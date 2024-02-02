@@ -53,6 +53,7 @@ class _DirectoryBrowserState extends State<DirectoryBrowser> {
     return Scaffold(
       appBar: AppBar(
         title: Text('אוצריא'),
+        
       ),
       body: FutureBuilder<List<FileSystemEntity>>(
         future: _fileList,
