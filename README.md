@@ -1,6 +1,6 @@
 # otzaria
 
-an open source project, to bring the sefaria library into PC.
+an open source project, to bring the sefaria library into PC. the program is writen in flutter, so it shuold run on any platform.
 
 # אוצריא
 
