@@ -1,0 +1,8 @@
+V add multi tabs support
+save tab state
+change markdown loading to async
+add book title search
+add search in markdown content
+add search for reference
+deploy with msix for sharing
+add option for styling the markdown
