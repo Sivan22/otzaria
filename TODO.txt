@@ -1,8 +1,13 @@
 V add multi tabs support
-save tab state
-change markdown loading to async
-add book title search
+V save tab state
+close the current tab
+V change markdown loading to async
+V add book title search
+move tabView to be home page
+add setting screen
+add option for styling the markdown
 add search in markdown content
+add PDF support
 add search for reference
 deploy with msix for sharing
-add option for styling the markdown
+

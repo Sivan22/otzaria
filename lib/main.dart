@@ -12,7 +12,6 @@ void main() {
 class FileExplorerApp extends StatelessWidget {
   const FileExplorerApp({Key? key}) : super(key: key);
 
-  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -35,7 +34,7 @@ class FileExplorerApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 18.0, fontFamily: 'candara'),
         ),
       ),
-      home: DirectoryBrowser(directory: Directory('./אוצריא'),openedFiles:[]),
+      home: DirectoryBrowser(directory: Directory('./אוצריא'), openedFiles: []),
     );
   }
 }
@@ -43,119 +42,150 @@ class FileExplorerApp extends StatelessWidget {
 class DirectoryBrowser extends StatefulWidget {
   final Directory directory;
   List<File> openedFiles;
-  DirectoryBrowser({Key? key, required this.directory,required this.openedFiles}) : super(key: key);
+  DirectoryBrowser(
+      {Key? key, required this.directory, required this.openedFiles})
+      : super(key: key);
 
   @override
   _DirectoryBrowserState createState() => _DirectoryBrowserState();
 }
 
 class _DirectoryBrowserState extends State<DirectoryBrowser> {
-  late Future<List<FileSystemEntity>> _fileList;
+  late Future<List<FileSystemEntity>> _fileList;  
+  late int selectedIndex;
+  
   @override
   void initState() {
     super.initState();
     _fileList = widget.directory.list().toList();
+    selectedIndex = 0;
   }
 
-openHomePage(){
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => DirectoryBrowser(directory: widget.directory,openedFiles: widget.openedFiles,)),    
-  );
-}
+  openHomePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => DirectoryBrowser(
+                directory: widget.directory,
+                openedFiles: widget.openedFiles,
+              )),
+    );
+  }
+
 //open the search page
-openSearchPage(){
-  Navigator.push(
-    context,MaterialPageRoute(builder: (context)=> BookSearchScreen(openedFiles: widget.openedFiles,),)
-  );
-}
+  openSearchPage() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookSearchScreen(
+            openedFiles: widget.openedFiles,
+          ),
+        ));
+  }
 
 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('אוצריא'),
-      ),
-      body:Row(
-        children: [
-          SidebarX(
-            controller: SidebarXController(selectedIndex: 0),
-            items:  [
-              SidebarXItem(icon: Icons.library_books, label: 'Home',onTap: openHomePage),
-              SidebarXItem(icon: Icons.search, label: 'Search', onTap: openSearchPage),
-            ],
-          ),
-           Expanded(
-             child: FutureBuilder<List<FileSystemEntity>>(
-                     future: _fileList,
-                     builder: (context, snapshot) {
-                       if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-             
-              if (snapshot.hasData) {
-                return ListView.builder(
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    FileSystemEntity entity = snapshot.data![index];
-                    return ListTile(
-                      title: Text(entity.path.split('/').last),
-                      leading: entity is Directory
-                          ? const Icon(Icons.my_library_books)
-                          : const Icon(Icons.book),
-                      onTap: () {
-                        if (entity is Directory) {
-                          
-                             Navigator.of(context).push(MaterialPageRoute(
-                               builder: (context) =>
-                                   DirectoryBrowser(directory: entity,openedFiles:widget.openedFiles),
-                           ));
-                        } else if (entity is File) {
-                          widget.openedFiles.insert(0,entity);
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) =>
-                                MarkdownTabView(markdownFiles: widget.openedFiles),
-                          ));
-                        }
+        appBar: AppBar(
+          title: const Text('אוצריא'),
+        ),
+        body: Row(children: [
+          NavigationRail(
+              destinations: [
+                NavigationRailDestination(
+                  icon: Icon(Icons.library_books),
+                  label: Text('Home'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.search),
+                  label: Text('Search'),
+                ),
+              ],
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  if (index != selectedIndex){
+                  selectedIndex = index;
+                  switch (index) {
+                    case 0:
+                      openHomePage();
+                    case 1:
+                      openSearchPage();
+                  }
+                }});
+              }),
+          Expanded(
+            child: FutureBuilder<List<FileSystemEntity>>(
+              future: _fileList,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  if (snapshot.hasData) {
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        FileSystemEntity entity = snapshot.data![index];
+                        return ListTile(
+                          title: Text(entity.path.split('/').last),
+                          leading: entity is Directory
+                              ? const Icon(Icons.my_library_books)
+                              : const Icon(Icons.book),
+                          onTap: () {
+                            if (entity is Directory) {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => DirectoryBrowser(
+                                    directory: entity,
+                                    openedFiles: widget.openedFiles),
+                              ));
+                            } else if (entity is File) {
+                              widget.openedFiles.insert(0, entity);
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => MarkdownTabView(
+                                    markdownFiles: widget.openedFiles),
+                              ));
+                            }
+                          },
+                        );
                       },
                     );
-                  },
-                );
-              }
-                       }
-             
-                       return const Center(child: CircularProgressIndicator());
-                     },
-                   ),
-           ),
-    ]));
+                  }
+                }
+
+                return const Center(child: CircularProgressIndicator());
+              },
+            ),
+          ),
+        ]));
   }
 }
 
 class BookSearchScreen extends StatefulWidget {
   List<File> openedFiles;
 
-  BookSearchScreen({Key? key,required this.openedFiles}) : super(key: key);
+  BookSearchScreen({Key? key, required this.openedFiles}) : super(key: key);
 
   @override
   _BookSearchScreenState createState() => _BookSearchScreenState();
 }
 
 class _BookSearchScreenState extends State<BookSearchScreen> {
-  TextEditingController _searchController = TextEditingController();  
+  TextEditingController _searchController = TextEditingController();
   // get all files from the directory "אוצריא"
-  final List<File> books = Directory('./אוצריא').listSync(recursive: true).whereType<File>().toList();
+  final List<File> books = Directory('./אוצריא')
+      .listSync(recursive: true)
+      .whereType<File>()
+      .toList();
   List<File> _searchResults = [];
 
   void _searchBooks(String query) {
     final results = books.where((book) {
       final bookName = book.path.split('\\').last.toLowerCase();
-       // if all the words seperated by spaces exist in the book name, even not in order, return true
-
-       
+      // if all the words seperated by spaces exist in the book name, even not in order, return true
 
       final searchLower = query.toLowerCase();
       return bookName.contains(searchLower);
@@ -170,7 +200,6 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
     super.initState();
     _searchController.addListener(() {
       _searchBooks(_searchController.text);
-
     });
   }
 
@@ -183,44 +212,44 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('חיפוש ספר'),
-      ),
-      body:  Center(
-        child: Padding(
-              padding: const EdgeInsets.all(80),
-          child: Column(
-          children: [TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'הקלד שם ספר: ',
-                  suffixIcon: Icon(Icons.search),
-                ),
-                onChanged: _searchBooks,
-              ),
-            
-            Expanded(
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  final book = _searchResults[index];
-                  return ListTile(
-                    title: Text(book.path.split('/').last),
-                    onTap: () {
-                          widget.openedFiles.insert(0,book);
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) =>
-                                  MarkdownTabView(markdownFiles: widget.openedFiles),
-                      ));
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+        appBar: AppBar(
+          title: Text('חיפוש ספר'),
         ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(80),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'הקלד שם ספר: ',
+                    suffixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: _searchBooks,
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _searchResults.length,
+                    itemBuilder: (context, index) {
+                      final book = _searchResults[index];
+                      return ListTile(
+                        title: Text(book.path.split('/').last),
+                        onTap: () {
+                          widget.openedFiles.insert(0, book);
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => MarkdownTabView(
+                                markdownFiles: widget.openedFiles),
+                          ));
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-      ));
+          ),
+        ));
   }
 }
 
@@ -236,12 +265,10 @@ class MarkdownTabView extends StatefulWidget {
 
 class _MarkdownTabViewState extends State<MarkdownTabView>
     with SingleTickerProviderStateMixin {
-
   void closeAllTabs() {
     setState(() {
-       widget.markdownFiles.removeAt(widget.markdownFiles.length-1); 
-   
-          });
+      widget.markdownFiles.removeAt(widget.markdownFiles.length - 1);
+    });
   }
 
   @override
@@ -249,51 +276,68 @@ class _MarkdownTabViewState extends State<MarkdownTabView>
     return DefaultTabController(
       length: widget.markdownFiles.length,
       child: Scaffold(
-            appBar: AppBar(            
-              actions: [
-                IconButton(icon: Icon(Icons.close), onPressed: closeAllTabs,)
-              ],
-              bottom: TabBar(
-                tabs: widget.markdownFiles
-                    .map((file) => Tab(text: file.path.split('/').last))
-                    .toList(),
-              ),
-            ),
-            body: TabBarView(       
-              children: widget.markdownFiles.map((file) {
-                return BookViewer(file: file,
-                );
-              }).toList(),
-            ),
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: closeAllTabs,
+            )
+          ],
+          bottom: TabBar(
+            tabs: widget.markdownFiles
+                .map((file) => Tab(text: file.path.split('/').last))
+                .toList(),
           ),
+        ),
+        body: TabBarView(
+          children: widget.markdownFiles.map((file) {
+            return BookViewer(
+              file: file,
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 }
 
 class BookViewer extends StatelessWidget {
   final File file;
+  late Future<String> data;
+  BookViewer({Key? key, required this.file}) : super(key: key)
+  {
+     data = file.readAsString();
+  }
+
   final tocController = TocController();
   Widget buildTocWidget() => TocWidget(controller: tocController);
-  Widget buildMarkdown() => MarkdownWidget(
-    padding: const EdgeInsets.all(50),
-      data: file.readAsStringSync(),
-      tocController: tocController,
-      markdownGenerator: MarkdownGenerator(
-          textGenerator: (node, config, visitor) =>
-              CustomTextNode(node.textContent, config, visitor)));
+  Widget buildMarkdown() => FutureBuilder(
+    future: data.then((value) => value),
+    builder:(context, snapshot) { 
+      if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
 
-  BookViewer({Key? key, required this.file}) : super(key: key);
-  @override
+                  if (snapshot.hasData) {
+                    return MarkdownWidget(
+        padding: const EdgeInsets.all(50),
+        data: snapshot.data!,
+        tocController: tocController,
+        markdownGenerator: MarkdownGenerator(
+            textGenerator: (node, config, visitor) =>
+                CustomTextNode(node.textContent, config, visitor)));
+}}
+return const Center(child: CircularProgressIndicator());});
+
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: Drawer(child: buildTocWidget()),
-        appBar: AppBar(
-          title: Text('${file.path.split('/').last}'),          
-        ),
-        body: buildMarkdown(),
-            
-          
-          
-        );
+      appBar: AppBar(
+        title: Text('${file.path.split('/').last}'),
+      ),
+      body: buildMarkdown(),
+    );
   }
 }
