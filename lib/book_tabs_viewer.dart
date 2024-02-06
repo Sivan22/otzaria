@@ -32,7 +32,7 @@ class MarkdownTabViewState extends State<MarkdownTabView> with TickerProviderSta
   
   void enlargeText() {
     setState(() {
-      Settings.setValue<double>( 'key-font-size',min(Settings.getValue<double>('key-font-size')!+5,50.0));
+      Settings.setValue<double>( 'key-font-size',min(Settings.getValue<double>('key-font-size')!+3,50.0));
       
     });
 
@@ -40,7 +40,7 @@ class MarkdownTabViewState extends State<MarkdownTabView> with TickerProviderSta
 
     void enSmallText() {
     setState(() {
-      Settings.setValue<double>( 'key-font-size',max(Settings.getValue<double>('key-font-size')!-5,15.0));
+      Settings.setValue<double>( 'key-font-size',max(Settings.getValue<double>('key-font-size')!-3,15.0));
       
     });
 
@@ -88,7 +88,7 @@ class MarkdownTabViewState extends State<MarkdownTabView> with TickerProviderSta
             bottom: TabBar(
               controller: tabController,
               tabs: openedFiles
-                  .map((file) => Tab(text: file.path.split('/').last))
+                  .map((file) => Tab(text: file.path.split('\\').last))
                   .toList(),
             ),
           ),
@@ -98,7 +98,7 @@ class MarkdownTabViewState extends State<MarkdownTabView> with TickerProviderSta
                 destinations: const [
                   NavigationRailDestination(
                     icon: Icon(Icons.library_books),
-                    label: Text('ספריה'),
+                    label: Text('ספריה'),                    
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.search),
@@ -213,7 +213,45 @@ class _BookViewerState extends State<BookViewer>  with AutomaticKeepAliveClientM
                           fontFamily: Settings.getValue('key-font-family'),
 
                           )),
-                ]),
+                  H1Config(
+                    style: TextStyle(
+                          fontSize: Settings.getValue('key-font-size')+10,
+                          fontFamily: Settings.getValue('key-font-family'),
+                          fontWeight: FontWeight.bold,
+
+                          )),
+                  H2Config(
+                    style: TextStyle(
+                          fontSize: Settings.getValue('key-font-size')+5,
+                          fontFamily: Settings.getValue('key-font-family'),
+                          fontWeight: FontWeight.bold,
+
+                          )),
+                  H3Config(
+                    style: TextStyle(
+                          fontSize: Settings.getValue('key-font-size')+5,
+                          fontFamily: Settings.getValue('key-font-family'),
+                          fontWeight: FontWeight.bold,
+                          )
+
+                  ),
+                    H4Config(
+                    style: TextStyle(
+                          fontSize: Settings.getValue('key-font-size'),
+                          fontFamily: Settings.getValue('key-font-family'),
+                          fontWeight: FontWeight.bold,
+
+                          ),
+                  ),
+                    H5Config(
+                    style: TextStyle(
+                          fontSize: Settings.getValue('key-font-size')-5,
+                          fontFamily: Settings.getValue('key-font-family'),
+                          fontWeight: FontWeight.bold,
+
+                          ),
+                        ),
+              ]),
                 markdownGenerator: MarkdownGenerator(
                     textGenerator: (node, config, visitor) =>
                         CustomTextNode(node.textContent, config, visitor))));
@@ -229,7 +267,7 @@ class _BookViewerState extends State<BookViewer>  with AutomaticKeepAliveClientM
       drawer: Drawer(child: buildTocWidget()),
       appBar: AppBar(
         actions: [],
-        title: Text('${widget.file.path.split('/').last}'),
+        title: Text('${widget.file.path.split('\\').last}'),
       ),
       body: buildMarkdown(),
     );
