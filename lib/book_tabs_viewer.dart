@@ -253,8 +253,10 @@ class _mdBookViewerState extends State<mdBookViewer>
                       PConfig(
                           textStyle: TextStyle(
                         fontSize: Settings.getValue('key-font-size'),
-                        fontFamily: Settings.getValue('key-font-family'),
-                      )),
+                        fontFamily: Settings.getValue('key-font-family'),                    
+                      ),
+                      
+                      ),
                       H1Config(
                           style: TextStyle(
                         fontSize: Settings.getValue('key-font-size') + 10,
@@ -287,6 +289,8 @@ class _mdBookViewerState extends State<mdBookViewer>
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      
+
                     ]),
                     markdownGenerator: MarkdownGenerator(
                         textGenerator: (node, config, visitor) =>

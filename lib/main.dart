@@ -76,7 +76,7 @@ class DirectoryBrowserState extends State<DirectoryBrowser> {
 void navigateUp() {
   final currentPath = widget.directory.path;
   final parentDirectory = Directory(currentPath).parent;
-  if (Directory(currentPath).path != parentDirectory.path && Directory(currentPath).path != "./אוצריא" ) {
+  if (Directory(currentPath).path != parentDirectory.path && Directory(currentPath).path != "." ) {
     setState(() {
       _fileList = parentDirectory.list().toList();
     });
@@ -87,7 +87,7 @@ void navigateUp() {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('אוצריא'),
+        title: const Text('דפדוף בספרייה'),
         actions:  [
           Align(
             alignment: Alignment.centerRight,
@@ -113,7 +113,7 @@ void navigateUp() {
                 itemBuilder: (context, index) {
                   FileSystemEntity entity = snapshot.data![index];
                   return ListTile(
-                    title: Text(entity.path.split('/').last),
+                    title: Text(entity.path.split('\\').last),
                     leading: entity is Directory
                         ? const Icon(Icons.my_library_books)
                         : const Icon(Icons.book),
@@ -153,7 +153,7 @@ class BookSearchScreen extends StatefulWidget {
 class _BookSearchScreenState extends State<BookSearchScreen> {
   TextEditingController _searchController = TextEditingController();
   // get all files from the directory "אוצריא"
-  final List<File> books = Directory('./אוצריא')
+  final List<File> books = Directory('אוצריא')
       .listSync(recursive: true)
       .whereType<File>()
       .toList();
