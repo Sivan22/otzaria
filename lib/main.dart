@@ -1,12 +1,18 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
-import 'package:markdown_widget/markdown_widget.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'custom_node.dart';
-import 'package:sidebarx/sidebarx.dart';
+import 'book_tabs_viewer.dart';
+import 'settings_screen.dart';
+import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'cache_provider.dart';
 
-void main() {
-  runApp(FileExplorerApp());
+
+
+
+void  main(){
+   Settings.init(cacheProvider: HiveCache());
+  //Settings.clearCache();
+  runApp(const FileExplorerApp());
 }
 
 class FileExplorerApp extends StatelessWidget {
@@ -30,144 +36,118 @@ class FileExplorerApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'candara',
-        textTheme: const TextTheme(
+         textTheme: const TextTheme(
           bodyMedium: TextStyle(fontSize: 18.0, fontFamily: 'candara'),
         ),
       ),
-      home: DirectoryBrowser(directory: Directory('./אוצריא'), openedFiles: []),
+      routes: {
+        '/search': (context) => BookSearchScreen(),
+        '/browser': (context) =>
+            DirectoryBrowser(directory: Directory('.')),
+        '/settings': (context) => mySettingsScreen(),
+      },
+      home:  const MarkdownTabView(),
+      // DirectoryBrowser(directory: Directory('./אוצריא'), openedFiles: []),
     );
   }
 }
 
+
+
 class DirectoryBrowser extends StatefulWidget {
-  final Directory directory;
-  List<File> openedFiles;
-  DirectoryBrowser(
-      {Key? key, required this.directory, required this.openedFiles})
-      : super(key: key);
+   Directory directory;
+   DirectoryBrowser({
+    Key? key,
+    required this.directory,
+  }) : super(key: key);
 
   @override
-  _DirectoryBrowserState createState() => _DirectoryBrowserState();
+  DirectoryBrowserState createState() => DirectoryBrowserState();
 }
 
-class _DirectoryBrowserState extends State<DirectoryBrowser> {
-  late Future<List<FileSystemEntity>> _fileList;  
+class DirectoryBrowserState extends State<DirectoryBrowser> {
+  late Future<List<FileSystemEntity>> _fileList;
   late int selectedIndex;
-  
+
   @override
   void initState() {
-    super.initState();
+    super.initState();    
     _fileList = widget.directory.list().toList();
     selectedIndex = 0;
   }
 
-  openHomePage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => DirectoryBrowser(
-                directory: widget.directory,
-                openedFiles: widget.openedFiles,
-              )),
-    );
+void navigateUp() {
+  final currentPath = widget.directory.path;
+  final parentDirectory = Directory(currentPath).parent;
+  if (Directory(currentPath).path != parentDirectory.path && Directory(currentPath).path != "./אוצריא" ) {
+    setState(() {
+      _fileList = parentDirectory.list().toList();
+    });
   }
-
-//open the search page
-  openSearchPage() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BookSearchScreen(
-            openedFiles: widget.openedFiles,
-          ),
-        ));
-  }
-
-
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('אוצריא'),
-        ),
-        body: Row(children: [
-          NavigationRail(
-              destinations: [
-                NavigationRailDestination(
-                  icon: Icon(Icons.library_books),
-                  label: Text('Home'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.search),
-                  label: Text('Search'),
-                ),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  if (index != selectedIndex){
-                  selectedIndex = index;
-                  switch (index) {
-                    case 0:
-                      openHomePage();
-                    case 1:
-                      openSearchPage();
-                  }
-                }});
-              }),
-          Expanded(
-            child: FutureBuilder<List<FileSystemEntity>>(
-              future: _fileList,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-
-                  if (snapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        FileSystemEntity entity = snapshot.data![index];
-                        return ListTile(
-                          title: Text(entity.path.split('/').last),
-                          leading: entity is Directory
-                              ? const Icon(Icons.my_library_books)
-                              : const Icon(Icons.book),
-                          onTap: () {
-                            if (entity is Directory) {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => DirectoryBrowser(
-                                    directory: entity,
-                                    openedFiles: widget.openedFiles),
-                              ));
-                            } else if (entity is File) {
-                              widget.openedFiles.insert(0, entity);
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => MarkdownTabView(
-                                    markdownFiles: widget.openedFiles),
-                              ));
-                            }
-                          },
-                        );
-                      },
-                    );
-                  }
-                }
-
-                return const Center(child: CircularProgressIndicator());
-              },
+      appBar: AppBar(
+        title: const Text('אוצריא'),
+        actions:  [
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_upward),
+              tooltip: 'חזרה לתיקיה הקודמת',
+              onPressed: navigateUp,
             ),
-          ),
-        ]));
+          )
+        ]
+      ),
+      body: FutureBuilder<List<FileSystemEntity>>(
+        future: _fileList,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (snapshot.hasData) {
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  FileSystemEntity entity = snapshot.data![index];
+                  return ListTile(
+                    title: Text(entity.path.split('/').last),
+                    leading: entity is Directory
+                        ? const Icon(Icons.my_library_books)
+                        : const Icon(Icons.book),
+                    onTap: () {
+                      if (entity is Directory) {
+                        setState(() {
+                          //_fileList = Directory(entity.path).list().toList();
+                          widget.directory = entity;
+                          _fileList = Directory(entity.path).list().toList();
+                        });
+                      } else if (entity is File) {
+                        Navigator.pop(context, entity);
+                      }
+                    },
+                  );
+                },
+              );
+            }
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
   }
 }
 
 class BookSearchScreen extends StatefulWidget {
-  List<File> openedFiles;
-
-  BookSearchScreen({Key? key, required this.openedFiles}) : super(key: key);
+  BookSearchScreen({
+    Key? key,
+  }) : super(key: key);
 
   @override
   _BookSearchScreenState createState() => _BookSearchScreenState();
@@ -221,6 +201,7 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
             child: Column(
               children: [
                 TextField(
+                  autofocus: true,
                   controller: _searchController,
                   decoration: InputDecoration(
                     labelText: 'הקלד שם ספר: ',
@@ -234,15 +215,10 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
                     itemBuilder: (context, index) {
                       final book = _searchResults[index];
                       return ListTile(
-                        title: Text(book.path.split('/').last),
-                        onTap: () {
-                          widget.openedFiles.insert(0, book);
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => MarkdownTabView(
-                                markdownFiles: widget.openedFiles),
-                          ));
-                        },
-                      );
+                          title: Text(book.path.split('/').last),
+                          onTap: () {
+                            Navigator.of(context).pop(book);
+                          });
                     },
                   ),
                 ),
@@ -250,94 +226,5 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
             ),
           ),
         ));
-  }
-}
-
-class MarkdownTabView extends StatefulWidget {
-  final List<File> markdownFiles;
-
-  const MarkdownTabView({Key? key, required this.markdownFiles})
-      : super(key: key);
-
-  @override
-  _MarkdownTabViewState createState() => _MarkdownTabViewState();
-}
-
-class _MarkdownTabViewState extends State<MarkdownTabView>
-    with SingleTickerProviderStateMixin {
-  void closeAllTabs() {
-    setState(() {
-      widget.markdownFiles.removeAt(widget.markdownFiles.length - 1);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: widget.markdownFiles.length,
-      child: Scaffold(
-        appBar: AppBar(
-          actions: [
-            IconButton(
-              icon: Icon(Icons.close),
-              onPressed: closeAllTabs,
-            )
-          ],
-          bottom: TabBar(
-            tabs: widget.markdownFiles
-                .map((file) => Tab(text: file.path.split('/').last))
-                .toList(),
-          ),
-        ),
-        body: TabBarView(
-          children: widget.markdownFiles.map((file) {
-            return BookViewer(
-              file: file,
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class BookViewer extends StatelessWidget {
-  final File file;
-  late Future<String> data;
-  BookViewer({Key? key, required this.file}) : super(key: key)
-  {
-     data = file.readAsString();
-  }
-
-  final tocController = TocController();
-  Widget buildTocWidget() => TocWidget(controller: tocController);
-  Widget buildMarkdown() => FutureBuilder(
-    future: data.then((value) => value),
-    builder:(context, snapshot) { 
-      if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-
-                  if (snapshot.hasData) {
-                    return MarkdownWidget(
-        padding: const EdgeInsets.all(50),
-        data: snapshot.data!,
-        tocController: tocController,
-        markdownGenerator: MarkdownGenerator(
-            textGenerator: (node, config, visitor) =>
-                CustomTextNode(node.textContent, config, visitor)));
-}}
-return const Center(child: CircularProgressIndicator());});
-
-    @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: Drawer(child: buildTocWidget()),
-      appBar: AppBar(
-        title: Text('${file.path.split('/').last}'),
-      ),
-      body: buildMarkdown(),
-    );
   }
 }

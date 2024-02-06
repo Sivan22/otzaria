@@ -1,13 +1,10 @@
-V add multi tabs support
-V save tab state
-close the current tab
-V change markdown loading to async
-V add book title search
-move tabView to be home page
-add setting screen
-add option for styling the markdown
+up folder in brwser
+use html2markdown
+add option for themes for the markdown
 add search in markdown content
 add PDF support
 add search for reference
 deploy with msix for sharing
+להוסיף את הרמה האחרונה של כותרת לכל הרמות מעל 4
+להחזיר ספרים שנמחקו
 
