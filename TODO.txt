@@ -1,3 +1,4 @@
+save tabControler scorlling stata
 use html2markdown
 add option for themes for the markdown
 add search in markdown content
@@ -7,5 +8,7 @@ deploy with msix for sharing
 
 בסקריפט:
 להוסיף את הרמה האחרונה של כותרת לכל הרמות מעל 4
+בחלוקה לשורות לא לעשות שורה חדשה
+בחלוקה לשאר החלוקות לעשות שורה חדשה והדגשה לסעיף
 להחזיר ספרים שנמחקו
 
