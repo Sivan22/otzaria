@@ -43,7 +43,7 @@ class FileExplorerApp extends StatelessWidget {
             DirectoryBrowser(directory: Directory('.')),
         '/settings': (context) => mySettingsScreen(),
       },
-      home:  const MarkdownTabView(),
+      home:  const booksTabView(),
       // DirectoryBrowser(directory: Directory('./אוצריא'), openedFiles: []),
     );
   }
