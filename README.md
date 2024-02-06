@@ -12,3 +12,8 @@ an open source project, to bring the sefaria library into PC. the program is wri
 ![alt text](image-4.png)
 ![alt text](image-5.png)
 
+
+## Credits
+
+![alt text](PBS.png)
+
