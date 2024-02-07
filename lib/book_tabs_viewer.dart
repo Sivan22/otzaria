@@ -63,36 +63,13 @@ class booksTabViewState extends State<booksTabView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Center(child: Text('אוצריא')),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.font_download_outlined,
-            ),
-            tooltip: 'הגדל טקסט',
-            onPressed: enlargeText,
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.font_download_off_outlined,
-            ),
-            tooltip: 'הקטן טקסט',
-            onPressed: enSmallText,
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            tooltip: 'סגור ספר פתוח',
-            onPressed: closelastTab,
-          ),
-        ],
-        bottom: TabBar(
+      appBar: TabBar(
           controller: tabController,
           tabs: openedFiles
               .map((file) => Tab(text: file.path.split('\\').last))
               .toList(),
         ),
-      ),
+      
       body: Row(children: [
         NavigationRail(
             labelType: NavigationRailLabelType.all,
@@ -132,9 +109,9 @@ class booksTabViewState extends State<booksTabView>
               children: openedFiles.map((file) {
                 if (file.path.endsWith('.pdf')) {
 
-                  return myPdfPage(file: file,);
+                  return myPdfPage(file: file,closelastTab: closelastTab,);
                 } else {
-                  return mdBookViewer(
+                  return mdBookViewer(closelastTab: closelastTab,
                     file: file,
                   );
                 }
@@ -152,7 +129,6 @@ class booksTabViewState extends State<booksTabView>
         context,
         MaterialPageRoute(
             builder: (context) => DirectoryBrowser(
-                  directory: Directory('./אוצריא'),
                 )),
       );
     } else if (how == 'search') {
@@ -189,8 +165,9 @@ class booksTabViewState extends State<booksTabView>
 class mdBookViewer extends StatefulWidget {
   final File file;
   late Future<String> data;
+  late void Function() closelastTab;
 
-  mdBookViewer({Key? key, required this.file}) : super(key: key) {
+  mdBookViewer({Key? key, required this.file,  required this.closelastTab  }) : super(key: key) {
     data = file.readAsString();
   }
 
@@ -200,21 +177,48 @@ class mdBookViewer extends StatefulWidget {
 
 class _mdBookViewerState extends State<mdBookViewer>
     with AutomaticKeepAliveClientMixin<mdBookViewer> {
-  //use value notifier
-
-  ValueNotifier textFontSize =
-      ValueNotifier(Settings.getValue('key-font-size'));
+  final tocController = TocController();
+  double textFontSize =Settings.getValue('key-font-size');
 
   @override
   void initState() {
     super.initState();
   }
 
-  final tocController = TocController();
 
-  Widget buildTocWidget() => TocWidget(controller: tocController);
-
-  Widget buildMarkdown() => FutureBuilder(
+ @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: Drawer(child: TocWidget(controller: tocController)),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.zoom_in,
+            ),
+            tooltip: 'הגדל טקסט',
+            onPressed: ()=>setState(() {
+              textFontSize =min(50.0, textFontSize + 3);
+            })
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.zoom_out,
+            ),
+            tooltip: 'הקטן טקסט',
+            onPressed:()=>setState(() {
+              textFontSize =max(15.0, textFontSize - 3);
+            }) ,
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: 'סגור ספר פתוח',
+            onPressed: widget.closelastTab,
+          ),
+        ],
+        title: Text('${widget.file.path.split('\\').last}'),
+      ),
+      body: FutureBuilder(
       future: widget.data.then((value) => value),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
@@ -223,49 +227,48 @@ class _mdBookViewerState extends State<mdBookViewer>
           }
 
           if (snapshot.hasData) {
-            return ValueListenableBuilder(
-                key: PageStorageKey<String>(widget.key.toString()),
-                valueListenable: textFontSize,
-                builder: (context, value, child) => MarkdownWidget(
+            return           
+                MarkdownWidget( 
+                  key: PageStorageKey<String>(widget.key.toString())   ,              
                     padding: const EdgeInsets.all(50),
                     data: snapshot.data!,
                     tocController: tocController,
                     config: MarkdownConfig(configs: [
                       PConfig(
                           textStyle: TextStyle(
-                        fontSize: Settings.getValue('key-font-size'),
+                        fontSize: textFontSize,
                         fontFamily: Settings.getValue('key-font-family'),                    
                       ),
                       
                       ),
                       H1Config(
                           style: TextStyle(
-                        fontSize: Settings.getValue('key-font-size') + 10,
+                        fontSize: textFontSize + 10,
                         fontFamily: Settings.getValue('key-font-family'),
                         fontWeight: FontWeight.bold,
                       )),
                       H2Config(
                           style: TextStyle(
-                        fontSize: Settings.getValue('key-font-size') + 5,
+                        fontSize: textFontSize + 5,
                         fontFamily: Settings.getValue('key-font-family'),
                         fontWeight: FontWeight.bold,
                       )),
                       H3Config(
                           style: TextStyle(
-                        fontSize: Settings.getValue('key-font-size') + 5,
+                        fontSize:textFontSize + 5,
                         fontFamily: Settings.getValue('key-font-family'),
                         fontWeight: FontWeight.bold,
                       )),
                       H4Config(
                         style: TextStyle(
-                          fontSize: Settings.getValue('key-font-size'),
+                          fontSize: textFontSize,
                           fontFamily: Settings.getValue('key-font-family'),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       H5Config(
                         style: TextStyle(
-                          fontSize: Settings.getValue('key-font-size') - 5,
+                          fontSize: textFontSize - 5,
                           fontFamily: Settings.getValue('key-font-family'),
                           fontWeight: FontWeight.bold,
                         ),
@@ -276,21 +279,13 @@ class _mdBookViewerState extends State<mdBookViewer>
                     markdownGenerator: MarkdownGenerator(
                         textGenerator: (node, config, visitor) =>
                             CustomTextNode(
-                                node.textContent, config, visitor))));
+                                node.textContent, config, visitor)));
           }
         }
         return const Center(child: CircularProgressIndicator());
-      });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: Drawer(child: buildTocWidget()),
-      appBar: AppBar(
-        actions: [],
-        title: Text('${widget.file.path.split('\\').last}'),
-      ),
-      body: buildMarkdown(),
+      
+      })
+,
     );
   }
 

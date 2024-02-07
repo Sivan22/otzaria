@@ -40,11 +40,10 @@ class FileExplorerApp extends StatelessWidget {
       routes: {
         '/search': (context) => BookSearchScreen(),
         '/browser': (context) =>
-            DirectoryBrowser(directory: Directory('.')),
+            DirectoryBrowser(),
         '/settings': (context) => mySettingsScreen(),
       },
       home:  const booksTabView(),
-      // DirectoryBrowser(directory: Directory('./אוצריא'), openedFiles: []),
     );
   }
 }
@@ -52,10 +51,9 @@ class FileExplorerApp extends StatelessWidget {
 
 
 class DirectoryBrowser extends StatefulWidget {
-   Directory directory;
+   
    DirectoryBrowser({
     Key? key,
-    required this.directory,
   }) : super(key: key);
 
   @override
@@ -63,24 +61,29 @@ class DirectoryBrowser extends StatefulWidget {
 }
 
 class DirectoryBrowserState extends State<DirectoryBrowser> {
+  late Directory directory;
   late Future<List<FileSystemEntity>> _fileList;
   late int selectedIndex;
 
   @override
   void initState() {
     super.initState();    
-    _fileList = widget.directory.list().toList();
+    directory = Directory('./אוצריא');
+    _fileList = directory.list().toList();
     selectedIndex = 0;
   }
 
 void navigateUp() {
-  final currentPath = widget.directory.path;
-  final parentDirectory = Directory(currentPath).parent;
-  if (Directory(currentPath).path != parentDirectory.path && Directory(currentPath).path != "." ) {
+  final parentDirectory = directory.parent;
+  if (parentDirectory.path != "." ) {
     setState(() {
-      _fileList = parentDirectory.list().toList();
-    });
+      directory = parentDirectory;
+      _fileList = Directory(parentDirectory.path).list().toList();
+    }); 
   }
+     else {
+      Navigator.pop(context);
+     }
 }
 
   @override
@@ -88,16 +91,14 @@ void navigateUp() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('דפדוף בספרייה'),
-        actions:  [
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_upward),
+        leading:
+        
+         IconButton(
+              icon: const Icon(Icons.arrow_back),
               tooltip: 'חזרה לתיקיה הקודמת',
               onPressed: navigateUp,
             ),
-          )
-        ]
+        
       ),
       body: FutureBuilder<List<FileSystemEntity>>(
         future: _fileList,
@@ -121,7 +122,7 @@ void navigateUp() {
                       if (entity is Directory) {
                         setState(() {
                           //_fileList = Directory(entity.path).list().toList();
-                          widget.directory = entity;
+                          directory = entity;
                           _fileList = Directory(entity.path).list().toList();
                         });
                       } else if (entity is File) {

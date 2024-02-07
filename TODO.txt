@@ -1,8 +1,7 @@
-switch pdf library to PDFx
-use html2markdown
+move resize buttons down - with callbacks
 add search in markdown content
-
-
+fix navigating in markdown view
+use html2markdown
 
 בסקריפט:
 להוסיף את הרמה האחרונה של כותרת לכל הרמות מעל 4

@@ -10,8 +10,9 @@ import 'thumbnails_view.dart';
 
 
 class myPdfPage extends StatefulWidget {
+  final void Function() closelastTab;
   final File file;
-  const myPdfPage({super.key, required this.file});
+  const myPdfPage({super.key, required this.file, required this.closelastTab});
 
   @override
   State<myPdfPage> createState() => _myPdfPageState();
@@ -52,21 +53,30 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.zoom_in),
+            icon: const Icon(Icons.zoom_in, ),
+            tooltip: 'הגדל',
             onPressed: () => controller.zoomUp(),
           ),
           IconButton(
             icon: const Icon(Icons.zoom_out),
+            tooltip: 'הקטן',
             onPressed: () => controller.zoomDown(),
           ),
           IconButton(
             icon: const Icon(Icons.first_page),
+            tooltip: 'תחילת הספר',
             onPressed: () => controller.goToPage(pageNumber: 1),
           ),
           IconButton(
             icon: const Icon(Icons.last_page),
+            tooltip: 'סוף הספר',
             onPressed: () =>
                 controller.goToPage(pageNumber: controller.pages.length),
+          ),
+                    IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: 'סגור ספר פתוח',
+            onPressed: widget.closelastTab,
           ),
         ],
       ),
