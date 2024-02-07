@@ -1,10 +1,8 @@
-save tabControler scorlling stata
+switch pdf library to PDFx
 use html2markdown
-add option for themes for the markdown
 add search in markdown content
-add PDF support
-add search for reference
-deploy with msix for sharing
+
+
 
 בסקריפט:
 להוסיף את הרמה האחרונה של כותרת לכל הרמות מעל 4

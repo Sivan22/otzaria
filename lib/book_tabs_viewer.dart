@@ -1,12 +1,15 @@
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:otzaria/outline_view.dart';
 import 'package:otzaria/settings_screen.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:markdown_widget/markdown_widget.dart';
 import 'custom_node.dart';
 import 'main.dart';
 import 'dart:math';
+import 'package:pdfrx/pdfrx.dart';
+import 'pdf_page.dart';
+
 
 class booksTabView extends StatefulWidget {
   const booksTabView({
@@ -22,15 +25,13 @@ class booksTabView extends StatefulWidget {
 class booksTabViewState extends State<booksTabView>
     with TickerProviderStateMixin {
   int selectedIndex = 0;
-  List<File> openedFiles = [];
+  List<File> openedFiles = [File('אוצריא\\ברוכים הבאים.pdf')];
   late TabController tabController;
-  late PdfViewerController pdfViewerCntroller;
 
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: openedFiles.length, vsync: this);
-    pdfViewerCntroller = PdfViewerController();
   }
 
   void enlargeText() {
@@ -97,12 +98,12 @@ class booksTabViewState extends State<booksTabView>
             labelType: NavigationRailLabelType.all,
             destinations: const [
               NavigationRailDestination(
-                icon: Icon(Icons.library_books),
-                label: Text('ספריה'),
+                icon: Icon(Icons.folder),
+                label: Text('דפדוף'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.search),
-                label: Text('חיפוש'),
+                label: Text('איתור ספר'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.settings),
@@ -130,29 +131,8 @@ class booksTabViewState extends State<booksTabView>
               controller: tabController,
               children: openedFiles.map((file) {
                 if (file.path.endsWith('.pdf')) {
-                List<GlobalKey<SfPdfViewerState>>  pdfViewerKey = [];
-                 pdfViewerKey.add(GlobalKey<SfPdfViewerState>());
 
-                  return Scaffold(
-                    appBar: AppBar(
-                      actions: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.bookmark,
-                            color: Color.fromARGB(255, 0, 0, 0),
-                          ),
-                          onPressed: () {
-                            pdfViewerKey.last.currentState?.openBookmarkView();
-                          },
-                        ),
-                      ],
-                    ),
-                    body: SfPdfViewer.file(
-                      file,
-                      controller: pdfViewerCntroller,
-                      key:  pdfViewerKey.last,
-                    ),
-                  );
+                  return myPdfPage(file: file,);
                 } else {
                   return mdBookViewer(
                     file: file,
@@ -202,6 +182,7 @@ class booksTabViewState extends State<booksTabView>
                 });
 }
 }
+
 
 
 

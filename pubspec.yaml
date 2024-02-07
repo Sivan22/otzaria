@@ -45,7 +45,9 @@ dependencies:
   msix: ^3.16.7      
   path_provider: ^2.0.15
   html: ^0.15.1
-  syncfusion_flutter_pdfviewer: ^24.2.4
+  pdfrx: ^0.4.30
+  url_launcher: ^6.1.10
+
 
 
 

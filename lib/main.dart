@@ -115,8 +115,8 @@ void navigateUp() {
                   return ListTile(
                     title: Text(entity.path.split('\\').last),
                     leading: entity is Directory
-                        ? const Icon(Icons.my_library_books)
-                        : const Icon(Icons.book),
+                        ? const Icon(Icons.folder)
+                        : const Icon(Icons.library_books),
                     onTap: () {
                       if (entity is Directory) {
                         setState(() {
@@ -162,10 +162,12 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
   void _searchBooks(String query) {
     final results = books.where((book) {
       final bookName = book.path.split('\\').last.toLowerCase();
-      // if all the words seperated by spaces exist in the book name, even not in order, return true
-
-      final searchLower = query.toLowerCase();
-      return bookName.contains(searchLower);
+      bool result = true;
+      for (final word in query.split(' ')) {
+        result = result && bookName.contains(word.toLowerCase());
+      }// if all the words seperated by spaces exist in the book name, even not in order, return true
+ 
+      return result;
     }).toList();
     setState(() {
       _searchResults = results;
@@ -212,7 +214,7 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
                     itemBuilder: (context, index) {
                       final book = _searchResults[index];
                       return ListTile(
-                          title: Text(book.path.split('/').last),
+                          title: Text(book.path.split('\\').last),
                           onTap: () {
                             Navigator.of(context).pop(book);
                           });
