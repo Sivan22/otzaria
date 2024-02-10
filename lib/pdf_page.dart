@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'search_view.dart';
+import 'pdf_search_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
@@ -47,6 +47,7 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu),
+          tooltip: 'חיפוש וניווט',
           onPressed: () {
             showLeftPane.value = !showLeftPane.value;
           },

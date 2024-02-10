@@ -1,4 +1,3 @@
-move resize buttons down - with callbacks
 add search in markdown content
 fix navigating in markdown view
 use html2markdown
