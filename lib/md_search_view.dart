@@ -1,28 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'dart:math';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:search_highlight_text/search_highlight_text.dart';
+import "package:flutter_html/flutter_html.dart";
+import 'toc_viewer.dart';
+import 'package:html/parser.dart';
 
 
 
 
 class MarkdownSearchView extends StatefulWidget {
 final String data;
-ScrollController scrollControler;
+ItemScrollController scrollControler;
+ValueNotifier searchQuery;
   
    MarkdownSearchView({
-    Key? key,required this.data, required this.scrollControler,
+    Key? key,required this.data, required this.scrollControler,required this.searchQuery
   }) : super(key: key);
 
   @override
   _MarkdownSearchViewState createState() => _MarkdownSearchViewState();
 }
 
-class _MarkdownSearchViewState extends State<MarkdownSearchView> {
+class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticKeepAliveClientMixin<MarkdownSearchView> {
   final focusNode = FocusNode();
   final searchTextController = TextEditingController();
   late final MarkdownSearcher markdownTextSearcher;
     List<TextSearchResult> searchResults = [];
-    late ScrollController scrollControler; 
+    late ItemScrollController scrollControler; 
 
   @override
   void initState() {
@@ -44,6 +50,8 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> {
 
   void _searchTextUpdated() {
     markdownTextSearcher.startTextSearch(searchTextController.text);
+    widget.searchQuery.value = searchTextController.text;
+
   }
 
   void _searchResultUpdated() {
@@ -62,7 +70,6 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Text('...זהירות כאן בונים'),CircularProgressIndicator(),
         TextField(
           focusNode: focusNode,
           controller: searchTextController,
@@ -71,18 +78,6 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> {
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_upward),
-                  onPressed: () {
-                    // Insert logic to navigate to the previous search result
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.arrow_downward),
-                  onPressed: () {
-                    // Insert logic to navigate to the next search result
-                  },
-                ),
                 IconButton(
                   icon: Icon(Icons.clear),
                   onPressed: () {
@@ -106,19 +101,22 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> {
                   final result = searchResults[index];
                   return Expanded(
                     child: ListTile(
-                      title: Text(result.snippet),
-                      // onTap: () {
-                      //   final position = result.index/200;
-                      //     widget.scrollControler.animateTo( position,
-                      //  duration: Duration(milliseconds: 500),
-                      //    curve: Curves.ease,
-                              //   );
-                              //  }
+                      subtitle: SearchHighlightText(
+                        result.snippet,
+                        searchText: result.query),
+                       onTap: () {                         
+                           widget.scrollControler.scrollTo( 
+                            index: result.index,
+                        duration: Duration(milliseconds: 250),
+                         curve: Curves.ease,
+                                 );
+                                }
                 ));
                 }
                 }
                     )
                  ))]);}
+                   bool get wantKeepAlive => true;
                 }
 
 class MarkdownSearcher {
@@ -136,6 +134,8 @@ class MarkdownSearcher {
       isSearching = false;
       searchProgress = 0.0;
       searchSession++;
+      //notifyListeners();
+      
       return;
     }
 
@@ -158,18 +158,24 @@ class MarkdownSearcher {
   }
 
   List<TextSearchResult> _findAllMatches(String data, String query) {
+    List<String> sections = removeVolwels(stripHtmlIfNeeded(data)).split('\n');
     List<TextSearchResult> results = [];
-    int index = data.indexOf(query);
-    while (index != -1) {
+    String address = '';
+    for (int section_index =0;section_index<sections.length;section_index++){
+
+      int index = sections[section_index].indexOf(query);
+      if (index>=0){ // if there is a match
       results.add(TextSearchResult(
-        snippet: data.substring(max(0,index-30), min(data.length-1, index + query.length + 30)),
-        index: index,
-      ));
-      index = data.indexOf(query, index + query.length);
-    }
+        snippet: sections[section_index].substring(max(0,index-40), min(sections[section_index].length-1, index + query.length + 40)),
+        index: section_index,
+        query: query
+ 
+      ));};
+
+    } {   
     return results;
   }
-  
+  }
    final List<VoidCallback> _listeners = [];
 
   void notifyListeners() {   
@@ -184,14 +190,28 @@ class MarkdownSearcher {
  void removeListener(VoidCallback listener) {
    _listeners.remove(listener);
  }
+ 
 }
 
 class TextSearchResult {
   final String snippet;
   final int index;
+  final String query;
+
 
   TextSearchResult({
     required this.snippet,
     required this.index,
+    required this.query,
+    
+
   });
+  
 }
+
+ String stripHtmlIfNeeded(String text) {
+  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
+}
+ String removeVolwels(String s) {        
+   return s.replaceAll(RegExp(r'[\u0591-\u05C7]'), '');
+ }

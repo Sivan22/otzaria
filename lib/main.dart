@@ -39,8 +39,7 @@ class FileExplorerApp extends StatelessWidget {
       ),
       routes: {
         '/search': (context) => BookSearchScreen(),
-        '/browser': (context) =>
-            DirectoryBrowser(),
+        '/browser': (context) => const DirectoryBrowser(),
         '/settings': (context) => mySettingsScreen(),
       },
       home:  const booksTabView(),
@@ -52,7 +51,7 @@ class FileExplorerApp extends StatelessWidget {
 
 class DirectoryBrowser extends StatefulWidget {
    
-   DirectoryBrowser({
+   const DirectoryBrowser({
     Key? key,
   }) : super(key: key);
 
@@ -203,7 +202,7 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
                 TextField(
                   autofocus: true,
                   controller: _searchController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'הקלד שם ספר: ',
                     suffixIcon: Icon(Icons.search),
                   ),

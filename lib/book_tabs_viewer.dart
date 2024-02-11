@@ -5,7 +5,6 @@ import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:markdown_widget/markdown_widget.dart';
-import 'custom_node.dart';
 import 'main.dart';
 import 'dart:math';
 import 'package:pdfrx/pdfrx.dart';
@@ -112,10 +111,10 @@ class booksTabViewState extends State<booksTabView>
               controller: tabController,
               children: openedFiles.map((file) {
                 if (file.path.endsWith('.pdf')) {
-
+          
                   return myPdfPage(file: file,closelastTab: closelastTab,);
                 } else {
-                  return mdBookViewer(closelastTab: closelastTab, scrollController: AutoScrollController(),
+                  return mdBookViewer(closelastTab: closelastTab, 
                     file: file,
                   );
                 }

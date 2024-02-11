@@ -47,6 +47,9 @@ dependencies:
   html: ^0.15.1
   pdfrx: ^0.4.30
   url_launcher: ^6.1.10
+  flutter_html: ^3.0.0-beta.2
+  scrollable_positioned_list: ^0.3.8
+  search_highlight_text: ^1.0.0+2
 
 
 
