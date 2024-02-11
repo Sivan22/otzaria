@@ -1,6 +1,7 @@
 fix permormance issue in html toc
 add address to search results
 add fonts
+open maximised
 
 
 בסקריפט:
