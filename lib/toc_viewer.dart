@@ -8,11 +8,10 @@ import 'package:html/parser.dart';
 class TocViewer extends StatefulWidget {
   final String data;
   final ItemScrollController scrollController;
-  final String searchQuery;
   late List<TocEntry> toc ;
 
   TocViewer({super.key, required this.data, required this.scrollController,
-  required this.searchQuery}){
+  }){
   final List<String> data = this.data.split('\n');
   toc = [];
   int index = 0;
@@ -33,15 +32,11 @@ class _TocViewerState extends State<TocViewer> with AutomaticKeepAliveClientMixi
   Widget build(BuildContext context) {
     return  ListView.builder(
         itemCount: widget.toc.length,
-        itemBuilder: (context, index) => Expanded(
-          child: Expanded(
-            child: ListTile(
-              title: Text((stripHtmlIfNeeded(widget.toc[index].text))),
-              onTap: () {
-                widget.scrollController.scrollTo(index: widget.toc[index].index, duration: Duration(milliseconds: 250), curve: Curves.ease);
-              },
-            ),
-          ),
+        itemBuilder: (context, index) => ListTile(
+          title: Text((stripHtmlIfNeeded(widget.toc[index].text))),
+          onTap: () {
+            widget.scrollController.scrollTo(index: widget.toc[index].index, duration: Duration(milliseconds: 250), curve: Curves.ease);
+          },
         ),
         
       );

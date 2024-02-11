@@ -36,6 +36,7 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
      markdownTextSearcher = MarkdownSearcher(widget.data);
     markdownTextSearcher.addListener(_searchResultUpdated);
     searchTextController.addListener(_searchTextUpdated);
+    searchTextController.text = widget.searchQuery.value;
    scrollControler = widget.scrollControler;
   }
 
@@ -49,10 +50,9 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
   }
 
   void _searchTextUpdated() {
-    markdownTextSearcher.startTextSearch(searchTextController.text);
     widget.searchQuery.value = searchTextController.text;
-
-  }
+    markdownTextSearcher.startTextSearch(widget.searchQuery.value);
+     }
 
   void _searchResultUpdated() {
 
@@ -70,7 +70,7 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        TextField(
+        TextField(          
           focusNode: focusNode,
           controller: searchTextController,
           decoration: InputDecoration(
@@ -91,31 +91,29 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
           ),
         ),
         
-           Expanded(
-             child: SizedBox.fromSize(
-              size: Size.fromHeight(300),
-               child: ListView.builder(
-                itemCount: searchResults.length,
-                itemBuilder: (context, index) {
-                  if (searchResults!.length > 0){
-                  final result = searchResults[index];
-                  return Expanded(
-                    child: ListTile(
-                      subtitle: SearchHighlightText(
-                        result.snippet,
-                        searchText: result.query),
-                       onTap: () {                         
-                           widget.scrollControler.scrollTo( 
-                            index: result.index,
-                        duration: Duration(milliseconds: 250),
-                         curve: Curves.ease,
-                                 );
-                                }
-                ));
-                }
-                }
-                    )
-                 ))]);}
+           SizedBox.fromSize(
+            size: Size.fromHeight(300),
+             child: ListView.builder(
+              itemCount: searchResults.length,
+              itemBuilder: (context, index) {
+                if (searchResults!.length > 0){
+                final result = searchResults[index];
+                return ListTile(
+                  subtitle: SearchHighlightText(
+                    result.snippet,
+                    searchText: result.query),
+                   onTap: () {                         
+                       widget.scrollControler.scrollTo( 
+                        index: result.index,
+                    duration: Duration(milliseconds: 250),
+                     curve: Curves.ease,
+                             );
+                            }
+                                );
+              }
+              }
+                  )
+               )]);}
                    bool get wantKeepAlive => true;
                 }
 
@@ -134,7 +132,7 @@ class MarkdownSearcher {
       isSearching = false;
       searchProgress = 0.0;
       searchSession++;
-      //notifyListeners();
+      notifyListeners();
       
       return;
     }

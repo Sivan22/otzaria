@@ -32,18 +32,6 @@ class _mdBookViewerState extends State<mdBookViewer>
   ValueNotifier<String> searchQuery = ValueNotifier<String>('');
     
 
-  @override
-  void initState() {
-    super.initState();
-     //searchQuery.addListener(() {
-    //setState(() {
-       //searchQuery.value = searchQuery.value;
-      //});
- //  });
-  }
-  
-
-
  @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,43 +115,38 @@ class _mdBookViewerState extends State<mdBookViewer>
                               children: [   
                               
                                
-                                Expanded(child: FutureBuilder(
-                                  future: widget.data.then((value) => value),
-                                  builder: (context, snapshot) =>
-                                   snapshot.connectionState == ConnectionState.done ?
-                                        Expanded(
-                                          child: TocViewer(
-                                          data: snapshot.data!,
-                                          searchQuery: searchQuery.value,
-                                          scrollController: widget.scrollController, ),
-                                        ):
-                                                              
-                                          Expanded(child: const CircularProgressIndicator())
-                                                  
-                                  
-                                ))
+                                Row(
+                                  children: [FutureBuilder(
+                                    future: widget.data.then((value) => value),
+                                    builder: (context, snapshot) =>
+                                     snapshot.connectionState == ConnectionState.done ?
+                                          Expanded(
+                                            child:TocViewer(
+                                                data: snapshot.data!,
+                                                scrollController: widget.scrollController, )
+                                         ): const CircularProgressIndicator()
+                                                    
+                                    
+                                  )],
+                                )
                                 ,
                             
-                                Expanded(
-                                  child: FutureBuilder(
-                                    future: widget.data.then((value) => value),
-                                    builder: (context, snapshot)=>                          
-                                                                
-                                    snapshot.connectionState == ConnectionState.done ?
-                                        Expanded(
-                                          child: MarkdownSearchView(
-                                          data: snapshot.data!,
-                                          scrollControler: widget.scrollController,
-                                          searchQuery:searchQuery 
-                                          ),
-                                        ):
+                                FutureBuilder(
+                                  future: widget.data.then((value) => value),
+                                  builder: (context, snapshot)=>                          
                                                               
-                                          Expanded(child: const CircularProgressIndicator())
-                                                  
-                                                              
-                                      
-                                     ),
-                                ),]
+                                  snapshot.connectionState == ConnectionState.done ?
+                                      MarkdownSearchView(
+                                      data: snapshot.data!,
+                                      scrollControler: widget.scrollController,
+                                      searchQuery:searchQuery 
+                                      ):
+                                                            
+                                        const CircularProgressIndicator()
+                                                
+                                                            
+                                    
+                                   ),]
                                    
                               
                                                 
@@ -187,16 +170,18 @@ class _mdBookViewerState extends State<mdBookViewer>
                                       }
                             
                                       if (snapshot.hasData) {
-                                        return           
+                                        return    
+                                        ValueListenableBuilder(valueListenable:  searchQuery, 
+                                        builder: (context, searchQuery, child) =>       
                                              HtmlView(
                                               key: PageStorageKey(snapshot.data!),
                                                    data: snapshot.data!.split('\n'),
                                                    scrollController: widget.scrollController,
-                                                   searchQuery: searchQuery.value,
+                                                   searchQuery: searchQuery,
                                                    textSize: textFontSize
-                                                  );
+                                                  ));
                                                 }}
-                                                return Expanded(child: Center(child: CircularProgressIndicator()));
+                                                return Center(child: CircularProgressIndicator());
                                   }
                           ),
                           ),]));

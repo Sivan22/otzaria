@@ -14,7 +14,7 @@ class mySettingsScreen extends StatelessWidget {
             title: 'הגדרות גופן',            
             children: <Widget>[
               SliderSettingsTile(
-                title: 'גודל גופן בספר',
+                title: 'גודל גופן התחלתי בספרים',
                 settingKey: 'key-font-size',
                 defaultValue: 20,
                 min: 15,

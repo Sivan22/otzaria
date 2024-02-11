@@ -1,10 +1,7 @@
-add search in markdown content
-fix navigating in markdown view
-use html2markdown
+fix permormance issue in html toc
+add address to search results
+add fonts
+
 
 בסקריפט:
-להוסיף את הרמה האחרונה של כותרת לכל הרמות מעל 4
-בחלוקה לשורות לא לעשות שורה חדשה
-בחלוקה לשאר החלוקות לעשות שורה חדשה והדגשה לסעיף
-להחזיר ספרים שנמחקו
-
+להוריד מחדש 

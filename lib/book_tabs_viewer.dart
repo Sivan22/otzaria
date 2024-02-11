@@ -1,18 +1,11 @@
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:otzaria/md_search_view.dart';
-import 'package:otzaria/outline_view.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:markdown_widget/markdown_widget.dart';
 import 'main.dart';
 import 'dart:math';
-import 'package:pdfrx/pdfrx.dart';
 import 'pdf_page.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
 import 'markdown_view.dart';
-
-
 
 class booksTabView extends StatefulWidget {
   const booksTabView({
@@ -22,8 +15,6 @@ class booksTabView extends StatefulWidget {
   @override
   booksTabViewState createState() => booksTabViewState();
 }
-
-
 
 class booksTabViewState extends State<booksTabView>
     with TickerProviderStateMixin {
