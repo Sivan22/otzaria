@@ -29,18 +29,36 @@ class mySettingsScreen extends StatelessWidget {
               DropDownSettingsTile<String>(
   title: 'גופן',
   settingKey: 'key-font-family',
-  values: <String, String>{
-    'David': 'דוד',
+  values: const <String, String>{
+    'DavidLibre': 'דוד',
     'Arial': 'אריאל',
+    'FrankRuhlLibre':'פרנק-רוהל',
+    'BonaNova': 'בונה-נובה',
+    'NotoRashiHebrew': 'רש"י',
+    'NotoSerifHebrew': 'נוטו',
+    'Tinos': 'טינוס',
+    'Rubik':'רוביק',
     'Candara': 'קנדרה',
     'roboto': 'רובוטו',
     'Calibri': 'קליברי',
+
   },
-  selected: 'David',
+  selected: 'FrankRuhlLibre',
   onChange: (value) {
-    debugPrint('key-dropdown-email-view: $value');
   },
-)
+),
+              DropDownSettingsTile<String>(
+  title: 'עובי',
+  settingKey: 'key-font-weight',
+  values: const <String, String>{
+    'normal':'רגיל',
+    'w600':'בינוני',
+    'bold':'עבה',
+  },
+  selected:'normal',
+  onChange: (value) {
+  },
+),
                 ],
           ),
           

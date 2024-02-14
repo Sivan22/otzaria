@@ -5,6 +5,7 @@ import 'book_tabs_viewer.dart';
 import 'settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'cache_provider.dart';
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
 void  main(){
    Settings.init(cacheProvider: HiveCache());
@@ -153,23 +154,34 @@ class BookSearchScreen extends StatefulWidget {
 class _BookSearchScreenState extends State<BookSearchScreen> {
   TextEditingController _searchController = TextEditingController();
   // get all files from the directory "אוצריא"
-  final List<File> books = Directory('אוצריא')
+  final List<String> books = Directory('אוצריא')
       .listSync(recursive: true)
-      .whereType<File>()
-      .toList();
-  List<File> _searchResults = [];
+      .whereType<File>().map((e) => e.path).toList();
+  List<String> _searchResults = [];
 
-  void _searchBooks(String query) {
+  Future<void> _searchBooks(String query) async{
     final results = books.where((book) {
-      final bookName = book.path.split('\\').last.toLowerCase();
-      bool result = true;
+      final bookName = book.split('\\').last.toLowerCase();
+      // if all the words seperated by spaces exist in the book name, even not in order, return true
+       bool result = true;
       for (final word in query.split(' ')) {
         result = result && bookName.contains(word.toLowerCase());
-      }// if all the words seperated by spaces exist in the book name, even not in order, return true
- 
+      }
       return result;
     }).toList();
-    setState(() {
+    
+    //sort the results by their levenstien distance
+    if (query.isNotEmpty){
+       results.sort((a, b) =>  ratio(query, b.split('\\').last.trim().toLowerCase()).compareTo(
+                           ratio(query,a.split('\\').last.trim().toLowerCase()))
+    ,);}
+    // sort alphabetic
+    else {
+      results.sort((a,b)=> a.split('\\').last.trim().compareTo(
+                           b.split('\\').last.trim()));
+      }
+
+       setState(() {
       _searchResults = results;
     });
   }
@@ -177,10 +189,9 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      _searchBooks(_searchController.text);
-    });
-  }
+    _searchController.addListener(() async=>
+        _searchBooks(_searchController.text)
+      );  }
 
   @override
   void dispose() {
@@ -206,7 +217,6 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
                     labelText: 'הקלד שם ספר: ',
                     suffixIcon: Icon(Icons.search),
                   ),
-                  onChanged: _searchBooks,
                 ),
                 Expanded(
                   child: ListView.builder(
@@ -214,9 +224,9 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
                     itemBuilder: (context, index) {
                       final book = _searchResults[index];
                       return ListTile(
-                          title: Text(book.path.split('\\').last),
+                          title: Text(book.split('\\').last),
                           onTap: () {
-                            Navigator.of(context).pop(book);
+                            Navigator.of(context).pop(File(book));
                           });
                     },
                   ),

@@ -1,9 +1,15 @@
-fix permormance issue in html toc
-add address to search results
-add fonts
-open maximised
-fix book search display
+(pinch suppourt)
+לסמן באדום גם טקסט עם ניקוד
+reopen last books
+לשמור את תוצאות החיפוש.
+לעשות ריבוי כרטיסיות לתוצאות חיפוש
 
+search:
+-כןס ךשטםוא
+- let the user filter books to show
+
+להוריד אנקי של הפצת אנקי - עם הריבית
+לברר על קופסה לדיסק קשיח
 
 בסקריפט:
 להוריד מחדש 

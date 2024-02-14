@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
 import 'dart:math';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
-import "package:flutter_html/flutter_html.dart";
-import 'toc_viewer.dart';
-import 'package:html/parser.dart';
-
 
 
 
@@ -62,10 +57,8 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
         // Trigger a rebuild to display the search results.
       });
     }
-    }
-
+  }
   
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -73,13 +66,14 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
         TextField(          
           focusNode: focusNode,
           controller: searchTextController,
+          autofocus: true,
           decoration: InputDecoration(
             hintText: 'חפש כאן..',
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.clear),
+                  icon: const Icon(Icons.clear),
                   onPressed: () {
                     searchTextController.clear();
                     focusNode.requestFocus();
@@ -92,20 +86,22 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
         ),
         
            SizedBox.fromSize(
-            size: Size.fromHeight(300),
+            size: const Size.fromHeight(400),
              child: ListView.builder(
               itemCount: searchResults.length,
               itemBuilder: (context, index) {
-                if (searchResults!.length > 0){
+                if (searchResults.isNotEmpty){
                 final result = searchResults[index];
                 return ListTile(
+                  title: Text(result.address,
+                  style:const TextStyle(fontWeight: FontWeight.bold ),) ,
                   subtitle: SearchHighlightText(
                     result.snippet,
                     searchText: result.query),
                    onTap: () {                         
                        widget.scrollControler.scrollTo( 
                         index: result.index,
-                    duration: Duration(milliseconds: 250),
+                    duration: const Duration(milliseconds: 250),
                      curve: Curves.ease,
                              );
                             }
@@ -114,7 +110,8 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
               }
                   )
                )]);}
-                   bool get wantKeepAlive => true;
+               @override
+                bool get wantKeepAlive => true;
                 }
 
 class MarkdownSearcher {
@@ -132,8 +129,7 @@ class MarkdownSearcher {
       isSearching = false;
       searchProgress = 0.0;
       searchSession++;
-      notifyListeners();
-      
+      notifyListeners();      
       return;
     }
 
@@ -156,31 +152,46 @@ class MarkdownSearcher {
   }
 
   List<TextSearchResult> _findAllMatches(String data, String query) {
-    List<String> sections = removeVolwels(stripHtmlIfNeeded(data)).split('\n');
+    List<String> sections = data.split('\n');
     List<TextSearchResult> results = [];
-    String address = '';
+    List<String> address = [];
     for (int section_index =0;section_index<sections.length;section_index++){
-
-      int index = sections[section_index].indexOf(query);
+    // get the address from html content
+      if (sections[section_index].startsWith('<h'))
+      {
+        if (address.isNotEmpty && address.any((element) => element.substring(0,4) == sections[section_index].substring(0,4)))
+            {address.removeRange(address.indexWhere((element) => element.substring(0,4) == sections[section_index].substring(0,4)),address.length);}
+      address.add(sections[section_index]);
+      
+      }
+      // get results from clean text
+      String section = removeVolwels(stripHtmlIfNeeded(sections[section_index]));
+        
+      int index = section.indexOf(query);
       if (index>=0){ // if there is a match
       results.add(TextSearchResult(
-        snippet: sections[section_index].substring(max(0,index-40), min(sections[section_index].length-1, index + query.length + 40)),
+        snippet: section.substring(max(0,index-40),
+         min(section.length-1, index + query.length + 40)),
         index: section_index,
-        query: query
+        query: query,
+        address: removeVolwels(stripHtmlIfNeeded(address.join('')))
  
-      ));};
-
-    } {   
+      ));
+      }
+      }
     return results;
+  
   }
-  }
-   final List<VoidCallback> _listeners = [];
+
+
+final List<VoidCallback> _listeners = [];
 
   void notifyListeners() {   
     for (final listener in _listeners) {
       listener();
     }
   }
+
  void addListener(VoidCallback listener) {
    _listeners.add(listener);
  }
@@ -188,24 +199,23 @@ class MarkdownSearcher {
  void removeListener(VoidCallback listener) {
    _listeners.remove(listener);
  }
- 
+
 }
+
 
 class TextSearchResult {
   final String snippet;
   final int index;
   final String query;
-
+  final String address;
 
   TextSearchResult({
     required this.snippet,
     required this.index,
-    required this.query,
-    
-
+    required this.query,  
+    required this. address,
   });
-  
-}
+  }
 
  String stripHtmlIfNeeded(String text) {
   return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');

@@ -14,10 +14,11 @@ class mdBookViewer extends StatefulWidget {
   late Future<String> data;
   late void Function() closelastTab;
   late ItemScrollController scrollController;
+  int initalIndex;
 
-  mdBookViewer({Key? key, required this.file,  required this.closelastTab,  }) : super(key: key) {
+  mdBookViewer({Key? key, required this.file,required this.initalIndex , required this.closelastTab,required this.scrollController  }) : super(key: key) {
     data = file.readAsString();
-    scrollController = ItemScrollController();
+
 
   }
 
@@ -139,7 +140,8 @@ class _mdBookViewerState extends State<mdBookViewer>
                                       MarkdownSearchView(
                                       data: snapshot.data!,
                                       scrollControler: widget.scrollController,
-                                      searchQuery:searchQuery 
+                                      searchQuery:searchQuery,
+
                                       ):
                                                             
                                         const CircularProgressIndicator()
@@ -173,13 +175,18 @@ class _mdBookViewerState extends State<mdBookViewer>
                                         return    
                                         ValueListenableBuilder(valueListenable:  searchQuery, 
                                         builder: (context, searchQuery, child) =>       
-                                             HtmlView(
-                                              key: PageStorageKey(snapshot.data!),
-                                                   data: snapshot.data!.split('\n'),
-                                                   scrollController: widget.scrollController,
-                                                   searchQuery: searchQuery,
-                                                   textSize: textFontSize
-                                                  ));
+                                             Padding(
+                                              padding: EdgeInsets.fromLTRB(10, 0, 5, 5),
+                                               child: HtmlView(
+                                                key: PageStorageKey(snapshot.data!),
+                                                     data: snapshot.data!.split('\n'),
+                                                     scrollController: widget.scrollController,
+                                                     searchQuery: searchQuery,
+                                                     textSize: textFontSize,
+                                                     initalIndex: widget.initalIndex,
+                                                     
+                                                    ),
+                                             ));
                                                 }}
                                                 return Center(child: CircularProgressIndicator());
                                   }
