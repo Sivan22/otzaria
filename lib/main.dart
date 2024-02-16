@@ -1,11 +1,11 @@
-import  'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'book_tabs_viewer.dart';
+import 'main_window_view.dart';
 import 'settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'cache_provider.dart';
-import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'book_search_view.dart';
 
 void  main(){
    Settings.init(cacheProvider: HiveCache());
@@ -39,201 +39,11 @@ class FileExplorerApp extends StatelessWidget {
         ),
       ),
       routes: {
-        '/search': (context) => BookSearchScreen(),
-        '/browser': (context) => const DirectoryBrowser(),
+        //'/search': (context) => BookSearchScreen(),
+       // '/browser': (context) => BooksBrowser(openFileCallback: addFileViewer),
         '/settings': (context) => mySettingsScreen(),
       },
-      home:  const booksTabView(),
+      home:   MainWindowView(),
     );
-  }
-}
-
-
-
-class DirectoryBrowser extends StatefulWidget {
-   
-   const DirectoryBrowser({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  DirectoryBrowserState createState() => DirectoryBrowserState();
-}
-
-class DirectoryBrowserState extends State<DirectoryBrowser> {
-  late Directory directory;
-  late Future<List<FileSystemEntity>> _fileList;
-  late int selectedIndex;
-
-  @override
-  void initState() {
-    super.initState();    
-    directory = Directory('./אוצריא');
-    _fileList = directory.list().toList();
-    selectedIndex = 0;
-  }
-
-void navigateUp() {
-  final parentDirectory = directory.parent;
-  if (parentDirectory.path != "." ) {
-    setState(() {
-      directory = parentDirectory;
-      _fileList = Directory(parentDirectory.path).list().toList();
-    }); 
-  }
-     else {
-      Navigator.pop(context);
-     }
-}
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('דפדוף בספרייה'),
-        leading:
-        
-         IconButton(
-              icon: const Icon(Icons.arrow_back),
-              tooltip: 'חזרה לתיקיה הקודמת',
-              onPressed: navigateUp,
-            ),
-        
-      ),
-      body: FutureBuilder<List<FileSystemEntity>>(
-        future: _fileList,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
-
-            if (snapshot.hasData) {
-              return ListView.builder(
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  FileSystemEntity entity = snapshot.data![index];
-                  return ListTile(
-                    title: Text(entity.path.split('\\').last),
-                    leading: entity is Directory
-                        ? const Icon(Icons.folder)
-                        : const Icon(Icons.library_books),
-                    onTap: () {
-                      if (entity is Directory) {
-                        setState(() {
-                          //_fileList = Directory(entity.path).list().toList();
-                          directory = entity;
-                          _fileList = Directory(entity.path).list().toList();
-                        });
-                      } else if (entity is File) {
-                        Navigator.pop(context, entity);
-                      }
-                    },
-                  );
-                },
-              );
-            }
-          }
-
-          return const Center(child: CircularProgressIndicator());
-        },
-      ),
-    );
-  }
-}
-
-class BookSearchScreen extends StatefulWidget {
-  BookSearchScreen({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  _BookSearchScreenState createState() => _BookSearchScreenState();
-}
-
-class _BookSearchScreenState extends State<BookSearchScreen> {
-  TextEditingController _searchController = TextEditingController();
-  // get all files from the directory "אוצריא"
-  final List<String> books = Directory('אוצריא')
-      .listSync(recursive: true)
-      .whereType<File>().map((e) => e.path).toList();
-  List<String> _searchResults = [];
-
-  Future<void> _searchBooks(String query) async{
-    final results = books.where((book) {
-      final bookName = book.split('\\').last.toLowerCase();
-      // if all the words seperated by spaces exist in the book name, even not in order, return true
-       bool result = true;
-      for (final word in query.split(' ')) {
-        result = result && bookName.contains(word.toLowerCase());
-      }
-      return result;
-    }).toList();
-    
-    //sort the results by their levenstien distance
-    if (query.isNotEmpty){
-       results.sort((a, b) =>  ratio(query, b.split('\\').last.trim().toLowerCase()).compareTo(
-                           ratio(query,a.split('\\').last.trim().toLowerCase()))
-    ,);}
-    // sort alphabetic
-    else {
-      results.sort((a,b)=> a.split('\\').last.trim().compareTo(
-                           b.split('\\').last.trim()));
-      }
-
-       setState(() {
-      _searchResults = results;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() async=>
-        _searchBooks(_searchController.text)
-      );  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text('חיפוש ספר'),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(80),
-            child: Column(
-              children: [
-                TextField(
-                  autofocus: true,
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    labelText: 'הקלד שם ספר: ',
-                    suffixIcon: Icon(Icons.search),
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _searchResults.length,
-                    itemBuilder: (context, index) {
-                      final book = _searchResults[index];
-                      return ListTile(
-                          title: Text(book.split('\\').last),
-                          onTap: () {
-                            Navigator.of(context).pop(File(book));
-                          });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ));
   }
 }

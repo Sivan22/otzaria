@@ -6,8 +6,8 @@ import 'package:synchronized/extension.dart';
 //
 // Simple Text Search View
 //
-class TextSearchView extends StatefulWidget {
-  const TextSearchView({
+class PdfBookSearchView extends StatefulWidget {
+  const PdfBookSearchView({
     super.key,
     required this.textSearcher,
   });
@@ -15,10 +15,10 @@ class TextSearchView extends StatefulWidget {
   final PdfTextSearcher textSearcher;
 
   @override
-  State<TextSearchView> createState() => _TextSearchViewState();
+  State<PdfBookSearchView> createState() => _PdfBookSearchViewState();
 }
 
-class _TextSearchViewState extends State<TextSearchView> {
+class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   final focusNode = FocusNode();
   final searchTextController = TextEditingController();
   late final pageTextStore =

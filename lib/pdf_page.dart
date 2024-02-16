@@ -110,7 +110,7 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
                             ValueListenableBuilder(
                               valueListenable: documentRef,
                               builder: (context, documentRef, child) => child!,
-                              child: TextSearchView(textSearcher: textSearcher),
+                              child: PdfBookSearchView(textSearcher: textSearcher),
                             ),
                             ValueListenableBuilder(
                               valueListenable: outline,
@@ -308,5 +308,5 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
     return result ?? false;
   }
     @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => false;
 }
