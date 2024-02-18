@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 
+import 'package:otzaria/main_window_view.dart';
+
 class BooksBrowser extends StatefulWidget {
   
-  void Function(String file) openFileCallback;
+  void Function(TabWindow tab) openFileCallback;
    
     BooksBrowser({
     Key? key,
@@ -79,7 +81,12 @@ void navigateUp() {
                           _fileList = Directory(entity.path).list().toList();
                         });
                       } else if (entity is File) {
-                         widget.openFileCallback(entity.path);
+                         widget.openFileCallback(
+                          BookTabWindow(
+                            entity.path,
+                            0
+                          )
+                         );
                       }
                     },
                   );

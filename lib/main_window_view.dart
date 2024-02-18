@@ -23,28 +23,30 @@ class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin {
   
   int selectedIndex = 0;
-  late List<String> tabs=[];
-  Map<File, ItemScrollController> itemScrollControllers= {};
-  late TabController tabController = TabController(length: tabs.length, vsync: this,initialIndex: max(0,tabs.length-1));
+  late List<TabWindow> tabs=[
+    BookTabWindow(
+       'אוצריא\\ברוכים הבאים.pdf',
+       0
+    )
+  ];
+  late TabController tabController = TabController(
+    length: tabs.length, 
+    vsync: this,
+    initialIndex: max(0,tabs.length-1));
   final  showBooksBrowser = ValueNotifier<bool>(false);
-   final  showBookSearch = ValueNotifier<bool>(false);
+  final  showBookSearch = ValueNotifier<bool>(false);
+  final focusNode = FocusNode();
 
-
-
-  @override
-  void initState() {
-    super.initState();    
-  }
-
-
-  void addTab(String path,{int index =0}) {
-  
+  void addTab(TabWindow tab) {  
              setState(() {
-      tabs.insert(0,path);
-      tabController = TabController(length: tabs.length, vsync: this,);
-       }
-      );
-      }
+      int newIndex = tabController.length == 0?  0: tabController.index+1;
+      tabs.insert(newIndex,tab);
+      tabController = TabController(length: 
+      tabs.length,
+       vsync: this);
+      tabController.index =newIndex;
+    });
+  }
 
 
   void enlargeText() {
@@ -64,7 +66,6 @@ class MainWindowViewState extends State<MainWindowView>
   void closeTab() {
     setState(() {
       if (tabs.isNotEmpty) {
-        itemScrollControllers.remove(tabs[tabController.index]);
         tabs.removeAt(tabController.index);
         tabController = TabController(
             length: tabs.length,
@@ -77,63 +78,64 @@ class MainWindowViewState extends State<MainWindowView>
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      NavigationRail(
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.folder),
-                label: Text('דפדוף'),
+      SizedBox.fromSize(
+        size: const Size.fromWidth(100),
+        child: NavigationRail(
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.folder),
+                  label: Text('דפדוף'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.library_books),
+                  label: Text('איתור ספר'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.search),
+                  label: Text('חיפוש'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings),
+                  label: Text('הגדרות'),
+                ),                
+              ],
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  selectedIndex = index;
+                  switch (index) {
+                    case 0:
+                    showBookSearch.value = false;     
+                    showBooksBrowser.value = !showBooksBrowser.value;
+                    case 1:
+                    showBooksBrowser.value = false;
+                    showBookSearch.value = ! showBookSearch.value;                  
+                    case 2:
+                    showBookSearch.value = false;
+                    showBooksBrowser.value = false; 
+                      _openSearchScreen();                  
+                    case 3:
+                      _openSettingsScreen();
+                  
+                  }
+                });
+              }),
+      ),
+      AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          child: ValueListenableBuilder(
+            valueListenable: showBooksBrowser,
+            builder: (context, showBooksBrowser, child) =>
+            SizedBox(
+              width: showBooksBrowser ? 300 : 0,
+              child: child!,
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.library_books),
-                label: Text('איתור ספר'),
-              ),
-                            NavigationRailDestination(
-                icon: Icon(Icons.search),
-                label: Text('חיפוש'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings),
-                label: Text('הגדרות'),
-              ),
-              
-            ],
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                selectedIndex = index;
-                switch (index) {
-                  case 0:
-                  showBookSearch.value = false;     
-                  showBooksBrowser.value = !showBooksBrowser.value;
-                  case 1:
-                  showBooksBrowser.value = false;
-                  showBookSearch.value = ! showBookSearch.value;                  
-                  case 2:
-                  showBookSearch.value = false;
-                  showBooksBrowser.value = false; 
-                    _openSearchScreen();                  
-                  case 3:
-                    _openSettingsScreen();
-                
-                }
-              });
-            }),
-             AnimatedSize(
-              
-            duration: const Duration(milliseconds: 300),
-            child: ValueListenableBuilder(
-              valueListenable: showBooksBrowser,
-              builder: (context, showBooksBrowser, child) => SizedBox(
-                width: showBooksBrowser ? 300 : 0,
-                child: child!,
-              ),
-              child: BooksBrowser(
+            child: BooksBrowser(
                 openFileCallback: addTab),
             ),
-            ),
-            AnimatedSize(
-              
+          ),
+        AnimatedSize(              
             duration: const Duration(milliseconds: 300),
             child: ValueListenableBuilder(
               valueListenable: showBookSearch,
@@ -161,12 +163,11 @@ class MainWindowViewState extends State<MainWindowView>
               isScrollable: true,
               tabAlignment: TabAlignment.center,      
               tabs: tabs.map((e)=>
-                e.isEmpty
-                ?
-                 Tab(text: "חיפוש")
+              e is SearchingTabWindow
+              ?
+              Tab(text:'${e.title}:  ${e._searchController.text}')
               :
-               Tab(text:e.split('\\').last)
-              ).toList(),),
+               Tab(text:e.title)).toList(),),
  
         
           body: Row(children: [          
@@ -175,23 +176,33 @@ class MainWindowViewState extends State<MainWindowView>
                  controller: tabController,
                 
                   children:
-                 tabs.map((path) {
-                  if(path.isEmpty){
-                    return TextFileSearchScreen(addTab,closeTab);
+                 tabs.map((tab) {
+                  if(tab is BookTabWindow){
+                      if (tab.path.endsWith('.pdf')){
 
-                  }
-                    else if (path.endsWith('.pdf')) {           
-                    return myPdfPage(file: File(path),closelastTab: closeTab,);
-                   } else {
-                     File file = File(path);
-                    itemScrollControllers[file] = ItemScrollController();
-                     return TextBookViewer(
+                          return myPdfPage(file: File(tab.path),closelastTab: closeTab,);
+                    }
+                      else{
+                          return TextBookViewer(
                        closelastTab: closeTab, 
-                       file: file,
-                     scrollController: itemScrollControllers[file]!,
-                       initalIndex: 0,                  );
+                       file: File(tab.path),
+                     scrollController: tab.scrollController,
+                       initalIndex: tab.scrollIndex,                  );
+                    }}
+                    if (tab is SearchingTabWindow){
+                    return TextFileSearchScreen(
+                      addTab,
+                    closeTab,
+                    tab.searchResults,
+                    tab._searchController,
+                    tab.booksToSearch,
+                    tab.searchStarted,
+                    tab.searchFinished
+                    );
+                    }
+                    return SizedBox.shrink();
                   }
-               }).toList()
+              ).toList()
                   ),
             ),
           ]),
@@ -212,13 +223,17 @@ class MainWindowViewState extends State<MainWindowView>
 
 void _openSearchScreen() async {
 
-  addTab('');
+  addTab(
+    SearchingTabWindow(
+      'חיפוש'
+    )
+  );
 
 }
           }
 
 class TabWindow {
-  final String title;
+   String title;
 
   TabWindow(
     this.title
@@ -228,20 +243,22 @@ class TabWindow {
 class BookTabWindow extends TabWindow {
 final String path;
 int scrollIndex;
-final ItemScrollController scrollController = ItemScrollController();
+ItemScrollController scrollController = ItemScrollController();
 
   BookTabWindow(
-    super.title,
      this.path,
      this.scrollIndex
-  );
-}
+  ):super(path.split('\\').last);
+  }
 
 class SearchingTabWindow extends TabWindow {
   List<String> booksToSearch= [];
-  String searchQuery='';
-  List<BookTextSearchResult> searchResults=[];  
+  TextEditingController _searchController = TextEditingController();
+  ValueNotifier<List<BookTextSearchResult>> searchResults= ValueNotifier([]);  
   final ItemScrollController scrollController = ItemScrollController();
+  DateTime? searchStarted;
+  DateTime? searchFinished;
+  
   SearchingTabWindow(
     super.title,
   );

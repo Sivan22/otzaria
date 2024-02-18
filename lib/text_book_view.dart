@@ -29,7 +29,7 @@ class TextBookViewer extends StatefulWidget {
 class _TextBookViewerState extends State<TextBookViewer>
     with AutomaticKeepAliveClientMixin<TextBookViewer> {
   double textFontSize = Settings.getValue('key-font-size');
-    final showLeftPane = ValueNotifier<bool>(false);    
+  final showLeftPane = ValueNotifier<bool>(false);    
   ValueNotifier<String> searchQuery = ValueNotifier<String>('');
     
 
@@ -178,7 +178,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                                              Padding(
                                               padding: EdgeInsets.fromLTRB(10, 0, 5, 5),
                                                child: HtmlView(
-                                                key: PageStorageKey(snapshot.data!),
+                                                key: PageStorageKey(snapshot.data! + widget.initalIndex.toString()),
                                                      data: snapshot.data!.split('\n'),
                                                      scrollController: widget.scrollController,
                                                      searchQuery: searchQuery,

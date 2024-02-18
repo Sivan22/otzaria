@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:otzaria/main_window_view.dart';
 import 'dart:io';
 import 'text_book_search_view.dart';
 import 'dart:math';
@@ -6,38 +7,38 @@ import 'package:search_highlight_text/search_highlight_text.dart';
 import 'tree_view_selectable.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
-  void Function(String book,{int index}) openBookCallback;
-  void Function() closeTabCallback;
+  void Function(TabWindow) openBookCallback;
+  void Function() closeTabCallback;  
+  ValueNotifier<List<BookTextSearchResult>> searchResults;
+  final TextEditingController queryController;  
+  List<String> booksToSearch= [];
+  DateTime? searchStarted;
+  DateTime? searchFinished;
 
   TextFileSearchScreen(
     this.openBookCallback, 
-    this.closeTabCallback,   
+    this.closeTabCallback,
+    this.searchResults,   
+    this.queryController,
+    this.booksToSearch,
+    this.searchStarted,
+    this.searchFinished
   );
    
-
-
   _TextFileSearchScreenState createState() => _TextFileSearchScreenState();
 }
 
 class _TextFileSearchScreenState extends State<TextFileSearchScreen> with AutomaticKeepAliveClientMixin<TextFileSearchScreen> {
-  final TextEditingController _queryController = TextEditingController();
+  
   bool _isSearching = false;
-  String _searchError = "";
-  ValueNotifier<List<BookTextSearchResult>> _searchResults = ValueNotifier([]);
-  List<String> checkedItems= [];
   final showLeftPane = ValueNotifier<bool>(true);
-  late DateTime searchStarted;
+
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-       appBar: AppBar(
-        leading:IconButton(
-          icon: const Icon(Icons.menu),
-          tooltip: "רשימת ספרים לחיפוש",
-          onPressed: () {
-            showLeftPane.value = !showLeftPane.value;
-          }),
+      appBar: AppBar(       
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
@@ -46,60 +47,32 @@ class _TextFileSearchScreenState extends State<TextFileSearchScreen> with Automa
           ),
         ],
       ),
-      body: Row(
-        children: [AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          child: ValueListenableBuilder(
-            valueListenable: showLeftPane,
-            builder: (context, showLeftPane, child) => SizedBox(
-              width: showLeftPane ? 500 : 0,
-              child:  Padding(
-              padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-          child: Row(
-            children:[Expanded(
-              child: Column(
-                children: [
-                  Text('רשימת ספרים לחיפוש:'),
-                  Divider(),
-                  Expanded(child: FileTreeViewScreen(checkedItems: checkedItems)),
-                ],
-              ),
-            ),          
-          VerticalDivider(),]
-          ),
-          ),
-
-          ),
-          ),),
-      
-          Expanded(
-          child: Column(
+      body: Column(
             children: [
-              Row(children: [
-              
+              Row(children: [              
               Expanded(
                 child: TextField(                  
-                  controller: _queryController,
+                  controller: widget.queryController,
                   onSubmitted:(e) =>_search(),
                   decoration: InputDecoration(
                     hintText: "הקלד את הטקסט ולחץ על סמל החיפוש",
                     suffixIcon: _isSearching
                         ? Row(children: [
-                          Expanded(child: Text(_queryController.text)),
+                          Expanded(child: Text(widget.queryController.text)),
                           IconButton(
                             icon: Icon(Icons.cancel),
                             onPressed: () {
                               setState(() {
-                                _queryController.clear();
+                                widget.queryController.clear();
+                                widget.searchResults.value = [];
                                 _isSearching = false;
-                              });
-                              
+                              });                              
                             }
                           ),
-                          Center(child: CircularProgressIndicator())
+                          const Center(child: CircularProgressIndicator())
                         ],)
                         : IconButton(
-                            icon: Icon(Icons.search),
+                            icon: const Icon(Icons.search),
                             onPressed: () {
                               _search();
                             },
@@ -107,26 +80,40 @@ class _TextFileSearchScreenState extends State<TextFileSearchScreen> with Automa
                           ),
                   ),
                 ),
-              ),],),
+              ),
+            ]),
                 
               ValueListenableBuilder<List<BookTextSearchResult>>(
-                valueListenable: _searchResults,
-               builder: (context, results, child) =>
-               checkedItems.isEmpty
-               ? 
-               const Center(child: Text('לא נבחרו ספרים, יש לבחור ספרים לחיפוש בתפריט הצד'))
-               :
-              results.isNotEmpty
-              ?
+                valueListenable: widget.searchResults,
+               builder: (context, searchResults, child) =>
+               searchResults.isEmpty
+               ?
+               Expanded(
+                 child: Column(
+                   children: [
+                    Text("רשימת הספרים לחיפוש:"),
               Expanded(
-                child: Column(children:[
-                   Text('${results.length} תוצאות תוך ${DateTimeRange(
-                    start: searchStarted,end: DateTime.now()).duration.inSeconds} שניות'),
-                Expanded(
+                     child: FileTreeViewScreen(
+                        checkedItems: widget.booksToSearch),
+                   )
+                   ],
+                 ),
+               )              
+              :
+              Expanded(
+                child: Column(children:[   
+                  widget.searchStarted != null && widget.searchFinished != null
+                  ?               
+                    Text('${searchResults.length} תוצאות תוך ${DateTimeRange(
+                    start: widget.searchStarted!,
+                     end:widget.searchFinished!).duration.inSeconds} שניות')
+                  :
+                  const SizedBox.shrink(),
+                  Expanded(
                     child: ListView.builder(
-                      itemCount: results.length,
+                      itemCount: searchResults.length,
                       itemBuilder: (context, index) {
-                    final result = results[index];
+                    final result = searchResults[index];
                      return ListTile(
                       title: Text(result.address,
                       style:const TextStyle(fontWeight: FontWeight.bold ),) ,
@@ -134,44 +121,41 @@ class _TextFileSearchScreenState extends State<TextFileSearchScreen> with Automa
                         result.snippet,
                         searchText: result.query),
                         onTap: () {
-                          widget.openBookCallback(result.path,index:result.index);
-                          }
+                          widget.openBookCallback(
+                            BookTabWindow(
+                              result.path,
+                              result.index,)
+                          );}
                     );
-                    }
-                    ),
-                    ),
-                    ],
-                    ),
-              )
-                  :const SizedBox.shrink()
-            )]
-          ),
-                  ),
-       
-        
-      ]),
-     ) ;
+                  }
+                ),
+              ),
+            ],),
+          )
+        )]
+      ),
+    );     
   }
 
   void _search() async {
     setState(() {
       showLeftPane.value = false;
       _isSearching = true;
-      _searchError = "";
-      _searchResults.value = [];
-      searchStarted = DateTime.now();
+      widget.searchResults.value = [];
+      widget.searchStarted = DateTime.now();
           });
 
-    // Hardcoded directory path
-          for (final entry in checkedItems) {
+
+          for (final entry in widget.booksToSearch) {
         if (FileSystemEntity.isFileSync(entry) && ! entry.endsWith('.pdf')) {
           final file = File(entry);
-          int section_index = 0;
+          int sectionIndex = 0;
           final contents = await file.readAsString();
           List<String> address = [];
  
           for (String line in contents.split('\n')) {
-            // get the address from html content
+            
+      // get the address from html content
       if (line.startsWith('<h'))
       {
         if (address.isNotEmpty && address.any((element) => 
@@ -182,22 +166,24 @@ class _TextFileSearchScreenState extends State<TextFileSearchScreen> with Automa
       }
             // get results from clean text
             String section = removeVolwels(stripHtmlIfNeeded(line));
-            int index = section.indexOf(_queryController.text);
+            int index = section.indexOf(widget.queryController.text);
             if (index>0){              
-         _searchResults.value.add(BookTextSearchResult(
+              widget.searchResults.value.add(BookTextSearchResult(
           path: entry,
         snippet: section.substring(max(0,index-40),
-         min(section.length-1, index + _queryController.text.length + 40)),
-        index: section_index,
-        query: _queryController.text,
+         min(section.length-1, index + widget.queryController.text.length + 40)),
+        index: sectionIndex,
+        query: widget.queryController.text,
         address: removeVolwels(stripHtmlIfNeeded(address.join('')))));
-       
+      
+      widget.searchFinished = DateTime.now();
+
             if (mounted) {
               setState(() {
       });
             }
             }
-            section_index++;
+            sectionIndex++;
           }
           }
           

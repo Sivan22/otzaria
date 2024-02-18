@@ -2,9 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'package:otzaria/main_window_view.dart';
 
 class BookSearchScreen extends StatefulWidget {
-  void Function(String file) openFileCallback;
+  void Function(TabWindow tab) openFileCallback;
   BookSearchScreen({
     Key? key, required this.openFileCallback
   }) : super(key: key);
@@ -85,7 +86,12 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
                     return ListTile(
                         title: Text(book.split('\\').last),
                         onTap: () {
-                          widget.openFileCallback(book);
+                          widget.openFileCallback(
+                            BookTabWindow(
+                               book,
+                               0
+                              )
+                          );
                         });
                   },
                 ),

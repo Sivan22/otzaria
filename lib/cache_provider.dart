@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 
 
@@ -14,7 +15,7 @@ class HiveCache extends CacheProvider {
   Future<void> init() async {
     WidgetsFlutterBinding.ensureInitialized();
     if (!kIsWeb) {
-      final defaultDirectory = await getApplicationDocumentsDirectory();
+      final defaultDirectory =Directory(".\\") ;
       Hive.init(defaultDirectory.path);
     }
     if (Hive.isBoxOpen(keyName)) {

@@ -8,8 +8,7 @@ import 'cache_provider.dart';
 import 'book_search_view.dart';
 
 void  main(){
-   Settings.init(cacheProvider: HiveCache());
-  //Settings.clearCache();
+  Settings.init(cacheProvider: HiveCache());  
   runApp(const FileExplorerApp());
 }
 
@@ -31,7 +30,7 @@ class FileExplorerApp extends StatelessWidget {
           "he", "IL"), // OR Locale('ar', 'AE') OR Other RTL locales,
       title: 'אוצריא',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepOrange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'candara',
          textTheme: const TextTheme(
@@ -39,11 +38,9 @@ class FileExplorerApp extends StatelessWidget {
         ),
       ),
       routes: {
-        //'/search': (context) => BookSearchScreen(),
-       // '/browser': (context) => BooksBrowser(openFileCallback: addFileViewer),
         '/settings': (context) => mySettingsScreen(),
       },
-      home:   MainWindowView(),
+      home:   const MainWindowView(),
     );
   }
 }
