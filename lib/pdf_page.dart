@@ -3,22 +3,21 @@ import 'package:pdfrx/pdfrx.dart';
 import 'pdf_search_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
-
 import 'outline_view.dart';
 import 'password_dialog.dart';
 import 'thumbnails_view.dart';
 
 
-class myPdfPage extends StatefulWidget {
+class MyPdfPage extends StatefulWidget {
   final void Function() closelastTab;
   final File file;
-  const myPdfPage({super.key, required this.file, required this.closelastTab});
+  const MyPdfPage({super.key, required this.file, required this.closelastTab});
 
   @override
-  State<myPdfPage> createState() => _myPdfPageState();
+  State<MyPdfPage> createState() => _MyPdfPageState();
 }
 
-class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixin<myPdfPage> {
+class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixin<MyPdfPage> {
   final documentRef = ValueNotifier<PdfDocumentRef?>(null);
   final controller = PdfViewerController();
   final showLeftPane = ValueNotifier<bool>(false);
@@ -43,6 +42,7 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -226,8 +226,7 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
                     //
                     // Link handling example
                     //
-                    // FIXME: a link with several areas (link that contains line-break) does not correctly
-                    // show the hover status
+
                     linkWidgetBuilder: (context, link, size) => Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -308,5 +307,5 @@ class _myPdfPageState extends State<myPdfPage> with AutomaticKeepAliveClientMixi
     return result ?? false;
   }
     @override
-  bool get wantKeepAlive => false;
+  bool get wantKeepAlive => true;
 }

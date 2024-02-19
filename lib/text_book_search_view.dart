@@ -7,46 +7,46 @@ import 'package:search_highlight_text/search_highlight_text.dart';
 
 class MarkdownSearchView extends StatefulWidget {
 final String data;
-ItemScrollController scrollControler;
-ValueNotifier searchQuery;
+final ItemScrollController scrollControler;
+final TextEditingController searchTextController;
   
-   MarkdownSearchView({
-    Key? key,required this.data, required this.scrollControler,required this.searchQuery
+   const MarkdownSearchView({
+    Key? key,
+    required this.data,
+    required this.scrollControler,
+    required this.searchTextController
   }) : super(key: key);
 
   @override
-  _MarkdownSearchViewState createState() => _MarkdownSearchViewState();
+  MarkdownSearchViewState createState() => MarkdownSearchViewState();
 }
 
-class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticKeepAliveClientMixin<MarkdownSearchView> {
+class MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticKeepAliveClientMixin<MarkdownSearchView> {
   final focusNode = FocusNode();
-  final searchTextController = TextEditingController();
-  late final textBookSearcher markdownTextSearcher;
+  late final TextBookSearcher markdownTextSearcher;
     List<TextSearchResult> searchResults = [];
     late ItemScrollController scrollControler; 
 
   @override
   void initState() {
     super.initState();
-     markdownTextSearcher = textBookSearcher(widget.data);
+    markdownTextSearcher = TextBookSearcher(widget.data);
     markdownTextSearcher.addListener(_searchResultUpdated);
-    searchTextController.addListener(_searchTextUpdated);
-    searchTextController.text = widget.searchQuery.value;
-   scrollControler = widget.scrollControler;
+    widget.searchTextController.addListener(_searchTextUpdated);
+    scrollControler = widget.scrollControler;
   }
 
   @override
   void dispose() {
     focusNode.dispose();
-    searchTextController.dispose();
-    searchTextController.removeListener(_searchTextUpdated);
+    widget.searchTextController.dispose();
+    widget.searchTextController.removeListener(_searchTextUpdated);
     markdownTextSearcher.removeListener(_searchResultUpdated);
     super.dispose();
   }
 
   void _searchTextUpdated() {
-    widget.searchQuery.value = searchTextController.text;
-    markdownTextSearcher.startTextSearch(widget.searchQuery.value);
+    markdownTextSearcher.startTextSearch(widget.searchTextController.text);
      }
 
   void _searchResultUpdated() {
@@ -61,11 +61,12 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
   
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Column(
       children: <Widget>[
         TextField(          
           focusNode: focusNode,
-          controller: searchTextController,
+          controller: widget.searchTextController,
           autofocus: true,
           decoration: InputDecoration(
             hintText: 'חפש כאן..',
@@ -75,7 +76,7 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
                 IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
-                    searchTextController.clear();
+                    widget.searchTextController.clear();
                     focusNode.requestFocus();
                   },
                 ),
@@ -107,6 +108,7 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
                             }
                                 );
               }
+              else {return const SizedBox.shrink();}
               }
                   )
                )]);}
@@ -114,14 +116,14 @@ class _MarkdownSearchViewState extends State<MarkdownSearchView> with AutomaticK
                 bool get wantKeepAlive => true;
                 }
 
-class textBookSearcher {
+class TextBookSearcher {
   final String _markdownData;
   final List<TextSearchResult> searchResults = [];
   int searchSession = 0;
   bool isSearching = false;
   double searchProgress = 0.0;
 
-  textBookSearcher(this._markdownData);
+  TextBookSearcher(this._markdownData);
 
   void startTextSearch(String query) {
     if (query.isEmpty) {
@@ -155,24 +157,24 @@ class textBookSearcher {
     List<String> sections = data.split('\n');
     List<TextSearchResult> results = [];
     List<String> address = [];
-    for (int section_index =0;section_index<sections.length;section_index++){
+    for (int sectionIndex =0;sectionIndex<sections.length;sectionIndex++){
     // get the address from html content
-      if (sections[section_index].startsWith('<h'))
+      if (sections[sectionIndex].startsWith('<h'))
       {
-        if (address.isNotEmpty && address.any((element) => element.substring(0,4) == sections[section_index].substring(0,4)))
-            {address.removeRange(address.indexWhere((element) => element.substring(0,4) == sections[section_index].substring(0,4)),address.length);}
-      address.add(sections[section_index]);
+        if (address.isNotEmpty && address.any((element) => element.substring(0,4) == sections[sectionIndex].substring(0,4)))
+            {address.removeRange(address.indexWhere((element) => element.substring(0,4) == sections[sectionIndex].substring(0,4)),address.length);}
+      address.add(sections[sectionIndex]);
       
       }
       // get results from clean text
-      String section = removeVolwels(stripHtmlIfNeeded(sections[section_index]));
+      String section = removeVolwels(stripHtmlIfNeeded(sections[sectionIndex]));
         
       int index = section.indexOf(query);
       if (index>=0){ // if there is a match
       results.add(TextSearchResult(
         snippet: section.substring(max(0,index-40),
          min(section.length-1, index + query.length + 40)),
-        index: section_index,
+        index: sectionIndex,
         query: query,
         address: removeVolwels(stripHtmlIfNeeded(address.join('')))
  

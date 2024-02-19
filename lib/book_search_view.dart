@@ -1,21 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/main_window_view.dart';
 
+
 class BookSearchScreen extends StatefulWidget {
-  void Function(TabWindow tab) openFileCallback;
-  BookSearchScreen({
+  final void Function(TabWindow tab) openFileCallback;
+  const BookSearchScreen({
     Key? key, required this.openFileCallback
   }) : super(key: key);
 
   @override
-  _BookSearchScreenState createState() => _BookSearchScreenState();
+  BookSearchScreenState createState() => BookSearchScreenState();
 }
 
-class _BookSearchScreenState extends State<BookSearchScreen> {
-  TextEditingController _searchController = TextEditingController();
+class BookSearchScreenState extends State<BookSearchScreen> {
+  TextEditingController searchController = TextEditingController();
   // get all files from the directory "אוצריא"
   final List<String> books = Directory('אוצריא')
       .listSync(recursive: true)
@@ -52,13 +52,13 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() async=>
-        _searchBooks(_searchController.text)
+    searchController.addListener(() async=>
+        _searchBooks(searchController.text)
       );  }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    searchController.dispose();
     super.dispose();
   }
 
@@ -66,14 +66,14 @@ class _BookSearchScreenState extends State<BookSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('חיפוש ספר'),
+          title: const Text('חיפוש ספר'),
         ),
         body: Center(
           child: Column(
             children: [
               TextField(
                 autofocus: true,
-                controller: _searchController,
+                controller: searchController,
                 decoration: const InputDecoration(
                   labelText: 'הקלד שם ספר: ',
                 ),

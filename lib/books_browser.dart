@@ -5,9 +5,9 @@ import 'package:otzaria/main_window_view.dart';
 
 class BooksBrowser extends StatefulWidget {
   
-  void Function(TabWindow tab) openFileCallback;
+  final void Function(TabWindow tab) openFileCallback;
    
-    BooksBrowser({
+    const BooksBrowser({
     Key? key,
     required this.openFileCallback
   }) : super(key: key);

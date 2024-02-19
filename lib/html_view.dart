@@ -10,47 +10,53 @@ class HtmlView extends StatefulWidget {
   final double textSize;
   final ItemScrollController scrollController;
   final String searchQuery;
-  const HtmlView({super.key, required this.data,required this.initalIndex , required this.scrollController,required this.searchQuery, required this.textSize});
+  const HtmlView(
+      {super.key,
+      required this.data,
+      required this.initalIndex,
+      required this.scrollController,
+      required this.searchQuery,
+      required this.textSize});
 
   @override
   State<HtmlView> createState() => _HtmlViewState();
 }
 
-class _HtmlViewState extends State<HtmlView> with AutomaticKeepAliveClientMixin<HtmlView> {
-
-static const  Map<String, FontWeight> fontWeights = {
-  'normal': FontWeight.normal,
-  'bold': FontWeight.bold,
-  'w600': FontWeight.w600,
-};
+class _HtmlViewState extends State<HtmlView>
+    with AutomaticKeepAliveClientMixin<HtmlView> {
+  static const Map<String, FontWeight> fontWeights = {
+    'normal': FontWeight.normal,
+    'bold': FontWeight.bold,
+    'w600': FontWeight.w600,
+  };
   @override
   Widget build(BuildContext context) {
-  return ScrollablePositionedList.builder(
-    initialScrollIndex: widget.initalIndex,
-  itemCount: widget.data.length,
-  itemBuilder: (context, index) => SelectionArea(
-    child: Html(
-      
-      data: Highlight(
-        widget.data[index],
-         widget.searchQuery), 
-    style: {'body': Style(fontSize: FontSize(widget.textSize),
-    fontFamily: Settings.getValue('key-font-family'),
-    fontWeight: fontWeights[Settings.getValue('key-font-weight')],
-    textAlign: TextAlign.justify )
-    ,
-    }),
-  ),
-  itemScrollController: widget.scrollController,
-);
+    super.build(context);
+    return ScrollablePositionedList.builder(
+      initialScrollIndex: widget.initalIndex,
+      itemCount: widget.data.length,
+      itemBuilder: (context, index) => SelectionArea(
+        child: Html(
+            data: highLight(widget.data[index], widget.searchQuery),
+            style: {
+              'body': Style(
+                  fontSize: FontSize(widget.textSize),
+                  fontFamily: Settings.getValue('key-font-family'),
+                  fontWeight: fontWeights[Settings.getValue('key-font-weight')],
+                  textAlign: TextAlign.justify),
+            }),
+      ),
+      itemScrollController: widget.scrollController,
+    );
   }
 
-    bool get wantKeepAlive => true;
+  @override
+  bool get wantKeepAlive => true;
 }
 
-// function to highlight a search query in html text 
-String Highlight(String data, String searchQuery) {
-  if(searchQuery.isNotEmpty){
+// function to highlight a search query in html text
+String highLight(String data, String searchQuery) {
+  if (searchQuery.isNotEmpty) {
     return data.replaceAll(searchQuery, '<font color=red>$searchQuery</font>');
   }
   return data;

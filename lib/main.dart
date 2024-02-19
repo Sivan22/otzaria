@@ -5,7 +5,6 @@ import 'main_window_view.dart';
 import 'settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'cache_provider.dart';
-import 'book_search_view.dart';
 
 void  main(){
   Settings.init(cacheProvider: HiveCache());  
