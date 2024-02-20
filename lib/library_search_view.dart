@@ -47,7 +47,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
 
   InputDecoration buildSearchDecoration(bool isSearching) {
     return InputDecoration(
-      hintText: "הקלד את הטקסט ולחץ על סמל החיפוש",
+      hintText: "הקלד את הטקסט והקש אנטר או לחץ על סמל החיפוש",
       suffixIcon: isSearching
           ? Row(
               children: [
@@ -82,9 +82,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
         return Row(
           children: [
             Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 20, 0),
-                  child: buildSearchField(isSearching)),
+              child: buildSearchField(isSearching),
             ),
           ],
         );
@@ -119,15 +117,12 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     return searchResults.isEmpty && !widget.searcher.isSearching.value
         ? buildEmptySearchResultsContent()
         : Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                children: [
-                  buildSearchProgressStatus(searchResults),
-                  buildSearchProgressBar(searchResults),
-                  buildSearchResults(searchResults),
-                ],
-              ),
+            child: Column(
+              children: [
+                buildSearchProgressBar(searchResults),
+                buildSearchProgressStatus(searchResults),
+                buildSearchResults(searchResults),
+              ],
             ),
           );
   }
@@ -136,27 +131,28 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     // show progress bar if search is in progress
     // max value is widget.searcher.booksToSearch.length
     // current value is widget.searcher.bookIndex
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 30, 20),
-      child: SizedBox(
-          height: 10.0,
-          child: LinearProgressIndicator(
-            value: widget.searcher.isSearching.value &&
-                    widget.searcher.booksToSearch.isNotEmpty
-                ? widget.searcher.bookIndex /
-                    widget.searcher.booksToSearch.length
-                : 0.0,
-            //backgroundColor: Colors.grey,
-            borderRadius: const BorderRadius.all(Radius.circular(10)),
-          )),
-    );
+    return SizedBox(
+        height: 3.0,
+        child: LinearProgressIndicator(
+          value: widget.searcher.isSearching.value &&
+                  widget.searcher.booksToSearch.isNotEmpty
+              ? widget.searcher.bookIndex / widget.searcher.booksToSearch.length
+              : 0.0,
+          //backgroundColor: Colors.grey,
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
+        ));
   }
 
   Widget buildSearchProgressStatus(searchResults) {
     return widget.searcher.searchStarted != null &&
-            widget.searcher.searchFinished != null
-        ? Text(
-            'נסרקו ${widget.searcher.bookIndex} ספרים נמצאו ${searchResults.length} תוצאות מתוך ${widget.searcher.booksToSearch.length} ספרים בתוך ${DateTimeRange(start: widget.searcher.searchStarted!, end: widget.searcher.searchFinished!).duration.inSeconds} שניות')
+            widget.searcher.searchFinished != null &&
+            widget.searcher.searchFinished!
+                .isAfter(widget.searcher.searchStarted!)
+        ? Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Text(
+                'נסרקו ${widget.searcher.bookIndex} מתוך ${widget.searcher.booksToSearch.length} ספרים.  נמצאו ${searchResults.length} תוצאות בתוך ${DateTimeRange(start: widget.searcher.searchStarted!, end: widget.searcher.searchFinished!).duration.inSeconds} שניות'),
+          )
         : const SizedBox.shrink();
   }
 
@@ -217,11 +213,14 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     super.build(context);
     return Scaffold(
       appBar: buildAppBar(),
-      body: Column(
-        children: [
-          buildIsSearchingBuilder(),
-          buildSearchResultsBuilder(),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          children: [
+            buildIsSearchingBuilder(),
+            buildSearchResultsBuilder(),
+          ],
+        ),
       ),
     );
   }

@@ -28,7 +28,6 @@ class FileExplorerApp extends StatelessWidget {
           "he", "IL"), // OR Locale('ar', 'AE') OR Other RTL locales,
       title: 'אוצריא',
       theme: ThemeData(
-        primarySwatch: Colors.deepOrange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'candara',
         textTheme: const TextTheme(

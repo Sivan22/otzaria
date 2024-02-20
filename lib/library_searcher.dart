@@ -13,7 +13,6 @@ class LibrarySearcher {
   int sectionIndex = 0;
   int bookIndex = 0;
 
-  bool searchInProgress = false;
   LibrarySearcher(
     this.booksToSearch,
     this.queryController,
@@ -27,6 +26,12 @@ class LibrarySearcher {
     sectionIndex = 0;
     bookIndex = 0;
 
+    // finish search imidiatly if search string is empty.
+    if (queryController.text.isEmpty) {
+      isSearching.value = false;
+      return;
+    }
+
     for (final entry in booksToSearch) {
       if (FileSystemEntity.isFileSync(entry) && !entry.endsWith('.pdf')) {
         final file = File(entry);
@@ -34,6 +39,8 @@ class LibrarySearcher {
         List<String> address = [];
 
         for (String line in contents) {
+          if (!isSearching.value) return;
+
           if (line.startsWith('<h')) {
             if (address.isNotEmpty &&
                 address.any((element) =>
