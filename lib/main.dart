@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'main_window_view.dart';
@@ -6,8 +5,8 @@ import 'settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'cache_provider.dart';
 
-void  main(){
-  Settings.init(cacheProvider: HiveCache());  
+void main() {
+  Settings.init(cacheProvider: HiveCache());
   runApp(const FileExplorerApp());
 }
 
@@ -32,14 +31,14 @@ class FileExplorerApp extends StatelessWidget {
         primarySwatch: Colors.deepOrange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'candara',
-         textTheme: const TextTheme(
+        textTheme: const TextTheme(
           bodyMedium: TextStyle(fontSize: 18.0, fontFamily: 'candara'),
         ),
       ),
       routes: {
         '/settings': (context) => mySettingsScreen(),
       },
-      home:   const MainWindowView(),
+      home: const MainWindowView(),
     );
   }
 }
