@@ -25,14 +25,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     with AutomaticKeepAliveClientMixin<TextFileSearchScreen> {
   final showLeftPane = ValueNotifier<bool>(true);
 
-  @override
-  void initState() {
-    widget.searcher.searchResults.addListener(() {
-      setState(() {});
-    });
-    super.initState();
-  }
-
   AppBar buildAppBar() {
     return AppBar(
       actions: [
@@ -67,6 +59,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
                       widget.searcher.queryController.clear();
                       widget.searcher.searchResults.value = [];
                       widget.searcher.isSearching.value = false;
+                      widget.searcher.bookIndex = 0;
                     });
                   },
                 ),
@@ -89,7 +82,9 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
         return Row(
           children: [
             Expanded(
-              child: buildSearchField(isSearching),
+              child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 20, 0),
+                  child: buildSearchField(isSearching)),
             ),
           ],
         );
@@ -121,15 +116,18 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   }
 
   Widget buildSearchResultsContent(List<BookTextSearchResult> searchResults) {
-    return searchResults.isEmpty && !widget.searcher.searchInProgress
+    return searchResults.isEmpty && !widget.searcher.isSearching.value
         ? buildEmptySearchResultsContent()
         : Expanded(
-            child: Column(
-              children: [
-                buildSearchProgressStatus(searchResults),
-                buildSearchProgressBar(searchResults),
-                buildSearchResults(searchResults),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  buildSearchProgressStatus(searchResults),
+                  buildSearchProgressBar(searchResults),
+                  buildSearchResults(searchResults),
+                ],
+              ),
             ),
           );
   }
@@ -138,16 +136,20 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     // show progress bar if search is in progress
     // max value is widget.searcher.booksToSearch.length
     // current value is widget.searcher.bookIndex
-    return SizedBox(
-        height: 10.0,
-        child: LinearProgressIndicator(
-          value: widget.searcher.searchInProgress
-              ? widget.searcher.bookIndex / widget.searcher.booksToSearch.length
-              : 0.0,
-          valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-          backgroundColor: Colors.grey,
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ));
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 30, 20),
+      child: SizedBox(
+          height: 10.0,
+          child: LinearProgressIndicator(
+            value: widget.searcher.isSearching.value &&
+                    widget.searcher.booksToSearch.isNotEmpty
+                ? widget.searcher.bookIndex /
+                    widget.searcher.booksToSearch.length
+                : 0.0,
+            //backgroundColor: Colors.grey,
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          )),
+    );
   }
 
   Widget buildSearchProgressStatus(searchResults) {
@@ -209,7 +211,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
       },
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     super.build(context);

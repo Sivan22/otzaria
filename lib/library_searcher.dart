@@ -23,15 +23,11 @@ class LibrarySearcher {
   void search() async {
     isSearching.value = true;
     searchResults.value = [];
-    searchInProgress = true;
     searchStarted = DateTime.now();
     sectionIndex = 0;
     bookIndex = 0;
 
     for (final entry in booksToSearch) {
-      searchFinished = DateTime.now();
-      searchResults.notifyListeners();
-
       if (FileSystemEntity.isFileSync(entry) && !entry.endsWith('.pdf')) {
         final file = File(entry);
         final contents = await file.readAsLines();
