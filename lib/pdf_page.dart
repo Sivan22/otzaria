@@ -7,17 +7,19 @@ import 'outline_view.dart';
 import 'password_dialog.dart';
 import 'thumbnails_view.dart';
 
-
 class MyPdfPage extends StatefulWidget {
-  final void Function() closelastTab;
   final File file;
-  const MyPdfPage({super.key, required this.file, required this.closelastTab});
+  const MyPdfPage({
+    super.key,
+    required this.file,
+  });
 
   @override
   State<MyPdfPage> createState() => _MyPdfPageState();
 }
 
-class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixin<MyPdfPage> {
+class _MyPdfPageState extends State<MyPdfPage>
+    with AutomaticKeepAliveClientMixin<MyPdfPage> {
   final documentRef = ValueNotifier<PdfDocumentRef?>(null);
   final controller = PdfViewerController();
   final showLeftPane = ValueNotifier<bool>(false);
@@ -54,7 +56,9 @@ class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixi
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.zoom_in, ),
+            icon: const Icon(
+              Icons.zoom_in,
+            ),
             tooltip: 'הגדל',
             onPressed: () => controller.zoomUp(),
           ),
@@ -73,11 +77,6 @@ class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixi
             tooltip: 'סוף הספר',
             onPressed: () =>
                 controller.goToPage(pageNumber: controller.pages.length),
-          ),
-                    IconButton(
-            icon: const Icon(Icons.close),
-            tooltip: 'סגור ספר פתוח',
-            onPressed: widget.closelastTab,
           ),
         ],
       ),
@@ -110,7 +109,8 @@ class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixi
                             ValueListenableBuilder(
                               valueListenable: documentRef,
                               builder: (context, documentRef, child) => child!,
-                              child: PdfBookSearchView(textSearcher: textSearcher),
+                              child:
+                                  PdfBookSearchView(textSearcher: textSearcher),
                             ),
                             ValueListenableBuilder(
                               valueListenable: outline,
@@ -280,9 +280,7 @@ class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixi
             child: Text.rich(
               TextSpan(
                 children: [
-                  const TextSpan(
-                      text:
-                          'האם לעבור לכתובת הבאה\n'),
+                  const TextSpan(text: 'האם לעבור לכתובת הבאה\n'),
                   TextSpan(
                     text: url.toString(),
                     style: const TextStyle(color: Colors.blue),
@@ -306,6 +304,7 @@ class _MyPdfPageState extends State<MyPdfPage> with AutomaticKeepAliveClientMixi
     );
     return result ?? false;
   }
-    @override
+
+  @override
   bool get wantKeepAlive => true;
 }

@@ -39,28 +39,15 @@ class MainWindowViewState extends State<MainWindowView>
     });
   }
 
-  void enlargeText() {
-    setState(() {
-      Settings.setValue<double>('key-font-size',
-          min(Settings.getValue<double>('key-font-size')! + 3, 50.0));
-    });
-  }
-
-  void enSmallText() {
-    setState(() {
-      Settings.setValue<double>('key-font-size',
-          max(Settings.getValue<double>('key-font-size')! - 3, 15.0));
-    });
-  }
-
-  void closeTab() {
+  void closeTab(TabWindow tab) {
     setState(() {
       if (tabs.isNotEmpty) {
-        tabs.removeAt(tabController.index);
+        int newIndex = tabs.indexOf(tab) <= tabController.index
+            ? max(0, tabController.index - 1)
+            : tabController.index;
+        tabs.remove(tab);
         tabController = TabController(
-            length: tabs.length,
-            vsync: this,
-            initialIndex: max(0, tabController.index - 1));
+            length: tabs.length, vsync: this, initialIndex: newIndex);
       }
     });
   }
@@ -148,11 +135,20 @@ class MainWindowViewState extends State<MainWindowView>
               isScrollable: true,
               tabAlignment: TabAlignment.center,
               tabs: tabs
-                  .map((e) => e is SearchingTabWindow
-                      ? Tab(
-                          text:
-                              '${e.title}:  ${e.searcher.queryController.text}')
-                      : Tab(text: e.title))
+                  .map((tab) => Tab(
+                        child: Row(children: [
+                          Text(
+                            tab is SearchingTabWindow
+                                ? '${tab.title}:  ${tab.searcher.queryController.text}'
+                                : tab.title,
+                          ),
+                          IconButton(
+                              onPressed: () {
+                                closeTab(tab);
+                              },
+                              icon: const Icon(Icons.close, size: 10))
+                        ]),
+                      ))
                   .toList(),
             ),
             body: Row(children: [
@@ -165,11 +161,9 @@ class MainWindowViewState extends State<MainWindowView>
                           return MyPdfPage(
                             key: PageStorageKey(tab.path),
                             file: File(tab.path),
-                            closelastTab: closeTab,
                           );
                         } else {
                           return TextBookViewer(
-                            closelastTab: closeTab,
                             file: File(tab.path),
                             scrollController: tab.scrollController,
                             initalIndex: tab.scrollIndex,
@@ -180,7 +174,6 @@ class MainWindowViewState extends State<MainWindowView>
                       if (tab is SearchingTabWindow) {
                         return TextFileSearchScreen(
                           openBookCallback: addTab,
-                          closeTabCallback: closeTab,
                           searcher: tab.searcher,
                         );
                       }
@@ -218,7 +211,7 @@ class BookTabWindow extends TabWindow {
   TextEditingController searchTextController = TextEditingController();
 
   BookTabWindow(this.path, this.scrollIndex, {String searchText = ''})
-      : super(path.split('\\').last) {
+      : super(path.split(Platform.pathSeparator).last) {
     if (searchText != '') {
       searchTextController.text = searchText;
     }

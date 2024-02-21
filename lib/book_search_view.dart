@@ -4,6 +4,7 @@ import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/main_window_view.dart';
 
 
+
 class BookSearchScreen extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;
   const BookSearchScreen({
@@ -24,7 +25,7 @@ class BookSearchScreenState extends State<BookSearchScreen> {
 
   Future<void> _searchBooks(String query) async{
     final results = books.where((book) {
-      final bookName = book.split('\\').last.toLowerCase();
+      final bookName = book.split(Platform.pathSeparator).last.toLowerCase();
       // if all the words seperated by spaces exist in the book name, even not in order, return true
        bool result = true;
       for (final word in query.split(' ')) {
@@ -35,13 +36,13 @@ class BookSearchScreenState extends State<BookSearchScreen> {
     
     //sort the results by their levenstien distance
     if (query.isNotEmpty){
-       results.sort((a, b) =>  ratio(query, b.split('\\').last.trim().toLowerCase()).compareTo(
-                           ratio(query,a.split('\\').last.trim().toLowerCase()))
+       results.sort((a, b) =>  ratio(query, b.split(Platform.pathSeparator).last.trim().toLowerCase()).compareTo(
+                           ratio(query,a.split(Platform.pathSeparator).last.trim().toLowerCase()))
     ,);}
     // sort alphabetic
     else {
-      results.sort((a,b)=> a.split('\\').last.trim().compareTo(
-                           b.split('\\').last.trim()));
+      results.sort((a,b)=> a.split(Platform.pathSeparator).last.trim().compareTo(
+                           b.split(Platform.pathSeparator).last.trim()));
       }
 
        setState(() {
@@ -84,7 +85,7 @@ class BookSearchScreenState extends State<BookSearchScreen> {
                   itemBuilder: (context, index) {
                     final book = _searchResults[index];
                     return ListTile(
-                        title: Text(book.split('\\').last),
+                        title: Text(book.split(Platform.pathSeparator).last),
                         onTap: () {
                           widget.openFileCallback(
                             BookTabWindow(

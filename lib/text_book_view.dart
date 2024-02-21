@@ -10,7 +10,6 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 class TextBookViewer extends StatefulWidget {
   final File file;
   late Future<String> data;
-  final void Function() closelastTab;
   final ItemScrollController scrollController;
   final TextEditingController searchTextController;
   final int initalIndex;
@@ -19,7 +18,6 @@ class TextBookViewer extends StatefulWidget {
       {Key? key,
       required this.file,
       required this.initalIndex,
-      required this.closelastTab,
       required this.scrollController,
       required this.searchTextController})
       : super(key: key) {
@@ -82,11 +80,6 @@ class _TextBookViewerState extends State<TextBookViewer>
                       index: await widget.data.then((value) => value.length),
                       duration: const Duration(milliseconds: 300));
                 }),
-            IconButton(
-              icon: const Icon(Icons.close),
-              tooltip: 'סגור ספר פתוח',
-              onPressed: widget.closelastTab,
-            ),
           ],
         ),
         body: Row(children: [
@@ -156,28 +149,31 @@ class _TextBookViewerState extends State<TextBookViewer>
                     if (snapshot.hasData) {
                       return ValueListenableBuilder(
                           valueListenable: widget.searchTextController,
-                          builder: (context, searchTextController, child) => Padding(
-                              padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
-                              child:
-                                  NotificationListener<UserScrollNotification>(
-                                onNotification: (scrollNotification) {
-                                  if (searchTextController.text.isEmpty){
-                                  Future.microtask(() {
-                                    showLeftPane.value = false;
-                                  });}
+                          builder: (context, searchTextController, child) =>
+                              Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(10, 0, 5, 5),
+                                  child: NotificationListener<
+                                      UserScrollNotification>(
+                                    onNotification: (scrollNotification) {
+                                      if (searchTextController.text.isEmpty) {
+                                        Future.microtask(() {
+                                          showLeftPane.value = false;
+                                        });
+                                      }
 
-                                  return false; // Don't block the notification
-                                },
-                                child: HtmlView(
-                                  key: PageStorageKey(snapshot.data! +
-                                      widget.initalIndex.toString()),
-                                  data: snapshot.data!.split('\n'),
-                                  scrollController: widget.scrollController,
-                                  searchQuery: searchTextController.text,
-                                  textSize: textFontSize,
-                                  initalIndex: widget.initalIndex,
-                                ),
-                              )));
+                                      return false; // Don't block the notification
+                                    },
+                                    child: HtmlView(
+                                      key: PageStorageKey(snapshot.data! +
+                                          widget.initalIndex.toString()),
+                                      data: snapshot.data!.split('\n'),
+                                      scrollController: widget.scrollController,
+                                      searchQuery: searchTextController.text,
+                                      textSize: textFontSize,
+                                      initalIndex: widget.initalIndex,
+                                    ),
+                                  )));
                     }
                   }
                   return const Center(child: CircularProgressIndicator());
@@ -185,6 +181,7 @@ class _TextBookViewerState extends State<TextBookViewer>
           ),
         ]));
   }
-@override
+
+  @override
   bool get wantKeepAlive => true;
 }
