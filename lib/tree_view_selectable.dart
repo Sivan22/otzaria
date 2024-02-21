@@ -13,7 +13,7 @@ class FileTreeViewScreen extends StatefulWidget {
 }
 
 class FileTreeViewScreenState extends State<FileTreeViewScreen> {
-  Directory? selectedDirectory = Directory('.\\אוצריא');
+  Directory? selectedDirectory = Directory('אוצריא');
 
   void _onItemChecked(FileSystemEntity item, bool isChecked) {
     setState(() {

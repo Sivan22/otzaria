@@ -38,8 +38,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  markdown_widget: ^2.3.2+3
-  markdown: ^7.1.1
   flutter_settings_screen_ex: ^0.0.1+5
   hive: ^2.2.3
   msix: ^3.16.7      
@@ -50,15 +48,7 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   scrollable_positioned_list: ^0.3.8
   search_highlight_text: ^1.0.0+2
-  window_manager: ^0.3.8
   fuzzywuzzy: ^1.1.6
-  file_picker:
-  built_value:
-  flutter_treeview:
-  
-
-
-
 
 dev_dependencies:
   flutter_test:

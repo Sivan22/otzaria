@@ -7,13 +7,11 @@ import 'library_searcher.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(TabWindow) openBookCallback;
-  final void Function() closeTabCallback;
   final LibrarySearcher searcher;
 
   const TextFileSearchScreen({
     super.key,
     required this.openBookCallback,
-    required this.closeTabCallback,
     required this.searcher,
   });
 
@@ -24,18 +22,6 @@ class TextFileSearchScreen extends StatefulWidget {
 class TextFileSearchScreenState extends State<TextFileSearchScreen>
     with AutomaticKeepAliveClientMixin<TextFileSearchScreen> {
   final showLeftPane = ValueNotifier<bool>(true);
-
-  AppBar buildAppBar() {
-    return AppBar(
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: 'סגור חיפוש',
-          onPressed: widget.closeTabCallback,
-        ),
-      ],
-    );
-  }
 
   TextField buildSearchField(bool isSearching) {
     return TextField(
@@ -212,7 +198,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: buildAppBar(),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
