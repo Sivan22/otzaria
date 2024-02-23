@@ -1,4 +1,3 @@
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -10,6 +9,9 @@ import 'books_browser.dart';
 import 'book_search_view.dart';
 import 'library_searcher.dart';
 import 'library_search_view.dart';
+import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MainWindowView extends StatefulWidget {
   const MainWindowView({
@@ -23,12 +25,42 @@ class MainWindowView extends StatefulWidget {
 class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin {
   int selectedIndex = 0;
-  late List<TabWindow> tabs = [BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)];
+  late List<TabWindow> tabs = [
+    /*BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)*/
+  ];
   late TabController tabController = TabController(
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
   final showBookSearch = ValueNotifier<bool>(false);
   final focusNode = FocusNode();
+  late Future<String?> rootOfLibrary;
+
+  @override
+  void initState() {
+    if (Settings.getValue('key-font-size') == null) {
+      Settings.setValue('key-font-size', 25.0);
+    }
+    if (Settings.getValue('key-font-weight') == null) {
+      Settings.setValue('key-font-weight', 'normal');
+    }
+    if (Settings.getValue('key-font-family') == null) {
+      Settings.setValue('key-font-family', 'FrankRuhlLibre');
+    }
+    () async {
+      if (Platform.isAndroid &&
+          !await Permission.manageExternalStorage.isGranted) {
+        await Permission.manageExternalStorage.request();
+      }
+    }();
+
+    rootOfLibrary = () async {
+      return Settings.getValue<String>('key-library-path') != null
+          ? Settings.getValue<String>('key-library-path')
+          : Platform.isAndroid
+              ? await FilePicker.platform.getDirectoryPath()
+              : 'אוצריא';
+    }();
+  }
 
   void addTab(TabWindow tab) {
     setState(() {
@@ -54,137 +86,155 @@ class MainWindowViewState extends State<MainWindowView>
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      SizedBox.fromSize(
-        size: const Size.fromWidth(100),
-        child: NavigationRail(
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.folder),
-                label: Text('דפדוף'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.library_books),
-                label: Text('איתור ספר'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.search),
-                label: Text('חיפוש'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings),
-                label: Text('הגדרות'),
-              ),
-            ],
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                selectedIndex = index;
-                switch (index) {
-                  case 0:
-                    showBookSearch.value = false;
-                    showBooksBrowser.value = !showBooksBrowser.value;
-                  case 1:
-                    showBooksBrowser.value = false;
-                    showBookSearch.value = !showBookSearch.value;
-                  case 2:
-                    showBookSearch.value = false;
-                    showBooksBrowser.value = false;
-                    _openSearchScreen();
-                  case 3:
-                    _openSettingsScreen();
-                }
-              });
-            }),
-      ),
-      AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        child: ValueListenableBuilder(
-          valueListenable: showBooksBrowser,
-          builder: (context, showBooksBrowser, child) => SizedBox(
-            width: showBooksBrowser ? 300 : 0,
-            child: child!,
-          ),
-          child: BooksBrowser(openFileCallback: addTab),
+    return Scaffold(
+      appBar: AppBar(),
+      body: Row(children: [
+        SizedBox.fromSize(
+          size: const Size.fromWidth(100),
+          child: NavigationRail(
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.folder),
+                  label: Text('דפדוף'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.library_books),
+                  label: Text('איתור ספר'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.search),
+                  label: Text('חיפוש'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings),
+                  label: Text('הגדרות'),
+                ),
+              ],
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  selectedIndex = index;
+                  switch (index) {
+                    case 0:
+                      showBookSearch.value = false;
+                      showBooksBrowser.value = !showBooksBrowser.value;
+                    case 1:
+                      showBooksBrowser.value = false;
+                      showBookSearch.value = !showBookSearch.value;
+                    case 2:
+                      showBookSearch.value = false;
+                      showBooksBrowser.value = false;
+                      _openSearchScreen();
+                    case 3:
+                      _openSettingsScreen();
+                  }
+                });
+              }),
         ),
-      ),
-      AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        child: ValueListenableBuilder(
-          valueListenable: showBookSearch,
-          builder: (context, showBookSearch, child) => SizedBox(
-            width: showBookSearch ? 300 : 0,
-            child: child!,
-          ),
-          child: BookSearchScreen(openFileCallback: addTab),
-        ),
-      ),
-      Expanded(
-        child: NotificationListener<UserScrollNotification>(
-          onNotification: (scrollNotification) {
-            Future.microtask(() {
-              showBooksBrowser.value = false;
-              showBookSearch.value = false;
-            });
-            return false; // Don't block the notification
-          },
-          child: Scaffold(
-            appBar: TabBar(
-              controller: tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.center,
-              tabs: tabs
-                  .map((tab) => Tab(
-                        child: Row(children: [
-                          Text(
-                            tab is SearchingTabWindow
-                                ? '${tab.title}:  ${tab.searcher.queryController.text}'
-                                : tab.title,
-                          ),
-                          IconButton(
-                              onPressed: () {
-                                closeTab(tab);
-                              },
-                              icon: const Icon(Icons.close, size: 10))
-                        ]),
-                      ))
-                  .toList(),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          child: ValueListenableBuilder(
+            valueListenable: showBooksBrowser,
+            builder: (context, showBooksBrowser, child) => SizedBox(
+              width: showBooksBrowser ? 300 : 0,
+              child: child!,
             ),
-            body: Row(children: [
-              Expanded(
-                child: TabBarView(
-                    controller: tabController,
-                    children: tabs.map((tab) {
-                      if (tab is BookTabWindow) {
-                        if (tab.path.endsWith('.pdf')) {
-                          return MyPdfPage(
-                            key: PageStorageKey(tab.path),
-                            file: File(tab.path),
-                          );
-                        } else {
-                          return TextBookViewer(
-                            file: File(tab.path),
-                            scrollController: tab.scrollController,
-                            initalIndex: tab.scrollIndex,
-                            searchTextController: tab.searchTextController,
+            child: FutureBuilder(
+                future: rootOfLibrary,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return BooksBrowser(
+                        openFileCallback: addTab, libraryPath: snapshot.data!);
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                }),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          child: ValueListenableBuilder(
+            valueListenable: showBookSearch,
+            builder: (context, showBookSearch, child) => SizedBox(
+              width: showBookSearch ? 300 : 0,
+              child: child!,
+            ),
+            child: FutureBuilder(
+                future: rootOfLibrary,
+                builder: (context, snapshot) {
+                  return snapshot.hasData
+                      ? BookSearchScreen(
+                          openFileCallback: addTab, libraryPath: snapshot.data!)
+                      : const Center(child: CircularProgressIndicator());
+                }),
+          ),
+        ),
+        Expanded(
+          child: NotificationListener<UserScrollNotification>(
+            onNotification: (scrollNotification) {
+              Future.microtask(() {
+                showBooksBrowser.value = false;
+                showBookSearch.value = false;
+              });
+              return false; // Don't block the notification
+            },
+            child: Scaffold(
+              appBar: TabBar(
+                controller: tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.center,
+                tabs: tabs
+                    .map((tab) => Tab(
+                          child: Row(children: [
+                            Text(
+                              tab is SearchingTabWindow
+                                  ? '${tab.title}:  ${tab.searcher.queryController.text}'
+                                  : tab.title,
+                            ),
+                            IconButton(
+                                onPressed: () {
+                                  closeTab(tab);
+                                },
+                                icon: const Icon(Icons.close, size: 10))
+                          ]),
+                        ))
+                    .toList(),
+              ),
+              body: Row(children: [
+                Expanded(
+                  child: TabBarView(
+                      controller: tabController,
+                      children: tabs.map((tab) {
+                        if (tab is BookTabWindow) {
+                          if (tab.path.endsWith('.pdf')) {
+                            return MyPdfPage(
+                              key: PageStorageKey(tab),
+                              file: File(tab.path),
+                            );
+                          } else {
+                            return TextBookViewer(
+                              file: File(tab.path),
+                              scrollController: tab.scrollController,
+                              initalIndex: tab.scrollIndex,
+                              searchTextController: tab.searchTextController,
+                            );
+                          }
+                        }
+                        if (tab is SearchingTabWindow) {
+                          return TextFileSearchScreen(
+                            openBookCallback: addTab,
+                            searcher: tab.searcher,
                           );
                         }
-                      }
-                      if (tab is SearchingTabWindow) {
-                        return TextFileSearchScreen(
-                          openBookCallback: addTab,
-                          searcher: tab.searcher,
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }).toList()),
-              ),
-            ]),
+                        return const SizedBox.shrink();
+                      }).toList()),
+                ),
+              ]),
+            ),
           ),
-        ),
-      )
-    ]);
+        )
+      ]),
+    );
   }
 
   void _openSettingsScreen() async {
