@@ -1,10 +1,9 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-
+import 'package:path_provider/path_provider.dart';
 
 /// A cache access provider class for shared preferences using Hive library
 class HiveCache extends CacheProvider {
@@ -15,7 +14,7 @@ class HiveCache extends CacheProvider {
   Future<void> init() async {
     WidgetsFlutterBinding.ensureInitialized();
     if (!kIsWeb) {
-      final defaultDirectory =Directory(".\\") ;
+      final defaultDirectory = await getApplicationDocumentsDirectory();
       Hive.init(defaultDirectory.path);
     }
     if (Hive.isBoxOpen(keyName)) {

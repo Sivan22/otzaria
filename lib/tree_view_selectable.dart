@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 
 class FileTreeViewScreen extends StatefulWidget {
   final List<String> checkedItems;
@@ -13,7 +15,19 @@ class FileTreeViewScreen extends StatefulWidget {
 }
 
 class FileTreeViewScreenState extends State<FileTreeViewScreen> {
-  Directory? selectedDirectory = Directory('אוצריא');
+  late Future<Directory> selectedDirectory;
+
+  @override
+  void initState() {
+    selectedDirectory = () async {
+      String? path = Settings.getValue<String>('key-library-path') ??
+          await FilePicker.platform.getDirectoryPath();
+
+      return Directory(path!);
+    }();
+
+    super.initState();
+  }
 
   void _onItemChecked(FileSystemEntity item, bool isChecked) {
     setState(() {
@@ -79,16 +93,18 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
     return Scaffold(
       body: Column(
         children: [
-          if (selectedDirectory != null)
-            Expanded(
-              child: selectedDirectory != null
+          FutureBuilder(
+            future: selectedDirectory,
+            builder: (context, snapshot) => Expanded(
+              child: snapshot.hasData
                   ? SingleChildScrollView(
-                      child: _buildTreeView(selectedDirectory!, 0))
+                      child: _buildTreeView(snapshot.data!, 0))
                   : const Center(
                       child: Text(
                           'No directory selected. Tap the folder icon to pick one.'),
                     ),
             ),
+          )
         ],
       ),
     );
