@@ -99,10 +99,7 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
               child: snapshot.hasData
                   ? SingleChildScrollView(
                       child: _buildTreeView(snapshot.data!, 0))
-                  : const Center(
-                      child: Text(
-                          'No directory selected. Tap the folder icon to pick one.'),
-                    ),
+                  : const CircularProgressIndicator(),
             ),
           )
         ],
