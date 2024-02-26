@@ -97,4 +97,5 @@ class Link {
         index1 = int.parse(json['line_index_1'].toString().split('.').first),
         path2 = json['path_2'].toString(),
         index2 = int.parse(json['line_index_2'].toString().split('.').first),
-        connectionType = json['Con
+        connectionType = json['Conection Type'].toString();
+}
