@@ -9,12 +9,14 @@ class HtmlView extends StatefulWidget {
   final int initalIndex;
   final double textSize;
   final ItemScrollController scrollController;
+  final ItemPositionsListener itemPositionsListener;
   final String searchQuery;
   const HtmlView(
       {super.key,
       required this.data,
       required this.initalIndex,
       required this.scrollController,
+      required this.itemPositionsListener,
       required this.searchQuery,
       required this.textSize});
 
@@ -34,6 +36,7 @@ class _HtmlViewState extends State<HtmlView>
     super.build(context);
     return ScrollablePositionedList.builder(
       initialScrollIndex: widget.initalIndex,
+      itemPositionsListener: widget.itemPositionsListener,
       itemCount: widget.data.length,
       itemBuilder: (context, index) => SelectionArea(
         child: Html(

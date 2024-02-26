@@ -86,154 +86,181 @@ class MainWindowViewState extends State<MainWindowView>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: Row(children: [
-        SizedBox.fromSize(
-          size: const Size.fromWidth(100),
-          child: NavigationRail(
-              labelType: NavigationRailLabelType.all,
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.folder),
-                  label: Text('דפדוף'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.library_books),
-                  label: Text('איתור ספר'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.search),
-                  label: Text('חיפוש'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.settings),
-                  label: Text('הגדרות'),
-                ),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  selectedIndex = index;
-                  switch (index) {
-                    case 0:
-                      showBookSearch.value = false;
-                      showBooksBrowser.value = !showBooksBrowser.value;
-                    case 1:
-                      showBooksBrowser.value = false;
-                      showBookSearch.value = !showBookSearch.value;
-                    case 2:
-                      showBookSearch.value = false;
-                      showBooksBrowser.value = false;
-                      _openSearchScreen();
-                    case 3:
-                      _openSettingsScreen();
-                  }
-                });
-              }),
-        ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          child: ValueListenableBuilder(
-            valueListenable: showBooksBrowser,
-            builder: (context, showBooksBrowser, child) => SizedBox(
-              width: showBooksBrowser ? 300 : 0,
-              child: child!,
+    return SafeArea(
+      child: Scaffold(
+        body: Row(children: [
+          buildNavigationSideBar(),
+          buildBooksBrowser(),
+          buildBookSearchScreen(),
+          buildTabBarAndTabView()
+        ]),
+      ),
+    );
+  }
+
+  Expanded buildTabBarAndTabView() {
+    return Expanded(
+      child: NotificationListener<UserScrollNotification>(
+        onNotification: (scrollNotification) {
+          Future.microtask(() {
+            showBooksBrowser.value = false;
+            showBookSearch.value = false;
+          });
+          return false; // Don't block the notification
+        },
+        child: Scaffold(
+          appBar: buildTabBar(),
+          body: Row(children: [
+            Expanded(
+              child: buildTabBarView(),
             ),
-            child: FutureBuilder(
-                future: rootOfLibrary,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return BooksBrowser(
-                        openFileCallback: addTab, libraryPath: snapshot.data!);
-                  }
-                  return const Center(child: CircularProgressIndicator());
-                }),
-          ),
+          ]),
         ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          child: ValueListenableBuilder(
-            valueListenable: showBookSearch,
-            builder: (context, showBookSearch, child) => SizedBox(
-              width: showBookSearch ? 300 : 0,
-              child: child!,
-            ),
-            child: FutureBuilder(
-                future: rootOfLibrary,
-                builder: (context, snapshot) {
-                  return snapshot.hasData
-                      ? BookSearchScreen(
-                          openFileCallback: addTab, libraryPath: snapshot.data!)
-                      : const Center(child: CircularProgressIndicator());
-                }),
-          ),
+      ),
+    );
+  }
+
+  TabBarView buildTabBarView() {
+    return TabBarView(
+        controller: tabController,
+        children: tabs.map((tab) {
+          if (tab is BookTabWindow) {
+            if (tab.path.endsWith('.pdf')) {
+              return MyPdfPage(
+                key: PageStorageKey(tab),
+                file: File(tab.path),
+              );
+            } else {
+              return TextBookViewer(
+                file: File(tab.path),
+                scrollController: tab.scrollController,
+                initalIndex: tab.scrollIndex,
+                searchTextController: tab.searchTextController,
+                itemPositionsListener: tab.positionsListener,
+                openBookCallback: addTab,
+              );
+            }
+          }
+          if (tab is SearchingTabWindow) {
+            return TextFileSearchScreen(
+              openBookCallback: addTab,
+              searcher: tab.searcher,
+            );
+          }
+          return const SizedBox.shrink();
+        }).toList());
+  }
+
+  TabBar buildTabBar() {
+    return TabBar(
+      controller: tabController,
+      isScrollable: true,
+      tabAlignment: TabAlignment.center,
+      tabs: tabs
+          .map((tab) => Tab(
+                child: Row(children: [
+                  Text(
+                    tab is SearchingTabWindow
+                        ? '${tab.title}:  ${tab.searcher.queryController.text}'
+                        : tab.title,
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        closeTab(tab);
+                      },
+                      icon: const Icon(Icons.close, size: 10))
+                ]),
+              ))
+          .toList(),
+    );
+  }
+
+  AnimatedSize buildBookSearchScreen() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      child: ValueListenableBuilder(
+        valueListenable: showBookSearch,
+        builder: (context, showBookSearch, child) => SizedBox(
+          width: showBookSearch ? 300 : 0,
+          child: child!,
         ),
-        Expanded(
-          child: NotificationListener<UserScrollNotification>(
-            onNotification: (scrollNotification) {
-              Future.microtask(() {
-                showBooksBrowser.value = false;
-                showBookSearch.value = false;
-              });
-              return false; // Don't block the notification
-            },
-            child: Scaffold(
-              appBar: TabBar(
-                controller: tabController,
-                isScrollable: true,
-                tabAlignment: TabAlignment.center,
-                tabs: tabs
-                    .map((tab) => Tab(
-                          child: Row(children: [
-                            Text(
-                              tab is SearchingTabWindow
-                                  ? '${tab.title}:  ${tab.searcher.queryController.text}'
-                                  : tab.title,
-                            ),
-                            IconButton(
-                                onPressed: () {
-                                  closeTab(tab);
-                                },
-                                icon: const Icon(Icons.close, size: 10))
-                          ]),
-                        ))
-                    .toList(),
-              ),
-              body: Row(children: [
-                Expanded(
-                  child: TabBarView(
-                      controller: tabController,
-                      children: tabs.map((tab) {
-                        if (tab is BookTabWindow) {
-                          if (tab.path.endsWith('.pdf')) {
-                            return MyPdfPage(
-                              key: PageStorageKey(tab),
-                              file: File(tab.path),
-                            );
-                          } else {
-                            return TextBookViewer(
-                              file: File(tab.path),
-                              scrollController: tab.scrollController,
-                              initalIndex: tab.scrollIndex,
-                              searchTextController: tab.searchTextController,
-                            );
-                          }
-                        }
-                        if (tab is SearchingTabWindow) {
-                          return TextFileSearchScreen(
-                            openBookCallback: addTab,
-                            searcher: tab.searcher,
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      }).toList()),
-                ),
-              ]),
+        child: FutureBuilder(
+            future: rootOfLibrary,
+            builder: (context, snapshot) {
+              return snapshot.hasData
+                  ? BookSearchScreen(
+                      openFileCallback: addTab, libraryPath: snapshot.data!)
+                  : const Center(child: CircularProgressIndicator());
+            }),
+      ),
+    );
+  }
+
+  AnimatedSize buildBooksBrowser() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      child: ValueListenableBuilder(
+        valueListenable: showBooksBrowser,
+        builder: (context, showBooksBrowser, child) => SizedBox(
+          width: showBooksBrowser ? 300 : 0,
+          child: child!,
+        ),
+        child: FutureBuilder(
+            future: rootOfLibrary,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return BooksBrowser(
+                    openFileCallback: addTab, libraryPath: snapshot.data!);
+              }
+              return const Center(child: CircularProgressIndicator());
+            }),
+      ),
+    );
+  }
+
+  SizedBox buildNavigationSideBar() {
+    return SizedBox.fromSize(
+      size: const Size.fromWidth(100),
+      child: NavigationRail(
+          labelType: NavigationRailLabelType.all,
+          destinations: const [
+            NavigationRailDestination(
+              icon: Icon(Icons.folder),
+              label: Text('דפדוף'),
             ),
-          ),
-        )
-      ]),
+            NavigationRailDestination(
+              icon: Icon(Icons.library_books),
+              label: Text('איתור ספר'),
+            ),
+            NavigationRailDestination(
+              icon: Icon(Icons.search),
+              label: Text('חיפוש'),
+            ),
+            NavigationRailDestination(
+              icon: Icon(Icons.settings),
+              label: Text('הגדרות'),
+            ),
+          ],
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (int index) {
+            setState(() {
+              selectedIndex = index;
+              switch (index) {
+                case 0:
+                  showBookSearch.value = false;
+                  showBooksBrowser.value = !showBooksBrowser.value;
+                case 1:
+                  showBooksBrowser.value = false;
+                  showBookSearch.value = !showBookSearch.value;
+                case 2:
+                  showBookSearch.value = false;
+                  showBooksBrowser.value = false;
+                  _openSearchScreen();
+                case 3:
+                  _openSettingsScreen();
+              }
+            });
+          }),
     );
   }
 
@@ -259,6 +286,7 @@ class BookTabWindow extends TabWindow {
   int scrollIndex;
   ItemScrollController scrollController = ItemScrollController();
   TextEditingController searchTextController = TextEditingController();
+  ItemPositionsListener positionsListener = ItemPositionsListener.create();
 
   BookTabWindow(this.path, this.scrollIndex, {String searchText = ''})
       : super(path.split(Platform.pathSeparator).last) {
