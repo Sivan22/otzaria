@@ -1,6 +1,4 @@
 // a widget that takes an html strings array, finds all the headings, and displays it in a listview. on pressed the scrollcontroller scrolls to the index of the heading.
-import 'dart:isolate';
-
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'main_window_view.dart';
 import 'package:flutter/material.dart';
@@ -24,27 +22,34 @@ class LinksViewer extends StatefulWidget {
 
 class _LinksViewerState extends State<LinksViewer>
     with AutomaticKeepAliveClientMixin<LinksViewer> {
+  late Future<List<Link>> allLinks;
   late Future<List<Link>> links;
 
   @override
   void initState() {
     super.initState();
-    links = getLinksFromJson();
+    allLinks = getAllLinksFromJson();
+    links = getLinks();
     widget.itemPositionsListener.itemPositions.addListener(() {
-      links = getLinksFromJson();
+      links = getLinks();
       setState(() {});
     });
   }
 
-  Future<List<Link>> getLinksFromJson() async {
-    final jsonString = await File(widget.path).readAsString();
-    final jsonList = jsonDecode(jsonString) as List;
-    return jsonList
-        .map((json) => Link.fromJson(json))
+  Future<List<Link>> getLinks() async {
+    List<Link> myallLinks = await allLinks;
+
+    return myallLinks
         .where((link) =>
             link.index1 ==
-            widget.itemPositionsListener.itemPositions.value.first.index)
+            widget.itemPositionsListener.itemPositions.value.first.index + 2)
         .toList();
+  }
+
+  Future<List<Link>> getAllLinksFromJson() async {
+    final jsonString = await File(widget.path).readAsString();
+    final jsonList = jsonDecode(jsonString) as List;
+    return jsonList.map((json) => Link.fromJson(json)).toList();
   }
 
   @override
@@ -57,11 +62,16 @@ class _LinksViewerState extends State<LinksViewer>
             return ListView.builder(
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) => ListTile(
-                title: Text(snapshot.data![index].heRef),
+                title: Text(snapshot.data![index].heRef,
+                    style: TextStyle(
+                        fontWeight:
+                            snapshot.data![index].connectionType == 'commentary'
+                                ? FontWeight.bold
+                                : FontWeight.normal)),
                 onTap: () {
                   widget.openTabcallback(BookTabWindow(
-                      snapshot.data![index].path2.replaceFirst('otzaria\\', ''),
-                      snapshot.data![index].index2));
+                      snapshot.data![index].path2,
+                      snapshot.data![index].index2 - 1));
                 },
               ),
             );

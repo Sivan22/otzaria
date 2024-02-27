@@ -12,21 +12,15 @@ import 'links_view.dart';
 class TextBookViewer extends StatefulWidget {
   final File file;
   late Future<String> data;
-  final ItemScrollController scrollController;
-  final ItemPositionsListener itemPositionsListener;
-  final TextEditingController searchTextController;
-  final int initalIndex;
+  final BookTabWindow tab;
   final Function(TabWindow) openBookCallback;
 
-  TextBookViewer(
-      {Key? key,
-      required this.file,
-      required this.initalIndex,
-      required this.scrollController,
-      required this.itemPositionsListener,
-      required this.openBookCallback,
-      required this.searchTextController})
-      : super(key: key) {
+  TextBookViewer({
+    Key? key,
+    required this.file,
+    required this.tab,
+    required this.openBookCallback,
+  }) : super(key: key) {
     data = file.readAsString();
   }
 
@@ -36,7 +30,7 @@ class TextBookViewer extends StatefulWidget {
 
 class _TextBookViewerState extends State<TextBookViewer>
     with AutomaticKeepAliveClientMixin<TextBookViewer> {
-  double textFontSize = Settings.getValue('key-font-size');
+  double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
   final showLeftPane = ValueNotifier<bool>(false);
 
   @override
@@ -45,81 +39,86 @@ class _TextBookViewerState extends State<TextBookViewer>
     return Scaffold(
         appBar: buildAppBar(),
         body: Row(children: [
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            child: ValueListenableBuilder(
-              valueListenable: showLeftPane,
-              builder: (context, showLeftPane, child) => SizedBox(
-                width: showLeftPane ? 300 : 0,
-                child: child!,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-                child: DefaultTabController(
-                  length: 3,
-                  child: Column(children: [
-                    const TabBar(tabs: [
-                      Tab(text: 'ניווט'),
-                      Tab(text: 'חיפוש'),
-                      Tab(text: 'קישורים')
-                    ]),
-                    Expanded(
-                      child: TabBarView(children: [
-                        buildTocViewer(),
-                        buildSearchView(),
-                        buildLinkView(),
-                      ]),
-                    ),
-                  ]),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: FutureBuilder(
-                future: widget.data.then((value) => value),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
-
-                    if (snapshot.hasData) {
-                      return ValueListenableBuilder(
-                          valueListenable: widget.searchTextController,
-                          builder: (context, searchTextController, child) =>
-                              Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(10, 0, 5, 5),
-                                  child: NotificationListener<
-                                      UserScrollNotification>(
-                                    onNotification: (scrollNotification) {
-                                      if (searchTextController.text.isEmpty) {
-                                        Future.microtask(() {
-                                          //showLeftPane.value = false;
-                                        });
-                                      }
-
-                                      return false; // Don't block the notification
-                                    },
-                                    child: HtmlView(
-                                      key: PageStorageKey(snapshot.data! +
-                                          widget.initalIndex.toString()),
-                                      data: snapshot.data!.split('\n'),
-                                      scrollController: widget.scrollController,
-                                      itemPositionsListener:
-                                          widget.itemPositionsListener,
-                                      searchQuery: searchTextController.text,
-                                      textSize: textFontSize,
-                                      initalIndex: widget.initalIndex,
-                                    ),
-                                  )));
-                    }
-                  }
-                  return const Center(child: CircularProgressIndicator());
-                }),
-          ),
+          buildTabBar(),
+          buildHTMLViewer(),
         ]));
+  }
+
+  Expanded buildHTMLViewer() {
+    return Expanded(
+      child: FutureBuilder(
+          future: widget.data.then((value) => value),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (snapshot.hasData) {
+                return ValueListenableBuilder(
+                    valueListenable: widget.tab.searchTextController,
+                    builder: (context, searchTextController, child) => Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
+                        child: NotificationListener<UserScrollNotification>(
+                          onNotification: (scrollNotification) {
+                            if (searchTextController.text.isEmpty) {
+                              Future.microtask(() {
+                                //showLeftPane.value = false;
+                              });
+                            }
+
+                            return false; // Don't block the notification
+                          },
+                          child: HtmlView(
+                            key: PageStorageKey(widget.tab),
+                            data: snapshot.data!.split('\n'),
+                            scrollController: widget.tab.scrollController,
+                            itemPositionsListener: widget.tab.positionsListener,
+                            scrollOffsetController:
+                                widget.tab.scrollOffsetController,
+                            searchQuery: searchTextController.text,
+                            textSize: textFontSize,
+                            initalIndex: widget.tab.initalIndex,
+                          ),
+                        )));
+              }
+            }
+            return const Center(child: CircularProgressIndicator());
+          }),
+    );
+  }
+
+  AnimatedSize buildTabBar() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      child: ValueListenableBuilder(
+        valueListenable: showLeftPane,
+        builder: (context, showLeftPane, child) => SizedBox(
+          width: showLeftPane ? 300 : 0,
+          child: child!,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+          child: DefaultTabController(
+            length: 3,
+            child: Column(children: [
+              const TabBar(tabs: [
+                Tab(text: 'ניווט'),
+                Tab(text: 'חיפוש'),
+                Tab(text: 'קישורים')
+              ]),
+              Expanded(
+                child: TabBarView(children: [
+                  buildTocViewer(),
+                  buildSearchView(),
+                  buildLinkView(),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
   }
 
   FutureBuilder<String> buildSearchView() {
@@ -127,10 +126,10 @@ class _TextBookViewerState extends State<TextBookViewer>
         future: widget.data.then((value) => value),
         builder: (context, snapshot) =>
             snapshot.connectionState == ConnectionState.done
-                ? MarkdownSearchView(
+                ? TextBookSearchView(
                     data: snapshot.data!,
-                    scrollControler: widget.scrollController,
-                    searchTextController: widget.searchTextController,
+                    scrollControler: widget.tab.scrollController,
+                    searchTextController: widget.tab.searchTextController,
                   )
                 : const CircularProgressIndicator());
   }
@@ -140,19 +139,19 @@ class _TextBookViewerState extends State<TextBookViewer>
         future: widget.data.then((value) => value),
         builder: (context, snapshot) =>
             snapshot.connectionState == ConnectionState.done
-                ? Expanded(
-                    child: TocViewer(
+                ? TocViewer(
                     data: snapshot.data!,
-                    scrollController: widget.scrollController,
-                  ))
+                    scrollController: widget.tab.scrollController,
+                  )
                 : const CircularProgressIndicator());
   }
 
   LinksViewer buildLinkView() {
     return LinksViewer(
-      path: widget.file.path + "_links.json",
+      path:
+          'links${Platform.pathSeparator}${widget.file.path.split(Platform.pathSeparator).last}_links.json',
       openTabcallback: widget.openBookCallback,
-      itemPositionsListener: widget.itemPositionsListener,
+      itemPositionsListener: widget.tab.positionsListener,
     );
   }
 
@@ -187,7 +186,7 @@ class _TextBookViewerState extends State<TextBookViewer>
             icon: const Icon(Icons.first_page),
             tooltip: 'תחילת הספר',
             onPressed: () {
-              widget.scrollController.scrollTo(
+              widget.tab.scrollController.scrollTo(
                   index: 0, duration: const Duration(milliseconds: 300));
             }
             // button to scroll all the way down
@@ -196,7 +195,7 @@ class _TextBookViewerState extends State<TextBookViewer>
             icon: const Icon(Icons.last_page),
             tooltip: 'סוף הספר',
             onPressed: () async {
-              widget.scrollController.scrollTo(
+              widget.tab.scrollController.scrollTo(
                   index: await widget.data.then((value) => value.length),
                   duration: const Duration(milliseconds: 300));
             }),

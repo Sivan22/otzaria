@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
@@ -85,11 +86,14 @@ class BookSearchScreenState extends State<BookSearchScreen> {
         body: Center(
           child: Column(
             children: [
-              TextField(
+              FocusScope(
                 autofocus: true,
-                controller: searchController,
-                decoration: const InputDecoration(
-                  labelText: 'הקלד שם ספר: ',
+                child: TextField(
+                  autofocus: true,
+                  controller: searchController,
+                  decoration: const InputDecoration(
+                    labelText: 'הקלד שם ספר: ',
+                  ),
                 ),
               ),
               Expanded(

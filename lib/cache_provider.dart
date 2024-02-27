@@ -14,7 +14,9 @@ class HiveCache extends CacheProvider {
   Future<void> init() async {
     WidgetsFlutterBinding.ensureInitialized();
     if (!kIsWeb) {
-      final defaultDirectory = await getApplicationDocumentsDirectory();
+      final defaultDirectory = Platform.isAndroid
+          ? await getApplicationSupportDirectory()
+          : Directory('.');
       Hive.init(defaultDirectory.path);
     }
     if (Hive.isBoxOpen(keyName)) {

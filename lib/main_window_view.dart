@@ -133,10 +133,7 @@ class MainWindowViewState extends State<MainWindowView>
             } else {
               return TextBookViewer(
                 file: File(tab.path),
-                scrollController: tab.scrollController,
-                initalIndex: tab.scrollIndex,
-                searchTextController: tab.searchTextController,
-                itemPositionsListener: tab.positionsListener,
+                tab: tab,
                 openBookCallback: addTab,
               );
             }
@@ -283,12 +280,12 @@ class TabWindow {
 
 class BookTabWindow extends TabWindow {
   final String path;
-  int scrollIndex;
+  int initalIndex;
   ItemScrollController scrollController = ItemScrollController();
+  ScrollOffsetController scrollOffsetController = ScrollOffsetController();
   TextEditingController searchTextController = TextEditingController();
   ItemPositionsListener positionsListener = ItemPositionsListener.create();
-
-  BookTabWindow(this.path, this.scrollIndex, {String searchText = ''})
+  BookTabWindow(this.path, this.initalIndex, {String searchText = ''})
       : super(path.split(Platform.pathSeparator).last) {
     if (searchText != '') {
       searchTextController.text = searchText;
