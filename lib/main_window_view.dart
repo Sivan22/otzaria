@@ -12,6 +12,9 @@ import 'library_search_view.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:convert';
+import 'links_view.dart';
+import 'dart:isolate';
 
 class MainWindowView extends StatefulWidget {
   const MainWindowView({
@@ -25,9 +28,8 @@ class MainWindowView extends StatefulWidget {
 class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin {
   int selectedIndex = 0;
-  late List<TabWindow> tabs = [
-    /*BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)*/
-  ];
+  late List<TabWindow> tabs =
+      Platform.isAndroid ? [] : [BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)];
   late TabController tabController = TabController(
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
@@ -37,6 +39,7 @@ class MainWindowViewState extends State<MainWindowView>
 
   @override
   void initState() {
+    super.initState();
     if (Settings.getValue('key-font-size') == null) {
       Settings.setValue('key-font-size', 25.0);
     }
@@ -54,6 +57,7 @@ class MainWindowViewState extends State<MainWindowView>
     }();
 
     rootOfLibrary = () async {
+      // ignore: prefer_if_null_operators
       return Settings.getValue<String>('key-library-path') != null
           ? Settings.getValue<String>('key-library-path')
           : Platform.isAndroid
@@ -88,12 +92,27 @@ class MainWindowViewState extends State<MainWindowView>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: Row(children: [
-          buildNavigationSideBar(),
-          buildBooksBrowser(),
-          buildBookSearchScreen(),
-          buildTabBarAndTabView()
-        ]),
+        body: OrientationBuilder(builder: (context, orientation) {
+          if (orientation == Orientation.landscape) {
+            return Row(children: [
+              buildNavigationSideBar(),
+              buildBooksBrowser(),
+              buildBookSearchScreen(),
+              buildTabBarAndTabView()
+            ]);
+          } else {
+            return Column(children: [
+              Expanded(
+                child: Row(children: [
+                  buildBooksBrowser(),
+                  buildBookSearchScreen(),
+                  buildTabBarAndTabView()
+                ]),
+              ),
+              buildNavigationBottomBar(),
+            ]);
+          }
+        }),
       ),
     );
   }
@@ -186,7 +205,10 @@ class MainWindowViewState extends State<MainWindowView>
             builder: (context, snapshot) {
               return snapshot.hasData
                   ? BookSearchScreen(
-                      openFileCallback: addTab, libraryPath: snapshot.data!)
+                      focusNode: focusNode,
+                      openFileCallback: addTab,
+                      closeLeftPaneCallback: closeLeftPanel,
+                      libraryPath: snapshot.data!)
                   : const Center(child: CircularProgressIndicator());
             }),
       ),
@@ -207,7 +229,10 @@ class MainWindowViewState extends State<MainWindowView>
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return BooksBrowser(
-                    openFileCallback: addTab, libraryPath: snapshot.data!);
+                  openFileCallback: addTab,
+                  libraryPath: snapshot.data!,
+                  closeLeftPaneCallback: closeLeftPanel,
+                );
               }
               return const Center(child: CircularProgressIndicator());
             }),
@@ -217,7 +242,7 @@ class MainWindowViewState extends State<MainWindowView>
 
   SizedBox buildNavigationSideBar() {
     return SizedBox.fromSize(
-      size: const Size.fromWidth(100),
+      size: const Size.fromWidth(80),
       child: NavigationRail(
           labelType: NavigationRailLabelType.all,
           destinations: const [
@@ -261,6 +286,48 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
+  NavigationBar buildNavigationBottomBar() {
+    return NavigationBar(
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.folder),
+            label: 'דפדוף',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.library_books),
+            label: 'איתור ספר',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.search),
+            label: 'חיפוש',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'הגדרות',
+          ),
+        ],
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (int index) {
+          setState(() {
+            selectedIndex = index;
+            switch (index) {
+              case 0:
+                showBookSearch.value = false;
+                showBooksBrowser.value = !showBooksBrowser.value;
+              case 1:
+                showBooksBrowser.value = false;
+                showBookSearch.value = !showBookSearch.value;
+              case 2:
+                showBookSearch.value = false;
+                showBooksBrowser.value = false;
+                _openSearchScreen();
+              case 3:
+                _openSettingsScreen();
+            }
+          });
+        });
+  }
+
   void _openSettingsScreen() async {
     await Navigator.push(
         context, MaterialPageRoute(builder: (context) => mySettingsScreen()));
@@ -269,6 +336,11 @@ class MainWindowViewState extends State<MainWindowView>
 
   void _openSearchScreen() async {
     addTab(SearchingTabWindow('חיפוש'));
+  }
+
+  void closeLeftPanel() {
+    showBooksBrowser.value = false;
+    showBookSearch.value = false;
   }
 }
 
@@ -280,6 +352,8 @@ class TabWindow {
 
 class BookTabWindow extends TabWindow {
   final String path;
+  ValueNotifier<List<String>> commentariesNames = ValueNotifier([]);
+  late Future<List<Link>> links;
   int initalIndex;
   ItemScrollController scrollController = ItemScrollController();
   ScrollOffsetController scrollOffsetController = ScrollOffsetController();
@@ -290,6 +364,14 @@ class BookTabWindow extends TabWindow {
     if (searchText != '') {
       searchTextController.text = searchText;
     }
+    links = Isolate.run(() async => await getAllLinksFromJson(
+        'links${Platform.pathSeparator}${path.split(Platform.pathSeparator).last}_links.json'));
+  }
+
+  Future<List<Link>> getAllLinksFromJson(String path) async {
+    final jsonString = await File(path).readAsString();
+    final jsonList = jsonDecode(jsonString) as List;
+    return jsonList.map((json) => Link.fromJson(json)).toList();
   }
 }
 

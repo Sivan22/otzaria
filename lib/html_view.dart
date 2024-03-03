@@ -63,16 +63,16 @@ class _HtmlViewState extends State<HtmlView>
           scrollOffsetController: widget.scrollOffsetController,
           itemCount: widget.data.length,
           itemBuilder: (context, index) => Html(
-              data: highLight(widget.data[index], widget.searchQuery),
-              style: {
-                'body': Style(
-                    fontSize: FontSize(widget.textSize),
-                    fontFamily:
-                        Settings.getValue('key-font-family') ?? 'candara',
-                    fontWeight: fontWeights[
-                        Settings.getValue('key-font-weight') ?? 'normal'],
-                    textAlign: TextAlign.justify),
-              }),
+            data: highLight(widget.data[index], widget.searchQuery),
+            style: {
+              'body': Style(
+                  fontSize: FontSize(widget.textSize),
+                  fontFamily: Settings.getValue('key-font-family') ?? 'candara',
+                  fontWeight: fontWeights[
+                      Settings.getValue('key-font-weight') ?? 'normal'],
+                  textAlign: TextAlign.justify),
+            },
+          ),
           itemScrollController: widget.scrollController,
         ),
       ),

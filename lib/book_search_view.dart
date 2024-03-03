@@ -9,9 +9,16 @@ import 'package:permission_handler/permission_handler.dart';
 
 class BookSearchScreen extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;
+  final void Function() closeLeftPaneCallback;
+  final FocusNode focusNode;
   final String libraryPath;
+
   const BookSearchScreen(
-      {Key? key, required this.openFileCallback, required this.libraryPath})
+      {Key? key,
+      required this.focusNode,
+      required this.openFileCallback,
+      required this.closeLeftPaneCallback,
+      required this.libraryPath})
       : super(key: key);
 
   @override
@@ -86,14 +93,12 @@ class BookSearchScreenState extends State<BookSearchScreen> {
         body: Center(
           child: Column(
             children: [
-              FocusScope(
+              TextField(
+                focusNode: widget.focusNode,
                 autofocus: true,
-                child: TextField(
-                  autofocus: true,
-                  controller: searchController,
-                  decoration: const InputDecoration(
-                    labelText: 'הקלד שם ספר: ',
-                  ),
+                controller: searchController,
+                decoration: const InputDecoration(
+                  labelText: 'הקלד שם ספר: ',
                 ),
               ),
               Expanded(
@@ -105,6 +110,10 @@ class BookSearchScreenState extends State<BookSearchScreen> {
                         title: Text(book.split(Platform.pathSeparator).last),
                         onTap: () {
                           widget.openFileCallback(BookTabWindow(book, 0));
+                          if (MediaQuery.of(context).orientation ==
+                              Orientation.portrait) {
+                            widget.closeLeftPaneCallback();
+                          }
                         });
                   },
                 ),

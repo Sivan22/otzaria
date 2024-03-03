@@ -67,11 +67,11 @@ def recursive_sections(section_names, text, depth,level=0,ref='',heRef=''):
         :param depth: current depth of recursion
         :return: None
         """
-        if depth == 0:
-            globals()['output'].append(f"ref: {ref[:-1].replace(',  ',' ').replace(' ,','')}| heRef: {heRef[:-1]}| text: {text}\n")
+        if depth == 0 and type(text) == str:
+            globals()['output'].append(f"ref: {ref[:-1].replace(',  ',' ').replace(' ,','')}| heRef: {heRef[:-1]}| text: {text.replace('\n\n','\n')}\n")
             globals()['refs_to_index']+=[{'ref':ref[:-1].replace(',  ',' ').replace(' ,',''),
                                           'heRef':heRef[:-1],
-                                        'path':globals()['path'],
+                                        'path':globals()['path'].replace('..\\..\\refs\\',''),
                                         'line_index':len(globals()['output'])}]
         else:
             for i, item in enumerate(text, start=1):
@@ -80,6 +80,7 @@ def recursive_sections(section_names, text, depth,level=0,ref='',heRef=''):
                     
                     if depth>1:                        
                         globals()['output'].append(f"{codes[level][0]}{section_names[-depth]} {letter}{codes[level][1]}\n")
+                    
 
                         
                 recursive_sections(section_names, item, depth-1,level+1,

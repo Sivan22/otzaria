@@ -10,7 +10,7 @@ class LibrarySearcher {
   DateTime? searchStarted;
   DateTime? searchFinished;
   ValueNotifier<bool> isSearching = ValueNotifier(false);
-  int sectionIndex = 0;
+  int lineIndex = 0;
   int bookIndex = 0;
 
   LibrarySearcher(
@@ -23,7 +23,7 @@ class LibrarySearcher {
     isSearching.value = true;
     searchResults.value = [];
     searchStarted = DateTime.now();
-    sectionIndex = 0;
+    lineIndex = 0;
     bookIndex = 0;
 
     // finish search imidiatly if search string is empty.
@@ -37,6 +37,7 @@ class LibrarySearcher {
         final file = File(entry);
         final contents = await file.readAsLines();
         List<String> address = [];
+        lineIndex = 0;
 
         for (String line in contents) {
           if (!isSearching.value) return;
@@ -62,14 +63,14 @@ class LibrarySearcher {
                     max(0, index - 200),
                     min(section.length - 1,
                         index + queryController.text.length + 200)),
-                index: sectionIndex,
+                index: lineIndex,
                 query: queryController.text,
                 address: stripHtmlIfNeeded(address.join(''))));
 
             searchFinished = DateTime.now();
             searchResults.notifyListeners();
           }
-          sectionIndex++;
+          lineIndex++;
         }
       }
       bookIndex++;

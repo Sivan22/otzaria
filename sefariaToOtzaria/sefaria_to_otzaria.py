@@ -39,9 +39,9 @@ def recursive_sections(section_names, text, depth,level=0):
         :param depth: current depth of recursion
         :return: None
         """
-        if depth == 0:
-            globals()['output'].append(f" {text}\n")
-        else:
+        if depth == 0 and text != [] and type(text) is not bool:
+            globals()['output'].append(text.replace('\n','')+'\n')
+        elif type(text) != bool:
             for i, item in enumerate(text, start=1):
                 if item != [] and item != [[]]:
                     letter = to_daf(i) if section_names[-depth] == 'דף' else to_gematria(i)

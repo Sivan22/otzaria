@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:otzaria/combined_book_commentary_view.dart';
 import 'package:otzaria/main_window_view.dart';
 import 'package:otzaria/text_book_search_view.dart';
 import 'dart:io';
@@ -8,6 +9,9 @@ import 'dart:math';
 import 'html_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'links_view.dart';
+import 'dart:convert';
+import 'dart:isolate';
+import 'commentary_list_view.dart';
 
 class TextBookViewer extends StatefulWidget {
   final File file;
@@ -29,9 +33,19 @@ class TextBookViewer extends StatefulWidget {
 }
 
 class _TextBookViewerState extends State<TextBookViewer>
-    with AutomaticKeepAliveClientMixin<TextBookViewer> {
+    with
+        AutomaticKeepAliveClientMixin<TextBookViewer>,
+        TickerProviderStateMixin {
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
   final showLeftPane = ValueNotifier<bool>(false);
+
+  late TabController tabController;
+
+  @override
+  initState() {
+    super.initState();
+    tabController = TabController(length: 4, vsync: this);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +83,9 @@ class _TextBookViewerState extends State<TextBookViewer>
 
                             return false; // Don't block the notification
                           },
-                          child: HtmlView(
+                          child: CombinedView(
+                            commentariesToShow: widget.tab.commentariesNames,
+                            links: widget.tab.links,
                             key: PageStorageKey(widget.tab),
                             data: snapshot.data!.split('\n'),
                             scrollController: widget.tab.scrollController,
@@ -94,28 +110,33 @@ class _TextBookViewerState extends State<TextBookViewer>
       child: ValueListenableBuilder(
         valueListenable: showLeftPane,
         builder: (context, showLeftPane, child) => SizedBox(
-          width: showLeftPane ? 300 : 0,
+          width: showLeftPane ? 350 : 0,
           child: child!,
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-          child: DefaultTabController(
-            length: 3,
-            child: Column(children: [
-              const TabBar(tabs: [
+          child: Column(children: [
+            TabBar(
+              tabs: const [
                 Tab(text: 'ניווט'),
                 Tab(text: 'חיפוש'),
+                Tab(text: 'פרשנות'),
                 Tab(text: 'קישורים')
-              ]),
-              Expanded(
-                child: TabBarView(children: [
+              ],
+              controller: tabController,
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
                   buildTocViewer(),
                   buildSearchView(),
+                  buildCommentaryView(),
                   buildLinkView(),
-                ]),
+                ],
+                controller: tabController,
               ),
-            ]),
-          ),
+            ),
+          ]),
         ),
       ),
     );
@@ -148,11 +169,15 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   LinksViewer buildLinkView() {
     return LinksViewer(
-      path:
-          'links${Platform.pathSeparator}${widget.file.path.split(Platform.pathSeparator).last}_links.json',
+      links: widget.tab.links,
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: widget.tab.positionsListener,
     );
+  }
+
+  CommetaryListView buildCommentaryView() {
+    return CommetaryListView(
+        links: widget.tab.links, commetaries: widget.tab.commentariesNames);
   }
 
   AppBar buildAppBar() {
@@ -164,6 +189,19 @@ class _TextBookViewerState extends State<TextBookViewer>
             showLeftPane.value = !showLeftPane.value;
           }),
       actions: [
+        // button to open the search field
+        IconButton(
+          onPressed: () {
+            showLeftPane.value = true;
+            tabController.index = 1;
+          },
+          icon: const Icon(
+            Icons.search,
+          ),
+          tooltip: 'חיפוש',
+        ),
+
+        // button to zoom in
         IconButton(
             icon: const Icon(
               Icons.zoom_in,

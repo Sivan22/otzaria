@@ -6,10 +6,14 @@ import 'package:otzaria/main_window_view.dart';
 
 class BooksBrowser extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;
+  final void Function() closeLeftPaneCallback;
   final String libraryPath;
 
   const BooksBrowser(
-      {Key? key, required this.openFileCallback, required this.libraryPath})
+      {Key? key,
+      required this.openFileCallback,
+      required this.libraryPath,
+      required this.closeLeftPaneCallback})
       : super(key: key);
 
   @override
@@ -67,6 +71,10 @@ class BooksBrowserState extends State<BooksBrowser> {
                   _fileList = Directory(entity.path).listSync().toList();
                 });
               } else if (entity is File) {
+                if (MediaQuery.of(context).orientation ==
+                    Orientation.portrait) {
+                  widget.closeLeftPaneCallback();
+                }
                 widget.openFileCallback(BookTabWindow(entity.path, 0));
               }
             },

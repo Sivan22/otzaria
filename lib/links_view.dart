@@ -1,18 +1,20 @@
 // a widget that takes an html strings array, finds all the headings, and displays it in a listview. on pressed the scrollcontroller scrolls to the index of the heading.
+
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'main_window_view.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'package:flutter/foundation.dart';
 
 class LinksViewer extends StatefulWidget {
-  final String path;
+  final Future<List<Link>> links;
   final Function(TabWindow tab) openTabcallback;
   final ItemPositionsListener itemPositionsListener;
 
   LinksViewer(
       {super.key,
-      required this.path,
+      required this.links,
       required this.openTabcallback,
       required this.itemPositionsListener});
 
@@ -22,55 +24,55 @@ class LinksViewer extends StatefulWidget {
 
 class _LinksViewerState extends State<LinksViewer>
     with AutomaticKeepAliveClientMixin<LinksViewer> {
-  late Future<List<Link>> allLinks;
-  late Future<List<Link>> links;
+  late Future<List<Link>> visibleLinks;
 
   @override
   void initState() {
     super.initState();
-    allLinks = getAllLinksFromJson();
-    links = getLinks();
+    visibleLinks = getLinks();
+
     widget.itemPositionsListener.itemPositions.addListener(() {
-      links = getLinks();
-      setState(() {});
+      visibleLinks = getLinks();
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
   Future<List<Link>> getLinks() async {
-    List<Link> myallLinks = await allLinks;
-
-    return myallLinks
+    List<Link> visibleLinks = (await widget.links)
         .where((link) =>
             link.index1 ==
-            widget.itemPositionsListener.itemPositions.value.first.index + 2)
+                widget.itemPositionsListener.itemPositions.value.first.index +
+                    2 &&
+            link.connectionType != "commentary")
         .toList();
-  }
 
-  Future<List<Link>> getAllLinksFromJson() async {
-    final jsonString = await File(widget.path).readAsString();
-    final jsonList = jsonDecode(jsonString) as List;
-    return jsonList.map((json) => Link.fromJson(json)).toList();
+    visibleLinks.sort((a, b) => a.path2
+        .split(Platform.pathSeparator)
+        .last
+        .compareTo(b.path2.split(Platform.pathSeparator).last));
+
+    return visibleLinks;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return FutureBuilder(
-        future: links,
+        future: visibleLinks,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return ListView.builder(
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) => ListTile(
-                title: Text(snapshot.data![index].heRef,
-                    style: TextStyle(
-                        fontWeight:
-                            snapshot.data![index].connectionType == 'commentary'
-                                ? FontWeight.bold
-                                : FontWeight.normal)),
+                title: Text(
+                  snapshot.data![index].heRef,
+                ),
                 onTap: () {
                   widget.openTabcallback(BookTabWindow(
-                      snapshot.data![index].path2,
+                      snapshot.data![index].path2
+                          .replaceAll('..\\..\\refs\\', ''),
                       snapshot.data![index].index2 - 1));
                 },
               ),
@@ -83,7 +85,7 @@ class _LinksViewerState extends State<LinksViewer>
   }
 
   @override
-  get wantKeepAlive => true;
+  get wantKeepAlive => false;
 }
 
 class Link {
