@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';

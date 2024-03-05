@@ -54,32 +54,36 @@ class BooksBrowserState extends State<BooksBrowser> {
           onPressed: navigateUp,
         ),
       ),
-      body: ListView.builder(
-        itemCount: _fileList.length,
-        itemBuilder: (context, index) {
-          FileSystemEntity entity = _fileList[index];
-          return ListTile(
-            title: Text(entity.path.split(Platform.pathSeparator).last),
-            leading: entity is Directory
-                ? const Icon(Icons.folder)
-                : const Icon(Icons.library_books),
-            onTap: () {
-              if (entity is Directory) {
-                setState(() {
-                  //_fileList = Directory(entity.path).list().toList();
-                  directory = entity;
-                  _fileList = Directory(entity.path).listSync().toList();
-                });
-              } else if (entity is File) {
-                if (MediaQuery.of(context).orientation ==
-                    Orientation.portrait) {
-                  widget.closeLeftPaneCallback();
+      body: Focus(
+        focusNode: FocusNode(),
+        autofocus: true,
+        child: ListView.builder(
+          itemCount: _fileList.length,
+          itemBuilder: (context, index) {
+            FileSystemEntity entity = _fileList[index];
+            return ListTile(
+              title: Text(entity.path.split(Platform.pathSeparator).last),
+              leading: entity is Directory
+                  ? const Icon(Icons.folder)
+                  : const Icon(Icons.library_books),
+              onTap: () {
+                if (entity is Directory) {
+                  setState(() {
+                    //_fileList = Directory(entity.path).list().toList();
+                    directory = entity;
+                    _fileList = Directory(entity.path).listSync().toList();
+                  });
+                } else if (entity is File) {
+                  if (MediaQuery.of(context).orientation ==
+                      Orientation.portrait) {
+                    widget.closeLeftPaneCallback();
+                  }
+                  widget.openFileCallback(BookTabWindow(entity.path, 0));
                 }
-                widget.openFileCallback(BookTabWindow(entity.path, 0));
-              }
-            },
-          );
-        },
+              },
+            );
+          },
+        ),
       ),
     );
   }
