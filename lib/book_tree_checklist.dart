@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 
 class FileTreeViewScreen extends StatefulWidget {
+  final String libraryRootPath;
   final List<String> checkedItems;
 
-  const FileTreeViewScreen({Key? key, required this.checkedItems})
+  const FileTreeViewScreen(
+      {Key? key, required this.checkedItems, required this.libraryRootPath})
       : super(key: key);
 
   @override
@@ -15,17 +15,11 @@ class FileTreeViewScreen extends StatefulWidget {
 }
 
 class FileTreeViewScreenState extends State<FileTreeViewScreen> {
-  late Future<Directory> selectedDirectory;
+  late Directory selectedDirectory;
 
   @override
   void initState() {
-    selectedDirectory = () async {
-      String? path = Settings.getValue<String>('key-library-path') ??
-          await FilePicker.platform.getDirectoryPath();
-
-      return Directory(path!);
-    }();
-
+    selectedDirectory = Directory(widget.libraryRootPath);
     super.initState();
   }
 
@@ -47,6 +41,7 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
 
   Widget _buildTreeView(Directory directory, int level) {
     return ExpansionTile(
+      initiallyExpanded: level == 0,
       key: Key(directory.path), // Ensure unique keys for ExpansionTiles
       title: Text(path.basename(directory.path)),
       backgroundColor: level % 2 != 0 ? Colors.grey[200] : Colors.white,
@@ -93,15 +88,9 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
     return Scaffold(
       body: Column(
         children: [
-          FutureBuilder(
-            future: selectedDirectory,
-            builder: (context, snapshot) => Expanded(
-              child: snapshot.hasData
-                  ? SingleChildScrollView(
-                      child: _buildTreeView(snapshot.data!, 0))
-                  : const CircularProgressIndicator(),
-            ),
-          )
+          Expanded(
+              child: SingleChildScrollView(
+                  child: _buildTreeView(selectedDirectory, 0)))
         ],
       ),
     );

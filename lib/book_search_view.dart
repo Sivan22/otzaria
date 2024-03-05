@@ -1,11 +1,7 @@
-import 'package:flutter/widgets.dart';
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/main_window_view.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class BookSearchScreen extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;
@@ -15,9 +11,9 @@ class BookSearchScreen extends StatefulWidget {
 
   const BookSearchScreen(
       {Key? key,
-      required this.focusNode,
       required this.openFileCallback,
       required this.closeLeftPaneCallback,
+      required this.focusNode,
       required this.libraryPath})
       : super(key: key);
 
@@ -27,9 +23,10 @@ class BookSearchScreen extends StatefulWidget {
 
 class BookSearchScreenState extends State<BookSearchScreen> {
   TextEditingController searchController = TextEditingController();
-  // get all files from the directory "אוצריא"
+
   late final List<String> books;
 
+  @override
   initState() {
     super.initState();
     books = Directory(widget.libraryPath)
@@ -110,6 +107,7 @@ class BookSearchScreenState extends State<BookSearchScreen> {
                         title: Text(book.split(Platform.pathSeparator).last),
                         onTap: () {
                           widget.openFileCallback(BookTabWindow(book, 0));
+                          //close the sidebar only if it is a narrow screen
                           if (MediaQuery.of(context).orientation ==
                               Orientation.portrait) {
                             widget.closeLeftPaneCallback();

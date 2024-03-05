@@ -53,6 +53,7 @@ dependencies:
   universal_io: ^2.2.2
   permission_handler: ^11.3.0
   flutter_launcher_icons: "^0.13.1"  
+  easy_debounce: ^2.0.3
 
 flutter_launcher_icons:
     android: "launcher_icon"
@@ -102,21 +103,28 @@ flutter:
   # list giving the asset and other descriptors for the font. For
 
   fonts:
-    - family: FrankRuhlLibre
+    - family: TaameyAshkenaz
       fonts:
-        - asset: fonts\FrankRuhlLibre-VariableFont_wght.ttf
+        - asset: fonts\TaameyAshkenaz-Medium.ttf
+    - family: FrankRuhlCLM
+      fonts:
+        - asset: fonts\FrankRuehlCLM-Medium.ttf
     - family: Rubik
       fonts:
         - asset: fonts/Rubik-VariableFont_wght.ttf
     - family: NotoRashiHebrew
       fonts:
         - asset: fonts\NotoRashiHebrew-VariableFont_wght.ttf
-    - family: BonaNova
+
+    - family: TaameyDavidCLM
       fonts:
-        - asset: fonts/BonaNova-Regular.ttf
-    - family: DavidLibre
-      fonts:  
-        - asset: fonts\DavidLibre-Regular.ttf
+        - asset: fonts\TaameyDavidCLM-Medium.ttf
+    - family: Shofar
+      fonts:
+        - asset: fonts/ShofarRegular.ttf
+    - family: KeterYG
+      fonts:
+        - asset: fonts/KeterYG-Medium.ttf
     - family: Tinos
       fonts:
         - asset: fonts\Tinos-Regular.ttf

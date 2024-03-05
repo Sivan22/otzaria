@@ -6,12 +6,9 @@ import 'package:otzaria/text_book_search_view.dart';
 import 'dart:io';
 import 'package:otzaria/toc_viewer.dart';
 import 'dart:math';
-import 'html_view.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'links_view.dart';
-import 'dart:convert';
-import 'dart:isolate';
 import 'commentary_list_view.dart';
+import 'package:flutter/services.dart';
 
 class TextBookViewer extends StatefulWidget {
   final File file;
@@ -38,6 +35,7 @@ class _TextBookViewerState extends State<TextBookViewer>
         TickerProviderStateMixin {
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
   final showLeftPane = ValueNotifier<bool>(false);
+  final FocusNode textSearchFocusNode = FocusNode();
 
   late TabController tabController;
 
@@ -58,7 +56,7 @@ class _TextBookViewerState extends State<TextBookViewer>
         ]));
   }
 
-  Expanded buildHTMLViewer() {
+  Widget buildHTMLViewer() {
     return Expanded(
       child: FutureBuilder(
           future: widget.data.then((value) => value),
@@ -74,29 +72,44 @@ class _TextBookViewerState extends State<TextBookViewer>
                     builder: (context, searchTextController, child) => Padding(
                         padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
                         child: NotificationListener<UserScrollNotification>(
-                          onNotification: (scrollNotification) {
-                            if (searchTextController.text.isEmpty) {
-                              Future.microtask(() {
-                                //showLeftPane.value = false;
-                              });
-                            }
+                            onNotification: (scrollNotification) {
+                              if (searchTextController.text.isEmpty) {
+                                Future.microtask(() {
+                                  //showLeftPane.value = false;
+                                });
+                              }
 
-                            return false; // Don't block the notification
-                          },
-                          child: CombinedView(
-                            commentariesToShow: widget.tab.commentariesNames,
-                            links: widget.tab.links,
-                            key: PageStorageKey(widget.tab),
-                            data: snapshot.data!.split('\n'),
-                            scrollController: widget.tab.scrollController,
-                            itemPositionsListener: widget.tab.positionsListener,
-                            scrollOffsetController:
-                                widget.tab.scrollOffsetController,
-                            searchQuery: searchTextController.text,
-                            textSize: textFontSize,
-                            initalIndex: widget.tab.initalIndex,
-                          ),
-                        )));
+                              return false; // Don't block the notification
+                            },
+                            child: CallbackShortcuts(
+                                bindings: <ShortcutActivator, VoidCallback>{
+                                  LogicalKeySet(LogicalKeyboardKey.control,
+                                      LogicalKeyboardKey.keyF): () {
+                                    showLeftPane.value = true;
+                                    tabController.index = 1;
+                                  },
+                                },
+                                child: Focus(
+                                  focusNode: FocusNode(),
+                                  autofocus: true,
+                                  child: CombinedView(
+                                    commentariesToShow:
+                                        widget.tab.commentariesNames,
+                                    links: widget.tab.links,
+                                    key: PageStorageKey(widget.tab),
+                                    data: snapshot.data!.split('\n'),
+                                    scrollController:
+                                        widget.tab.scrollController,
+                                    itemPositionsListener:
+                                        widget.tab.positionsListener,
+                                    scrollOffsetController:
+                                        widget.tab.scrollOffsetController,
+                                    searchQuery: searchTextController.text,
+                                    textSize: textFontSize,
+                                    initalIndex: widget.tab.initalIndex,
+                                    openBookCallback: widget.openBookCallback,
+                                  ),
+                                )))));
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -124,6 +137,11 @@ class _TextBookViewerState extends State<TextBookViewer>
                 Tab(text: 'קישורים')
               ],
               controller: tabController,
+              onTap: (value) {
+                if (value == 1) {
+                  textSearchFocusNode.requestFocus();
+                }
+              },
             ),
             Expanded(
               child: TabBarView(
@@ -148,6 +166,7 @@ class _TextBookViewerState extends State<TextBookViewer>
         builder: (context, snapshot) =>
             snapshot.connectionState == ConnectionState.done
                 ? TextBookSearchView(
+                    focusNode: textSearchFocusNode,
                     data: snapshot.data!,
                     scrollControler: widget.tab.scrollController,
                     searchTextController: widget.tab.searchTextController,
@@ -194,6 +213,7 @@ class _TextBookViewerState extends State<TextBookViewer>
           onPressed: () {
             showLeftPane.value = true;
             tabController.index = 1;
+            textSearchFocusNode.requestFocus();
           },
           icon: const Icon(
             Icons.search,
@@ -226,9 +246,37 @@ class _TextBookViewerState extends State<TextBookViewer>
             onPressed: () {
               widget.tab.scrollController.scrollTo(
                   index: 0, duration: const Duration(milliseconds: 300));
-            }
-            // button to scroll all the way down
-            ),
+            }),
+        //button to scroll to previous section
+        IconButton(
+            icon: const Icon(Icons.navigate_before),
+            tooltip: 'הקטע הקודם',
+            onPressed: () {
+              widget.tab.scrollController.scrollTo(
+                  duration: const Duration(milliseconds: 300),
+                  index: max(
+                    0,
+                    widget.tab.positionsListener.itemPositions.value.first
+                            .index -
+                        1,
+                  ));
+            }),
+        //button to scroll to next section
+        IconButton(
+            icon: const Icon(Icons.navigate_next),
+            tooltip: 'הקטע הבא',
+            onPressed: () {
+              widget.tab.scrollController.scrollTo(
+                  index: max(
+                      widget.tab.positionsListener.itemPositions.value.first
+                              .index +
+                          1,
+                      widget.tab.positionsListener.itemPositions.value.length -
+                          1),
+                  duration: const Duration(milliseconds: 300));
+            }),
+
+        // button to scroll all the way down
         IconButton(
             icon: const Icon(Icons.last_page),
             tooltip: 'סוף הספר',

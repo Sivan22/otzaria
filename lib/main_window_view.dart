@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -34,17 +36,88 @@ class MainWindowViewState extends State<MainWindowView>
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
   final showBookSearch = ValueNotifier<bool>(false);
-  final focusNode = FocusNode();
-  late Future<String?> rootOfLibrary;
-
+  final bookSearchfocusNode = FocusNode();
+  final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
+  late Future<String?> libraryRootPath;
+  final Map<String, LogicalKeySet> shortcuts = {
+    'ctrl+a':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyA),
+    'ctrl+b':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyB),
+    'ctrl+c':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC),
+    'ctrl+d':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyD),
+    'ctrl+e':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyE),
+    'ctrl+f':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF),
+    'ctrl+g':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG),
+    'ctrl+h':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyH),
+    'ctrl+i':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI),
+    'ctrl+j':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyJ),
+    'ctrl+k':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyK),
+    'ctrl+l':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyL),
+    'ctrl+m':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyM),
+    'ctrl+n':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN),
+    'ctrl+o':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyO),
+    'ctrl+p':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyP),
+    'ctrl+q':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyQ),
+    'ctrl+r':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR),
+    'ctrl+s':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS),
+    'ctrl+t':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyT),
+    'ctrl+u':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyU),
+    'ctrl+v':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyV),
+    'ctrl+w':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyW),
+    'ctrl+x':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyX),
+    'ctrl+y':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyY),
+    'ctrl+z':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ),
+    'ctrl+0':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit0),
+    'ctrl+1':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit1),
+    'ctrl+2':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit2),
+    'ctrl+3':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit3),
+    'ctrl+4':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit4),
+    'ctrl+5':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit5),
+    'ctrl+6':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit6),
+    'ctrl+7':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit7),
+    'ctrl+8':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit8),
+    'ctrl+9':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit9),
+  };
   @override
   void initState() {
     super.initState();
     if (Settings.getValue('key-font-size') == null) {
       Settings.setValue('key-font-size', 25.0);
-    }
-    if (Settings.getValue('key-font-weight') == null) {
-      Settings.setValue('key-font-weight', 'normal');
     }
     if (Settings.getValue('key-font-family') == null) {
       Settings.setValue('key-font-family', 'FrankRuhlLibre');
@@ -56,7 +129,7 @@ class MainWindowViewState extends State<MainWindowView>
       }
     }();
 
-    rootOfLibrary = () async {
+    libraryRootPath = () async {
       // ignore: prefer_if_null_operators
       return Settings.getValue<String>('key-library-path') != null
           ? Settings.getValue<String>('key-library-path')
@@ -94,12 +167,7 @@ class MainWindowViewState extends State<MainWindowView>
       child: Scaffold(
         body: OrientationBuilder(builder: (context, orientation) {
           if (orientation == Orientation.landscape) {
-            return Row(children: [
-              buildNavigationSideBar(),
-              buildBooksBrowser(),
-              buildBookSearchScreen(),
-              buildTabBarAndTabView()
-            ]);
+            return buildShortcuts();
           } else {
             return Column(children: [
               Expanded(
@@ -115,6 +183,62 @@ class MainWindowViewState extends State<MainWindowView>
         }),
       ),
     );
+  }
+
+  CallbackShortcuts buildShortcuts() {
+    return CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          shortcuts[
+              Settings.getValue<String>('key-shortcut-open-book-browser') !=
+                      null
+                  ? Settings.getValue<String>('key-shortcut-open-book-browser')
+                  : 'ctrl+b']!: () {
+            showBooksBrowser.value = true;
+            showBookSearch.value = false;
+          },
+          shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
+              ? Settings.getValue<String>('key-shortcut-close-tab')
+              : 'ctrl+w']!: () {
+            setState(() {
+              closeTab(tabs[tabController.index]);
+            });
+          },
+          shortcuts[
+              Settings.getValue<String>('key-shortcut-close-all-tabs') != null
+                  ? Settings.getValue<String>('key-shortcut-close-all-tabs')
+                  : 'ctrl+x']!: () {
+            setState(() {
+              tabs = [];
+              tabController = TabController(length: tabs.length, vsync: this);
+            });
+          },
+          shortcuts[
+              Settings.getValue<String>('key-shortcut-open-book-search') != null
+                  ? Settings.getValue<String>('key-shortcut-open-book-search')
+                  : 'ctrl+o']!: () {
+            showBooksBrowser.value = false;
+            showBookSearch.value = true;
+            bookSearchfocusNode.requestFocus();
+          },
+          shortcuts[
+              Settings.getValue<String>('key-shortcut-open-new-search') != null
+                  ? Settings.getValue<String>('key-shortcut-open-new-search')
+                  : 'ctrl+q']!: () {
+            setState(() {
+              addTab(SearchingTabWindow('חיפוש'));
+            });
+          },
+        },
+        child: FocusScope(
+          node: mainFocusScopeNode,
+          autofocus: true,
+          child: Row(children: [
+            buildNavigationSideBar(),
+            buildBooksBrowser(),
+            buildBookSearchScreen(),
+            buildTabBarAndTabView()
+          ]),
+        ));
   }
 
   Expanded buildTabBarAndTabView() {
@@ -158,10 +282,19 @@ class MainWindowViewState extends State<MainWindowView>
             }
           }
           if (tab is SearchingTabWindow) {
-            return TextFileSearchScreen(
-              openBookCallback: addTab,
-              searcher: tab.searcher,
-            );
+            return FutureBuilder(
+                future: libraryRootPath,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return TextFileSearchScreen(
+                      openBookCallback: addTab,
+                      searcher: tab.searcher,
+                      libraryRootPath: snapshot.data!,
+                    );
+                  }
+
+                  return const Center(child: CircularProgressIndicator());
+                });
           }
           return const SizedBox.shrink();
         }).toList());
@@ -201,13 +334,13 @@ class MainWindowViewState extends State<MainWindowView>
           child: child!,
         ),
         child: FutureBuilder(
-            future: rootOfLibrary,
+            future: libraryRootPath,
             builder: (context, snapshot) {
               return snapshot.hasData
                   ? BookSearchScreen(
-                      focusNode: focusNode,
                       openFileCallback: addTab,
                       closeLeftPaneCallback: closeLeftPanel,
+                      focusNode: bookSearchfocusNode,
                       libraryPath: snapshot.data!)
                   : const Center(child: CircularProgressIndicator());
             }),
@@ -225,7 +358,7 @@ class MainWindowViewState extends State<MainWindowView>
           child: child!,
         ),
         child: FutureBuilder(
-            future: rootOfLibrary,
+            future: libraryRootPath,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return BooksBrowser(
@@ -274,6 +407,7 @@ class MainWindowViewState extends State<MainWindowView>
                 case 1:
                   showBooksBrowser.value = false;
                   showBookSearch.value = !showBookSearch.value;
+                  bookSearchfocusNode.requestFocus();
                 case 2:
                   showBookSearch.value = false;
                   showBooksBrowser.value = false;

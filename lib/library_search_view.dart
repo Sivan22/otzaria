@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:otzaria/main_window_view.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
-import 'tree_view_selectable.dart';
+import 'book_tree_checklist.dart';
 import 'library_searcher.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(TabWindow) openBookCallback;
+  final String libraryRootPath;
   final LibrarySearcher searcher;
 
   const TextFileSearchScreen({
     super.key,
     required this.openBookCallback,
     required this.searcher,
+    required this.libraryRootPath,
   });
 
   @override
@@ -22,12 +25,18 @@ class TextFileSearchScreen extends StatefulWidget {
 class TextFileSearchScreenState extends State<TextFileSearchScreen>
     with AutomaticKeepAliveClientMixin<TextFileSearchScreen> {
   final showLeftPane = ValueNotifier<bool>(true);
+  final FocusNode focusNode = FocusNode();
 
-  TextField buildSearchField(bool isSearching) {
-    return TextField(
-      controller: widget.searcher.queryController,
-      onSubmitted: (e) => widget.searcher.search(),
-      decoration: buildSearchDecoration(isSearching),
+  Widget buildSearchField(bool isSearching) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(60, 30, 60, 10),
+      child: TextField(
+        focusNode: focusNode,
+        autofocus: true,
+        controller: widget.searcher.queryController,
+        onSubmitted: (e) => widget.searcher.search(),
+        decoration: buildSearchDecoration(isSearching),
+      ),
     );
   }
 
@@ -46,6 +55,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
                       widget.searcher.searchResults.value = [];
                       widget.searcher.isSearching.value = false;
                       widget.searcher.bookIndex = 0;
+                      focusNode.requestFocus();
                     });
                   },
                 ),
@@ -89,9 +99,13 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     return Expanded(
       child: Column(
         children: [
-          const Text("רשימת הספרים לחיפוש:"),
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: const Text("רשימת הספרים לחיפוש:"),
+          ),
           Expanded(
               child: FileTreeViewScreen(
+            libraryRootPath: widget.libraryRootPath,
             checkedItems: widget.searcher.booksToSearch,
           )),
         ],

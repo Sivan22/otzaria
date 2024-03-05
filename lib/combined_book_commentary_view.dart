@@ -1,11 +1,12 @@
 // a widget that takes an html strings array and displays it as a widget
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'links_view.dart';
 import 'dart:io';
-import 'dart:isolate';
+import 'main_window_view.dart';
 
 class CombinedView extends StatefulWidget {
   final List<String> data;
@@ -17,6 +18,7 @@ class CombinedView extends StatefulWidget {
   final ScrollOffsetController scrollOffsetController;
   final ItemPositionsListener itemPositionsListener;
   final String searchQuery;
+  final Function(TabWindow) openBookCallback;
 
   const CombinedView(
       {super.key,
@@ -28,6 +30,7 @@ class CombinedView extends StatefulWidget {
       required this.itemPositionsListener,
       required this.searchQuery,
       required this.links,
+      required this.openBookCallback,
       required this.textSize});
 
   @override
@@ -36,23 +39,21 @@ class CombinedView extends StatefulWidget {
 
 class _CombinedViewState extends State<CombinedView>
     with AutomaticKeepAliveClientMixin<CombinedView> {
-  static const Map<String, FontWeight> fontWeights = {
-    'normal': FontWeight.normal,
-    'bold': FontWeight.bold,
-    'w600': FontWeight.w600,
-  };
+  FocusNode focusNode = FocusNode();
+
   late List<String> combinedData;
+  bool isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return buildKeyboardListener();
+    //return buildSelectionArea();
   }
 
   KeyboardListener buildKeyboardListener() {
     return KeyboardListener(
-        focusNode: FocusNode(),
-        autofocus: true,
+        focusNode: focusNode,
         onKeyEvent: (KeyEvent event) {
           if (event.logicalKey.keyLabel == 'Arrow Down') {
             widget.scrollOffsetController.animateScroll(
@@ -89,8 +90,6 @@ class _CombinedViewState extends State<CombinedView>
                           fontSize: FontSize(widget.textSize),
                           fontFamily:
                               Settings.getValue('key-font-family') ?? 'candara',
-                          fontWeight: fontWeights[
-                              Settings.getValue('key-font-weight') ?? 'normal'],
                           textAlign: TextAlign.justify),
                     }),
                 children: [buildInnerListView(index)])));
@@ -118,25 +117,40 @@ class _CombinedViewState extends State<CombinedView>
                       .compareTo(widget.commentariesToShow.value.indexOf(
                           b.path2.split(Platform.pathSeparator).last)));
 
-                  return thisLinks.isEmpty
-                      ? const SizedBox.shrink()
-                      : SizedBox.fromSize(
-                          size: const Size.fromHeight(250),
-                          child: ListView.builder(
-                            key: PageStorageKey(thisLinks[0].heRef),
-                            itemCount: thisLinks.length,
-                            itemBuilder: (context, smallindex) => ListTile(
-                                title: Text(thisLinks[smallindex].heRef),
-                                subtitle: buildCommentaryContent(
-                                    thisLinks, smallindex)),
-                          ),
-                        );
+                  return buildDynamicContent(thisLinks);
                 }
                 return const Center(
                   child: CircularProgressIndicator(),
                 );
               });
         });
+  }
+
+  Widget buildDynamicContent(List<Link> thisLinks) {
+    return thisLinks.isEmpty
+        ? const SizedBox.shrink()
+        : DynamicContent(
+            fixedHeight: 200.0,
+            listView: ListView.builder(
+              key: PageStorageKey(thisLinks[0].heRef),
+              primary: true,
+              shrinkWrap: true,
+              itemCount: thisLinks.length,
+              itemBuilder: (context, smallindex) => ListTile(
+                title: Text(thisLinks[smallindex].heRef),
+                subtitle: buildCommentaryContent(thisLinks, smallindex),
+                onTap: () {
+                  //open the reference in a new tab
+                  widget.openBookCallback(BookTabWindow(
+                    thisLinks[smallindex]
+                        .path2
+                        .replaceFirst('..\\..\\refs\\', ''),
+                    thisLinks[smallindex].index2 - 1,
+                  ));
+                },
+              ),
+            ),
+          );
   }
 
   FutureBuilder<String> buildCommentaryContent(
@@ -150,8 +164,6 @@ class _CombinedViewState extends State<CombinedView>
               'body': Style(
                   fontSize: FontSize(widget.textSize / 1.2),
                   fontFamily: Settings.getValue('key-font-family') ?? 'candara',
-                  fontWeight: fontWeights[
-                      Settings.getValue('key-font-weight') ?? 'normal'],
                   textAlign: TextAlign.justify),
             });
           }
@@ -178,4 +190,35 @@ Future<String> getContent(String path, int index) async {
   List<String> lines = await File(path).readAsLines();
   String line = lines[index - 1];
   return line;
+}
+
+class DynamicContent extends StatefulWidget {
+  final ListView listView;
+  final double fixedHeight;
+  const DynamicContent(
+      {Key? key, required this.listView, required this.fixedHeight})
+      : super(key: key);
+
+  @override
+  State<DynamicContent> createState() => _DynamicContentState();
+}
+
+class _DynamicContentState extends State<DynamicContent> {
+  bool isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          isExpanded = !isExpanded;
+        });
+      },
+      child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.ease,
+          height: isExpanded ? null : widget.fixedHeight,
+          child: widget.listView),
+    );
+  }
 }

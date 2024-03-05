@@ -7,12 +7,14 @@ class TextBookSearchView extends StatefulWidget {
   final String data;
   final ItemScrollController scrollControler;
   final TextEditingController searchTextController;
+  final FocusNode focusNode;
 
   const TextBookSearchView(
       {Key? key,
       required this.data,
       required this.scrollControler,
-      required this.searchTextController})
+      required this.searchTextController,
+      required this.focusNode})
       : super(key: key);
 
   @override
@@ -21,7 +23,6 @@ class TextBookSearchView extends StatefulWidget {
 
 class TextBookSearchViewState extends State<TextBookSearchView>
     with AutomaticKeepAliveClientMixin<TextBookSearchView> {
-  final focusNode = FocusNode();
   late final TextBookSearcher markdownTextSearcher;
   List<TextSearchResult> searchResults = [];
   late ItemScrollController scrollControler;
@@ -33,6 +34,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     markdownTextSearcher.addListener(_searchResultUpdated);
     widget.searchTextController.addListener(_searchTextUpdated);
     scrollControler = widget.scrollControler;
+    widget.focusNode.requestFocus();
   }
 
   void _searchTextUpdated() {
@@ -53,7 +55,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     super.build(context);
     return Column(children: <Widget>[
       TextField(
-        focusNode: focusNode,
+        focusNode: widget.focusNode,
         controller: widget.searchTextController,
         autofocus: true,
         decoration: InputDecoration(
@@ -65,7 +67,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   widget.searchTextController.clear();
-                  focusNode.requestFocus();
+                  widget.focusNode.requestFocus();
                 },
               ),
             ],
