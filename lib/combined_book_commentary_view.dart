@@ -19,6 +19,7 @@ class CombinedView extends StatefulWidget {
   final ItemPositionsListener itemPositionsListener;
   final String searchQuery;
   final Function(TabWindow) openBookCallback;
+  final String libraryRootPath;
 
   const CombinedView(
       {super.key,
@@ -31,6 +32,7 @@ class CombinedView extends StatefulWidget {
       required this.searchQuery,
       required this.links,
       required this.openBookCallback,
+      required this.libraryRootPath,
       required this.textSize});
 
   @override
@@ -78,52 +80,84 @@ class _CombinedViewState extends State<CombinedView>
             itemScrollController: widget.scrollController,
             scrollOffsetController: widget.scrollOffsetController,
             itemCount: widget.data.length,
-            itemBuilder: (context, index) => ExpansionTile(
-                shape: const Border(),
-                key: PageStorageKey(widget.data[index]),
-                iconColor: Colors.transparent,
-                collapsedIconColor: Colors.transparent,
-                title: Html(
-                    data: highLight(widget.data[index], widget.searchQuery),
-                    style: {
-                      'body': Style(
-                          fontSize: FontSize(widget.textSize),
-                          fontFamily:
-                              Settings.getValue('key-font-family') ?? 'candara',
-                          textAlign: TextAlign.justify),
-                    }),
-                children: [buildInnerListView(index)])));
-  }
+            itemBuilder: (context, index) {
+              return ListenableBuilder(
+                  listenable: widget.commentariesToShow,
+                  builder: (context, child) {
+                    return FutureBuilder(
+                        future: widget.links,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            List<Link> thisLinks = snapshot.data!
+                                .where((link) =>
+                                    link.index1 == index + 1 &&
+                                    (link.connectionType == "commentary" ||
+                                        link.connectionType == "targum") &&
+                                    widget.commentariesToShow.value
+                                        .contains(link.path2.split('\\').last))
+                                .toList();
+                            //sort the links by the heref in order of the commentariesToShow list
+                            thisLinks.sort((a, b) => widget
+                                .commentariesToShow.value
+                                .indexOf(
+                                    a.path2.split(Platform.pathSeparator).last)
+                                .compareTo(widget.commentariesToShow.value
+                                    .indexOf(b.path2
+                                        .split(Platform.pathSeparator)
+                                        .last)));
 
-  ListenableBuilder buildInnerListView(int index) {
-    return ListenableBuilder(
-        listenable: widget.commentariesToShow,
-        builder: (context, child) {
-          return FutureBuilder(
-              future: widget.links,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  List<Link> thisLinks = snapshot.data!
-                      .where((link) =>
-                          link.index1 == index + 1 &&
-                          (link.connectionType == "commentary" ||
-                              link.connectionType == "targum") &&
-                          widget.commentariesToShow.value.contains(
-                              link.path2.split(Platform.pathSeparator).last))
-                      .toList();
-                  //sort the links by the heref in order of the commentariesToShow list
-                  thisLinks.sort((a, b) => widget.commentariesToShow.value
-                      .indexOf(a.path2.split(Platform.pathSeparator).last)
-                      .compareTo(widget.commentariesToShow.value.indexOf(
-                          b.path2.split(Platform.pathSeparator).last)));
-
-                  return buildDynamicContent(thisLinks);
-                }
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              });
-        });
+                            if (thisLinks.isEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(40, 0, 0, 0),
+                                child: Html(
+                                    data: highLight(
+                                        widget.data[index], widget.searchQuery),
+                                    style: {
+                                      'body': Style(
+                                          fontSize: FontSize(widget.textSize),
+                                          fontFamily: Settings.getValue(
+                                                  'key-font-family') ??
+                                              'candara',
+                                          textAlign: TextAlign.justify),
+                                    }),
+                              );
+                            } else {
+                              return ExpansionTile(
+                                  shape: const Border(),
+                                  key: PageStorageKey(widget.data[index]),
+                                  iconColor: Colors.transparent,
+                                  tilePadding: const EdgeInsets.all(0.0),
+                                  collapsedIconColor: Colors.transparent,
+                                  maintainState: true,
+                                  title: Html(
+                                      data: highLight(widget.data[index],
+                                          widget.searchQuery),
+                                      style: {
+                                        'body': Style(
+                                            fontSize: FontSize(widget.textSize),
+                                            fontFamily: Settings.getValue(
+                                                    'key-font-family') ??
+                                                'candara',
+                                            textAlign: TextAlign.justify),
+                                      }),
+                                  children: [buildDynamicContent(thisLinks)]);
+                            }
+                          }
+                          // until links are ready, view plain html without commentaries
+                          return Html(
+                              data: highLight(
+                                  widget.data[index], widget.searchQuery),
+                              style: {
+                                'body': Style(
+                                    fontSize: FontSize(widget.textSize),
+                                    fontFamily:
+                                        Settings.getValue('key-font-family') ??
+                                            'candara',
+                                    textAlign: TextAlign.justify),
+                              });
+                        });
+                  });
+            }));
   }
 
   Widget buildDynamicContent(List<Link> thisLinks) {
@@ -133,6 +167,7 @@ class _CombinedViewState extends State<CombinedView>
             fixedHeight: 200.0,
             listView: ListView.builder(
               key: PageStorageKey(thisLinks[0].heRef),
+              physics: const ClampingScrollPhysics(),
               primary: true,
               shrinkWrap: true,
               itemCount: thisLinks.length,
@@ -142,9 +177,8 @@ class _CombinedViewState extends State<CombinedView>
                 onTap: () {
                   //open the reference in a new tab
                   widget.openBookCallback(BookTabWindow(
-                    thisLinks[smallindex]
-                        .path2
-                        .replaceFirst('..\\..\\refs\\', ''),
+                    '${widget.libraryRootPath}${Platform.pathSeparator}${thisLinks[smallindex].path2}'
+                        .replaceAll('\\', Platform.pathSeparator),
                     thisLinks[smallindex].index2 - 1,
                   ));
                 },
@@ -156,8 +190,8 @@ class _CombinedViewState extends State<CombinedView>
   FutureBuilder<String> buildCommentaryContent(
       List<Link> thisLinks, int smallindex) {
     return FutureBuilder(
-        future: getContent(
-            thisLinks[smallindex].path2, thisLinks[smallindex].index2),
+        future: getContent(widget.libraryRootPath, thisLinks[smallindex].path2,
+            thisLinks[smallindex].index2),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return Html(data: snapshot.data, style: {
@@ -185,8 +219,9 @@ String highLight(String data, String searchQuery) {
   return data;
 }
 
-Future<String> getContent(String path, int index) async {
-  path = path.replaceFirst('..\\..\\refs\\', '');
+Future<String> getContent(
+    String libraryRootPath, String path, int index) async {
+  path = path.replaceAll('\\', Platform.pathSeparator);
   List<String> lines = await File(path).readAsLines();
   String line = lines[index - 1];
   return line;

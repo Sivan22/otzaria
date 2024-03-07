@@ -1,5 +1,7 @@
 // a widget that takes an html strings array, finds all the headings, and displays it in a listview. on pressed the scrollcontroller scrolls to the index of the heading.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -7,11 +9,13 @@ class TocViewer extends StatefulWidget {
   final String data;
   final ItemScrollController scrollController;
   late List<TocEntry> toc;
+  final void Function() closeLeftPaneCallback;
 
   TocViewer({
     super.key,
     required this.data,
     required this.scrollController,
+    required this.closeLeftPaneCallback,
   }) {
     final List<String> data = this.data.split('\n');
     toc = [];
@@ -42,6 +46,9 @@ class _TocViewerState extends State<TocViewer>
               index: widget.toc[index].index,
               duration: const Duration(milliseconds: 250),
               curve: Curves.ease);
+          if (Platform.isAndroid) {
+            widget.closeLeftPaneCallback();
+          }
         },
       ),
     );

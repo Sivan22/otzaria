@@ -64,9 +64,8 @@ Future<List<String>> getCommentariesNames(Future<List<Link>> links) async {
           link.connectionType == 'targum')
       .toList();
 
-  List<String> commentaries = finalLinks
-      .map((link) => link.path2.split(Platform.pathSeparator).last)
-      .toList();
+  List<String> commentaries =
+      finalLinks.map((link) => link.path2.split('\\').last).toList();
 
   commentaries.sort(
     (a, b) => a.compareTo(b),

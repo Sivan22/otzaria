@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:otzaria/main_window_view.dart';
@@ -105,7 +107,8 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
           ),
           Expanded(
               child: FileTreeViewScreen(
-            libraryRootPath: widget.libraryRootPath,
+            libraryRootPath:
+                widget.libraryRootPath + Platform.pathSeparator + 'אוצריא',
             checkedItems: widget.searcher.booksToSearch,
           )),
         ],

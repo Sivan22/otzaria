@@ -164,8 +164,8 @@ def process_all_books_in_folder(json_folder, schemas_folder,output_folder):
                 output_file_name = os.path.join(output_folder, output_path) + get_content_from_json(schema_file_name)['schema']['heTitle'].replace('"','').replace("'",'')
                 process_book(text_file, schema_file_name, output_file_name)
             
-process_all_books_in_folder("..\\..\\Sefaria-Export\\json",
-                            "..\\..\\Sefaria-Export\\schemas",
+process_all_books_in_folder("..\\..\\database_export\\json",
+                            "..\\..\\database_export\\schemas",
                            "..\\אוצריא")
 
 

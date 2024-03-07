@@ -7,14 +7,14 @@ class BookSearchScreen extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;
   final void Function() closeLeftPaneCallback;
   final FocusNode focusNode;
-  final String libraryPath;
+  final String libraryRootPath;
 
   const BookSearchScreen(
       {Key? key,
       required this.openFileCallback,
       required this.closeLeftPaneCallback,
       required this.focusNode,
-      required this.libraryPath})
+      required this.libraryRootPath})
       : super(key: key);
 
   @override
@@ -29,11 +29,12 @@ class BookSearchScreenState extends State<BookSearchScreen> {
   @override
   initState() {
     super.initState();
-    books = Directory(widget.libraryPath)
-        .listSync(recursive: true)
-        .whereType<File>()
-        .map((e) => e.path)
-        .toList();
+    books =
+        Directory(widget.libraryRootPath + Platform.pathSeparator + 'אוצריא')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .map((e) => e.path)
+            .toList();
 
     searchController
         .addListener(() async => _searchBooks(searchController.text));

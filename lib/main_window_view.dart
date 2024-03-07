@@ -129,12 +129,21 @@ class MainWindowViewState extends State<MainWindowView>
     }();
 
     libraryRootPath = () async {
-      // ignore: prefer_if_null_operators
-      return Settings.getValue<String>('key-library-path') != null
-          ? Settings.getValue<String>('key-library-path')
-          : Platform.isAndroid
-              ? await FilePicker.platform.getDirectoryPath()
-              : 'אוצריא';
+      // first try to get the library path from settings
+      if (Settings.getValue<String>('key-library-path') != null) {
+        return Settings.getValue<String>('key-library-path');
+        //if faild, ask the user on android to find the path
+      } else {
+        if (Platform.isAndroid) {
+          String? path = await FilePicker.platform.getDirectoryPath();
+          if (path != null) {
+            Settings.setValue<String>('key-library-path', path);
+            return path;
+          }
+        }
+        //on windows/linux, just use the application path
+        return '.';
+      }
     }();
   }
 
@@ -230,7 +239,8 @@ class MainWindowViewState extends State<MainWindowView>
         },
         child: FocusScope(
           node: mainFocusScopeNode,
-          autofocus: true,
+          //on android don't autofocus, so keyboard won't show
+          autofocus: Platform.isAndroid ? false : true,
           child: Row(children: [
             buildNavigationSideBar(),
             buildBooksBrowser(),
@@ -340,7 +350,7 @@ class MainWindowViewState extends State<MainWindowView>
                       openFileCallback: addTab,
                       closeLeftPaneCallback: closeLeftPanel,
                       focusNode: bookSearchfocusNode,
-                      libraryPath: snapshot.data!)
+                      libraryRootPath: snapshot.data!)
                   : const Center(child: CircularProgressIndicator());
             }),
       ),
@@ -362,7 +372,7 @@ class MainWindowViewState extends State<MainWindowView>
               if (snapshot.hasData) {
                 return BooksBrowser(
                   openFileCallback: addTab,
-                  libraryPath: snapshot.data!,
+                  libraryRootPath: snapshot.data!,
                   closeLeftPaneCallback: closeLeftPanel,
                 );
               }
@@ -497,14 +507,21 @@ class BookTabWindow extends TabWindow {
     if (searchText != '') {
       searchTextController.text = searchText;
     }
-    links = Isolate.run(() async => await getAllLinksFromJson(
-        'links${Platform.pathSeparator}${path.split(Platform.pathSeparator).last}_links.json'));
+    links = Isolate.run(() async {
+      String libraryRootPath = path.split('אוצריא').first;
+      return await getAllLinksFromJson(
+          '$libraryRootPath${Platform.pathSeparator}links${Platform.pathSeparator}${path.split(Platform.pathSeparator).last}_links.json');
+    });
   }
 
   Future<List<Link>> getAllLinksFromJson(String path) async {
-    final jsonString = await File(path).readAsString();
-    final jsonList = jsonDecode(jsonString) as List;
-    return jsonList.map((json) => Link.fromJson(json)).toList();
+    try {
+      final jsonString = await File(path).readAsString();
+      final jsonList = jsonDecode(jsonString) as List;
+      return jsonList.map((json) => Link.fromJson(json)).toList();
+    } on Exception {
+      return [];
+    }
   }
 }
 

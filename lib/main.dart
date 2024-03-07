@@ -5,8 +5,8 @@ import 'settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'cache_provider.dart';
 
-void main() {
-  Settings.init(cacheProvider: HiveCache());
+void main() async {
+  await Settings.init(cacheProvider: HiveCache());
   runApp(const FileExplorerApp());
 }
 

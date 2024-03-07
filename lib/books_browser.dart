@@ -7,12 +7,12 @@ import 'package:otzaria/main_window_view.dart';
 class BooksBrowser extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;
   final void Function() closeLeftPaneCallback;
-  final String libraryPath;
+  final String libraryRootPath;
 
   const BooksBrowser(
       {Key? key,
       required this.openFileCallback,
-      required this.libraryPath,
+      required this.libraryRootPath,
       required this.closeLeftPaneCallback})
       : super(key: key);
 
@@ -29,7 +29,10 @@ class BooksBrowserState extends State<BooksBrowser> {
   void initState() {
     super.initState();
 
-    _fileList = Directory(widget.libraryPath).listSync().toList();
+    _fileList =
+        Directory(widget.libraryRootPath + Platform.pathSeparator + "אוצריא")
+            .listSync()
+            .toList();
 
     selectedIndex = 0;
   }

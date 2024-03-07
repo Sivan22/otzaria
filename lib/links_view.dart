@@ -11,12 +11,16 @@ class LinksViewer extends StatefulWidget {
   final Future<List<Link>> links;
   final Function(TabWindow tab) openTabcallback;
   final ItemPositionsListener itemPositionsListener;
+  final void Function() closeLeftPanelCallback;
+  final String libraryRootPath;
 
   LinksViewer(
       {super.key,
       required this.links,
       required this.openTabcallback,
-      required this.itemPositionsListener});
+      required this.itemPositionsListener,
+      required this.closeLeftPanelCallback,
+      required this.libraryRootPath});
 
   @override
   State<LinksViewer> createState() => _LinksViewerState();
@@ -71,9 +75,10 @@ class _LinksViewerState extends State<LinksViewer>
                 ),
                 onTap: () {
                   widget.openTabcallback(BookTabWindow(
-                      snapshot.data![index].path2
-                          .replaceAll('..\\..\\refs\\', ''),
+                      "${widget.libraryRootPath}${snapshot.data![index].path2}"
+                          .replaceAll('\\', Platform.pathSeparator),
                       snapshot.data![index].index2 - 1));
+                  widget.closeLeftPanelCallback();
                 },
               ),
             );

@@ -68,14 +68,16 @@ def recursive_sections(section_names, text, depth,level=0,ref='',heRef=''):
         :return: None
         """
         if depth == 0 and type(text) == str:
-            globals()['output'].append(f"ref: {ref[:-1].replace(',  ',' ').replace(' ,','')}| heRef: {heRef[:-1]}| text: {text.replace('\n\n','\n')}\n")
+            
+            oneN = '\n'
+            globals()['output'].append(f"ref: {ref[:-1].replace(',  ',' ').replace(' ,','')}| heRef: {heRef[:-1]}| text: {text.replace(oneN,'')}"+('\n'))
             globals()['refs_to_index']+=[{'ref':ref[:-1].replace(',  ',' ').replace(' ,',''),
                                           'heRef':heRef[:-1],
                                         'path':globals()['path'].replace('..\\..\\refs\\',''),
                                         'line_index':len(globals()['output'])}]
-        else:
+        elif type(text) != bool :
             for i, item in enumerate(text, start=1):
-                if item != [] and item != [[]]:
+                if item != [] and item != [[]] and item!= [[[]]]:
                     letter = to_daf(i) if section_names[-depth] == 'דף' else to_gematria(i)
                     
                     if depth>1:                        

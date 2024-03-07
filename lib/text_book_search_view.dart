@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -8,13 +10,15 @@ class TextBookSearchView extends StatefulWidget {
   final ItemScrollController scrollControler;
   final TextEditingController searchTextController;
   final FocusNode focusNode;
+  final void Function() closeLeftPaneCallback;
 
   const TextBookSearchView(
       {Key? key,
       required this.data,
       required this.scrollControler,
       required this.searchTextController,
-      required this.focusNode})
+      required this.focusNode,
+      required this.closeLeftPaneCallback})
       : super(key: key);
 
   @override
@@ -94,6 +98,9 @@ class TextBookSearchViewState extends State<TextBookSearchView>
                           duration: const Duration(milliseconds: 250),
                           curve: Curves.ease,
                         );
+                        if (Platform.isAndroid) {
+                          widget.closeLeftPaneCallback();
+                        }
                       });
                 } else {
                   return const SizedBox.shrink();

@@ -39,6 +39,10 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   late TabController tabController;
 
+  void closeLeftPane() {
+    showLeftPane.value = false;
+  }
+
   @override
   initState() {
     super.initState();
@@ -91,7 +95,8 @@ class _TextBookViewerState extends State<TextBookViewer>
                                 },
                                 child: Focus(
                                   focusNode: FocusNode(),
-                                  autofocus: true,
+                                  //don't autofocus on android, so that the keyboard doesn't appear
+                                  autofocus: Platform.isAndroid ? false : true,
                                   child: CombinedView(
                                     commentariesToShow:
                                         widget.tab.commentariesNames,
@@ -108,6 +113,8 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     textSize: textFontSize,
                                     initalIndex: widget.tab.initalIndex,
                                     openBookCallback: widget.openBookCallback,
+                                    libraryRootPath:
+                                        widget.file.path.split('אוצריא').first,
                                   ),
                                 )))));
               }
@@ -170,6 +177,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                     data: snapshot.data!,
                     scrollControler: widget.tab.scrollController,
                     searchTextController: widget.tab.searchTextController,
+                    closeLeftPaneCallback: closeLeftPane,
                   )
                 : const CircularProgressIndicator());
   }
@@ -182,6 +190,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                 ? TocViewer(
                     data: snapshot.data!,
                     scrollController: widget.tab.scrollController,
+                    closeLeftPaneCallback: closeLeftPane,
                   )
                 : const CircularProgressIndicator());
   }
@@ -191,6 +200,8 @@ class _TextBookViewerState extends State<TextBookViewer>
       links: widget.tab.links,
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: widget.tab.positionsListener,
+      closeLeftPanelCallback: closeLeftPane,
+      libraryRootPath: widget.file.path.split('אוצריא').first,
     );
   }
 
