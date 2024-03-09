@@ -36,6 +36,7 @@ class _TextBookViewerState extends State<TextBookViewer>
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
   final showLeftPane = ValueNotifier<bool>(false);
   final FocusNode textSearchFocusNode = FocusNode();
+  final ValueNotifier<bool> allTilesCollapsed = ValueNotifier<bool>(true);
 
   late TabController tabController;
 
@@ -115,6 +116,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     openBookCallback: widget.openBookCallback,
                                     libraryRootPath:
                                         widget.file.path.split('אוצריא').first,
+                                    allTilesCollapsed: allTilesCollapsed,
                                   ),
                                 )))));
               }
@@ -219,6 +221,14 @@ class _TextBookViewerState extends State<TextBookViewer>
             showLeftPane.value = !showLeftPane.value;
           }),
       actions: [
+        //button to collapse all tiles
+        // IconButton(
+        //     icon: const Icon(Icons.expand_rounded),
+        //     tooltip: 'הצג/הסתר פרשנות',
+        //     onPressed: () => setState(() {
+        //           allTilesCollapsed.value = !allTilesCollapsed.value;
+        //         })),
+
         // button to open the search field
         IconButton(
           onPressed: () {

@@ -1,5 +1,4 @@
 // a widget that takes an html strings array and displays it as a widget
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -20,6 +19,7 @@ class CombinedView extends StatefulWidget {
   final String searchQuery;
   final Function(TabWindow) openBookCallback;
   final String libraryRootPath;
+  final ValueNotifier<bool> allTilesCollapsed;
 
   const CombinedView(
       {super.key,
@@ -33,7 +33,8 @@ class CombinedView extends StatefulWidget {
       required this.links,
       required this.openBookCallback,
       required this.libraryRootPath,
-      required this.textSize});
+      required this.textSize,
+      required this.allTilesCollapsed});
 
   @override
   State<CombinedView> createState() => _CombinedViewState();
@@ -122,25 +123,37 @@ class _CombinedViewState extends State<CombinedView>
                                     }),
                               );
                             } else {
-                              return ExpansionTile(
-                                  shape: const Border(),
-                                  key: PageStorageKey(widget.data[index]),
-                                  iconColor: Colors.transparent,
-                                  tilePadding: const EdgeInsets.all(0.0),
-                                  collapsedIconColor: Colors.transparent,
-                                  maintainState: true,
-                                  title: Html(
-                                      data: highLight(widget.data[index],
-                                          widget.searchQuery),
-                                      style: {
-                                        'body': Style(
-                                            fontSize: FontSize(widget.textSize),
-                                            fontFamily: Settings.getValue(
-                                                    'key-font-family') ??
-                                                'candara',
-                                            textAlign: TextAlign.justify),
-                                      }),
-                                  children: [buildDynamicContent(thisLinks)]);
+                              return ValueListenableBuilder(
+                                  valueListenable: widget.allTilesCollapsed,
+                                  builder: (context, allTilesCollapsed, child) {
+                                    ExpansionTileController controller =
+                                        ExpansionTileController();
+                                    return ExpansionTile(
+                                        shape: const Border(),
+                                        maintainState: true,
+                                        controller: controller,
+                                        initiallyExpanded: !allTilesCollapsed,
+                                        key: PageStorageKey(widget.data[index]),
+                                        iconColor: Colors.transparent,
+                                        tilePadding: const EdgeInsets.all(0.0),
+                                        collapsedIconColor: Colors.transparent,
+                                        title: Html(
+                                            data: highLight(widget.data[index],
+                                                widget.searchQuery),
+                                            style: {
+                                              'body': Style(
+                                                  fontSize:
+                                                      FontSize(widget.textSize),
+                                                  fontFamily: Settings.getValue(
+                                                          'key-font-family') ??
+                                                      'candara',
+                                                  textAlign: TextAlign.justify),
+                                            }),
+                                        children: [
+                                          buildDynamicContent(
+                                              thisLinks, controller)
+                                        ]);
+                                  });
                             }
                           }
                           // until links are ready, view plain html without commentaries
@@ -160,7 +173,8 @@ class _CombinedViewState extends State<CombinedView>
             }));
   }
 
-  Widget buildDynamicContent(List<Link> thisLinks) {
+  Widget buildDynamicContent(
+      List<Link> thisLinks, ExpansionTileController controller) {
     return thisLinks.isEmpty
         ? const SizedBox.shrink()
         : DynamicContent(
@@ -171,17 +185,14 @@ class _CombinedViewState extends State<CombinedView>
               primary: true,
               shrinkWrap: true,
               itemCount: thisLinks.length,
-              itemBuilder: (context, smallindex) => ListTile(
-                title: Text(thisLinks[smallindex].heRef),
-                subtitle: buildCommentaryContent(thisLinks, smallindex),
+              itemBuilder: (context, smallindex) => GestureDetector(
                 onTap: () {
-                  //open the reference in a new tab
-                  widget.openBookCallback(BookTabWindow(
-                    '${widget.libraryRootPath}${Platform.pathSeparator}${thisLinks[smallindex].path2}'
-                        .replaceAll('\\', Platform.pathSeparator),
-                    thisLinks[smallindex].index2 - 1,
-                  ));
+                  controller.collapse();
                 },
+                child: ListTile(
+                  title: Text(thisLinks[smallindex].heRef),
+                  subtitle: buildCommentaryContent(thisLinks, smallindex),
+                ),
               ),
             ),
           );
@@ -194,12 +205,21 @@ class _CombinedViewState extends State<CombinedView>
             thisLinks[smallindex].index2),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return Html(data: snapshot.data, style: {
-              'body': Style(
-                  fontSize: FontSize(widget.textSize / 1.2),
-                  fontFamily: Settings.getValue('key-font-family') ?? 'candara',
-                  textAlign: TextAlign.justify),
-            });
+            return GestureDetector(
+              onDoubleTap: () {
+                widget.openBookCallback(BookTabWindow(
+                  '${widget.libraryRootPath}${Platform.pathSeparator}${thisLinks[smallindex].path2}',
+                  thisLinks[smallindex].index2 - 1,
+                ));
+              },
+              child: Html(data: snapshot.data, style: {
+                'body': Style(
+                    fontSize: FontSize(widget.textSize / 1.2),
+                    fontFamily:
+                        Settings.getValue('key-font-family') ?? 'candara',
+                    textAlign: TextAlign.justify),
+              }),
+            );
           }
           return const Center(
             child: CircularProgressIndicator(),
