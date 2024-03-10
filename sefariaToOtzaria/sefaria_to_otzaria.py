@@ -136,6 +136,8 @@ def process_book(text_file_name, schema_file_name, output_file_name):
     # write the output to the output file in windows-1255 encoding
     with open(output_file_name, 'w', encoding='utf-8') as file:
         file.writelines(output)
+        
+    
 
 
 def process_all_books_in_folder(json_folder, schemas_folder,output_folder):

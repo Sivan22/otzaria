@@ -37,7 +37,6 @@ class _TextBookViewerState extends State<TextBookViewer>
   final showLeftPane = ValueNotifier<bool>(false);
   final FocusNode textSearchFocusNode = FocusNode();
   final ValueNotifier<bool> allTilesCollapsed = ValueNotifier<bool>(true);
-
   late TabController tabController;
 
   void closeLeftPane() {
@@ -78,9 +77,10 @@ class _TextBookViewerState extends State<TextBookViewer>
                         padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
                         child: NotificationListener<UserScrollNotification>(
                             onNotification: (scrollNotification) {
-                              if (searchTextController.text.isEmpty) {
+                              //unless links is shown, close left pane on scrolling
+                              if (tabController.index != 3) {
                                 Future.microtask(() {
-                                  //showLeftPane.value = false;
+                                  showLeftPane.value = false;
                                 });
                               }
 
@@ -147,7 +147,7 @@ class _TextBookViewerState extends State<TextBookViewer>
               ],
               controller: tabController,
               onTap: (value) {
-                if (value == 1) {
+                if (value == 1 && !Platform.isAndroid) {
                   textSearchFocusNode.requestFocus();
                 }
               },
@@ -181,7 +181,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                     searchTextController: widget.tab.searchTextController,
                     closeLeftPaneCallback: closeLeftPane,
                   )
-                : const CircularProgressIndicator());
+                : const Center(child: CircularProgressIndicator()));
   }
 
   FutureBuilder<String> buildTocViewer() {

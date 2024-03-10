@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
+import 'package:universal_io/io.dart';
 
 class TextBookSearchView extends StatefulWidget {
   final String data;
@@ -38,7 +39,9 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     markdownTextSearcher.addListener(_searchResultUpdated);
     widget.searchTextController.addListener(_searchTextUpdated);
     scrollControler = widget.scrollControler;
-    widget.focusNode.requestFocus();
+    if (!Platform.isAndroid) {
+      widget.focusNode.requestFocus();
+    }
   }
 
   void _searchTextUpdated() {

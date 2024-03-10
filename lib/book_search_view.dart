@@ -108,11 +108,8 @@ class BookSearchScreenState extends State<BookSearchScreen> {
                         title: Text(book.split(Platform.pathSeparator).last),
                         onTap: () {
                           widget.openFileCallback(BookTabWindow(book, 0));
-                          //close the sidebar only if it is a narrow screen
-                          if (MediaQuery.of(context).orientation ==
-                              Orientation.portrait) {
-                            widget.closeLeftPaneCallback();
-                          }
+                          //close the sidebar
+                          widget.closeLeftPaneCallback();
                         });
                   },
                 ),

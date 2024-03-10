@@ -72,15 +72,11 @@ class BooksBrowserState extends State<BooksBrowser> {
               onTap: () {
                 if (entity is Directory) {
                   setState(() {
-                    //_fileList = Directory(entity.path).list().toList();
                     directory = entity;
                     _fileList = Directory(entity.path).listSync().toList();
                   });
                 } else if (entity is File) {
-                  if (MediaQuery.of(context).orientation ==
-                      Orientation.portrait) {
-                    widget.closeLeftPaneCallback();
-                  }
+                  widget.closeLeftPaneCallback();
                   widget.openFileCallback(BookTabWindow(entity.path, 0));
                 }
               },
