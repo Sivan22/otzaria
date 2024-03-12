@@ -203,11 +203,14 @@ class _MyPdfPageState extends State<MyPdfPage>
                       PdfViewerScrollThumb(
                         controller: controller,
                         orientation: ScrollbarOrientation.bottom,
-                        thumbSize: const Size(80, 30),
+                        thumbSize: const Size(80, 5),
                         thumbBuilder:
                             (context, thumbSize, pageNumber, controller) =>
                                 Container(
-                          color: Colors.red,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(3),
+                          ),
                         ),
                       ),
                     ],

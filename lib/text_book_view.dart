@@ -116,7 +116,6 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     openBookCallback: widget.openBookCallback,
                                     libraryRootPath:
                                         widget.file.path.split('אוצריא').first,
-                                    allTilesCollapsed: allTilesCollapsed,
                                   ),
                                 )))));
               }
@@ -194,7 +193,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                     scrollController: widget.tab.scrollController,
                     closeLeftPaneCallback: closeLeftPane,
                   )
-                : const CircularProgressIndicator());
+                : const Center(child: CircularProgressIndicator()));
   }
 
   LinksViewer buildLinkView() {

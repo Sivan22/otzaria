@@ -6,6 +6,7 @@ import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'links_view.dart';
 import 'dart:io';
 import 'main_window_view.dart';
+import 'dart:isolate';
 
 class CombinedView extends StatefulWidget {
   final List<String> data;
@@ -19,22 +20,21 @@ class CombinedView extends StatefulWidget {
   final String searchQuery;
   final Function(TabWindow) openBookCallback;
   final String libraryRootPath;
-  final ValueNotifier<bool> allTilesCollapsed;
 
-  const CombinedView(
-      {super.key,
-      required this.data,
-      required this.commentariesToShow,
-      required this.initalIndex,
-      required this.scrollController,
-      required this.scrollOffsetController,
-      required this.itemPositionsListener,
-      required this.searchQuery,
-      required this.links,
-      required this.openBookCallback,
-      required this.libraryRootPath,
-      required this.textSize,
-      required this.allTilesCollapsed});
+  const CombinedView({
+    super.key,
+    required this.data,
+    required this.commentariesToShow,
+    required this.initalIndex,
+    required this.scrollController,
+    required this.scrollOffsetController,
+    required this.itemPositionsListener,
+    required this.searchQuery,
+    required this.links,
+    required this.openBookCallback,
+    required this.libraryRootPath,
+    required this.textSize,
+  });
 
   @override
   State<CombinedView> createState() => _CombinedViewState();
@@ -43,9 +43,6 @@ class CombinedView extends StatefulWidget {
 class _CombinedViewState extends State<CombinedView>
     with AutomaticKeepAliveClientMixin<CombinedView> {
   FocusNode focusNode = FocusNode();
-
-  late List<String> combinedData;
-  bool isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -73,129 +70,81 @@ class _CombinedViewState extends State<CombinedView>
         child: buildSelectionArea());
   }
 
-  SelectionArea buildSelectionArea() {
-    return SelectionArea(
-        child: ScrollablePositionedList.builder(
-            initialScrollIndex: widget.initalIndex,
-            itemPositionsListener: widget.itemPositionsListener,
-            itemScrollController: widget.scrollController,
-            scrollOffsetController: widget.scrollOffsetController,
-            itemCount: widget.data.length,
-            itemBuilder: (context, index) {
-              return ListenableBuilder(
-                  listenable: widget.commentariesToShow,
-                  builder: (context, child) {
-                    return FutureBuilder(
-                        future: widget.links,
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            List<Link> thisLinks = snapshot.data!
-                                .where((link) =>
-                                    link.index1 == index + 1 &&
-                                    (link.connectionType == "commentary" ||
-                                        link.connectionType == "targum") &&
-                                    widget.commentariesToShow.value
-                                        .contains(link.path2.split('\\').last))
-                                .toList();
-                            //sort the links by the heref in order of the commentariesToShow list
-                            thisLinks.sort((a, b) => widget
-                                .commentariesToShow.value
-                                .indexOf(
-                                    a.path2.split(Platform.pathSeparator).last)
-                                .compareTo(widget.commentariesToShow.value
-                                    .indexOf(b.path2
-                                        .split(Platform.pathSeparator)
-                                        .last)));
-
-                            if (thisLinks.isEmpty) {
-                              return Padding(
-                                padding: const EdgeInsets.fromLTRB(40, 0, 0, 0),
-                                child: Html(
-                                    data: highLight(
-                                        widget.data[index], widget.searchQuery),
-                                    style: {
-                                      'body': Style(
-                                          fontSize: FontSize(widget.textSize),
-                                          fontFamily: Settings.getValue(
-                                                  'key-font-family') ??
-                                              'candara',
-                                          textAlign: TextAlign.justify),
-                                    }),
-                              );
-                            } else {
-                              return ValueListenableBuilder(
-                                  valueListenable: widget.allTilesCollapsed,
-                                  builder: (context, allTilesCollapsed, child) {
-                                    ExpansionTileController controller =
-                                        ExpansionTileController();
-                                    return ExpansionTile(
-                                        shape: const Border(),
-                                        maintainState: true,
-                                        controller: controller,
-                                        initiallyExpanded: !allTilesCollapsed,
-                                        key: PageStorageKey(widget.data[index]),
-                                        iconColor: Colors.transparent,
-                                        tilePadding: const EdgeInsets.all(0.0),
-                                        collapsedIconColor: Colors.transparent,
-                                        title: Html(
-                                            data: highLight(widget.data[index],
-                                                widget.searchQuery),
-                                            style: {
-                                              'body': Style(
-                                                  fontSize:
-                                                      FontSize(widget.textSize),
-                                                  fontFamily: Settings.getValue(
-                                                          'key-font-family') ??
-                                                      'candara',
-                                                  textAlign: TextAlign.justify),
-                                            }),
-                                        children: [
-                                          buildDynamicContent(
-                                              thisLinks, controller)
-                                        ]);
-                                  });
-                            }
-                          }
-                          // until links are ready, view plain html without commentaries
-                          return Html(
-                              data: highLight(
-                                  widget.data[index], widget.searchQuery),
-                              style: {
-                                'body': Style(
-                                    fontSize: FontSize(widget.textSize),
-                                    fontFamily:
-                                        Settings.getValue('key-font-family') ??
-                                            'candara',
-                                    textAlign: TextAlign.justify),
-                              });
-                        });
-                  });
-            }));
+  Widget buildSelectionArea() {
+    return ScrollablePositionedList.builder(
+        initialScrollIndex: widget.initalIndex,
+        itemPositionsListener: widget.itemPositionsListener,
+        itemScrollController: widget.scrollController,
+        scrollOffsetController: widget.scrollOffsetController,
+        itemCount: widget.data.length,
+        itemBuilder: (context, index) {
+          ExpansionTileController controller = ExpansionTileController();
+          return ExpansionTile(
+              shape: const Border(),
+              //maintainState: true,
+              controller: controller,
+              key: PageStorageKey(widget.data[index]),
+              iconColor: Colors.transparent,
+              tilePadding: const EdgeInsets.all(0.0),
+              collapsedIconColor: Colors.transparent,
+              title: Html(
+                  data: highLight(widget.data[index], widget.searchQuery),
+                  style: {
+                    'body': Style(
+                        fontSize: FontSize(widget.textSize),
+                        fontFamily:
+                            Settings.getValue('key-font-family') ?? 'candara',
+                        textAlign: TextAlign.justify),
+                  }),
+              children: [buildCommentaryList(index, controller)]);
+        });
   }
 
-  Widget buildDynamicContent(
-      List<Link> thisLinks, ExpansionTileController controller) {
-    return thisLinks.isEmpty
-        ? const SizedBox.shrink()
-        : DynamicContent(
-            fixedHeight: 200.0,
-            listView: ListView.builder(
-              key: PageStorageKey(thisLinks[0].heRef),
-              physics: const ClampingScrollPhysics(),
-              primary: true,
-              shrinkWrap: true,
-              itemCount: thisLinks.length,
-              itemBuilder: (context, smallindex) => GestureDetector(
-                onTap: () {
-                  controller.collapse();
-                },
-                child: ListTile(
-                  title: Text(thisLinks[smallindex].heRef),
-                  subtitle: buildCommentaryContent(thisLinks, smallindex),
-                ),
-              ),
-            ),
+  Widget buildCommentaryList(index, ExpansionTileController controller) {
+    //first get all the links
+    return FutureBuilder(
+        future: widget.links,
+        builder: (context, linksSnapshot) {
+          if (linksSnapshot.hasData) {
+            //then get the links for this index
+            Future<List<Link>> thisLinks = getThisLinks(
+                linksSnapshot.data!, widget.commentariesToShow.value, index);
+            return FutureBuilder(
+                future: thisLinks,
+                builder: (context, thisLinksSnapshot) {
+                  if (thisLinksSnapshot.hasData) {
+                    return thisLinksSnapshot.data!.isEmpty
+                        ? const SizedBox.shrink()
+                        : ListView.builder(
+                            key: PageStorageKey(
+                                thisLinksSnapshot.data![0].heRef),
+                            physics: const ClampingScrollPhysics(),
+                            primary: true,
+                            shrinkWrap: true,
+                            itemCount: thisLinksSnapshot.data!.length,
+                            itemBuilder: (context, smallindex) =>
+                                GestureDetector(
+                              onTap: () {
+                                controller.collapse();
+                              },
+                              child: ListTile(
+                                title: Text(
+                                    thisLinksSnapshot.data![smallindex].heRef),
+                                subtitle: buildCommentaryContent(
+                                    thisLinksSnapshot.data!, smallindex),
+                              ),
+                            ),
+                          );
+                  }
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                });
+          }
+          return const Center(
+            child: CircularProgressIndicator(),
           );
+        });
   }
 
   FutureBuilder<String> buildCommentaryContent(
@@ -239,41 +188,32 @@ String highLight(String data, String searchQuery) {
   return data;
 }
 
+Future<List<Link>> getThisLinks(
+    List<Link> links, List<String> commentariesToShow, int index) async {
+  return Isolate.run(() {
+    List<Link> thisLinks = links
+        .where((link) =>
+            link.index1 == index + 1 &&
+            (link.connectionType == "commentary" ||
+                link.connectionType == "targum") &&
+            commentariesToShow.contains(link.path2.split('\\').last))
+        .toList();
+    //sort the links by the heref in order of the commentariesToShow list
+    thisLinks.sort((a, b) => commentariesToShow
+        .indexOf(a.path2.split(Platform.pathSeparator).last)
+        .compareTo(commentariesToShow
+            .indexOf(b.path2.split(Platform.pathSeparator).last)));
+
+    return thisLinks;
+  });
+}
+
 Future<String> getContent(
     String libraryRootPath, String path, int index) async {
-  path = path.replaceAll('\\', Platform.pathSeparator);
-  List<String> lines = await File(path).readAsLines();
-  String line = lines[index - 1];
-  return line;
-}
-
-class DynamicContent extends StatefulWidget {
-  final ListView listView;
-  final double fixedHeight;
-  const DynamicContent(
-      {Key? key, required this.listView, required this.fixedHeight})
-      : super(key: key);
-
-  @override
-  State<DynamicContent> createState() => _DynamicContentState();
-}
-
-class _DynamicContentState extends State<DynamicContent> {
-  bool isExpanded = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          isExpanded = !isExpanded;
-        });
-      },
-      child: AnimatedContainer(
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.ease,
-          height: isExpanded ? null : widget.fixedHeight,
-          child: widget.listView),
-    );
-  }
+  return Isolate.run(() async {
+    path = path.replaceAll('\\', Platform.pathSeparator);
+    List<String> lines = await File(path).readAsLines();
+    String line = lines[index - 1];
+    return line;
+  });
 }
