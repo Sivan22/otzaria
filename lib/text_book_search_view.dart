@@ -139,7 +139,7 @@ class TextBookSearcher {
     searchProgress = 0.0; // Reset progress for new search
 
     // Perform search asynchronously to avoid blocking the main thread
-    Future(() {
+    Future(() async {
       searchResults.clear();
       var matches = _findAllMatches(_markdownData, query);
       searchResults.addAll(matches);

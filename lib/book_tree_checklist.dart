@@ -44,7 +44,6 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
       initiallyExpanded: level == 0,
       key: Key(directory.path), // Ensure unique keys for ExpansionTiles
       title: Text(path.basename(directory.path)),
-      backgroundColor: level % 2 != 0 ? Colors.grey[200] : Colors.white,
 
       tilePadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),
       leading: SizedBox.fromSize(

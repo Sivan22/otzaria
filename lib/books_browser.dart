@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/main_window_view.dart';
 
 class BooksBrowser extends StatefulWidget {

@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
@@ -107,9 +109,14 @@ class BookSearchScreenState extends State<BookSearchScreen> {
                     return ListTile(
                         title: Text(book.split(Platform.pathSeparator).last),
                         onTap: () {
-                          widget.openFileCallback(BookTabWindow(book, 0));
                           //close the sidebar
                           widget.closeLeftPaneCallback();
+                          Future.microtask(() {
+                            //open the book
+                            widget.openFileCallback(BookTabWindow(book, 0));
+                            //clear textField
+                            searchController.clear();
+                          });
                         });
                   },
                 ),

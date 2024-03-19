@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
+import 'main.dart';
 
 class mySettingsScreen extends StatelessWidget {
+  ValueNotifier<bool> isDarkMode;
+
+  mySettingsScreen(
+    this.isDarkMode,
+  );
+
   @override
   Widget build(BuildContext context) {
     const Map<String, String> shortcuctsList = {
@@ -52,9 +58,20 @@ class mySettingsScreen extends StatelessWidget {
         title: 'הגדרות',
         children: [
           SettingsGroup(
-            title: 'הגדרות גופן',
+            title: 'הגדרות עיצוב',
             titleTextStyle: const TextStyle(fontSize: 25),
             children: <Widget>[
+              SwitchSettingsTile(
+                settingKey: 'key-dark-mode',
+                title: 'מצב כהה',
+                enabledLabel: 'מופעל',
+                disabledLabel: 'לא מופעל',
+                leading: const Icon(Icons.nightlight_round_outlined),
+                onChange: (value) {
+                  isDarkMode.value = value;
+                  isDarkMode.notifyListeners();
+                },
+              ),
               SliderSettingsTile(
                 title: 'גודל גופן התחלתי בספרים',
                 settingKey: 'key-font-size',
@@ -62,7 +79,7 @@ class mySettingsScreen extends StatelessWidget {
                 min: 15,
                 max: 60,
                 step: 1,
-                leading: Icon(Icons.font_download),
+                leading: const Icon(Icons.format_size),
                 decimalPrecision: 0,
                 onChange: (value) {},
               ),
@@ -84,6 +101,7 @@ class mySettingsScreen extends StatelessWidget {
                   'Arial': 'אריאל',
                 },
                 selected: 'FrankRuhlCLM',
+                leading: const Icon(Icons.font_download_outlined),
                 onChange: (value) {},
               ),
             ],
@@ -97,29 +115,34 @@ class mySettingsScreen extends StatelessWidget {
                   settingKey: 'key-shortcut-open-book-browser',
                   title: 'דפדוף בספריה',
                   values: shortcuctsList,
+                  leading: Icon(Icons.folder),
                 ),
                 DropDownSettingsTile<String>(
                   selected: 'ctrl+w',
                   settingKey: 'key-shortcut-close-tab',
                   title: 'סגור ספר נוכחי',
+                  leading: Icon(Icons.cancel),
                   values: shortcuctsList,
                 ),
                 DropDownSettingsTile<String>(
                   selected: 'ctrl+x',
                   settingKey: 'key-shortcut-close-all-tabs',
                   title: 'סגור כל הספרים',
+                  leading: Icon(Icons.close),
                   values: shortcuctsList,
                 ),
                 DropDownSettingsTile<String>(
                   selected: 'ctrl+o',
                   settingKey: 'key-shortcut-open-book-search',
                   title: 'איתור ספר',
+                  leading: Icon(Icons.library_books),
                   values: shortcuctsList,
                 ),
                 DropDownSettingsTile<String>(
                   selected: 'ctrl+q',
                   settingKey: 'key-shortcut-open-new-search',
                   title: 'חלון חיפוש חדש',
+                  leading: Icon(Icons.search),
                   values: shortcuctsList,
                 ),
               ]),

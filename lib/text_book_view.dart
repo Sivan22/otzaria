@@ -11,19 +11,18 @@ import 'commentary_list_view.dart';
 import 'package:flutter/services.dart';
 
 class TextBookViewer extends StatefulWidget {
-  final File file;
-  late Future<String> data;
+  final String path;
   final BookTabWindow tab;
   final Function(TabWindow) openBookCallback;
+  final Future<String> data;
 
-  TextBookViewer({
+  const TextBookViewer({
     Key? key,
-    required this.file,
+    required this.path,
     required this.tab,
     required this.openBookCallback,
-  }) : super(key: key) {
-    data = file.readAsString();
-  }
+    required this.data,
+  }) : super(key: key);
 
   @override
   State<TextBookViewer> createState() => _TextBookViewerState();
@@ -38,10 +37,6 @@ class _TextBookViewerState extends State<TextBookViewer>
   final FocusNode textSearchFocusNode = FocusNode();
   final ValueNotifier<bool> allTilesCollapsed = ValueNotifier<bool>(true);
   late TabController tabController;
-
-  void closeLeftPane() {
-    showLeftPane.value = false;
-  }
 
   @override
   initState() {
@@ -63,7 +58,7 @@ class _TextBookViewerState extends State<TextBookViewer>
   Widget buildHTMLViewer() {
     return Expanded(
       child: FutureBuilder(
-          future: widget.data.then((value) => value),
+          future: widget.data,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
@@ -115,7 +110,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     initalIndex: widget.tab.initalIndex,
                                     openBookCallback: widget.openBookCallback,
                                     libraryRootPath:
-                                        widget.file.path.split('אוצריא').first,
+                                        widget.path.split('אוצריא').first,
                                   ),
                                 )))));
               }
@@ -153,13 +148,13 @@ class _TextBookViewerState extends State<TextBookViewer>
             ),
             Expanded(
               child: TabBarView(
+                controller: tabController,
                 children: [
                   buildTocViewer(),
                   buildSearchView(),
                   buildCommentaryView(),
                   buildLinkView(),
                 ],
-                controller: tabController,
               ),
             ),
           ]),
@@ -170,7 +165,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   FutureBuilder<String> buildSearchView() {
     return FutureBuilder(
-        future: widget.data.then((value) => value),
+        future: widget.data,
         builder: (context, snapshot) =>
             snapshot.connectionState == ConnectionState.done
                 ? TextBookSearchView(
@@ -185,7 +180,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   FutureBuilder<String> buildTocViewer() {
     return FutureBuilder(
-        future: widget.data.then((value) => value),
+        future: widget.data,
         builder: (context, snapshot) =>
             snapshot.connectionState == ConnectionState.done
                 ? TocViewer(
@@ -202,13 +197,13 @@ class _TextBookViewerState extends State<TextBookViewer>
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: widget.tab.positionsListener,
       closeLeftPanelCallback: closeLeftPane,
-      libraryRootPath: widget.file.path.split('אוצריא').first,
+      libraryRootPath: widget.path.split('אוצריא').first,
     );
   }
 
-  CommetaryListView buildCommentaryView() {
-    return CommetaryListView(
-        links: widget.tab.links, commetaries: widget.tab.commentariesNames);
+  CommentaryListView buildCommentaryView() {
+    return CommentaryListView(
+        links: widget.tab.links, commentaries: widget.tab.commentariesNames);
   }
 
   AppBar buildAppBar() {
@@ -307,6 +302,10 @@ class _TextBookViewerState extends State<TextBookViewer>
             }),
       ],
     );
+  }
+
+  void closeLeftPane() {
+    showLeftPane.value = false;
   }
 
   @override

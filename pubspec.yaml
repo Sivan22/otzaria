@@ -53,6 +53,7 @@ dependencies:
   universal_io: ^2.2.2
   permission_handler: ^11.3.0
   flutter_launcher_icons: "^0.13.1"
+  provider: ^6.1.2
 
   #flutter_context_menu: ^0.1.3
 

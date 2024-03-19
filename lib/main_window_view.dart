@@ -18,9 +18,14 @@ import 'links_view.dart';
 import 'dart:isolate';
 
 class MainWindowView extends StatefulWidget {
+  final ValueNotifier<bool> isDarkMode;
+
   const MainWindowView({
+    required this.isDarkMode,
     Key? key,
-  }) : super(key: key);
+  }) : super(
+          key: key,
+        );
 
   @override
   MainWindowViewState createState() => MainWindowViewState();
@@ -284,9 +289,10 @@ class MainWindowViewState extends State<MainWindowView>
               );
             } else {
               return TextBookViewer(
-                file: File(tab.path),
+                path: tab.path,
                 tab: tab,
                 openBookCallback: addTab,
+                data: tab.data,
               );
             }
           }
@@ -473,7 +479,9 @@ class MainWindowViewState extends State<MainWindowView>
 
   void _openSettingsScreen() async {
     await Navigator.push(
-        context, MaterialPageRoute(builder: (context) => mySettingsScreen()));
+        context,
+        MaterialPageRoute(
+            builder: (context) => mySettingsScreen(widget.isDarkMode)));
     setState(() {});
   }
 
@@ -497,6 +505,7 @@ class BookTabWindow extends TabWindow {
   final String path;
   ValueNotifier<List<String>> commentariesNames = ValueNotifier([]);
   late Future<List<Link>> links;
+  late Future<String> data;
   int initalIndex;
   ItemScrollController scrollController = ItemScrollController();
   ScrollOffsetController scrollOffsetController = ScrollOffsetController();
@@ -512,6 +521,7 @@ class BookTabWindow extends TabWindow {
       return await getAllLinksFromJson(
           '$libraryRootPath${Platform.pathSeparator}links${Platform.pathSeparator}${path.split(Platform.pathSeparator).last}_links.json');
     });
+    data = getBookData(path);
   }
 
   Future<List<Link>> getAllLinksFromJson(String path) async {
@@ -522,6 +532,14 @@ class BookTabWindow extends TabWindow {
     } on Exception {
       return [];
     }
+  }
+
+  Future<String> getBookData(String path) {
+    return Isolate.run(() async {
+      File file = File(path);
+      String data = await file.readAsString();
+      return data;
+    });
   }
 }
 

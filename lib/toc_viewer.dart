@@ -20,7 +20,7 @@ class TocViewer extends StatefulWidget {
 
 class _TocViewerState extends State<TocViewer>
     with AutomaticKeepAliveClientMixin<TocViewer> {
-  late List<TocEntry> _toc;
+  late Future<List<TocEntry>> _toc;
 
   @override
   void initState() {
@@ -28,7 +28,7 @@ class _TocViewerState extends State<TocViewer>
     _toc = _parseToc(widget.data);
   }
 
-  List<TocEntry> _parseToc(String data) {
+  Future<List<TocEntry>> _parseToc(String data) async {
     List<String> lines = data.split('\n');
     List<TocEntry> toc = [];
     Map<int, TocEntry> parents = {}; // Keep track of parent nodes
@@ -68,9 +68,16 @@ class _TocViewerState extends State<TocViewer>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return ListView(
-      children: _buildTree(_toc),
-    );
+    return FutureBuilder(
+        future: _toc,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView(
+              children: _buildTree(snapshot.data!),
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
+        });
   }
 
   List<Widget> _buildTree(List<TocEntry> entries) {
@@ -79,26 +86,33 @@ class _TocViewerState extends State<TocViewer>
       if (entry.children.isEmpty) {
         // Leaf node (no children)
         widgets.add(
-          ListTile(
-            title: Text(entry.text),
-            onTap: () {
-              widget.scrollController.scrollTo(
-                index: entry.index,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.ease,
-              );
-              if (Platform.isAndroid) {
-                widget.closeLeftPaneCallback();
-              }
-            },
+          Padding(
+            padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+            child: ListTile(
+              title: Text(entry.text),
+              onTap: () {
+                widget.scrollController.scrollTo(
+                  index: entry.index,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.ease,
+                );
+                if (Platform.isAndroid) {
+                  widget.closeLeftPaneCallback();
+                }
+              },
+            ),
           ),
         );
       } else {
         // Parent node with children
         widgets.add(
-          ExpansionTile(
-            title: Text(entry.text),
-            children: _buildTree(entry.children), // Recursively build children
+          Padding(
+            padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+            child: ExpansionTile(
+              title: Text(entry.text),
+              children:
+                  _buildTree(entry.children), // Recursively build children
+            ),
           ),
         );
       }

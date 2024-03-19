@@ -195,7 +195,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
             searchText: result.query,
             style: TextStyle(
               fontFamily: Settings.getValue<String>('key-font-family'),
-              color: Colors.black,
               fontSize: 20.0,
             ),
             textAlign: TextAlign.justify,
