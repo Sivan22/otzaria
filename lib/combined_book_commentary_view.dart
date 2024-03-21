@@ -212,8 +212,11 @@ class _CommentaryContentState extends State<CommentaryContent>
           if (snapshot.hasData) {
             return GestureDetector(
               onDoubleTap: () {
+                String path = widget.widget.libraryRootPath +
+                    widget.thisLinks[widget.smallindex].path2
+                        .replaceAll('\\', Platform.pathSeparator);
                 widget.widget.openBookCallback(BookTabWindow(
-                  '${widget.widget.libraryRootPath}${Platform.pathSeparator}${widget.thisLinks[widget.smallindex].path2}',
+                  path,
                   widget.thisLinks[widget.smallindex].index2 - 1,
                 ));
               },
@@ -267,7 +270,7 @@ Future<List<Link>> getThisLinks(
 Future<String> getContent(
     String libraryRootPath, String path, int index) async {
   return Isolate.run(() async {
-    path = path.replaceAll('\\', Platform.pathSeparator);
+    path = libraryRootPath + path.replaceAll('\\', Platform.pathSeparator);
     List<String> lines = await File(path).readAsLines();
     String line = lines[index - 1];
     return line;

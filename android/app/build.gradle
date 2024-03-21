@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.example.otzaria"
+    namespace "com.sinav22.otzaria"
     compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 

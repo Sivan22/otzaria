@@ -35,7 +35,7 @@ class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin {
   int selectedIndex = 0;
   late List<TabWindow> tabs =
-      Platform.isAndroid ? [] : [BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)];
+      Platform.isWindows ? [BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)] : [];
   late TabController tabController = TabController(
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
@@ -346,6 +346,7 @@ class MainWindowViewState extends State<MainWindowView>
         valueListenable: showBookSearch,
         builder: (context, showBookSearch, child) => SizedBox(
           width: showBookSearch ? 300 : 0,
+          height: showBookSearch ? null : 0,
           child: child!,
         ),
         child: FutureBuilder(
@@ -370,6 +371,7 @@ class MainWindowViewState extends State<MainWindowView>
         valueListenable: showBooksBrowser,
         builder: (context, showBooksBrowser, child) => SizedBox(
           width: showBooksBrowser ? 300 : 0,
+          height: showBooksBrowser ? null : 0,
           child: child!,
         ),
         child: FutureBuilder(

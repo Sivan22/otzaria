@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:provider/provider.dart';
-import 'main.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 
 class mySettingsScreen extends StatelessWidget {
   ValueNotifier<bool> isDarkMode;
@@ -106,45 +106,62 @@ class mySettingsScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SettingsGroup(
-              title: "קיצורי מקשים",
+          Platform.isAndroid
+              ? const SizedBox.shrink()
+              : const SettingsGroup(
+                  title: "קיצורי מקשים",
+                  titleTextStyle: TextStyle(fontSize: 25),
+                  children: [
+                      DropDownSettingsTile<String>(
+                        selected: 'ctrl+b',
+                        settingKey: 'key-shortcut-open-book-browser',
+                        title: 'דפדוף בספריה',
+                        values: shortcuctsList,
+                        leading: Icon(Icons.folder),
+                      ),
+                      DropDownSettingsTile<String>(
+                        selected: 'ctrl+w',
+                        settingKey: 'key-shortcut-close-tab',
+                        title: 'סגור ספר נוכחי',
+                        leading: Icon(Icons.cancel),
+                        values: shortcuctsList,
+                      ),
+                      DropDownSettingsTile<String>(
+                        selected: 'ctrl+x',
+                        settingKey: 'key-shortcut-close-all-tabs',
+                        title: 'סגור כל הספרים',
+                        leading: Icon(Icons.close),
+                        values: shortcuctsList,
+                      ),
+                      DropDownSettingsTile<String>(
+                        selected: 'ctrl+o',
+                        settingKey: 'key-shortcut-open-book-search',
+                        title: 'איתור ספר',
+                        leading: Icon(Icons.library_books),
+                        values: shortcuctsList,
+                      ),
+                      DropDownSettingsTile<String>(
+                        selected: 'ctrl+q',
+                        settingKey: 'key-shortcut-open-new-search',
+                        title: 'חלון חיפוש חדש',
+                        leading: Icon(Icons.search),
+                        values: shortcuctsList,
+                      ),
+                    ]),
+          SettingsGroup(
+              title: 'הגדרות ממשק',
               titleTextStyle: const TextStyle(fontSize: 25),
               children: [
-                DropDownSettingsTile<String>(
-                  selected: 'ctrl+b',
-                  settingKey: 'key-shortcut-open-book-browser',
-                  title: 'דפדוף בספריה',
-                  values: shortcuctsList,
-                  leading: Icon(Icons.folder),
-                ),
-                DropDownSettingsTile<String>(
-                  selected: 'ctrl+w',
-                  settingKey: 'key-shortcut-close-tab',
-                  title: 'סגור ספר נוכחי',
-                  leading: Icon(Icons.cancel),
-                  values: shortcuctsList,
-                ),
-                DropDownSettingsTile<String>(
-                  selected: 'ctrl+x',
-                  settingKey: 'key-shortcut-close-all-tabs',
-                  title: 'סגור כל הספרים',
-                  leading: Icon(Icons.close),
-                  values: shortcuctsList,
-                ),
-                DropDownSettingsTile<String>(
-                  selected: 'ctrl+o',
-                  settingKey: 'key-shortcut-open-book-search',
-                  title: 'איתור ספר',
-                  leading: Icon(Icons.library_books),
-                  values: shortcuctsList,
-                ),
-                DropDownSettingsTile<String>(
-                  selected: 'ctrl+q',
-                  settingKey: 'key-shortcut-open-new-search',
-                  title: 'חלון חיפוש חדש',
-                  leading: Icon(Icons.search),
-                  values: shortcuctsList,
-                ),
+                Platform.isAndroid
+                    ? const SizedBox.shrink()
+                    : const SwitchSettingsTile(
+                        settingKey: 'key-close-left-pane-on-scroll',
+                        title: 'סגירת תפריט הצד בעת גלילה',
+                        enabledLabel:
+                            'עם תחילת הגלילה, ייסגר תפריט הצד אוטומטית',
+                        disabledLabel: 'תפריט הצד לא ייסגר אוטומטית',
+                        leading: Icon(Icons.arrow_back),
+                      ),
               ]),
           SettingsGroup(
               title: 'כללי',

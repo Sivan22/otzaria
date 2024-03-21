@@ -1,9 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:otzaria/main_window_view.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import 'library_searcher.dart';
@@ -193,10 +190,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
           subtitle: SearchHighlightText(
             result.snippet,
             searchText: result.query,
-            style: TextStyle(
-              fontFamily: Settings.getValue<String>('key-font-family'),
-              fontSize: 20.0,
-            ),
             textAlign: TextAlign.justify,
           ),
           onTap: () {

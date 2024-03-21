@@ -73,7 +73,10 @@ class _TextBookViewerState extends State<TextBookViewer>
                         child: NotificationListener<UserScrollNotification>(
                             onNotification: (scrollNotification) {
                               //unless links is shown, close left pane on scrolling
-                              if (tabController.index != 3) {
+                              if (tabController.index != 3 &&
+                                  (Settings.getValue<bool>(
+                                          'key-close-left-pane-on-scroll') ??
+                                      true)) {
                                 Future.microtask(() {
                                   showLeftPane.value = false;
                                 });
