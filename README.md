@@ -19,4 +19,6 @@ An open source project to bring the sefaria library to PC. The program is writte
 
 ## Credits
 
+vy
+
 ![alt text](PBS.png)

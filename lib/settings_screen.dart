@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/services.dart';
 import 'dart:io';
 
-class mySettingsScreen extends StatelessWidget {
-  ValueNotifier<bool> isDarkMode;
+class MySettingsScreen extends StatelessWidget {
+  final ValueNotifier<bool> isDarkMode;
+  final ValueNotifier<Color> seedColor;
 
-  mySettingsScreen(
-    this.isDarkMode,
-  );
+  const MySettingsScreen({
+    Key? key,
+    required this.isDarkMode,
+    required this.seedColor,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -69,19 +71,24 @@ class mySettingsScreen extends StatelessWidget {
                 leading: const Icon(Icons.nightlight_round_outlined),
                 onChange: (value) {
                   isDarkMode.value = value;
-                  isDarkMode.notifyListeners();
                 },
               ),
-              SliderSettingsTile(
+              ColorPickerSettingsTile(
+                  title: 'צבע בסיס',
+                  leading: const Icon(Icons.color_lens),
+                  settingKey: 'key-swatch-color',
+                  onChange: (p0) {
+                    seedColor.value = p0;
+                  }),
+              const SliderSettingsTile(
                 title: 'גודל גופן התחלתי בספרים',
                 settingKey: 'key-font-size',
                 defaultValue: 30,
                 min: 15,
                 max: 60,
                 step: 1,
-                leading: const Icon(Icons.format_size),
+                leading: Icon(Icons.format_size),
                 decimalPrecision: 0,
-                onChange: (value) {},
               ),
               DropDownSettingsTile<String>(
                 title: 'גופן',

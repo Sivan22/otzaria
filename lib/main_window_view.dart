@@ -19,9 +19,11 @@ import 'dart:isolate';
 
 class MainWindowView extends StatefulWidget {
   final ValueNotifier<bool> isDarkMode;
+  final ValueNotifier<Color> seedColor;
 
   const MainWindowView({
     required this.isDarkMode,
+    required this.seedColor,
     Key? key,
   }) : super(
           key: key,
@@ -483,7 +485,8 @@ class MainWindowViewState extends State<MainWindowView>
     await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => mySettingsScreen(widget.isDarkMode)));
+            builder: (context) => MySettingsScreen(
+                isDarkMode: widget.isDarkMode, seedColor: widget.seedColor)));
     setState(() {});
   }
 
