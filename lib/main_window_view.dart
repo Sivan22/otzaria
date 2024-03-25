@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:otzaria/bookmark_view.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -38,9 +39,12 @@ class MainWindowViewState extends State<MainWindowView>
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
   final showBookSearch = ValueNotifier<bool>(false);
+  final showBookmarksView = ValueNotifier<bool>(false);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
   late Future<String?> libraryRootPath;
+  final List<Bookmark> bookmarks = [];
+
   final Map<String, LogicalKeySet> shortcuts = {
     'ctrl+a':
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyA),
@@ -248,6 +252,7 @@ class MainWindowViewState extends State<MainWindowView>
             buildNavigationSideBar(),
             buildBooksBrowser(),
             buildBookSearchScreen(),
+            buildBookmarksView(),
             buildTabBarAndTabView()
           ]),
         ));
@@ -291,6 +296,7 @@ class MainWindowViewState extends State<MainWindowView>
                 tab: tab,
                 openBookCallback: addTab,
                 data: tab.data,
+                bookmarks: bookmarks,
               );
             }
           }
@@ -388,6 +394,23 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
+  AnimatedSize buildBookmarksView() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      child: ValueListenableBuilder(
+          valueListenable: showBookmarksView,
+          builder: (context, showBookmarksView, child) => SizedBox(
+                width: showBookmarksView ? 300 : 0,
+                height: showBookmarksView ? null : 0,
+                child: child!,
+              ),
+          child: BookmarkView(
+            addTabCallBack: addTab,
+            bookmarks: bookmarks,
+          )),
+    );
+  }
+
   SizedBox buildNavigationSideBar() {
     return SizedBox.fromSize(
       size: const Size.fromWidth(80),
@@ -401,6 +424,10 @@ class MainWindowViewState extends State<MainWindowView>
             NavigationRailDestination(
               icon: Icon(Icons.library_books),
               label: Text('איתור ספר'),
+            ),
+            NavigationRailDestination(
+              icon: Icon(Icons.bookmark),
+              label: Text('סימניות'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.search),
@@ -418,16 +445,22 @@ class MainWindowViewState extends State<MainWindowView>
               switch (index) {
                 case 0:
                   showBookSearch.value = false;
+                  showBookmarksView.value = false;
                   showBooksBrowser.value = !showBooksBrowser.value;
                 case 1:
                   showBooksBrowser.value = false;
+                  showBookmarksView.value = false;
                   showBookSearch.value = !showBookSearch.value;
                   bookSearchfocusNode.requestFocus();
                 case 2:
                   showBookSearch.value = false;
                   showBooksBrowser.value = false;
-                  _openSearchScreen();
+                  _openBookmarksScreen();
                 case 3:
+                  showBookSearch.value = false;
+                  showBooksBrowser.value = false;
+                  _openSearchScreen();
+                case 4:
                   _openSettingsScreen();
               }
             });
@@ -488,6 +521,10 @@ class MainWindowViewState extends State<MainWindowView>
 
   void _openSearchScreen() async {
     addTab(SearchingTabWindow('חיפוש'));
+  }
+
+  void _openBookmarksScreen() {
+    showBookmarksView.value = !showBookmarksView.value;
   }
 
   void closeLeftPanel() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:otzaria/bookmark_view.dart';
 import 'package:otzaria/combined_book_commentary_view.dart';
 import 'tab_window.dart';
 import 'package:otzaria/text_book_search_view.dart';
@@ -15,12 +16,14 @@ class TextBookViewer extends StatefulWidget {
   final BookTabWindow tab;
   final Function(TabWindow) openBookCallback;
   final Future<String> data;
+  final List<Bookmark> bookmarks;
 
   const TextBookViewer({
     Key? key,
     required this.path,
     required this.tab,
     required this.openBookCallback,
+    required this.bookmarks,
     required this.data,
   }) : super(key: key);
 
@@ -210,10 +213,13 @@ class _TextBookViewerState extends State<TextBookViewer>
           listenable: widget.tab.positionsListener.itemPositions,
           builder: (context, _) {
             return FutureBuilder(
-              future: refFromIndex(
-                  widget.tab.positionsListener.itemPositions.value.first.index),
-              builder: (context, snapshot) =>
-                  snapshot.hasData ? Text(snapshot.data!) : Text("אין כותרת"),
+              future: refFromIndex(widget
+                      .tab.positionsListener.itemPositions.value.isNotEmpty
+                  ? widget.tab.positionsListener.itemPositions.value.first.index
+                  : 0),
+              builder: (context, snapshot) => snapshot.hasData
+                  ? Text(snapshot.data!)
+                  : const SizedBox.shrink(),
             );
           }),
       leading: IconButton(
@@ -223,15 +229,31 @@ class _TextBookViewerState extends State<TextBookViewer>
             showLeftPane.value = !showLeftPane.value;
           }),
       actions: [
-        //button to collapse all tiles
-        // IconButton(
-        //     icon: const Icon(Icons.expand_rounded),
-        //     tooltip: 'הצג/הסתר פרשנות',
-        //     onPressed: () => setState(() {
-        //           allTilesCollapsed.value = !allTilesCollapsed.value;
-        //         })),
+        //button to add a bookmark
+        IconButton(
+          onPressed: () async {
+            int index =
+                widget.tab.positionsListener.itemPositions.value.first.index;
+            widget.bookmarks.add(Bookmark(
+              ref: widget.tab.title + await refFromIndex(index),
+              path: widget.path,
+              index: index,
+            ));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('הסימניה נוספה בהצלחה'),
+                ),
+              );
+            }
+          },
+          icon: const Icon(
+            Icons.bookmark_add,
+          ),
+          tooltip: 'הוספת סימניה',
+        ),
 
-        // button to open the search field
+        // button to search
         IconButton(
           onPressed: () {
             showLeftPane.value = true;
@@ -249,7 +271,7 @@ class _TextBookViewerState extends State<TextBookViewer>
             icon: const Icon(
               Icons.zoom_in,
             ),
-            tooltip: 'הגדל טקסט',
+            tooltip: 'הגדלת טקסט',
             onPressed: () => setState(() {
                   textFontSize = min(50.0, textFontSize + 3);
                 })),
@@ -257,7 +279,7 @@ class _TextBookViewerState extends State<TextBookViewer>
           icon: const Icon(
             Icons.zoom_out,
           ),
-          tooltip: 'הקטן טקסט',
+          tooltip: 'הקטנת טקסט',
           onPressed: () => setState(() {
             textFontSize = max(15.0, textFontSize - 3);
           }),
