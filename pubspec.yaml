@@ -54,6 +54,7 @@ dependencies:
   permission_handler: ^11.3.0
   flutter_launcher_icons: "^0.13.1"
   provider: ^6.1.2
+  docx_to_text: ^1.0.1
 
   #flutter_context_menu: ^0.1.3
 

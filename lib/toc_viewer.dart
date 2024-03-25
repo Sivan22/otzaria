@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'tab_window.dart';
 
 class TocViewer extends StatefulWidget {
-  final String data;
+  final Future<List<TocEntry>> toc;
   final ItemScrollController scrollController;
   final void Function() closeLeftPaneCallback;
 
   TocViewer({
     super.key,
-    required this.data,
+    required this.toc,
     required this.scrollController,
     required this.closeLeftPaneCallback,
   });
@@ -20,56 +21,11 @@ class TocViewer extends StatefulWidget {
 
 class _TocViewerState extends State<TocViewer>
     with AutomaticKeepAliveClientMixin<TocViewer> {
-  late Future<List<TocEntry>> _toc;
-
-  @override
-  void initState() {
-    super.initState();
-    _toc = _parseToc(widget.data);
-  }
-
-  Future<List<TocEntry>> _parseToc(String data) async {
-    List<String> lines = data.split('\n');
-    List<TocEntry> toc = [];
-    Map<int, TocEntry> parents = {}; // Keep track of parent nodes
-
-    for (int i = 0; i < lines.length; i++) {
-      final String line = lines[i];
-      if (line.startsWith('<h')) {
-        final int level =
-            int.parse(line[2]); // Extract heading level (h1, h2, etc.)
-        final String text = stripHtmlIfNeeded(line);
-
-        // Create the TocEntry
-        TocEntry entry = TocEntry(text: text, index: i, level: level);
-
-        if (level == 1) {
-          // If it's an h1, add it as a root node
-          toc.add(entry);
-          parents[level] = entry;
-        } else {
-          // Find the parent node based on the previous level
-          final TocEntry? parent = parents[level - 1];
-          if (parent != null) {
-            parent.children.add(entry);
-            parents[level] = entry;
-          } else {
-            // Handle cases where heading levels might be skipped
-            print("Warning: Found h$level without a parent h${level - 1}");
-            toc.add(entry);
-          }
-        }
-      }
-    }
-
-    return toc;
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return FutureBuilder(
-        future: _toc,
+        future: widget.toc,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return ListView(
@@ -122,21 +78,4 @@ class _TocViewerState extends State<TocViewer>
 
   @override
   bool get wantKeepAlive => true;
-}
-
-class TocEntry {
-  final String text;
-  final int index;
-  final int level;
-  List<TocEntry> children = [];
-
-  TocEntry({
-    required this.text,
-    required this.index,
-    this.level = 1,
-  });
-}
-
-String stripHtmlIfNeeded(String text) {
-  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
 }

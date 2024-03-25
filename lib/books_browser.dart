@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
-import 'package:otzaria/main_window_view.dart';
+import 'tab_window.dart';
 
 class BooksBrowser extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;

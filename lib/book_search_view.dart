@@ -3,7 +3,7 @@ import 'dart:isolate';
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
-import 'package:otzaria/main_window_view.dart';
+import 'tab_window.dart';
 
 class BookSearchScreen extends StatefulWidget {
   final void Function(TabWindow tab) openFileCallback;

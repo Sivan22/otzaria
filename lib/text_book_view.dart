@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/combined_book_commentary_view.dart';
-import 'package:otzaria/main_window_view.dart';
+import 'tab_window.dart';
 import 'package:otzaria/text_book_search_view.dart';
 import 'dart:io';
 import 'package:otzaria/toc_viewer.dart';
@@ -181,17 +181,12 @@ class _TextBookViewerState extends State<TextBookViewer>
                 : const Center(child: CircularProgressIndicator()));
   }
 
-  FutureBuilder<String> buildTocViewer() {
-    return FutureBuilder(
-        future: widget.data,
-        builder: (context, snapshot) =>
-            snapshot.connectionState == ConnectionState.done
-                ? TocViewer(
-                    data: snapshot.data!,
-                    scrollController: widget.tab.scrollController,
-                    closeLeftPaneCallback: closeLeftPane,
-                  )
-                : const Center(child: CircularProgressIndicator()));
+  Widget buildTocViewer() {
+    return TocViewer(
+      toc: widget.tab.toc,
+      scrollController: widget.tab.scrollController,
+      closeLeftPaneCallback: closeLeftPane,
+    );
   }
 
   LinksViewer buildLinkView() {
@@ -211,6 +206,16 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   AppBar buildAppBar() {
     return AppBar(
+      title: ListenableBuilder(
+          listenable: widget.tab.positionsListener.itemPositions,
+          builder: (context, _) {
+            return FutureBuilder(
+              future: refFromIndex(
+                  widget.tab.positionsListener.itemPositions.value.first.index),
+              builder: (context, snapshot) =>
+                  snapshot.hasData ? Text(snapshot.data!) : Text("אין כותרת"),
+            );
+          }),
       leading: IconButton(
           icon: const Icon(Icons.menu),
           tooltip: "ניווט וחיפוש",
@@ -309,6 +314,30 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   void closeLeftPane() {
     showLeftPane.value = false;
+  }
+
+  Future<String> refFromIndex(int index) async {
+    List<TocEntry> toc = await widget.tab.toc;
+    List<String> texts = [];
+
+    void searchToc(List<TocEntry> entries, int index) {
+      for (final TocEntry entry in entries) {
+        if (entry.index > index) {
+          return;
+        }
+        if (entry.level > texts.length) {
+          texts.add(entry.text);
+        } else {
+          texts[entry.level - 1] = entry.text;
+        }
+
+        searchToc(entry.children, index);
+      }
+    }
+
+    searchToc(toc, index);
+
+    return texts.join(',');
   }
 
   @override

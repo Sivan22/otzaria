@@ -5,7 +5,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'links_view.dart';
 import 'dart:io';
-import 'main_window_view.dart';
+import 'tab_window.dart';
 import 'dart:isolate';
 
 class CombinedView extends StatefulWidget {

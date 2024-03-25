@@ -2,20 +2,16 @@ import 'package:flutter/services.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:math';
 import 'pdf_page.dart';
 import 'text_book_view.dart';
 import 'books_browser.dart';
 import 'book_search_view.dart';
-import 'library_searcher.dart';
 import 'library_search_view.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:convert';
-import 'links_view.dart';
-import 'dart:isolate';
+import 'tab_window.dart';
 
 class MainWindowView extends StatefulWidget {
   final ValueNotifier<bool> isDarkMode;
@@ -498,65 +494,4 @@ class MainWindowViewState extends State<MainWindowView>
     showBooksBrowser.value = false;
     showBookSearch.value = false;
   }
-}
-
-class TabWindow {
-  String title;
-
-  TabWindow(this.title);
-}
-
-class BookTabWindow extends TabWindow {
-  final String path;
-  ValueNotifier<List<String>> commentariesNames = ValueNotifier([]);
-  late Future<List<Link>> links;
-  late Future<String> data;
-  int initalIndex;
-  ItemScrollController scrollController = ItemScrollController();
-  ScrollOffsetController scrollOffsetController = ScrollOffsetController();
-  TextEditingController searchTextController = TextEditingController();
-  ItemPositionsListener positionsListener = ItemPositionsListener.create();
-  BookTabWindow(this.path, this.initalIndex, {String searchText = ''})
-      : super(path.split(Platform.pathSeparator).last) {
-    if (searchText != '') {
-      searchTextController.text = searchText;
-    }
-    links = Isolate.run(() async {
-      String libraryRootPath = path.split('אוצריא').first;
-      return await getAllLinksFromJson(
-          '$libraryRootPath${Platform.pathSeparator}links${Platform.pathSeparator}${path.split(Platform.pathSeparator).last}_links.json');
-    });
-    data = getBookData(path);
-  }
-
-  Future<List<Link>> getAllLinksFromJson(String path) async {
-    try {
-      final jsonString = await File(path).readAsString();
-      final jsonList = jsonDecode(jsonString) as List;
-      return jsonList.map((json) => Link.fromJson(json)).toList();
-    } on Exception {
-      return [];
-    }
-  }
-
-  Future<String> getBookData(String path) {
-    return Isolate.run(() async {
-      File file = File(path);
-      String data = await file.readAsString();
-      return data;
-    });
-  }
-}
-
-class SearchingTabWindow extends TabWindow {
-  LibrarySearcher searcher = LibrarySearcher(
-    [],
-    TextEditingController(),
-    ValueNotifier([]),
-  );
-  final ItemScrollController scrollController = ItemScrollController();
-
-  SearchingTabWindow(
-    super.title,
-  );
 }

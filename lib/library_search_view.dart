@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:otzaria/main_window_view.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import 'library_searcher.dart';
+import 'tab_window.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(TabWindow) openBookCallback;
