@@ -1,18 +1,20 @@
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:otzaria/bookmark_view.dart';
 import 'package:otzaria/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'pdf_page.dart';
+import 'pdf_book_view.dart';
 import 'text_book_view.dart';
 import 'books_browser.dart';
 import 'book_search_view.dart';
 import 'library_search_view.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
+import 'opened_tabs.dart';
+
 import 'package:permission_handler/permission_handler.dart';
-import 'tab_window.dart';
 
 class MainWindowView extends StatefulWidget {
   final ValueNotifier<bool> isDarkMode;
@@ -31,10 +33,12 @@ class MainWindowView extends StatefulWidget {
 }
 
 class MainWindowViewState extends State<MainWindowView>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   int selectedIndex = 0;
-  late List<TabWindow> tabs =
-      Platform.isWindows ? [BookTabWindow('אוצריא\\ברוכים הבאים.pdf', 0)] : [];
+  final List<OpenedTab> tabs = List<OpenedTab>.from(
+      ((Hive.box(name: 'tabs').get('key-tabs') ?? []) as List)
+          .map((e) => OpenedTab.fromJson(e))
+          .toList());
   late TabController tabController = TabController(
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
@@ -43,7 +47,9 @@ class MainWindowViewState extends State<MainWindowView>
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
   late Future<String?> libraryRootPath;
-  final List<Bookmark> bookmarks = [];
+  final List<dynamic> rawBookmarks =
+      Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
+  late List<Bookmark> bookmarks;
 
   final Map<String, LogicalKeySet> shortcuts = {
     'ctrl+a':
@@ -121,6 +127,13 @@ class MainWindowViewState extends State<MainWindowView>
   };
   @override
   void initState() {
+    () async {
+      if (Platform.isAndroid) {
+        await Permission.manageExternalStorage.request();
+      }
+    }();
+    WidgetsBinding.instance.addObserver(this);
+    bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
     super.initState();
     if (Settings.getValue('key-font-size') == null) {
       Settings.setValue('key-font-size', 25.0);
@@ -128,12 +141,6 @@ class MainWindowViewState extends State<MainWindowView>
     if (Settings.getValue('key-font-family') == null) {
       Settings.setValue('key-font-family', 'FrankRuhlLibre');
     }
-    () async {
-      if (Platform.isAndroid &&
-          !await Permission.manageExternalStorage.isGranted) {
-        await Permission.manageExternalStorage.request();
-      }
-    }();
 
     libraryRootPath = () async {
       // first try to get the library path from settings
@@ -154,16 +161,40 @@ class MainWindowViewState extends State<MainWindowView>
     }();
   }
 
-  void addTab(TabWindow tab) {
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      Hive.box(name: 'tabs').put("key-tabs", tabs);
+    }
+  }
+
+  void openBook(String path, int index) {
+    if (path.endsWith('.pdf')) {
+      addTab(PdfBookTab(path, index));
+    } else {
+      addTab(TextBookTab(path, index));
+    }
+  }
+
+  void addTab(OpenedTab tab) {
     setState(() {
       int newIndex = tabController.length == 0 ? 0 : tabController.index + 1;
       tabs.insert(newIndex, tab);
       tabController = TabController(length: tabs.length, vsync: this);
       tabController.index = newIndex;
     });
+    Hive.box(name: 'tabs').put("key-tabs", tabs);
   }
 
-  void closeTab(TabWindow tab) {
+  void closeTab(OpenedTab tab) {
     setState(() {
       if (tabs.isNotEmpty) {
         int newIndex = tabs.indexOf(tab) <= tabController.index
@@ -174,6 +205,7 @@ class MainWindowViewState extends State<MainWindowView>
             length: tabs.length, vsync: this, initialIndex: newIndex);
       }
     });
+    Hive.box(name: 'tabs').put("key-tabs", tabs);
   }
 
   @override
@@ -223,7 +255,8 @@ class MainWindowViewState extends State<MainWindowView>
                   ? Settings.getValue<String>('key-shortcut-close-all-tabs')
                   : 'ctrl+x']!: () {
             setState(() {
-              tabs = [];
+              tabs.removeRange(0, tabs.length);
+              Hive.box(name: 'tabs').put("key-tabs", tabs);
               tabController = TabController(length: tabs.length, vsync: this);
             });
           },
@@ -240,7 +273,7 @@ class MainWindowViewState extends State<MainWindowView>
                   ? Settings.getValue<String>('key-shortcut-open-new-search')
                   : 'ctrl+q']!: () {
             setState(() {
-              addTab(SearchingTabWindow('חיפוש'));
+              addTab(SearchingTab('חיפוש'));
             });
           },
         },
@@ -265,6 +298,7 @@ class MainWindowViewState extends State<MainWindowView>
           Future.microtask(() {
             showBooksBrowser.value = false;
             showBookSearch.value = false;
+            showBookmarksView.value = false;
           });
           return false; // Don't block the notification
         },
@@ -284,23 +318,22 @@ class MainWindowViewState extends State<MainWindowView>
     return TabBarView(
         controller: tabController,
         children: tabs.map((tab) {
-          if (tab is BookTabWindow) {
-            if (tab.path.endsWith('.pdf')) {
-              return MyPdfPage(
-                key: PageStorageKey(tab),
-                file: File(tab.path),
-              );
-            } else {
-              return TextBookViewer(
-                path: tab.path,
-                tab: tab,
-                openBookCallback: addTab,
-                data: tab.data,
-                bookmarks: bookmarks,
-              );
-            }
-          }
-          if (tab is SearchingTabWindow) {
+          if (tab is PdfBookTab) {
+            return PdfBookViewr(
+              key: PageStorageKey(tab),
+              tab: tab,
+              controller: tab.pdfViewerController,
+              addBookmarkCallback: addBookmark,
+            );
+          } else if (tab is TextBookTab) {
+            return TextBookViewer(
+              path: tab.path,
+              tab: tab,
+              openBookCallback: addTab,
+              data: tab.data,
+              addBookmarkCallback: addBookmark,
+            );
+          } else if (tab is SearchingTab) {
             return FutureBuilder(
                 future: libraryRootPath,
                 builder: (context, snapshot) {
@@ -328,7 +361,7 @@ class MainWindowViewState extends State<MainWindowView>
           .map((tab) => Tab(
                 child: Row(children: [
                   Text(
-                    tab is SearchingTabWindow
+                    tab is SearchingTab
                         ? '${tab.title}:  ${tab.searcher.queryController.text}'
                         : tab.title,
                   ),
@@ -358,7 +391,7 @@ class MainWindowViewState extends State<MainWindowView>
             builder: (context, snapshot) {
               return snapshot.hasData
                   ? BookSearchScreen(
-                      openFileCallback: addTab,
+                      openBookCallback: openBook,
                       closeLeftPaneCallback: closeLeftPanel,
                       focusNode: bookSearchfocusNode,
                       libraryRootPath: snapshot.data!)
@@ -383,7 +416,7 @@ class MainWindowViewState extends State<MainWindowView>
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return BooksBrowser(
-                  openFileCallback: addTab,
+                  openBookCallback: openBook,
                   libraryRootPath: snapshot.data!,
                   closeLeftPaneCallback: closeLeftPanel,
                 );
@@ -405,7 +438,7 @@ class MainWindowViewState extends State<MainWindowView>
                 child: child!,
               ),
           child: BookmarkView(
-            addTabCallBack: addTab,
+            openBookmarkCallBack: openBook,
             bookmarks: bookmarks,
           )),
     );
@@ -520,11 +553,26 @@ class MainWindowViewState extends State<MainWindowView>
   }
 
   void _openSearchScreen() async {
-    addTab(SearchingTabWindow('חיפוש'));
+    addTab(SearchingTab('חיפוש'));
   }
 
   void _openBookmarksScreen() {
     showBookmarksView.value = !showBookmarksView.value;
+  }
+
+  void addBookmark(
+      {required String ref, required String path, required int index}) {
+    bookmarks.add(Bookmark(ref: ref, path: path, index: index));
+    // write to disk
+    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
+    // notify user
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('הסימניה נוספה בהצלחה'),
+        ),
+      );
+    }
   }
 
   void closeLeftPanel() {

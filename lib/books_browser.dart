@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
-import 'tab_window.dart';
+import 'opened_tabs.dart';
 
 class BooksBrowser extends StatefulWidget {
-  final void Function(TabWindow tab) openFileCallback;
+  final void Function(String, int) openBookCallback;
   final void Function() closeLeftPaneCallback;
   final String libraryRootPath;
 
   const BooksBrowser(
       {Key? key,
-      required this.openFileCallback,
+      required this.openBookCallback,
       required this.libraryRootPath,
       required this.closeLeftPaneCallback})
       : super(key: key);
@@ -75,7 +75,7 @@ class BooksBrowserState extends State<BooksBrowser> {
                   });
                 } else if (entity is File) {
                   widget.closeLeftPaneCallback();
-                  widget.openFileCallback(BookTabWindow(entity.path, 0));
+                  widget.openBookCallback(entity.path, 0);
                 }
               },
             );

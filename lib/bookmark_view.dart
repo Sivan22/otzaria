@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'tab_window.dart';
+import 'opened_tabs.dart';
+import 'package:hive/hive.dart';
 
 class BookmarkView extends StatefulWidget {
   final List<Bookmark> bookmarks;
-  final void Function(TabWindow) addTabCallBack;
+  final void Function(String path, int index) openBookmarkCallBack;
   const BookmarkView(
-      {Key? key, required this.bookmarks, required this.addTabCallBack})
+      {Key? key, required this.bookmarks, required this.openBookmarkCallBack})
       : super(key: key);
 
   @override
@@ -23,14 +24,15 @@ class _BookmarkViewState extends State<BookmarkView> {
             itemBuilder: (context, index) => ListTile(
                 title: Text(widget.bookmarks[index].ref),
                 onTap: () {
-                  widget.addTabCallBack(BookTabWindow(
-                      widget.bookmarks[index].path,
-                      widget.bookmarks[index].index));
+                  widget.openBookmarkCallBack(widget.bookmarks[index].path,
+                      widget.bookmarks[index].index);
                 },
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_forever),
                   onPressed: () {
                     widget.bookmarks.removeAt(index);
+                    Hive.box(name: 'bookmarks')
+                        .put('key-bookmarks', widget.bookmarks);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('הסימניה נמחקה'),
@@ -46,6 +48,7 @@ class _BookmarkViewState extends State<BookmarkView> {
           child: ElevatedButton(
             onPressed: () {
               widget.bookmarks.clear();
+              Hive.box(name: 'bookmarks').clear();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('כל הסימניות נמחקו'),
@@ -67,4 +70,20 @@ class Bookmark {
   final int index;
 
   Bookmark({required this.ref, required this.path, required this.index});
+
+  factory Bookmark.fromJson(Map<String, dynamic> json) {
+    return Bookmark(
+      ref: json['ref'] as String,
+      path: json['path'] as String,
+      index: json['index'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ref': ref,
+      'path': path,
+      'index': index,
+    };
+  }
 }

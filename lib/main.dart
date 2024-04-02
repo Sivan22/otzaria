@@ -4,9 +4,23 @@ import 'main_window_view.dart';
 import 'settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'cache_provider.dart';
+import 'package:hive/hive.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:otzaria/bookmark_view.dart';
 
 void main() async {
   await Settings.init(cacheProvider: HiveCache());
+  await () async {
+    WidgetsFlutterBinding.ensureInitialized();
+    final defaultDirectory = Platform.isAndroid
+        ? await getApplicationSupportDirectory()
+        : Directory('.');
+    Hive.box(directory: defaultDirectory.path, name: 'bookmarks');
+    Hive.box(directory: defaultDirectory.path, name: 'tabs');
+  }();
+
+  Hive.registerAdapter<Bookmark>('Bookmark', (json) => Bookmark.fromJson(json));
   runApp(FileExplorerApp());
 }
 

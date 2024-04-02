@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/bookmark_view.dart';
 import 'package:otzaria/combined_book_commentary_view.dart';
-import 'tab_window.dart';
+import 'opened_tabs.dart';
 import 'package:otzaria/text_book_search_view.dart';
 import 'dart:io';
 import 'package:otzaria/toc_viewer.dart';
@@ -10,20 +10,24 @@ import 'dart:math';
 import 'links_view.dart';
 import 'commentary_list_view.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 
 class TextBookViewer extends StatefulWidget {
   final String path;
-  final BookTabWindow tab;
-  final Function(TabWindow) openBookCallback;
+  final TextBookTab tab;
+  final void Function(OpenedTab) openBookCallback;
+  final void Function(
+      {required String ref,
+      required String path,
+      required int index}) addBookmarkCallback;
   final Future<String> data;
-  final List<Bookmark> bookmarks;
-
   const TextBookViewer({
     Key? key,
     required this.path,
     required this.tab,
     required this.openBookCallback,
-    required this.bookmarks,
+    required this.addBookmarkCallback,
     required this.data,
   }) : super(key: key);
 
@@ -234,18 +238,10 @@ class _TextBookViewerState extends State<TextBookViewer>
           onPressed: () async {
             int index =
                 widget.tab.positionsListener.itemPositions.value.first.index;
-            widget.bookmarks.add(Bookmark(
-              ref: widget.tab.title + await refFromIndex(index),
-              path: widget.path,
-              index: index,
-            ));
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('הסימניה נוספה בהצלחה'),
-                ),
-              );
-            }
+            widget.addBookmarkCallback(
+                ref: widget.tab.title + await refFromIndex(index),
+                path: widget.path,
+                index: index);
           },
           icon: const Icon(
             Icons.bookmark_add,

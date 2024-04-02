@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import 'library_searcher.dart';
-import 'tab_window.dart';
+import 'opened_tabs.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
-  final void Function(TabWindow) openBookCallback;
+  final void Function(OpenedTab) openBookCallback;
   final String libraryRootPath;
   final LibrarySearcher searcher;
 
@@ -194,8 +194,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
           ),
           onTap: () {
             widget.openBookCallback(
-              BookTabWindow(result.path, result.index,
-                  searchText: result.query),
+              TextBookTab(result.path, result.index, searchText: result.query),
             );
           },
         );

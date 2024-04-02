@@ -17,12 +17,7 @@ class HiveCache extends CacheProvider {
       final defaultDirectory = Platform.isAndroid
           ? await getApplicationSupportDirectory()
           : Directory('.');
-      Hive.init(defaultDirectory.path);
-    }
-    if (Hive.isBoxOpen(keyName)) {
-      _preferences = Hive.box(keyName);
-    } else {
-      _preferences = await Hive.openBox(keyName);
+      _preferences = Hive.box(name: keyName, directory: defaultDirectory.path);
     }
   }
 
@@ -50,27 +45,27 @@ class HiveCache extends CacheProvider {
 
   @override
   Future<void> setBool(String key, bool? value) async {
-    await _preferences?.put(key, value);
+    _preferences?.put(key, value);
   }
 
   @override
-  Future<void> setDouble(String key, double? value) async {
-    await _preferences?.put(key, value);
+  Future setDouble(String key, double? value) async {
+    _preferences?.put(key, value);
   }
 
   @override
   Future<void> setInt(String key, int? value) async {
-    await _preferences?.put(key, value);
+    _preferences?.put(key, value);
   }
 
   @override
   Future<void> setString(String key, String? value) async {
-    await _preferences?.put(key, value);
+    _preferences?.put(key, value);
   }
 
   @override
   Future<void> setObject<T>(String key, T? value) async {
-    await _preferences?.put(key, value);
+    _preferences?.put(key, value);
   }
 
   @override
@@ -93,7 +88,7 @@ class HiveCache extends CacheProvider {
   @override
   Future<void> removeAll() async {
     final keys = getKeys();
-    await _preferences?.deleteAll(keys);
+    _preferences?.deleteAll(keys.where((element) => true) as Iterable<String>);
   }
 
   @override

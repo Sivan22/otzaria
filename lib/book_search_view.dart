@@ -1,19 +1,17 @@
-import 'dart:isolate';
-
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
-import 'tab_window.dart';
+import 'opened_tabs.dart';
 
 class BookSearchScreen extends StatefulWidget {
-  final void Function(TabWindow tab) openFileCallback;
+  final void Function(String, int) openBookCallback;
   final void Function() closeLeftPaneCallback;
   final FocusNode focusNode;
   final String libraryRootPath;
 
   const BookSearchScreen(
       {Key? key,
-      required this.openFileCallback,
+      required this.openBookCallback,
       required this.closeLeftPaneCallback,
       required this.focusNode,
       required this.libraryRootPath})
@@ -113,7 +111,7 @@ class BookSearchScreenState extends State<BookSearchScreen> {
                           widget.closeLeftPaneCallback();
                           Future.microtask(() {
                             //open the book
-                            widget.openFileCallback(BookTabWindow(book, 0));
+                            widget.openBookCallback(book, 0);
                             //clear textField
                             searchController.clear();
                           });

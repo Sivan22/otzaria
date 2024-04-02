@@ -106,6 +106,7 @@ class MySettingsScreen extends StatelessWidget {
                   'roboto': 'רובוטו',
                   'Calibri': 'קליברי',
                   'Arial': 'אריאל',
+                  'FrankRuhlLibre': 'xmi',
                 },
                 selected: 'FrankRuhlCLM',
                 leading: const Icon(Icons.font_download_outlined),

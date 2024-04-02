@@ -3,11 +3,11 @@
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'tab_window.dart';
+import 'opened_tabs.dart';
 
 class LinksViewer extends StatefulWidget {
   final Future<List<Link>> links;
-  final Function(TabWindow tab) openTabcallback;
+  final Function(OpenedTab tab) openTabcallback;
   final ItemPositionsListener itemPositionsListener;
   final void Function() closeLeftPanelCallback;
   final String libraryRootPath;
@@ -72,7 +72,7 @@ class _LinksViewerState extends State<LinksViewer>
                   snapshot.data![index].heRef,
                 ),
                 onTap: () {
-                  widget.openTabcallback(BookTabWindow(
+                  widget.openTabcallback(TextBookTab(
                       "${widget.libraryRootPath}${snapshot.data![index].path2}"
                           .replaceAll('\\', Platform.pathSeparator),
                       snapshot.data![index].index2 - 1));
