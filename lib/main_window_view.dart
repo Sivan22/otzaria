@@ -358,7 +358,14 @@ class MainWindowViewState extends State<MainWindowView>
       isScrollable: true,
       tabAlignment: TabAlignment.center,
       tabs: tabs
-          .map((tab) => Tab(
+          .map((tab) => Listener(
+              // close tab on middle mouse button click
+              onPointerDown: (PointerDownEvent event) {
+                if (event.buttons == 4) {
+                  closeTab(tab);
+                }
+              },
+              child: Tab(
                 child: Row(children: [
                   Text(
                     tab is SearchingTab
@@ -371,7 +378,8 @@ class MainWindowViewState extends State<MainWindowView>
                       },
                       icon: const Icon(Icons.close, size: 10))
                 ]),
-              ))
+              ),
+            ))
           .toList(),
     );
   }
