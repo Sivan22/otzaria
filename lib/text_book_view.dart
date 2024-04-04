@@ -10,8 +10,9 @@ import 'dart:math';
 import 'links_view.dart';
 import 'commentary_list_view.dart';
 import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
-import 'package:provider/provider.dart';
+import 'package:multi_split_view/multi_split_view.dart';
+import 'package:otzaria/widgets/commentary_list.dart';
+import 'dart:isolate';
 
 class TextBookViewer extends StatefulWidget {
   final String path;
@@ -42,13 +43,16 @@ class _TextBookViewerState extends State<TextBookViewer>
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
   final showLeftPane = ValueNotifier<bool>(false);
   final FocusNode textSearchFocusNode = FocusNode();
-  final ValueNotifier<bool> allTilesCollapsed = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> showSplitedView = ValueNotifier<bool>(true);
   late TabController tabController;
 
   @override
   initState() {
     super.initState();
     tabController = TabController(length: 4, vsync: this);
+    widget.tab.positionsListener.itemPositions.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -100,33 +104,75 @@ class _TextBookViewerState extends State<TextBookViewer>
                                   },
                                 },
                                 child: Focus(
-                                  focusNode: FocusNode(),
-                                  //don't autofocus on android, so that the keyboard doesn't appear
-                                  autofocus: Platform.isAndroid ? false : true,
-                                  child: CombinedView(
-                                    commentariesToShow:
-                                        widget.tab.commentariesNames,
-                                    links: widget.tab.links,
-                                    key: PageStorageKey(widget.tab),
-                                    data: snapshot.data!.split('\n'),
-                                    scrollController:
-                                        widget.tab.scrollController,
-                                    itemPositionsListener:
-                                        widget.tab.positionsListener,
-                                    scrollOffsetController:
-                                        widget.tab.scrollOffsetController,
-                                    searchQuery: searchTextController.text,
-                                    textSize: textFontSize,
-                                    initalIndex: widget.tab.initalIndex,
-                                    openBookCallback: widget.openBookCallback,
-                                    libraryRootPath:
-                                        widget.path.split('אוצריא').first,
-                                  ),
-                                )))));
+                                    focusNode: FocusNode(),
+                                    //don't autofocus on android, so that the keyboard doesn't appear
+                                    autofocus:
+                                        Platform.isAndroid ? false : true,
+                                    child: Builder(builder: (context) {
+                                      if (Settings.getValue<bool>(
+                                              'key-splited-view') ??
+                                          false) {
+                                        return buildSplitedView(
+                                            snapshot, searchTextController);
+                                      } else {
+                                        return buildCombinedView(
+                                            snapshot, searchTextController);
+                                      }
+                                    }))))));
               }
             }
             return const Center(child: CircularProgressIndicator());
           }),
+    );
+  }
+
+  Widget buildSplitedView(
+      AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
+    return ValueListenableBuilder(
+        valueListenable: widget.tab.positionsListener.itemPositions,
+        builder: (BuildContext context, Iterable itemPositions,
+                Widget? child) =>
+            ValueListenableBuilder(
+                valueListenable: widget.tab.commentariesToShow,
+                builder: (context, commentariesNames, child) =>
+                    OrientationBuilder(
+                        builder:
+                            (BuildContext context, Orientation orientation) =>
+                                MultiSplitView(
+                                    axis: orientation == Orientation.landscape
+                                        ? Axis.horizontal
+                                        : Axis.vertical,
+                                    resizable: true,
+                                    children: [
+                                      CommentaryList(
+                                          index: widget.tab.positionsListener
+                                                  .itemPositions.value.isEmpty
+                                              ? 0
+                                              : widget
+                                                  .tab
+                                                  .positionsListener
+                                                  .itemPositions
+                                                  .value
+                                                  .first
+                                                  .index,
+                                          textBookTab: widget.tab,
+                                          fontSize: textFontSize,
+                                          openBookCallback:
+                                              widget.openBookCallback),
+                                      buildCombinedView(
+                                          snapshot, searchTextController)
+                                    ]))));
+  }
+
+  Widget buildCombinedView(
+      AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
+    return CombinedView(
+      key: PageStorageKey(widget.tab),
+      tab: widget.tab,
+      data: snapshot.data!.split('\n'),
+      textSize: textFontSize,
+      openBookCallback: widget.openBookCallback,
+      libraryRootPath: widget.path.split('אוצריא').first,
     );
   }
 
@@ -208,7 +254,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   CommentaryListView buildCommentaryView() {
     return CommentaryListView(
-        links: widget.tab.links, commentaries: widget.tab.commentariesNames);
+        links: widget.tab.links, commentaries: widget.tab.commentariesToShow);
   }
 
   AppBar buildAppBar() {

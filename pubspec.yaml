@@ -5,11 +5,22 @@ description: "A Jewish books library - based on sefaria."
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 msix_config:
-  display_name: otzaria
+  display_name: אוצריא
   publisher_display_name: sivan22
   identity_name: sivan22.Otzaria
   msix_version: 0.0.1.5
-  logo_path: windows/runner/resources/app_icon.ico
+  logo_path: assets/icon/icon.png
+  publisher: CN=sivan22, O=sivan22, C=IL
+  certificate_path: C:\dev\otzaria\sivan22.pfx
+  certificate_password: 1234
+  app_installer: #<-- app installer configuration
+    publish_folder_path: C:\dev\otzaria\build\windows\x64\runner\Release
+    hours_between_update_checks: 24
+    automatic_background_task: true
+    update_blocks_activation: true
+    show_prompt: true
+    force_update_from_any_version: false
+
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
 # followed by an optional build number separated by a +.
@@ -57,6 +68,7 @@ dependencies:
   provider: ^6.1.2
   docx_to_text: ^1.0.1
   expandable: ^5.0.1
+  multi_split_view: ^2.4.0
 
   #flutter_context_menu: ^0.1.3
 

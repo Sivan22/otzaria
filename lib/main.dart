@@ -13,9 +13,8 @@ void main() async {
   await Settings.init(cacheProvider: HiveCache());
   await () async {
     WidgetsFlutterBinding.ensureInitialized();
-    final defaultDirectory = Platform.isAndroid
-        ? await getApplicationSupportDirectory()
-        : Directory('.');
+    final defaultDirectory = await getApplicationSupportDirectory();
+
     Hive.box(directory: defaultDirectory.path, name: 'bookmarks');
     Hive.box(directory: defaultDirectory.path, name: 'tabs');
   }();

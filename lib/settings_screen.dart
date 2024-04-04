@@ -170,6 +170,15 @@ class MySettingsScreen extends StatelessWidget {
                         disabledLabel: 'תפריט הצד לא ייסגר אוטומטית',
                         leading: Icon(Icons.arrow_back),
                       ),
+                const SwitchSettingsTile(
+                  settingKey: 'key-splited-view',
+                  title: 'הצגת המפרשים במפוצל',
+                  enabledLabel:
+                      ' בהצגת מפרשים, החלון יפוצל והמפרשים יוצגו בחלון נפרד',
+                  disabledLabel: 'המפרשים יוצגו בתוך הטקסט',
+                  leading: Icon(Icons.splitscreen),
+                  defaultValue: false,
+                ),
               ]),
           SettingsGroup(
               title: 'כללי',

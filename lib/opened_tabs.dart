@@ -49,7 +49,7 @@ class PdfBookTab extends OpenedTab {
 
 class TextBookTab extends OpenedTab {
   final String path;
-  ValueNotifier<List<String>> commentariesNames = ValueNotifier([]);
+  ValueNotifier<List<String>> commentariesToShow = ValueNotifier([]);
   late Future<List<Link>> links;
   late Future<List<TocEntry>> toc;
   late Future<String> data;
