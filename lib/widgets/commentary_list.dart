@@ -39,6 +39,28 @@ class _CommentaryListState extends State<CommentaryList>
     super.initState();
     thisLinks = getThisLinks(widget.textBookTab.links,
         widget.textBookTab.commentariesToShow.value, widget.index);
+    // in case we are inside a splited view, we need to listen to the item positions
+    if (Settings.getValue<bool>('key-splited-view') ?? false) {
+      widget.textBookTab.positionsListener.itemPositions.addListener(() {
+        if (mounted) {
+          setState(() {
+            thisLinks = getThisLinks(
+                widget.textBookTab.links,
+                widget.textBookTab.commentariesToShow.value,
+                widget.textBookTab.positionsListener.itemPositions.value.isEmpty
+                    ? 0
+                    : widget.textBookTab.positionsListener.itemPositions.value
+                        .first.index);
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.textBookTab.positionsListener.itemPositions.removeListener(() {});
+    super.dispose();
   }
 
   @override

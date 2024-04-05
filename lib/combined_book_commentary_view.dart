@@ -95,12 +95,15 @@ class _CombinedViewState extends State<CombinedView>
                   textAlign: TextAlign.justify),
             }),
         children: [
-          CommentaryList(
-            index: index,
-            fontSize: widget.textSize,
-            textBookTab: widget.tab,
-            openBookCallback: widget.openBookCallback,
-          )
+          //on splited view we don't need the Inner list
+          Settings.getValue<bool>('key-splited-view') ?? false
+              ? const SizedBox.shrink()
+              : CommentaryList(
+                  index: index,
+                  fontSize: widget.textSize,
+                  textBookTab: widget.tab,
+                  openBookCallback: widget.openBookCallback,
+                )
         ]);
   }
 

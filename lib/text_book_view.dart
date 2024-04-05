@@ -12,7 +12,6 @@ import 'commentary_list_view.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
-import 'dart:isolate';
 
 class TextBookViewer extends StatefulWidget {
   final String path;
@@ -50,9 +49,6 @@ class _TextBookViewerState extends State<TextBookViewer>
   initState() {
     super.initState();
     tabController = TabController(length: 4, vsync: this);
-    widget.tab.positionsListener.itemPositions.addListener(() {
-      setState(() {});
-    });
   }
 
   @override
@@ -129,39 +125,26 @@ class _TextBookViewerState extends State<TextBookViewer>
   Widget buildSplitedView(
       AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
     return ValueListenableBuilder(
-        valueListenable: widget.tab.positionsListener.itemPositions,
-        builder: (BuildContext context, Iterable itemPositions,
-                Widget? child) =>
-            ValueListenableBuilder(
-                valueListenable: widget.tab.commentariesToShow,
-                builder: (context, commentariesNames, child) =>
-                    OrientationBuilder(
-                        builder:
-                            (BuildContext context, Orientation orientation) =>
-                                MultiSplitView(
-                                    axis: orientation == Orientation.landscape
-                                        ? Axis.horizontal
-                                        : Axis.vertical,
-                                    resizable: true,
-                                    children: [
-                                      CommentaryList(
-                                          index: widget.tab.positionsListener
-                                                  .itemPositions.value.isEmpty
-                                              ? 0
-                                              : widget
-                                                  .tab
-                                                  .positionsListener
-                                                  .itemPositions
-                                                  .value
-                                                  .first
-                                                  .index,
-                                          textBookTab: widget.tab,
-                                          fontSize: textFontSize,
-                                          openBookCallback:
-                                              widget.openBookCallback),
-                                      buildCombinedView(
-                                          snapshot, searchTextController)
-                                    ]))));
+        valueListenable: widget.tab.commentariesToShow,
+        builder: (context, commentariesNames, child) => OrientationBuilder(
+            builder: (BuildContext context, Orientation orientation) =>
+                MultiSplitView(
+                    axis: orientation == Orientation.landscape
+                        ? Axis.horizontal
+                        : Axis.vertical,
+                    resizable: true,
+                    children: [
+                      CommentaryList(
+                          index: widget.tab.positionsListener.itemPositions
+                                  .value.isEmpty
+                              ? 0
+                              : widget.tab.positionsListener.itemPositions.value
+                                  .first.index,
+                          textBookTab: widget.tab,
+                          fontSize: textFontSize,
+                          openBookCallback: widget.openBookCallback),
+                      buildCombinedView(snapshot, searchTextController)
+                    ])));
   }
 
   Widget buildCombinedView(
