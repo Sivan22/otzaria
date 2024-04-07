@@ -2,6 +2,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'opened_tabs.dart';
+import 'dart:isolate';
 
 class BookSearchScreen extends StatefulWidget {
   final void Function(String, int) openBookCallback;
@@ -36,30 +37,27 @@ class BookSearchScreenState extends State<BookSearchScreen> {
             .map((e) => e.path)
             .toList();
 
-    searchController
-        .addListener(() async => _searchBooks(searchController.text));
+    searchController.addListener(() => _searchBooks(searchController.text));
   }
 
   List<String> _searchResults = [];
 
-  Future<void> _searchBooks(String query) async {
+  void _searchBooks(String query) async {
     final results = books.where((book) {
-      final bookName = book.split(Platform.pathSeparator).last.toLowerCase();
-      // if all the words seperated by spaces exist in the book name, even not in order, return true
-      bool result = true;
-      for (final word in query.split(' ')) {
-        result = result && bookName.contains(word.toLowerCase());
-      }
-      return result;
-    }).toList();
-
+        final bookName = book.split(Platform.pathSeparator).last;
+        // if all the words seperated by spaces exist in the book name, even not in order, return true
+        bool result = true;
+        for (final word in query.split(' ')) {
+          result = result && bookName.contains(word);
+        }
+        return result;
+      }).toList();   
     //sort the results by their levenstien distance
     if (query.isNotEmpty) {
       results.sort(
-        (a, b) => ratio(query,
-                b.split(Platform.pathSeparator).last.trim().toLowerCase())
-            .compareTo(ratio(query,
-                a.split(Platform.pathSeparator).last.trim().toLowerCase())),
+        (a, b) => ratio(query, b.split(Platform.pathSeparator).last.trim())
+            .compareTo(
+                ratio(query, a.split(Platform.pathSeparator).last.trim())),
       );
     }
     // sort alphabetic

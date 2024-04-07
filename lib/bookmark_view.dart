@@ -5,9 +5,13 @@ import 'package:hive/hive.dart';
 class BookmarkView extends StatefulWidget {
   final List<Bookmark> bookmarks;
   final void Function(String path, int index) openBookmarkCallBack;
-  const BookmarkView(
-      {Key? key, required this.bookmarks, required this.openBookmarkCallBack})
-      : super(key: key);
+  final void Function() closeLeftPaneCallback;
+  const BookmarkView({
+    Key? key,
+    required this.bookmarks,
+    required this.openBookmarkCallBack,
+    required this.closeLeftPaneCallback,
+  }) : super(key: key);
 
   @override
   State<BookmarkView> createState() => _BookmarkViewState();
@@ -26,6 +30,7 @@ class _BookmarkViewState extends State<BookmarkView> {
                 onTap: () {
                   widget.openBookmarkCallBack(widget.bookmarks[index].path,
                       widget.bookmarks[index].index);
+                  widget.closeLeftPaneCallback;
                 },
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_forever),

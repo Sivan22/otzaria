@@ -59,11 +59,16 @@ class TextBookTab extends OpenedTab {
   TextEditingController searchTextController = TextEditingController();
   ItemPositionsListener positionsListener = ItemPositionsListener.create();
 
-  TextBookTab(this.path, this.initalIndex, {String searchText = ''})
+  TextBookTab(this.path, this.initalIndex,
+      {String searchText = '', List<String>? commentaries})
       : super(path.split(Platform.pathSeparator).last) {
     if (searchText != '') {
       searchTextController.text = searchText;
     }
+    if (commentaries != null && commentaries.isNotEmpty) {
+      commentariesToShow.value = commentaries;
+    }
+
     links = Isolate.run(() async {
       String libraryRootPath = path.split('אוצריא').first;
       return await getAllLinksFromJson(
@@ -75,7 +80,10 @@ class TextBookTab extends OpenedTab {
 
   @override
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
-    return TextBookTab(json['path'], json['initalIndex']);
+    return TextBookTab(json['path'], json['initalIndex'],
+        commentaries: json['commentaries']
+            .map<String>((json) => json.toString())
+            .toList());
   }
 
   Map<String, dynamic> toJson() {
@@ -84,6 +92,7 @@ class TextBookTab extends OpenedTab {
       'initalIndex': positionsListener.itemPositions.value.isNotEmpty
           ? positionsListener.itemPositions.value.first.index
           : 0,
+      'commentaries': commentariesToShow.value,
       'type': 'BookTabWindow'
     };
   }

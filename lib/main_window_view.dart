@@ -13,7 +13,6 @@ import 'library_search_view.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
 import 'opened_tabs.dart';
-
 import 'package:permission_handler/permission_handler.dart';
 
 class MainWindowView extends StatefulWidget {
@@ -221,6 +220,7 @@ class MainWindowViewState extends State<MainWindowView>
                 child: Row(children: [
                   buildBooksBrowser(),
                   buildBookSearchScreen(),
+                  buildBookmarksView(),
                   buildTabBarAndTabView()
                 ]),
               ),
@@ -359,27 +359,27 @@ class MainWindowViewState extends State<MainWindowView>
       tabAlignment: TabAlignment.center,
       tabs: tabs
           .map((tab) => Listener(
-              // close tab on middle mouse button click
-              onPointerDown: (PointerDownEvent event) {
-                if (event.buttons == 4) {
-                  closeTab(tab);
-                }
-              },
-              child: Tab(
-                child: Row(children: [
-                  Text(
-                    tab is SearchingTab
-                        ? '${tab.title}:  ${tab.searcher.queryController.text}'
-                        : tab.title,
-                  ),
-                  IconButton(
-                      onPressed: () {
-                        closeTab(tab);
-                      },
-                      icon: const Icon(Icons.close, size: 10))
-                ]),
-              ),
-            ))
+                // close tab on middle mouse button click
+                onPointerDown: (PointerDownEvent event) {
+                  if (event.buttons == 4) {
+                    closeTab(tab);
+                  }
+                },
+                child: Tab(
+                  child: Row(children: [
+                    Text(
+                      tab is SearchingTab
+                          ? '${tab.title}:  ${tab.searcher.queryController.text}'
+                          : tab.title,
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          closeTab(tab);
+                        },
+                        icon: const Icon(Icons.close, size: 10))
+                  ]),
+                ),
+              ))
           .toList(),
     );
   }
@@ -448,6 +448,7 @@ class MainWindowViewState extends State<MainWindowView>
           child: BookmarkView(
             openBookmarkCallBack: openBook,
             bookmarks: bookmarks,
+            closeLeftPaneCallback: closeLeftPanel,
           )),
     );
   }
@@ -525,6 +526,10 @@ class MainWindowViewState extends State<MainWindowView>
             label: 'חיפוש',
           ),
           NavigationDestination(
+            icon: Icon(Icons.bookmark),
+            label: 'סימניות',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.settings),
             label: 'הגדרות',
           ),
@@ -545,6 +550,11 @@ class MainWindowViewState extends State<MainWindowView>
                 showBooksBrowser.value = false;
                 _openSearchScreen();
               case 3:
+                showBookSearch.value = false;
+                showBooksBrowser.value = false;
+                _openBookmarksScreen();
+
+              case 4:
                 _openSettingsScreen();
             }
           });
@@ -586,5 +596,6 @@ class MainWindowViewState extends State<MainWindowView>
   void closeLeftPanel() {
     showBooksBrowser.value = false;
     showBookSearch.value = false;
+    showBookmarksView.value = false;
   }
 }

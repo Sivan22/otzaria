@@ -104,17 +104,22 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     //don't autofocus on android, so that the keyboard doesn't appear
                                     autofocus:
                                         Platform.isAndroid ? false : true,
-                                    child: Builder(builder: (context) {
-                                      if (Settings.getValue<bool>(
-                                              'key-splited-view') ??
-                                          false) {
-                                        return buildSplitedView(
-                                            snapshot, searchTextController);
-                                      } else {
-                                        return buildCombinedView(
-                                            snapshot, searchTextController);
-                                      }
-                                    }))))));
+                                    child: ValueListenableBuilder(
+                                        valueListenable:
+                                            widget.tab.commentariesToShow,
+                                        builder: (context, value, child) {
+                                          if ((Settings.getValue<bool>(
+                                                      'key-splited-view') ??
+                                                  false) &&
+                                              widget.tab.commentariesToShow
+                                                  .value.isNotEmpty) {
+                                            return buildSplitedView(
+                                                snapshot, searchTextController);
+                                          } else {
+                                            return buildCombinedView(
+                                                snapshot, searchTextController);
+                                          }
+                                        }))))));
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -126,25 +131,24 @@ class _TextBookViewerState extends State<TextBookViewer>
       AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
     return ValueListenableBuilder(
         valueListenable: widget.tab.commentariesToShow,
-        builder: (context, commentariesNames, child) => OrientationBuilder(
-            builder: (BuildContext context, Orientation orientation) =>
-                MultiSplitView(
-                    axis: orientation == Orientation.landscape
-                        ? Axis.horizontal
-                        : Axis.vertical,
-                    resizable: true,
-                    children: [
-                      CommentaryList(
-                          index: widget.tab.positionsListener.itemPositions
-                                  .value.isEmpty
-                              ? 0
-                              : widget.tab.positionsListener.itemPositions.value
-                                  .first.index,
-                          textBookTab: widget.tab,
-                          fontSize: textFontSize,
-                          openBookCallback: widget.openBookCallback),
-                      buildCombinedView(snapshot, searchTextController)
-                    ])));
+        builder: (context, commentariesNames, child) => MultiSplitView(
+                axis: Axis.horizontal,
+                resizable: true,
+                dividerBuilder: (axis, index, resizable, dragging, highlighted,
+                        themeData) =>
+                    const VerticalDivider(),
+                children: [
+                  CommentaryList(
+                      index: widget
+                              .tab.positionsListener.itemPositions.value.isEmpty
+                          ? 0
+                          : widget.tab.positionsListener.itemPositions.value
+                              .first.index,
+                      textBookTab: widget.tab,
+                      fontSize: textFontSize,
+                      openBookCallback: widget.openBookCallback),
+                  buildCombinedView(snapshot, searchTextController)
+                ]));
   }
 
   Widget buildCombinedView(

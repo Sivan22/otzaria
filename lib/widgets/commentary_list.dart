@@ -138,8 +138,9 @@ class _CommentaryContentState extends State<CommentaryContent>
           if (snapshot.hasData) {
             return GestureDetector(
               onDoubleTap: () {
-                String path = Settings.getValue<String>('key-library-path') ??
-                    './' +
+                String path =
+                    (Settings.getValue<String>('key-library-path') ?? './') +
+                        Platform.pathSeparator +
                         widget.thisLinks[widget.smallindex].path2
                             .replaceAll('\\', Platform.pathSeparator);
                 widget.openBookCallback(TextBookTab(
