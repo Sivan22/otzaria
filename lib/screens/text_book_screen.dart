@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:otzaria/bookmark_view.dart';
-import 'package:otzaria/combined_book_commentary_view.dart';
-import 'opened_tabs.dart';
-import 'package:otzaria/text_book_search_view.dart';
+import 'package:otzaria/screens/combined_book_screen.dart';
+import '../model/books.dart';
+import 'package:otzaria/screens/text_book_search_screen.dart';
 import 'dart:io';
-import 'package:otzaria/toc_viewer.dart';
+import 'package:otzaria/screens/toc_navigator_screen.dart';
 import 'dart:math';
-import 'links_view.dart';
+import 'links_screen.dart';
 import 'commentary_list_view.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -138,15 +137,17 @@ class _TextBookViewerState extends State<TextBookViewer>
                         themeData) =>
                     const VerticalDivider(),
                 children: [
-                  CommentaryList(
-                      index: widget
-                              .tab.positionsListener.itemPositions.value.isEmpty
-                          ? 0
-                          : widget.tab.positionsListener.itemPositions.value
-                              .first.index,
-                      textBookTab: widget.tab,
-                      fontSize: textFontSize,
-                      openBookCallback: widget.openBookCallback),
+                  SelectionArea(
+                    child: CommentaryList(
+                        index: widget.tab.positionsListener.itemPositions.value
+                                .isEmpty
+                            ? 0
+                            : widget.tab.positionsListener.itemPositions.value
+                                .first.index,
+                        textBookTab: widget.tab,
+                        fontSize: textFontSize,
+                        openBookCallback: widget.openBookCallback),
+                  ),
                   buildCombinedView(snapshot, searchTextController)
                 ]));
   }

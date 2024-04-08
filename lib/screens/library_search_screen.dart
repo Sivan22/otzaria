@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
-import 'library_searcher.dart';
-import 'opened_tabs.dart';
+import '../model/library_searcher.dart';
+import '../model/books.dart';
+import '../model/search_results.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;

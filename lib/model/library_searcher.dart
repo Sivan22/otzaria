@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'text_book_search_view.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 import 'dart:math';
+import 'package:otzaria/model/search_results.dart';
 
 class LibrarySearcher {
   final List<String> booksToSearch;
@@ -77,15 +78,4 @@ class LibrarySearcher {
     }
     isSearching.value = false;
   }
-}
-
-class BookTextSearchResult extends TextSearchResult {
-  final String path;
-  BookTextSearchResult(
-      {required this.path,
-      required String snippet,
-      required int index,
-      required String query,
-      required String address})
-      : super(snippet: snippet, index: index, query: query, address: address);
 }

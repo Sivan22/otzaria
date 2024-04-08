@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'pdf_search_view.dart';
+import 'pdf_search_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io';
-import 'outline_view.dart';
-import 'password_dialog.dart';
-import 'thumbnails_view.dart';
-import 'opened_tabs.dart';
+import 'pdf_outlines_screen.dart';
+import '../widgets/password_dialog.dart';
+import 'pdf_thumbnails_screen.dart';
+import 'package:otzaria/model/books.dart';
 
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;

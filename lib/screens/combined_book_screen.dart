@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'opened_tabs.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
-import 'links_view.dart';
-import 'dart:isolate';
-import 'dart:io';
+import 'package:otzaria/model/books.dart';
 
 class CombinedView extends StatefulWidget {
   final List<String> data;
@@ -109,27 +106,6 @@ class _CombinedViewState extends State<CombinedView>
 
   @override
   bool get wantKeepAlive => true;
-
-  Future<List<Link>> getThisLinks(int index, Future<List<Link>> links,
-      List<String> commentariesNames) async {
-    List<Link> doneLinks = await links;
-    return Isolate.run(() async {
-      List<Link> thisLinks = doneLinks
-          .where((link) =>
-              link.index1 == index + 1 &&
-              (link.connectionType == "commentary" ||
-                  link.connectionType == "targum") &&
-              commentariesNames.contains(link.path2.split('\\').last))
-          .toList();
-      //sort the links by the heref in order of the commentariesToShow list
-      thisLinks.sort((a, b) => commentariesNames
-          .indexOf(a.path2.split(Platform.pathSeparator).last)
-          .compareTo(commentariesNames
-              .indexOf(b.path2.split(Platform.pathSeparator).last)));
-
-      return thisLinks;
-    });
-  }
 
   String highLight(String data, String searchQuery) {
     if (searchQuery.isNotEmpty) {

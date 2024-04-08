@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:otzaria/links_view.dart';
-import 'dart:io';
-import 'package:otzaria/opened_tabs.dart';
+import 'package:otzaria/model/books.dart';
 import 'dart:isolate';
-
-import 'package:otzaria/provider_combined_view.dart';
+import 'dart:io';
+import 'package:otzaria/model/links.dart';
+import 'package:otzaria/widgets/commentary_content.dart';
 
 class CommentaryList extends StatefulWidget {
   final Function(TextBookTab) openBookCallback;
@@ -37,17 +35,20 @@ class _CommentaryListState extends State<CommentaryList>
   @override
   void initState() {
     super.initState();
-    thisLinks = getThisLinks(widget.textBookTab.links,
-        widget.textBookTab.commentariesToShow.value, widget.index);
+    thisLinks = getLinksforIndex(
+        links: widget.textBookTab.links,
+        commentariesNames: widget.textBookTab.commentariesToShow.value,
+        index: widget.index);
     // in case we are inside a splited view, we need to listen to the item positions
     if (Settings.getValue<bool>('key-splited-view') ?? false) {
       widget.textBookTab.positionsListener.itemPositions.addListener(() {
         if (mounted) {
           setState(() {
-            thisLinks = getThisLinks(
-                widget.textBookTab.links,
-                widget.textBookTab.commentariesToShow.value,
-                widget.textBookTab.positionsListener.itemPositions.value.isEmpty
+            thisLinks = getLinksforIndex(
+                links: widget.textBookTab.links,
+                commentariesNames: widget.textBookTab.commentariesToShow.value,
+                index: widget.textBookTab.positionsListener.itemPositions.value
+                        .isEmpty
                     ? 0
                     : widget.textBookTab.positionsListener.itemPositions.value
                         .first.index);
@@ -97,86 +98,30 @@ class _CommentaryListState extends State<CommentaryList>
       },
     );
   }
-}
 
-class CommentaryContent extends StatefulWidget {
-  const CommentaryContent({
-    super.key,
-    required this.smallindex,
-    required this.thisLinks,
-    required this.fontSize,
-    required this.openBookCallback,
-  });
-  final List<Link> thisLinks;
-  final int smallindex;
-  final double fontSize;
-  final Function(TextBookTab) openBookCallback;
+  Future<List<Link>> getLinksforIndex(
+      {required int index,
+      required Future<List<Link>> links,
+      required List<String> commentariesNames}) async {
+    List<Link> doneLinks = await links;
+    return Isolate.run(() async {
+      List<Link> thisLinks = doneLinks
+          .where((link) =>
+              link.index1 == index + 1 &&
+              (link.connectionType == "commentary" ||
+                  link.connectionType == "targum") &&
+              commentariesNames.contains(link.path2.split('\\').last))
+          .toList();
+      //sort the links by the heref in order of the commentariesToShow list
+      thisLinks.sort((a, b) => commentariesNames
+          .indexOf(a.path2.split(Platform.pathSeparator).last)
+          .compareTo(commentariesNames
+              .indexOf(b.path2.split(Platform.pathSeparator).last)));
 
-  @override
-  State<CommentaryContent> createState() => _CommentaryContentState();
-}
-
-class _CommentaryContentState extends State<CommentaryContent>
-    with AutomaticKeepAliveClientMixin<CommentaryContent> {
-  late Future<String> content;
-
-  @override
-  void initState() {
-    content = getContent(
-        Settings.getValue<String>('key-library-path') ?? './',
-        widget.thisLinks[widget.smallindex].path2,
-        widget.thisLinks[widget.smallindex].index2);
-    super.initState();
+      return thisLinks;
+    });
   }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder(
-        future: content,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return GestureDetector(
-              onDoubleTap: () {
-                String path =
-                    (Settings.getValue<String>('key-library-path') ?? './') +
-                        Platform.pathSeparator +
-                        widget.thisLinks[widget.smallindex].path2
-                            .replaceAll('\\', Platform.pathSeparator);
-                widget.openBookCallback(TextBookTab(
-                  path,
-                  widget.thisLinks[widget.smallindex].index2 - 1,
-                ));
-              },
-              child: Html(data: snapshot.data, style: {
-                'body': Style(
-                    fontSize: FontSize(widget.fontSize / 1.2),
-                    fontFamily:
-                        Settings.getValue('key-font-family') ?? 'candara',
-                    textAlign: TextAlign.justify),
-              }),
-            );
-          }
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        });
-  }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
-Future<String> getContent(
-    String libraryRootPath, String path, int index) async {
-  path = libraryRootPath +
-      Platform.pathSeparator +
-      path.replaceAll('\\', Platform.pathSeparator);
-  return Isolate.run(() async {
-    List<String> lines = await File(path).readAsLines();
-    String line = lines[index - 1];
-    return line;
-  });
-}
 
 // function to highlight a search query in html text

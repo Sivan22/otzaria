@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'main_window_view.dart';
-import 'settings_screen.dart';
+import 'screens/main_window_screen.dart';
+import 'screens/settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'cache_provider.dart';
+import 'model/cache_provider.dart';
 import 'package:hive/hive.dart';
-import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:otzaria/bookmark_view.dart';
+import 'package:otzaria/model/bookmark.dart';
 
 void main() async {
   await Settings.init(cacheProvider: HiveCache());

@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'library_searcher.dart';
 import 'dart:convert';
-import 'links_view.dart';
 import 'dart:isolate';
 import 'package:docx_to_text/docx_to_text.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:otzaria/model/links.dart';
+import 'package:otzaria/model/library_searcher.dart';
 
 class OpenedTab {
   String title;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:universal_io/io.dart';
-import 'opened_tabs.dart';
+import 'dart:io';
 
 class BooksBrowser extends StatefulWidget {
   final void Function(String, int) openBookCallback;

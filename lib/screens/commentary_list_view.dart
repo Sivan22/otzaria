@@ -1,7 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'links_view.dart';
+import 'package:otzaria/model/links.dart';
 
 class CommentaryListView extends StatefulWidget {
   final Future<List<Link>> links;

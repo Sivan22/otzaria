@@ -1,7 +1,6 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
-import 'opened_tabs.dart';
 import 'dart:isolate';
 
 class BookSearchScreen extends StatefulWidget {
@@ -44,14 +43,14 @@ class BookSearchScreenState extends State<BookSearchScreen> {
 
   void _searchBooks(String query) async {
     final results = books.where((book) {
-        final bookName = book.split(Platform.pathSeparator).last;
-        // if all the words seperated by spaces exist in the book name, even not in order, return true
-        bool result = true;
-        for (final word in query.split(' ')) {
-          result = result && bookName.contains(word);
-        }
-        return result;
-      }).toList();   
+      final bookName = book.split(Platform.pathSeparator).last;
+      // if all the words seperated by spaces exist in the book name, even not in order, return true
+      bool result = true;
+      for (final word in query.split(' ')) {
+        result = result && bookName.contains(word);
+      }
+      return result;
+    }).toList();
     //sort the results by their levenstien distance
     if (query.isNotEmpty) {
       results.sort(

@@ -1,19 +1,20 @@
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
-import 'package:otzaria/bookmark_view.dart';
-import 'package:otzaria/settings_screen.dart';
+import 'package:otzaria/screens/bookmark_screen.dart';
+import 'package:otzaria/screens/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'pdf_book_view.dart';
-import 'text_book_view.dart';
-import 'books_browser.dart';
-import 'book_search_view.dart';
-import 'library_search_view.dart';
+import 'pdf_book_screen.dart';
+import 'text_book_screen.dart';
+import 'books_browser_screen.dart';
+import 'find_book_screen.dart';
+import 'library_search_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
-import 'opened_tabs.dart';
+import '../model/books.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../model/bookmark.dart';
 
 class MainWindowView extends StatefulWidget {
   final ValueNotifier<bool> isDarkMode;
