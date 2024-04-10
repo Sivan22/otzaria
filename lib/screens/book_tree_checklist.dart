@@ -45,7 +45,7 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
       key: Key(directory.path), // Ensure unique keys for ExpansionTiles
       title: Text(path.basename(directory.path)),
 
-      tilePadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),
+      tilePadding: EdgeInsets.symmetric(horizontal: 16 + (level-1) * 16),
       leading: SizedBox.fromSize(
         size: const Size.fromWidth(60.0),
         child: Row(
