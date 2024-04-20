@@ -69,6 +69,7 @@ dependencies:
   docx_to_text: ^1.0.1
   expandable: ^5.0.1
   multi_split_view: ^2.4.0
+  get_it: ^7.7.0
 
   #flutter_context_menu: ^0.1.3
 

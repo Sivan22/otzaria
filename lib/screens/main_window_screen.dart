@@ -1,20 +1,23 @@
-import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:otzaria/helper/shortcuts_list.dart';
 import 'package:hive/hive.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
+import 'package:otzaria/model/books.dart';
+import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'pdf_book_screen.dart';
 import 'text_book_screen.dart';
-import 'books_browser_screen.dart';
 import 'find_book_screen.dart';
 import 'library_search_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
-import '../model/books.dart';
+import '../model/tabs.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../model/bookmark.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class MainWindowView extends StatefulWidget {
   final ValueNotifier<bool> isDarkMode;
@@ -34,11 +37,8 @@ class MainWindowView extends StatefulWidget {
 
 class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  int selectedIndex = 0;
-  final List<OpenedTab> tabs = List<OpenedTab>.from(
-      ((Hive.box(name: 'tabs').get('key-tabs') ?? []) as List)
-          .map((e) => OpenedTab.fromJson(e))
-          .toList());
+  ValueNotifier<int> selectedIndex = ValueNotifier(0);
+  late List<OpenedTab> tabs;
   late TabController tabController = TabController(
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
   final showBooksBrowser = ValueNotifier<bool>(false);
@@ -51,80 +51,6 @@ class MainWindowViewState extends State<MainWindowView>
       Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
   late List<Bookmark> bookmarks;
 
-  final Map<String, LogicalKeySet> shortcuts = {
-    'ctrl+a':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyA),
-    'ctrl+b':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyB),
-    'ctrl+c':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC),
-    'ctrl+d':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyD),
-    'ctrl+e':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyE),
-    'ctrl+f':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF),
-    'ctrl+g':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG),
-    'ctrl+h':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyH),
-    'ctrl+i':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI),
-    'ctrl+j':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyJ),
-    'ctrl+k':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyK),
-    'ctrl+l':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyL),
-    'ctrl+m':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyM),
-    'ctrl+n':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN),
-    'ctrl+o':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyO),
-    'ctrl+p':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyP),
-    'ctrl+q':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyQ),
-    'ctrl+r':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR),
-    'ctrl+s':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS),
-    'ctrl+t':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyT),
-    'ctrl+u':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyU),
-    'ctrl+v':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyV),
-    'ctrl+w':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyW),
-    'ctrl+x':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyX),
-    'ctrl+y':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyY),
-    'ctrl+z':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ),
-    'ctrl+0':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit0),
-    'ctrl+1':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit1),
-    'ctrl+2':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit2),
-    'ctrl+3':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit3),
-    'ctrl+4':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit4),
-    'ctrl+5':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit5),
-    'ctrl+6':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit6),
-    'ctrl+7':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit7),
-    'ctrl+8':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit8),
-    'ctrl+9':
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit9),
-  };
   @override
   void initState() {
     () async {
@@ -133,13 +59,17 @@ class MainWindowViewState extends State<MainWindowView>
       }
     }();
     WidgetsBinding.instance.addObserver(this);
+    tabs = List<OpenedTab>.from(
+        ((Hive.box(name: 'tabs').get('key-tabs') ?? []) as List)
+            .map((e) => OpenedTab.fromJson(e))
+            .toList());
     bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
-    super.initState();
+
     if (Settings.getValue('key-font-size') == null) {
       Settings.setValue('key-font-size', 25.0);
     }
     if (Settings.getValue('key-font-family') == null) {
-      Settings.setValue('key-font-family', 'FrankRuhlLibre');
+      Settings.setValue('key-font-family', 'FrankRuhlCLM');
     }
 
     libraryRootPath = () async {
@@ -159,6 +89,8 @@ class MainWindowViewState extends State<MainWindowView>
         return '.';
       }
     }();
+
+    super.initState();
   }
 
   @override
@@ -174,38 +106,6 @@ class MainWindowViewState extends State<MainWindowView>
         state == AppLifecycleState.detached) {
       Hive.box(name: 'tabs').put("key-tabs", tabs);
     }
-  }
-
-  void openBook(String path, int index) {
-    if (path.endsWith('.pdf')) {
-      addTab(PdfBookTab(path, index));
-    } else {
-      addTab(TextBookTab(path, index));
-    }
-  }
-
-  void addTab(OpenedTab tab) {
-    setState(() {
-      int newIndex = tabController.length == 0 ? 0 : tabController.index + 1;
-      tabs.insert(newIndex, tab);
-      tabController = TabController(length: tabs.length, vsync: this);
-      tabController.index = newIndex;
-    });
-    Hive.box(name: 'tabs').put("key-tabs", tabs);
-  }
-
-  void closeTab(OpenedTab tab) {
-    setState(() {
-      if (tabs.isNotEmpty) {
-        int newIndex = tabs.indexOf(tab) <= tabController.index
-            ? max(0, tabController.index - 1)
-            : tabController.index;
-        tabs.remove(tab);
-        tabController = TabController(
-            length: tabs.length, vsync: this, initialIndex: newIndex);
-      }
-    });
-    Hive.box(name: 'tabs').put("key-tabs", tabs);
   }
 
   @override
@@ -282,17 +182,43 @@ class MainWindowViewState extends State<MainWindowView>
           node: mainFocusScopeNode,
           //on android don't autofocus, so keyboard won't show
           autofocus: Platform.isAndroid ? false : true,
-          child: Row(children: [
-            buildNavigationSideBar(),
-            buildBooksBrowser(),
-            buildBookSearchScreen(),
-            buildBookmarksView(),
-            buildTabBarAndTabView()
-          ]),
+          child: ListenableBuilder(
+              listenable: selectedIndex,
+              builder: (context, child) {
+                Widget mainWindow = Container();
+                switch (selectedIndex.value) {
+                  case (0):
+                    mainWindow = buildLibraryBrowser();
+                    break;
+                  case (1 || 2 || 3):
+                    mainWindow = buildTabBarAndTabView();
+                    break;
+                  case (4):
+                    mainWindow = buildSettingsScreen();
+                }
+                return Row(children: [
+                  buildNavigationSideBar(),
+                  buildBookmarksView(),
+                  mainWindow
+                ]);
+              }),
         ));
   }
 
-  Expanded buildTabBarAndTabView() {
+  Widget buildLibraryBrowser() {
+    return Expanded(
+      child: Container(
+          color: Colors.white,
+          child: LibraryBrowser(
+            onBookClickCallback: openTextBook,
+          )),
+    );
+  }
+
+  Widget buildTabBarAndTabView() {
+    if (tabs.isEmpty) {
+      return const Expanded(child: Center(child: Text('לא נבחרו ספרים')));
+    }
     return Expanded(
       child: NotificationListener<UserScrollNotification>(
         onNotification: (scrollNotification) {
@@ -328,10 +254,9 @@ class MainWindowViewState extends State<MainWindowView>
             );
           } else if (tab is TextBookTab) {
             return TextBookViewer(
-              path: tab.path,
               tab: tab,
               openBookCallback: addTab,
-              data: tab.data,
+              data: tab.bookData,
               addBookmarkCallback: addBookmark,
             );
           } else if (tab is SearchingTab) {
@@ -412,28 +337,17 @@ class MainWindowViewState extends State<MainWindowView>
 
   AnimatedSize buildBooksBrowser() {
     return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      child: ValueListenableBuilder(
-        valueListenable: showBooksBrowser,
-        builder: (context, showBooksBrowser, child) => SizedBox(
-          width: showBooksBrowser ? 300 : 0,
-          height: showBooksBrowser ? null : 0,
-          child: child!,
-        ),
-        child: FutureBuilder(
-            future: libraryRootPath,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return BooksBrowser(
-                  openBookCallback: openBook,
-                  libraryRootPath: snapshot.data!,
-                  closeLeftPaneCallback: closeLeftPanel,
-                );
-              }
-              return const Center(child: CircularProgressIndicator());
-            }),
-      ),
-    );
+        duration: const Duration(milliseconds: 300),
+        child: ValueListenableBuilder(
+            valueListenable: showBooksBrowser,
+            builder: (context, showBooksBrowser, child) => SizedBox(
+                  width: showBooksBrowser ? 300 : 0,
+                  height: showBooksBrowser ? null : 0,
+                  child: child!,
+                ),
+            child: LibraryBrowser(
+              onBookClickCallback: openTextBook,
+            )));
   }
 
   AnimatedSize buildBookmarksView() {
@@ -454,6 +368,13 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
+  Widget buildSettingsScreen() {
+    return Expanded(
+      child: MySettingsScreen(
+          isDarkMode: widget.isDarkMode, seedColor: widget.seedColor),
+    );
+  }
+
   SizedBox buildNavigationSideBar() {
     return SizedBox.fromSize(
       size: const Size.fromWidth(80),
@@ -461,12 +382,12 @@ class MainWindowViewState extends State<MainWindowView>
           labelType: NavigationRailLabelType.all,
           destinations: const [
             NavigationRailDestination(
-              icon: Icon(Icons.folder),
-              label: Text('דפדוף'),
+              icon: Icon(Icons.library_books),
+              label: Text('ספריה'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.library_books),
-              label: Text('איתור ספר'),
+              icon: Icon(Icons.menu_book),
+              label: Text('קריאה'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.bookmark),
@@ -481,30 +402,17 @@ class MainWindowViewState extends State<MainWindowView>
               label: Text('הגדרות'),
             ),
           ],
-          selectedIndex: selectedIndex,
+          selectedIndex: selectedIndex.value,
           onDestinationSelected: (int index) {
             setState(() {
-              selectedIndex = index;
+              selectedIndex.value = index;
               switch (index) {
-                case 0:
-                  showBookSearch.value = false;
-                  showBookmarksView.value = false;
-                  showBooksBrowser.value = !showBooksBrowser.value;
-                case 1:
-                  showBooksBrowser.value = false;
-                  showBookmarksView.value = false;
-                  showBookSearch.value = !showBookSearch.value;
-                  bookSearchfocusNode.requestFocus();
                 case 2:
-                  showBookSearch.value = false;
-                  showBooksBrowser.value = false;
                   _openBookmarksScreen();
                 case 3:
                   showBookSearch.value = false;
                   showBooksBrowser.value = false;
                   _openSearchScreen();
-                case 4:
-                  _openSettingsScreen();
               }
             });
           }),
@@ -516,7 +424,7 @@ class MainWindowViewState extends State<MainWindowView>
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.folder),
-            label: 'דפדוף',
+            label: 'ספרייה',
           ),
           NavigationDestination(
             icon: Icon(Icons.library_books),
@@ -535,10 +443,10 @@ class MainWindowViewState extends State<MainWindowView>
             label: 'הגדרות',
           ),
         ],
-        selectedIndex: selectedIndex,
+        selectedIndex: selectedIndex.value,
         onDestinationSelected: (int index) {
           setState(() {
-            selectedIndex = index;
+            selectedIndex.value = index;
             switch (index) {
               case 0:
                 showBookSearch.value = false;
@@ -562,6 +470,52 @@ class MainWindowViewState extends State<MainWindowView>
         });
   }
 
+  void openBook(String path, int index) {
+    if (path.endsWith('.pdf')) {
+      addTab(PdfBookTab(path, index));
+    } else {
+      addTab(TextBookTab(title: utils.getTitleFromPath(path), index));
+    }
+  }
+
+  void openTextBook(Book book, int index) {
+    addTab(TextBookTab(0, title: book.title));
+    selectedIndex.value = 1;
+  }
+
+  void addTab(OpenedTab tab) {
+    setState(() {
+      int newIndex = tabController.length == 0 ? 0 : tabController.index + 1;
+      tabs.insert(newIndex, tab);
+      tabController = TabController(length: tabs.length, vsync: this);
+      tabController.index = newIndex;
+    });
+    Hive.box(name: 'tabs').put("key-tabs", tabs);
+  }
+
+  void closeTab(OpenedTab tab) {
+    setState(() {
+      if (tabs.isNotEmpty) {
+        int newIndex = tabs.indexOf(tab) <= tabController.index
+            ? max(0, tabController.index - 1)
+            : tabController.index;
+        tabs.remove(tab);
+        tabController = TabController(
+            length: tabs.length, vsync: this, initialIndex: newIndex);
+      }
+    });
+    Hive.box(name: 'tabs').put("key-tabs", tabs);
+  }
+
+  void showLibrary() async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LibraryBrowser(
+                  onBookClickCallback: openTextBook,
+                )));
+  }
+
   void _openSettingsScreen() async {
     await Navigator.push(
         context,
@@ -580,8 +534,8 @@ class MainWindowViewState extends State<MainWindowView>
   }
 
   void addBookmark(
-      {required String ref, required String path, required int index}) {
-    bookmarks.add(Bookmark(ref: ref, path: path, index: index));
+      {required String ref, required String title, required int index}) {
+    bookmarks.add(Bookmark(ref: ref, title: title, index: index));
     // write to disk
     Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
     // notify user

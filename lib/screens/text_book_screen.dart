@@ -7,23 +7,23 @@ import 'dart:io';
 import 'package:otzaria/screens/toc_navigator_screen.dart';
 import 'dart:math';
 import 'links_screen.dart';
-import 'commentary_list_view.dart';
+import 'commentators_list_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
+import 'package:otzaria/model/tabs.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TextBookViewer extends StatefulWidget {
-  final String path;
   final TextBookTab tab;
   final void Function(OpenedTab) openBookCallback;
   final void Function(
       {required String ref,
-      required String path,
+      required String title,
       required int index}) addBookmarkCallback;
   final Future<String> data;
   const TextBookViewer({
     Key? key,
-    required this.path,
     required this.tab,
     required this.openBookCallback,
     required this.addBookmarkCallback,
@@ -40,6 +40,7 @@ class _TextBookViewerState extends State<TextBookViewer>
         TickerProviderStateMixin {
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
   final showLeftPane = ValueNotifier<bool>(false);
+  final pinLeftPane = ValueNotifier<bool>(false);
   final FocusNode textSearchFocusNode = FocusNode();
   final ValueNotifier<bool> showSplitedView = ValueNotifier<bool>(true);
   late TabController tabController;
@@ -79,10 +80,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                         child: NotificationListener<UserScrollNotification>(
                             onNotification: (scrollNotification) {
                               //unless links is shown, close left pane on scrolling
-                              if (tabController.index != 3 &&
-                                  (Settings.getValue<bool>(
-                                          'key-close-left-pane-on-scroll') ??
-                                      true)) {
+                              if (!pinLeftPane.value) {
                                 Future.microtask(() {
                                   showLeftPane.value = false;
                                 });
@@ -104,21 +102,28 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     autofocus:
                                         Platform.isAndroid ? false : true,
                                     child: ValueListenableBuilder(
-                                        valueListenable:
-                                            widget.tab.commentariesToShow,
-                                        builder: (context, value, child) {
-                                          if ((Settings.getValue<bool>(
-                                                      'key-splited-view') ??
-                                                  false) &&
-                                              widget.tab.commentariesToShow
-                                                  .value.isNotEmpty) {
-                                            return buildSplitedView(
-                                                snapshot, searchTextController);
-                                          } else {
-                                            return buildCombinedView(
-                                                snapshot, searchTextController);
-                                          }
-                                        }))))));
+                                      valueListenable: showSplitedView,
+                                      builder: (context, value, child) =>
+                                          ValueListenableBuilder(
+                                              valueListenable:
+                                                  widget.tab.commentariesToShow,
+                                              builder: (context, value, child) {
+                                                if (showSplitedView.value &&
+                                                    widget
+                                                        .tab
+                                                        .commentariesToShow
+                                                        .value
+                                                        .isNotEmpty) {
+                                                  return buildSplitedView(
+                                                      snapshot,
+                                                      searchTextController);
+                                                } else {
+                                                  return buildCombinedView(
+                                                      snapshot,
+                                                      searchTextController);
+                                                }
+                                              }),
+                                    ))))));
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -139,14 +144,16 @@ class _TextBookViewerState extends State<TextBookViewer>
                 children: [
                   SelectionArea(
                     child: CommentaryList(
-                        index: widget.tab.positionsListener.itemPositions.value
-                                .isEmpty
-                            ? 0
-                            : widget.tab.positionsListener.itemPositions.value
-                                .first.index,
-                        textBookTab: widget.tab,
-                        fontSize: textFontSize,
-                        openBookCallback: widget.openBookCallback),
+                      index: widget
+                              .tab.positionsListener.itemPositions.value.isEmpty
+                          ? 0
+                          : widget.tab.positionsListener.itemPositions.value
+                              .first.index,
+                      textBookTab: widget.tab,
+                      fontSize: textFontSize,
+                      openBookCallback: widget.openBookCallback,
+                      showSplitView: showSplitedView,
+                    ),
                   ),
                   buildCombinedView(snapshot, searchTextController)
                 ]));
@@ -160,7 +167,7 @@ class _TextBookViewerState extends State<TextBookViewer>
       data: snapshot.data!.split('\n'),
       textSize: textFontSize,
       openBookCallback: widget.openBookCallback,
-      libraryRootPath: widget.path.split('אוצריא').first,
+      showSplitedView: showSplitedView,
     );
   }
 
@@ -170,25 +177,43 @@ class _TextBookViewerState extends State<TextBookViewer>
       child: ValueListenableBuilder(
         valueListenable: showLeftPane,
         builder: (context, showLeftPane, child) => SizedBox(
-          width: showLeftPane ? 350 : 0,
+          width: showLeftPane ? 400 : 0,
           child: child!,
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
           child: Column(children: [
-            TabBar(
-              tabs: const [
-                Tab(text: 'ניווט'),
-                Tab(text: 'חיפוש'),
-                Tab(text: 'פרשנות'),
-                Tab(text: 'קישורים')
+            Row(
+              children: [
+                Expanded(
+                  child: TabBar(
+                    tabs: const [
+                      Tab(text: 'ניווט'),
+                      Tab(text: 'חיפוש'),
+                      Tab(text: 'פרשנות'),
+                      Tab(text: 'קישורים')
+                    ],
+                    controller: tabController,
+                    onTap: (value) {
+                      if (value == 1 && !Platform.isAndroid) {
+                        textSearchFocusNode.requestFocus();
+                      }
+                    },
+                  ),
+                ),
+                ValueListenableBuilder(
+                  valueListenable: pinLeftPane,
+                  builder: (context, pinLeftPanel, child) => IconButton(
+                    onPressed: () {
+                      pinLeftPane.value = !pinLeftPane.value;
+                    },
+                    icon: const Icon(
+                      Icons.push_pin,
+                    ),
+                    isSelected: pinLeftPanel,
+                  ),
+                )
               ],
-              controller: tabController,
-              onTap: (value) {
-                if (value == 1 && !Platform.isAndroid) {
-                  textSearchFocusNode.requestFocus();
-                }
-              },
             ),
             Expanded(
               child: TabBarView(
@@ -236,13 +261,13 @@ class _TextBookViewerState extends State<TextBookViewer>
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: widget.tab.positionsListener,
       closeLeftPanelCallback: closeLeftPane,
-      libraryRootPath: widget.path.split('אוצריא').first,
     );
   }
 
   CommentaryListView buildCommentaryView() {
     return CommentaryListView(
-        links: widget.tab.links, commentaries: widget.tab.commentariesToShow);
+      tab: widget.tab,
+    );
   }
 
   AppBar buildAppBar() {
@@ -267,6 +292,22 @@ class _TextBookViewerState extends State<TextBookViewer>
             showLeftPane.value = !showLeftPane.value;
           }),
       actions: [
+        // button to switch between splitted view and combined view
+        ValueListenableBuilder(
+          valueListenable: showSplitedView,
+          builder: (context, showSplitedViewValue, child) => IconButton(
+            onPressed: () {
+              showSplitedView.value = !showSplitedView.value;
+            },
+            icon: Icon(!showSplitedView.value
+                ? Icons.vertical_split_outlined
+                : Icons.view_agenda_outlined),
+            tooltip: !showSplitedView.value
+                ? ' הצגת מפרשים בצד הטקסט'
+                : 'הצגת מפרשים מתחת הטקסט',
+          ),
+        ),
+
         //button to add a bookmark
         IconButton(
           onPressed: () async {
@@ -274,7 +315,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                 widget.tab.positionsListener.itemPositions.value.first.index;
             widget.addBookmarkCallback(
                 ref: widget.tab.title + await refFromIndex(index),
-                path: widget.path,
+                title: utils.getTitleFromPath(widget.tab.book.title),
                 index: index);
           },
           icon: const Icon(

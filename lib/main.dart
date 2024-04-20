@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:otzaria/model/model.dart';
 import 'screens/main_window_screen.dart';
 import 'screens/settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'model/cache_provider.dart';
-import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/model/bookmark.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:hive/hive.dart';
+import 'package:otzaria/data/cache_provider.dart';
+import 'package:get_it/get_it.dart';
 
 void main() async {
-  await Settings.init(cacheProvider: HiveCache());
+  // initializing all the hive components
   await () async {
+    await Settings.init(cacheProvider: HiveCache());
     WidgetsFlutterBinding.ensureInitialized();
-    final defaultDirectory = await getApplicationSupportDirectory();
-
-    Hive.box(directory: defaultDirectory.path, name: 'bookmarks');
-    Hive.box(directory: defaultDirectory.path, name: 'tabs');
+    Hive.registerAdapter<Bookmark>(
+        'Bookmark', (json) => Bookmark.fromJson(json));
+    Hive.defaultDirectory = (await getApplicationSupportDirectory()).path;
+    Hive.box(name: 'bookmarks');
+    Hive.box(name: 'tabs');
   }();
-
-  Hive.registerAdapter<Bookmark>('Bookmark', (json) => Bookmark.fromJson(json));
+  GetIt.I.registerSingleton<AppModel>(AppModel());
   runApp(FileExplorerApp());
 }
 

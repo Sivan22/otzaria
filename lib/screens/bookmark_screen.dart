@@ -28,7 +28,7 @@ class _BookmarkViewState extends State<BookmarkView> {
             itemBuilder: (context, index) => ListTile(
                 title: Text(widget.bookmarks[index].ref),
                 onTap: () {
-                  widget.openBookmarkCallBack(widget.bookmarks[index].path,
+                  widget.openBookmarkCallBack(widget.bookmarks[index].title,
                       widget.bookmarks[index].index);
                   widget.closeLeftPaneCallback;
                 },

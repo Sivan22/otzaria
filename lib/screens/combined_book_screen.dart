@@ -4,22 +4,23 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
-import 'package:otzaria/model/books.dart';
+import 'package:otzaria/model/tabs.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 
 class CombinedView extends StatefulWidget {
   final List<String> data;
   final TextBookTab tab;
   final double textSize;
   final Function(OpenedTab) openBookCallback;
-  final String libraryRootPath;
+  final ValueNotifier<bool> showSplitedView;
 
   const CombinedView({
     super.key,
     required this.tab,
     required this.data,
     required this.openBookCallback,
-    required this.libraryRootPath,
     required this.textSize,
+    required this.showSplitedView,
   });
 
   @override
@@ -93,25 +94,18 @@ class _CombinedViewState extends State<CombinedView>
             }),
         children: [
           //on splited view we don't need the Inner list
-          Settings.getValue<bool>('key-splited-view') ?? false
+          widget.showSplitedView.value
               ? const SizedBox.shrink()
               : CommentaryList(
                   index: index,
                   fontSize: widget.textSize,
                   textBookTab: widget.tab,
                   openBookCallback: widget.openBookCallback,
+                  showSplitView: ValueNotifier<bool>(false),
                 )
         ]);
   }
 
   @override
   bool get wantKeepAlive => true;
-
-  String highLight(String data, String searchQuery) {
-    if (searchQuery.isNotEmpty) {
-      return data.replaceAll(
-          searchQuery, '<font color=red>$searchQuery</font>');
-    }
-    return data;
-  }
 }

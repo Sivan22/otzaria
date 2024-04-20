@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/model/links.dart';
+import 'package:otzaria/model/tabs.dart';
 
 class CommentaryListView extends StatefulWidget {
-  final Future<List<Link>> links;
-  final ValueNotifier<List<String>> commentaries;
+  final TextBookTab tab;
 
-  const CommentaryListView({
-    Key? key,
-    required this.links,
-    required this.commentaries,
-  }) : super(key: key);
+  const CommentaryListView({Key? key, required this.tab}) : super(key: key);
 
   @override
   State<CommentaryListView> createState() => CommentaryListViewState();
@@ -17,29 +12,25 @@ class CommentaryListView extends StatefulWidget {
 
 class CommentaryListViewState extends State<CommentaryListView>
     with AutomaticKeepAliveClientMixin<CommentaryListView> {
-  late Future<List<String>> commentariesNames;
   bool _selectAll = false;
   String _filterQuery = "";
 
   @override
   void initState() {
     super.initState();
-    commentariesNames = getCommentariesNames(widget.links);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return FutureBuilder(
-        future: commentariesNames,
+        future: widget.tab.availableCommentators,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
-          List<String> commentariesNames = snapshot.data!;
-
           return Column(
             children: [
               TextField(
@@ -59,35 +50,36 @@ class CommentaryListViewState extends State<CommentaryListView>
                   setState(() {
                     _selectAll = value!;
                     if (_selectAll) {
-                      widget.commentaries.value.addAll(commentariesNames);
+                      widget.tab.commentariesToShow.value
+                          .addAll(snapshot.data!);
                     } else {
-                      widget.commentaries.value.clear();
+                      widget.tab.commentariesToShow.value.clear();
                     }
-                    widget.commentaries.notifyListeners();
+                    widget.tab.commentariesToShow.notifyListeners();
                   });
                 },
               ),
               Expanded(
                 child: Builder(builder: (context) {
                   final filteredCommentaries = snapshot.data!
-                      .where(
-                          (name) => name.toLowerCase().contains(_filterQuery))
+                      .where((book) =>
+                          book.title.toLowerCase().contains(_filterQuery))
                       .toList();
                   return ListView.builder(
                     itemCount: filteredCommentaries.length,
                     itemBuilder: (context, index) => CheckboxListTile(
-                      title: Text(filteredCommentaries[index]),
-                      value: widget.commentaries.value
+                      title: Text(filteredCommentaries[index].title),
+                      value: widget.tab.commentariesToShow.value
                           .contains(filteredCommentaries[index]),
                       onChanged: (value) {
                         if (value!) {
-                          widget.commentaries.value
+                          widget.tab.commentariesToShow.value
                               .add(filteredCommentaries[index]);
                         } else {
-                          widget.commentaries.value
+                          widget.tab.commentariesToShow.value
                               .remove(filteredCommentaries[index]);
                         }
-                        widget.commentaries.notifyListeners();
+                        widget.tab.commentariesToShow.notifyListeners();
                         setState(() {});
                       },
                     ),
@@ -101,19 +93,4 @@ class CommentaryListViewState extends State<CommentaryListView>
 
   @override
   bool get wantKeepAlive => true;
-}
-
-Future<List<String>> getCommentariesNames(Future<List<Link>> links) async {
-  List<Link> finalLinks = (await links)
-      .where((link) =>
-          link.connectionType == 'commentary' ||
-          link.connectionType == 'targum')
-      .toList();
-  List<String> commentaries =
-      finalLinks.map((link) => link.path2.split('\\').last).toList();
-  commentaries.sort(
-    (a, b) => a.compareTo(b),
-  );
-  commentaries = commentaries.toSet().toList();
-  return commentaries;
 }

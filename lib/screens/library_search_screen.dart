@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import '../model/library_searcher.dart';
-import '../model/books.dart';
+import '../model/tabs.dart';
 import '../model/search_results.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
@@ -195,7 +196,10 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
           ),
           onTap: () {
             widget.openBookCallback(
-              TextBookTab(result.path, result.index, searchText: result.query),
+              TextBookTab(
+                  title: utils.getTitleFromPath(result.path),
+                  result.index,
+                  searchText: result.query),
             );
           },
         );

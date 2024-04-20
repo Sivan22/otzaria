@@ -1,159 +1,79 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'dart:convert';
-import 'dart:isolate';
-import 'package:docx_to_text/docx_to_text.dart';
-import 'package:pdfrx/pdfrx.dart';
+import 'package:otzaria/data/data.dart';
+import 'package:otzaria/data/file_system_data.dart';
 import 'package:otzaria/model/links.dart';
-import 'package:otzaria/model/library_searcher.dart';
+import 'dart:isolate';
 
-class OpenedTab {
-  String title;
+/// Represents a book in the application.
+///
+/// A `Book` object has a [title] which is the name of the book.
+/// The book data is fetched using the [bookData] getter, which returns a [Future]
+/// that resolves to a [String] containing the text of the book.
+class Book {
+  /// The title of the book.
+  final String title;
+  final Data data = FileSystemData.instance;
 
-  OpenedTab(this.title);
+  /// The text data of the book.
+  Future<String> get text async => (await data.getBookText(title));
 
-  factory OpenedTab.fromJson(Map<String, dynamic> json) {
-    String type = json['type'];
-    if (type == 'BookTabWindow') {
-      return TextBookTab.fromJson(json);
-    } else if (type == 'SearchingTabWindow') {
-      return SearchingTab.fromJson(json);
-    }
-    return PdfBookTab.fromJson(json);
+  /// The author of the book.
+  String? get author => data.metadata[title]?['author'];
+
+  //the short description of the book
+  String? get heShortDesc => data.metadata[title]?['heShortDesc'];
+
+  /// The publication date of the book.
+  String? get pubDate => data.metadata[title]?['pubDate'];
+
+  /// The place where the book was published.
+  String? get pubPlace => data.metadata[title]?['pubPlace'];
+
+  /// The order of the book in the list of books.
+  int get order => data.metadata[title]?['order'] == null
+      ? 999
+      : data.metadata[title]!['order'] as int;
+
+  /// Creates a new `Book` instance.
+  ///
+  /// The [title] parameter is required and cannot be null.
+  ///
+  /// The [author] parameter is optional and defaults to an empty string.
+  ///
+  /// The [pubDate] parameter is optional and defaults to an empty string.
+  ///
+  /// The [pubPlace] parameter is optional and defaults to an empty string.
+  ///
+  /// The [order] parameter is optional and defaults to 0.
+  Book({
+    required this.title,
+  });
+
+  /// Retrieves the table of contents of the book.
+  ///
+  /// Returns a [Future] that resolves to a [List] of [TocEntry] objects representing
+  /// the table of contents of the book.
+  Future<List<TocEntry>> get tableOfContents =>
+      Isolate.run(() => data.getBookToc(title));
+
+  /// Retrieves all the links for the book.
+  ///
+  /// Returns a [Future] that resolves to a [List] of [Link] objects.
+  Future<List<Link>> get links => data.getAllLinksForBook(title);
+
+  /// Creates a new `Book` instance from a JSON object.
+  ///
+  /// The JSON object should have a 'title' key.
+  factory Book.fromJson(Map<String, dynamic> json) {
+    return Book(
+      title: json['title'],
+    );
   }
-}
 
-class PdfBookTab extends OpenedTab {
-  final String path;
-  final int pageNumber;
-  final PdfViewerController pdfViewerController = PdfViewerController();
-
-  PdfBookTab(this.path, this.pageNumber)
-      : super(path.split(Platform.pathSeparator).last);
-
-  @override
-  factory PdfBookTab.fromJson(Map<String, dynamic> json) {
-    return PdfBookTab(json['path'], json['pageNumber']);
-  }
-
+  /// Converts the `Book` instance into a JSON object.
+  ///
+  /// Returns a JSON object with a 'title' key.
   Map<String, dynamic> toJson() {
-    return {
-      'path': path,
-      'pageNumber':
-          (pdfViewerController.isReady ? pdfViewerController.pageNumber : 0),
-      'type': 'PdfPageTab'
-    };
-  }
-}
-
-class TextBookTab extends OpenedTab {
-  final String path;
-  ValueNotifier<List<String>> commentariesToShow = ValueNotifier([]);
-  late Future<List<Link>> links;
-  late Future<List<TocEntry>> toc;
-  late Future<String> data;
-  int initalIndex;
-  ItemScrollController scrollController = ItemScrollController();
-  ScrollOffsetController scrollOffsetController = ScrollOffsetController();
-  TextEditingController searchTextController = TextEditingController();
-  ItemPositionsListener positionsListener = ItemPositionsListener.create();
-
-  TextBookTab(this.path, this.initalIndex,
-      {String searchText = '', List<String>? commentaries})
-      : super(path.split(Platform.pathSeparator).last) {
-    if (searchText != '') {
-      searchTextController.text = searchText;
-    }
-    if (commentaries != null && commentaries.isNotEmpty) {
-      commentariesToShow.value = commentaries;
-    }
-
-    links = Isolate.run(() async {
-      String libraryRootPath = path.split('אוצריא').first;
-      return await getAllLinksFromJson(
-          '$libraryRootPath${Platform.pathSeparator}links${Platform.pathSeparator}${path.split(Platform.pathSeparator).last}_links.json');
-    });
-    data = getBookData(path);
-    toc = _parseToc(data);
-  }
-
-  @override
-  factory TextBookTab.fromJson(Map<String, dynamic> json) {
-    return TextBookTab(json['path'], json['initalIndex'],
-        commentaries: json['commentaries']
-            .map<String>((json) => json.toString())
-            .toList());
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'path': path,
-      'initalIndex': positionsListener.itemPositions.value.isNotEmpty
-          ? positionsListener.itemPositions.value.first.index
-          : 0,
-      'commentaries': commentariesToShow.value,
-      'type': 'BookTabWindow'
-    };
-  }
-
-  Future<List<Link>> getAllLinksFromJson(String path) async {
-    try {
-      final jsonString = await File(path).readAsString();
-      final jsonList = jsonDecode(jsonString) as List;
-      return jsonList.map((json) => Link.fromJson(json)).toList();
-    } on Exception {
-      return [];
-    }
-  }
-
-  Future<String> getBookData(String path) {
-    return Isolate.run(() async {
-      File file = File(path);
-      if (path.endsWith('.docx')) {
-        final bytes = await file.readAsBytes();
-        return docxToText(bytes);
-      } else {
-        return await file.readAsString();
-      }
-    });
-  }
-
-  Future<List<TocEntry>> _parseToc(Future<String> data) async {
-    List<String> lines = (await data).split('\n');
-    List<TocEntry> toc = [];
-    Map<int, TocEntry> parents = {}; // Keep track of parent nodes
-
-    for (int i = 0; i < lines.length; i++) {
-      final String line = lines[i];
-      if (line.startsWith('<h')) {
-        final int level =
-            int.parse(line[2]); // Extract heading level (h1, h2, etc.)
-        final String text = stripHtmlIfNeeded(line);
-
-        // Create the TocEntry
-        TocEntry entry = TocEntry(text: text, index: i, level: level);
-
-        if (level == 1) {
-          // If it's an h1, add it as a root node
-          toc.add(entry);
-          parents[level] = entry;
-        } else {
-          // Find the parent node based on the previous level
-          final TocEntry? parent = parents[level - 1];
-          if (parent != null) {
-            parent.children.add(entry);
-            parents[level] = entry;
-          } else {
-            // Handle cases where heading levels might be skipped
-            print("Warning: Found h$level without a parent h${level - 1}");
-            toc.add(entry);
-          }
-        }
-      }
-    }
-
-    return toc;
+    return {'title': title};
   }
 }
 
@@ -168,30 +88,4 @@ class TocEntry {
     required this.index,
     this.level = 1,
   });
-}
-
-String stripHtmlIfNeeded(String text) {
-  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
-}
-
-class SearchingTab extends OpenedTab {
-  LibrarySearcher searcher = LibrarySearcher(
-    [],
-    TextEditingController(),
-    ValueNotifier([]),
-  );
-  final ItemScrollController scrollController = ItemScrollController();
-
-  SearchingTab(
-    super.title,
-  );
-
-  @override
-  factory SearchingTab.fromJson(Map<String, dynamic> json) {
-    return SearchingTab(json['title']);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'title': title, 'type': 'SearchingTabWindow'};
-  }
 }

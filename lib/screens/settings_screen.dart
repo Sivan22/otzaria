@@ -106,7 +106,6 @@ class MySettingsScreen extends StatelessWidget {
                   'roboto': 'רובוטו',
                   'Calibri': 'קליברי',
                   'Arial': 'אריאל',
-                  'FrankRuhlLibre': 'xmi',
                 },
                 selected: 'FrankRuhlCLM',
                 leading: const Icon(Icons.font_download_outlined),
@@ -156,30 +155,30 @@ class MySettingsScreen extends StatelessWidget {
                         values: shortcuctsList,
                       ),
                     ]),
-          SettingsGroup(
-              title: 'הגדרות ממשק',
-              titleTextStyle: const TextStyle(fontSize: 25),
-              children: [
-                Platform.isAndroid
-                    ? const SizedBox.shrink()
-                    : const SwitchSettingsTile(
-                        settingKey: 'key-close-left-pane-on-scroll',
-                        title: 'סגירת תפריט הצד בעת גלילה',
-                        enabledLabel:
-                            'עם תחילת הגלילה, ייסגר תפריט הצד אוטומטית',
-                        disabledLabel: 'תפריט הצד לא ייסגר אוטומטית',
-                        leading: Icon(Icons.arrow_back),
-                      ),
-                const SwitchSettingsTile(
-                  settingKey: 'key-splited-view',
-                  title: 'הצגת המפרשים במפוצל',
-                  enabledLabel:
-                      ' בהצגת מפרשים, החלון יפוצל והמפרשים יוצגו בחלון נפרד',
-                  disabledLabel: 'המפרשים יוצגו בתוך הטקסט',
-                  leading: Icon(Icons.splitscreen),
-                  defaultValue: false,
-                ),
-              ]),
+          // SettingsGroup(
+          //     title: 'הגדרות ממשק',
+          //     titleTextStyle: const TextStyle(fontSize: 25),
+          //     children: [
+          //       Platform.isAndroid
+          //           ? const SizedBox.shrink()
+          //           : const SwitchSettingsTile(
+          //               settingKey: 'key-close-left-pane-on-scroll',
+          //               title: 'סגירת תפריט הצד בעת גלילה',
+          //               enabledLabel:
+          //                   'עם תחילת הגלילה, ייסגר תפריט הצד אוטומטית',
+          //               disabledLabel: 'תפריט הצד לא ייסגר אוטומטית',
+          //               leading: Icon(Icons.arrow_back),
+          //             ),
+          //       const SwitchSettingsTile(
+          //         settingKey: 'key-splited-view',
+          //         title: 'הצגת המפרשים במפוצל',
+          //         enabledLabel:
+          //             ' בהצגת מפרשים, החלון יפוצל והמפרשים יוצגו בחלון נפרד',
+          //         disabledLabel: 'המפרשים יוצגו בתוך הטקסט',
+          //         leading: Icon(Icons.splitscreen),
+          //         defaultValue: false,
+          //       ),
+          //     ]),
           SettingsGroup(
               title: 'כללי',
               titleTextStyle: const TextStyle(fontSize: 25),
