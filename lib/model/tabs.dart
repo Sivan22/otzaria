@@ -8,8 +8,9 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:isolate';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/model/links.dart';
-import 'package:otzaria/model/library_searcher.dart';
+import 'package:otzaria/model/full_text_search.dart';
 import 'package:otzaria/model/books.dart';
+import 'package:otzaria/data/file_system_data.dart';
 
 class OpenedTab {
   String title;
@@ -28,21 +29,23 @@ class OpenedTab {
 }
 
 class PdfBookTab extends OpenedTab {
-  final String path;
+  final pdfBook book;
   final int pageNumber;
   final PdfViewerController pdfViewerController = PdfViewerController();
 
-  PdfBookTab(this.path, this.pageNumber)
-      : super(path.split(Platform.pathSeparator).last);
+  PdfBookTab(this.book, this.pageNumber)
+      : super(book.path.split(Platform.pathSeparator).last);
 
   @override
   factory PdfBookTab.fromJson(Map<String, dynamic> json) {
-    return PdfBookTab(json['path'], json['pageNumber']);
+    return PdfBookTab(
+        pdfBook(title: getTitleFromPath(json['path']), path: json['path']),
+        json['pageNumber']);
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'path': path,
+      'path': book.path,
       'pageNumber':
           (pdfViewerController.isReady ? pdfViewerController.pageNumber : 0),
       'type': 'PdfPageTab'
@@ -51,7 +54,7 @@ class PdfBookTab extends OpenedTab {
 }
 
 class TextBookTab extends OpenedTab {
-  late Book book;
+  late TextBook book;
   late Future<String> bookData;
   late Future<List<Link>> links;
   late Future<List<TocEntry>> toc;
@@ -64,9 +67,11 @@ class TextBookTab extends OpenedTab {
   ItemPositionsListener positionsListener = ItemPositionsListener.create();
 
   TextBookTab(this.initalIndex,
-      {required String title, String searchText = '', List<Book>? commentaries})
-      : super(title) {
-    book = Book(
+      {required TextBook book,
+      String searchText = '',
+      List<Book>? commentaries})
+      : super(book.title) {
+    book = TextBook(
       title: title,
     );
     bookData = book.text;
@@ -98,8 +103,8 @@ class TextBookTab extends OpenedTab {
   }
 
   Future<Map<String, String>> cacheCommentators(
-      Future<List<Book>> availableCommentators) async {
-    List<Book> availableCommentatorsList = await availableCommentators;
+      Future<List<TextBook>> availableCommentators) async {
+    List<TextBook> availableCommentatorsList = await availableCommentators;
     Map<String, String> availableCommentatorsData = {};
     for (int av = 0; av < availableCommentatorsList.length; av++) {
       availableCommentatorsData[availableCommentatorsList[av].title] =
@@ -111,7 +116,9 @@ class TextBookTab extends OpenedTab {
   @override
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
     return TextBookTab(json['initalIndex'],
-        title: json['title'],
+        book: TextBook(
+          title: json['title'],
+        ),
         commentaries: json['commentaries']
             .map<Book>((json) => Book(title: json.toString()))
             .toList());
@@ -130,7 +137,7 @@ class TextBookTab extends OpenedTab {
 }
 
 class SearchingTab extends OpenedTab {
-  LibrarySearcher searcher = LibrarySearcher(
+  FullTextSearcher searcher = FullTextSearcher(
     [],
     TextEditingController(),
     ValueNotifier([]),

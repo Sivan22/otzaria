@@ -4,7 +4,7 @@ import 'package:otzaria/utils/text_manipulation.dart';
 import 'dart:math';
 import 'package:otzaria/model/search_results.dart';
 
-class LibrarySearcher {
+class FullTextSearcher {
   final List<String> booksToSearch;
   final TextEditingController queryController;
   final ValueNotifier<List<BookTextSearchResult>> searchResults;
@@ -14,7 +14,7 @@ class LibrarySearcher {
   int lineIndex = 0;
   int bookIndex = 0;
 
-  LibrarySearcher(
+  FullTextSearcher(
     this.booksToSearch,
     this.queryController,
     this.searchResults,

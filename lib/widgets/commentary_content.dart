@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:otzaria/model/books.dart';
 import 'package:otzaria/model/tabs.dart';
 import 'package:otzaria/model/links.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
@@ -37,7 +38,7 @@ class _CommentaryContentState extends State<CommentaryContent>
     return GestureDetector(
       onDoubleTap: () {
         widget.openBookCallback(TextBookTab(
-          title: utils.getTitleFromPath(widget.link.path2),
+          book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
           widget.link.index2 - 1,
         ));
       },

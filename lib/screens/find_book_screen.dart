@@ -1,7 +1,7 @@
-import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'dart:isolate';
+import 'dart:io';
 
 class BookSearchScreen extends StatefulWidget {
   final void Function(String, int) openBookCallback;

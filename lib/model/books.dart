@@ -2,48 +2,35 @@ import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data.dart';
 import 'package:otzaria/model/links.dart';
 import 'dart:isolate';
+import 'package:pdfrx/pdfrx.dart';
 
 /// Represents a book in the application.
 ///
 /// A `Book` object has a [title] which is the name of the book.
-/// The book data is fetched using the [bookData] getter, which returns a [Future]
-/// that resolves to a [String] containing the text of the book.
+
 class Book {
   /// The title of the book.
   final String title;
   final Data data = FileSystemData.instance;
 
-  /// The text data of the book.
-  Future<String> get text async => (await data.getBookText(title));
-
-  /// The author of the book.
+  /// The author of the book, if available.
   String? get author => data.metadata[title]?['author'];
 
-  //the short description of the book
+  /// A short description of the book, if available.
   String? get heShortDesc => data.metadata[title]?['heShortDesc'];
 
-  /// The publication date of the book.
+  /// The publication date of the book, if available.
   String? get pubDate => data.metadata[title]?['pubDate'];
 
-  /// The place where the book was published.
+  /// The place where the book was published, if available.
   String? get pubPlace => data.metadata[title]?['pubPlace'];
 
-  /// The order of the book in the list of books.
-  int get order => data.metadata[title]?['order'] == null
-      ? 999
-      : data.metadata[title]!['order'] as int;
+  /// The order of the book in the list of books. If not available, defaults to 999.
+  int get order => data.metadata[title]?['order'] ?? 999;
 
   /// Creates a new `Book` instance.
   ///
   /// The [title] parameter is required and cannot be null.
-  ///
-  /// The [author] parameter is optional and defaults to an empty string.
-  ///
-  /// The [pubDate] parameter is optional and defaults to an empty string.
-  ///
-  /// The [pubPlace] parameter is optional and defaults to an empty string.
-  ///
-  /// The [order] parameter is optional and defaults to 0.
   Book({
     required this.title,
   });
@@ -77,6 +64,13 @@ class Book {
   }
 }
 
+class TextBook extends Book {
+  TextBook({required String title}) : super(title: title);
+
+  /// The text data of the book.
+  Future<String> get text async => (await data.getBookText(title));
+}
+
 class TocEntry {
   final String text;
   final int index;
@@ -88,4 +82,28 @@ class TocEntry {
     required this.index,
     this.level = 1,
   });
+}
+
+class pdfBook extends Book {
+  final String path;
+  pdfBook({required String title, required this.path}) : super(title: title);
+  Future<PdfPageView> get thumbnail async => PdfPageView(
+      document: await PdfDocument.openFile(
+        path,
+      ),
+      pageNumber: 1);
+
+  factory pdfBook.fromJson(Map<String, dynamic> json) {
+    return pdfBook(
+      title: json['title'],
+      path: json['path'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'title': title, 'path': path};
+  }
+
+  @override
+  String toString() => 'pdfBook(title: $title, path: $path)';
 }

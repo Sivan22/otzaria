@@ -22,6 +22,7 @@ void main() async {
     Hive.box(name: 'tabs');
   }();
   GetIt.I.registerSingleton<AppModel>(AppModel());
+
   runApp(FileExplorerApp());
 }
 

@@ -67,7 +67,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
             onPressed: () => widget.addBookmarkCallback(
                 ref:
                     '${widget.tab.title} עמוד ${widget.controller.pageNumber ?? 1}',
-                title: widget.tab.path,
+                title: widget.tab.title,
                 index: widget.controller.pageNumber ?? 1),
           ),
           IconButton(
@@ -153,7 +153,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
             child: Stack(
               children: [
                 PdfViewer.file(
-                  widget.tab.path,
+                  widget.tab.book.path,
                   initialPageNumber: widget.tab.pageNumber,
                   // PdfViewer.file(
                   //   r"D:\pdfrx\example\assets\hello.pdf",

@@ -1,23 +1,23 @@
-import 'package:flutter/widgets.dart';
-import 'package:otzaria/helper/shortcuts_list.dart';
+import 'dart:io';
+import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:otzaria/screens/bookmark_screen.dart';
+import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+//imports from otzaria
+import 'package:otzaria/model/tabs.dart';
 import 'package:otzaria/model/books.dart';
+import 'package:otzaria/model/bookmark.dart';
+import 'package:otzaria/screens/bookmark_screen.dart';
 import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'dart:math';
 import 'pdf_book_screen.dart';
 import 'text_book_screen.dart';
 import 'find_book_screen.dart';
-import 'library_search_screen.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:file_picker/file_picker.dart';
-import '../model/tabs.dart';
-import 'package:permission_handler/permission_handler.dart';
-import '../model/bookmark.dart';
+import 'full_text_search_screen.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/helper/shortcuts_list.dart';
 
 class MainWindowView extends StatefulWidget {
   final ValueNotifier<bool> isDarkMode;
@@ -41,8 +41,7 @@ class MainWindowViewState extends State<MainWindowView>
   late List<OpenedTab> tabs;
   late TabController tabController = TabController(
       length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
-  final showBooksBrowser = ValueNotifier<bool>(false);
-  final showBookSearch = ValueNotifier<bool>(false);
+
   final showBookmarksView = ValueNotifier<bool>(false);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
@@ -113,17 +112,23 @@ class MainWindowViewState extends State<MainWindowView>
     return SafeArea(
       child: Scaffold(
         body: OrientationBuilder(builder: (context, orientation) {
+          Widget mainWindow = Container();
+          switch (selectedIndex.value) {
+            case (0):
+              mainWindow = buildLibraryBrowser();
+              break;
+            case (1 || 2 || 3):
+              mainWindow = buildTabBarAndTabView();
+              break;
+            case (4):
+              mainWindow = buildSettingsScreen();
+          }
           if (orientation == Orientation.landscape) {
-            return buildShortcuts();
+            return buildHorizontalLayout(mainWindow);
           } else {
             return Column(children: [
               Expanded(
-                child: Row(children: [
-                  buildBooksBrowser(),
-                  buildBookSearchScreen(),
-                  buildBookmarksView(),
-                  buildTabBarAndTabView()
-                ]),
+                child: Row(children: [buildBookmarksView(), mainWindow]),
               ),
               buildNavigationBottomBar(),
             ]);
@@ -133,17 +138,14 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
-  CallbackShortcuts buildShortcuts() {
+  Widget buildHorizontalLayout(Widget mainWindow) {
     return CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
           shortcuts[
               Settings.getValue<String>('key-shortcut-open-book-browser') !=
                       null
                   ? Settings.getValue<String>('key-shortcut-open-book-browser')
-                  : 'ctrl+b']!: () {
-            showBooksBrowser.value = true;
-            showBookSearch.value = false;
-          },
+                  : 'ctrl+b']!: () {},
           shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
               ? Settings.getValue<String>('key-shortcut-close-tab')
               : 'ctrl+w']!: () {
@@ -164,11 +166,7 @@ class MainWindowViewState extends State<MainWindowView>
           shortcuts[
               Settings.getValue<String>('key-shortcut-open-book-search') != null
                   ? Settings.getValue<String>('key-shortcut-open-book-search')
-                  : 'ctrl+o']!: () {
-            showBooksBrowser.value = false;
-            showBookSearch.value = true;
-            bookSearchfocusNode.requestFocus();
-          },
+                  : 'ctrl+o']!: () {},
           shortcuts[
               Settings.getValue<String>('key-shortcut-open-new-search') != null
                   ? Settings.getValue<String>('key-shortcut-open-new-search')
@@ -185,17 +183,6 @@ class MainWindowViewState extends State<MainWindowView>
           child: ListenableBuilder(
               listenable: selectedIndex,
               builder: (context, child) {
-                Widget mainWindow = Container();
-                switch (selectedIndex.value) {
-                  case (0):
-                    mainWindow = buildLibraryBrowser();
-                    break;
-                  case (1 || 2 || 3):
-                    mainWindow = buildTabBarAndTabView();
-                    break;
-                  case (4):
-                    mainWindow = buildSettingsScreen();
-                }
                 return Row(children: [
                   buildNavigationSideBar(),
                   buildBookmarksView(),
@@ -210,7 +197,7 @@ class MainWindowViewState extends State<MainWindowView>
       child: Container(
           color: Colors.white,
           child: LibraryBrowser(
-            onBookClickCallback: openTextBook,
+            onBookClickCallback: openBook,
           )),
     );
   }
@@ -223,8 +210,6 @@ class MainWindowViewState extends State<MainWindowView>
       child: NotificationListener<UserScrollNotification>(
         onNotification: (scrollNotification) {
           Future.microtask(() {
-            showBooksBrowser.value = false;
-            showBookSearch.value = false;
             showBookmarksView.value = false;
           });
           return false; // Don't block the notification
@@ -310,46 +295,6 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
-  AnimatedSize buildBookSearchScreen() {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      child: ValueListenableBuilder(
-        valueListenable: showBookSearch,
-        builder: (context, showBookSearch, child) => SizedBox(
-          width: showBookSearch ? 300 : 0,
-          height: showBookSearch ? null : 0,
-          child: child!,
-        ),
-        child: FutureBuilder(
-            future: libraryRootPath,
-            builder: (context, snapshot) {
-              return snapshot.hasData
-                  ? BookSearchScreen(
-                      openBookCallback: openBook,
-                      closeLeftPaneCallback: closeLeftPanel,
-                      focusNode: bookSearchfocusNode,
-                      libraryRootPath: snapshot.data!)
-                  : const Center(child: CircularProgressIndicator());
-            }),
-      ),
-    );
-  }
-
-  AnimatedSize buildBooksBrowser() {
-    return AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        child: ValueListenableBuilder(
-            valueListenable: showBooksBrowser,
-            builder: (context, showBooksBrowser, child) => SizedBox(
-                  width: showBooksBrowser ? 300 : 0,
-                  height: showBooksBrowser ? null : 0,
-                  child: child!,
-                ),
-            child: LibraryBrowser(
-              onBookClickCallback: openTextBook,
-            )));
-  }
-
   AnimatedSize buildBookmarksView() {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
@@ -409,10 +354,6 @@ class MainWindowViewState extends State<MainWindowView>
               switch (index) {
                 case 2:
                   _openBookmarksScreen();
-                case 3:
-                  showBookSearch.value = false;
-                  showBooksBrowser.value = false;
-                  _openSearchScreen();
               }
             });
           }),
@@ -423,12 +364,12 @@ class MainWindowViewState extends State<MainWindowView>
     return NavigationBar(
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.folder),
+            icon: Icon(Icons.library_books),
             label: 'ספרייה',
           ),
           NavigationDestination(
-            icon: Icon(Icons.library_books),
-            label: 'איתור ספר',
+            icon: Icon(Icons.menu_book),
+            label: 'קריאה',
           ),
           NavigationDestination(
             icon: Icon(Icons.search),
@@ -445,41 +386,16 @@ class MainWindowViewState extends State<MainWindowView>
         ],
         selectedIndex: selectedIndex.value,
         onDestinationSelected: (int index) {
-          setState(() {
-            selectedIndex.value = index;
-            switch (index) {
-              case 0:
-                showBookSearch.value = false;
-                showBooksBrowser.value = !showBooksBrowser.value;
-              case 1:
-                showBooksBrowser.value = false;
-                showBookSearch.value = !showBookSearch.value;
-              case 2:
-                showBookSearch.value = false;
-                showBooksBrowser.value = false;
-                _openSearchScreen();
-              case 3:
-                showBookSearch.value = false;
-                showBooksBrowser.value = false;
-                _openBookmarksScreen();
-
-              case 4:
-                _openSettingsScreen();
-            }
-          });
+          setState(() {});
         });
   }
 
-  void openBook(String path, int index) {
-    if (path.endsWith('.pdf')) {
-      addTab(PdfBookTab(path, index));
-    } else {
-      addTab(TextBookTab(title: utils.getTitleFromPath(path), index));
+  void openBook(Book book, int index) {
+    if (book is pdfBook) {
+      addTab(PdfBookTab(book, index));
+    } else if (book is TextBook) {
+      addTab(TextBookTab(book: book, index));
     }
-  }
-
-  void openTextBook(Book book, int index) {
-    addTab(TextBookTab(0, title: book.title));
     selectedIndex.value = 1;
   }
 
@@ -505,15 +421,6 @@ class MainWindowViewState extends State<MainWindowView>
       }
     });
     Hive.box(name: 'tabs').put("key-tabs", tabs);
-  }
-
-  void showLibrary() async {
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => LibraryBrowser(
-                  onBookClickCallback: openTextBook,
-                )));
   }
 
   void _openSettingsScreen() async {
@@ -549,8 +456,6 @@ class MainWindowViewState extends State<MainWindowView>
   }
 
   void closeLeftPanel() {
-    showBooksBrowser.value = false;
-    showBookSearch.value = false;
     showBookmarksView.value = false;
   }
 }

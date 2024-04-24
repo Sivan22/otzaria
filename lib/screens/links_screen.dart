@@ -1,5 +1,6 @@
 // a widget that takes an html strings array, finds all the headings, and displays it in a listview. on pressed the scrollcontroller scrolls to the index of the heading.
 
+import 'package:otzaria/model/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter/material.dart';
@@ -74,8 +75,9 @@ class _LinksViewerState extends State<LinksViewer>
                 ),
                 onTap: () {
                   widget.openTabcallback(TextBookTab(
-                      title:
-                          utils.getTitleFromPath(snapshot.data![index].path2),
+                      book: TextBook(
+                          title: utils
+                              .getTitleFromPath(snapshot.data![index].path2)),
                       snapshot.data![index].index2 - 1));
                   widget.closeLeftPanelCallback();
                 },

@@ -188,7 +188,10 @@ every directory represents a category, and every file represents a book*/
           category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
               Directory(entity.path), category));
         } else {
-          category.books.add(Book(title: getBookTitle(entity.path)));
+          entity.path.toLowerCase().endsWith('.pdf')
+              ? category.books.add(
+                  pdfBook(title: getBookTitle(entity.path), path: entity.path))
+              : category.books.add(TextBook(title: getBookTitle(entity.path)));
         }
         try {
           category.books.sort(

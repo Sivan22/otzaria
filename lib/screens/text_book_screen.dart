@@ -14,6 +14,17 @@ import 'package:otzaria/widgets/commentary_list.dart';
 import 'package:otzaria/model/tabs.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
+/// A [StatefulWidget] that displays a text book.
+///
+/// This widget takes a [TextBookTab] that contains the details of the book
+/// and the data to display, and a [Future<String>] that represents the
+/// contents of the book. It also takes two callbacks: [openBookCallback]
+/// which is called when the user wants to open another book, and
+/// [addBookmarkCallback] which is called when the user wants to add a bookmark.
+///
+/// [TextBookViewer] is responsible for displaying the book's contents and
+/// allowing the user to interact with it, such as adjusting the font size
+/// and searching for text within the book.
 class TextBookViewer extends StatefulWidget {
   final TextBookTab tab;
   final void Function(OpenedTab) openBookCallback;
@@ -22,6 +33,15 @@ class TextBookViewer extends StatefulWidget {
       required String title,
       required int index}) addBookmarkCallback;
   final Future<String> data;
+
+  /// Creates a new [TextBookViewer].
+  ///
+  /// The [tab] parameter is the [TextBookTab] that contains the details of the
+  /// book, the [openBookCallback] parameter is the callback that is called
+  /// when the user wants to open another book, and the [addBookmarkCallback]
+  /// parameter is the callback that is called when the user wants to add a bookmark.
+  /// The [data] parameter is the [Future<String>] that represents the contents
+  /// of the book.
   const TextBookViewer({
     Key? key,
     required this.tab,
@@ -30,6 +50,7 @@ class TextBookViewer extends StatefulWidget {
     required this.data,
   }) : super(key: key);
 
+  /// Creates the mutable state for this widget at a given location in the tree.
   @override
   State<TextBookViewer> createState() => _TextBookViewerState();
 }
@@ -301,7 +322,7 @@ class _TextBookViewerState extends State<TextBookViewer>
             },
             icon: Icon(!showSplitedView.value
                 ? Icons.vertical_split_outlined
-                : Icons.view_agenda_outlined),
+                : Icons.horizontal_split_outlined),
             tooltip: !showSplitedView.value
                 ? ' הצגת מפרשים בצד הטקסט'
                 : 'הצגת מפרשים מתחת הטקסט',
