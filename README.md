@@ -4,6 +4,8 @@ An open source project to bring the sefaria library to PC. The program is writte
 
 # אוצריא
 
+כנסו [לאתר שלנו](https://sivan22.github.io/otzaria-download/)
+
 .פרוייקט בקוד פתוח, להנגשת ספריה תורנית על בסיס המאגר של ספריא.
 
 הפרוייקט בפיתוח, ויתכנו באגים או אי ריצה.
