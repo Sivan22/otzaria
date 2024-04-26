@@ -2,9 +2,9 @@ import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
-import 'package:otzaria/model/library.dart';
-import 'package:otzaria/model/books.dart';
-import 'package:otzaria/model/model.dart';
+import 'package:otzaria/models/library.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/model.dart';
 import 'dart:math';
 
 class LibraryBrowser extends StatefulWidget {
@@ -31,11 +31,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   }
 
   void _openCategory(Category category) {
-    setState(() {
-      depth += 1;
-      currentTopCategory = category;
-      items = getGrids(currentTopCategory);
-    });
+    depth += 1;
+    currentTopCategory = category;
+    items = getGrids(currentTopCategory);
+    setState(() {});
   }
 
   @override
@@ -74,6 +73,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
                 child: Column(
                   children: snapshot.data!,
                 ),
@@ -269,13 +269,13 @@ class _BookGridItem extends StatelessWidget {
                       : ('${book.author!} ${book.pubDate ?? ''}'),
                   style: const TextStyle(fontSize: 14)),
               isThreeLine: true,
-              leading: book is TextBook
+              trailing: book is TextBook
                   ? null
                   : SizedBox.fromSize(
                       size: const Size.fromWidth(64),
                       child: ClipRect(
                         child: Builder(builder: (context) {
-                          final pdfbook = book as pdfBook;
+                          final pdfbook = book as PdfBook;
                           return FutureBuilder(
                             future: pdfbook.thumbnail,
                             builder: (context, snapshot) {

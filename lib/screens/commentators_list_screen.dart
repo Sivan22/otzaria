@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/model/tabs.dart';
+import 'package:otzaria/models/tabs.dart';
 
 class CommentaryListView extends StatefulWidget {
   final TextBookTab tab;

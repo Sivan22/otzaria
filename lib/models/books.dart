@@ -1,16 +1,17 @@
 import 'package:otzaria/data/data.dart';
-import 'package:otzaria/data/file_system_data.dart';
-import 'package:otzaria/model/links.dart';
+import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
 import 'package:pdfrx/pdfrx.dart';
 
 /// Represents a book in the application.
 ///
 /// A `Book` object has a [title] which is the name of the book.
-
-class Book {
+abstract class Book {
   /// The title of the book.
   final String title;
+
+  /// an access to the data layer
   final Data data = FileSystemData.instance;
 
   /// The author of the book, if available.
@@ -34,6 +35,13 @@ class Book {
   Book({
     required this.title,
   });
+}
+
+///a representation of a text book (opposite PDF book).
+///a text book has a getter 'text' which returns a [Future] that resolvs to a [String].
+///it has also a 'tableOfContents' field thatreturns a [Future] that resolvs to a list of [TocEntry]
+class TextBook extends Book {
+  TextBook({required String title}) : super(title: title);
 
   /// Retrieves the table of contents of the book.
   ///
@@ -47,11 +55,14 @@ class Book {
   /// Returns a [Future] that resolves to a [List] of [Link] objects.
   Future<List<Link>> get links => data.getAllLinksForBook(title);
 
+  /// The text data of the book.
+  Future<String> get text async => (await data.getBookText(title));
+
   /// Creates a new `Book` instance from a JSON object.
   ///
   /// The JSON object should have a 'title' key.
-  factory Book.fromJson(Map<String, dynamic> json) {
-    return Book(
+  factory TextBook.fromJson(Map<String, dynamic> json) {
+    return TextBook(
       title: json['title'],
     );
   }
@@ -64,19 +75,15 @@ class Book {
   }
 }
 
-class TextBook extends Book {
-  TextBook({required String title}) : super(title: title);
-
-  /// The text data of the book.
-  Future<String> get text async => (await data.getBookText(title));
-}
-
+///represents an entry in table of content , which is a node in a hirarchial tree of topics.
+///every entry has its 'level' in the tree, and an index of the line in the book that it is refers to
 class TocEntry {
   final String text;
   final int index;
   final int level;
   List<TocEntry> children = [];
 
+  ///creats [TocEntry]
   TocEntry({
     required this.text,
     required this.index,
@@ -84,17 +91,29 @@ class TocEntry {
   });
 }
 
-class pdfBook extends Book {
+///represents a PDF format book, which is always a file on the device, and there for the [String] fiels 'path'
+///is required
+class PdfBook extends Book {
   final String path;
-  pdfBook({required String title, required this.path}) : super(title: title);
-  Future<PdfPageView> get thumbnail async => PdfPageView(
-      document: await PdfDocument.openFile(
-        path,
-      ),
-      pageNumber: 1);
+  PdfBook({required String title, required this.path}) : super(title: title);
 
-  factory pdfBook.fromJson(Map<String, dynamic> json) {
-    return pdfBook(
+  ///get a preview of the first page in the book (returns a [Widget] viewing the page)
+  Future<PdfPageView> get thumbnail async {
+    //TODO memory efiiciecy is needed
+    var document = await PdfDocument.openFile(
+      path,
+    );
+    var result = PdfPageView(
+      document: document,
+      pageNumber: 1,
+    );
+    //free the memory
+    //document.dispose();
+    return result;
+  }
+
+  factory PdfBook.fromJson(Map<String, dynamic> json) {
+    return PdfBook(
       title: json['title'],
       path: json['path'],
     );

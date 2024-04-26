@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/model/tabs.dart';
-import 'package:otzaria/model/links.dart';
+import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/links.dart';
 import 'package:otzaria/widgets/commentary_content.dart';
 
 class CommentaryList extends StatefulWidget {

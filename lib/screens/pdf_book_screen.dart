@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'pdf_outlines_screen.dart';
 import '../widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
-import 'package:otzaria/model/tabs.dart';
+import 'package:otzaria/models/tabs.dart';
 
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;

@@ -1,12 +1,12 @@
 // a widget that takes an html strings array, finds all the headings, and displays it in a listview. on pressed the scrollcontroller scrolls to the index of the heading.
 
-import 'package:otzaria/model/books.dart';
+import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:otzaria/model/tabs.dart';
-import 'package:otzaria/model/links.dart';
+import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/links.dart';
 
 class LinksViewer extends StatefulWidget {
   final Future<List<Link>> links;

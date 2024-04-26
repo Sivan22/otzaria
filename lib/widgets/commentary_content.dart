@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:otzaria/model/books.dart';
-import 'package:otzaria/model/tabs.dart';
-import 'package:otzaria/model/links.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/links.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'dart:isolate';
 

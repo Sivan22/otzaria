@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:otzaria/model/model.dart';
+import 'package:otzaria/models/model.dart';
 import 'screens/main_window_screen.dart';
 import 'screens/settings_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:otzaria/model/bookmark.dart';
+import 'package:otzaria/models/bookmark.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:hive/hive.dart';
 import 'package:otzaria/data/cache_provider.dart';

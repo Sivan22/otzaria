@@ -1,9 +1,9 @@
 /* this is an abstract class of the data layer,
  providing all the data access methods needed for the app model. */
 
-import 'package:otzaria/model/library.dart';
-import 'package:otzaria/model/books.dart';
-import 'package:otzaria/model/links.dart';
+import 'package:otzaria/models/library.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/links.dart';
 
 /// Abstract class of the data layer.
 ///

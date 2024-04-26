@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/model/bookmark.dart';
+import 'package:otzaria/models/bookmark.dart';
 import 'package:hive/hive.dart';
-import 'package:otzaria/model/books.dart';
+import 'package:otzaria/models/books.dart';
 
 class BookmarkView extends StatefulWidget {
   final List<Bookmark> bookmarks;
@@ -30,7 +30,7 @@ class _BookmarkViewState extends State<BookmarkView> {
                 title: Text(widget.bookmarks[index].ref),
                 onTap: () {
                   widget.openBookmarkCallBack(
-                      Book(title: widget.bookmarks[index].title),
+                      TextBook(title: widget.bookmarks[index].title),
                       widget.bookmarks[index].index);
                   widget.closeLeftPaneCallback;
                 },

@@ -6,9 +6,9 @@ import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 //imports from otzaria
-import 'package:otzaria/model/tabs.dart';
-import 'package:otzaria/model/books.dart';
-import 'package:otzaria/model/bookmark.dart';
+import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
 import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
@@ -391,7 +391,7 @@ class MainWindowViewState extends State<MainWindowView>
   }
 
   void openBook(Book book, int index) {
-    if (book is pdfBook) {
+    if (book is PdfBook) {
       addTab(PdfBookTab(book, index));
     } else if (book is TextBook) {
       addTab(TextBookTab(book: book, index));

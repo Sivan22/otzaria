@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:otzaria/model/books.dart';
+import 'package:otzaria/models/books.dart';
 
 class TocViewer extends StatefulWidget {
   final Future<List<TocEntry>> toc;

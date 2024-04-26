@@ -1,8 +1,8 @@
 /* a representation of the library , every entry could be a category or a book, and a category can
 contain other categories and books */
 
-import 'package:otzaria/model/books.dart';
-import 'package:otzaria/data/file_system_data.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/data/file_system_data_provider.dart';
 
 class Category {
   String title;

@@ -2,15 +2,15 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:otzaria/data/file_system_data.dart';
+import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:isolate';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:otzaria/model/links.dart';
-import 'package:otzaria/model/full_text_search.dart';
-import 'package:otzaria/model/books.dart';
-import 'package:otzaria/data/file_system_data.dart';
+import 'package:otzaria/models/links.dart';
+import 'package:otzaria/models/full_text_search.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/data/file_system_data_provider.dart';
 
 class OpenedTab {
   String title;
@@ -29,7 +29,7 @@ class OpenedTab {
 }
 
 class PdfBookTab extends OpenedTab {
-  final pdfBook book;
+  final PdfBook book;
   final int pageNumber;
   final PdfViewerController pdfViewerController = PdfViewerController();
 
@@ -39,7 +39,7 @@ class PdfBookTab extends OpenedTab {
   @override
   factory PdfBookTab.fromJson(Map<String, dynamic> json) {
     return PdfBookTab(
-        pdfBook(title: getTitleFromPath(json['path']), path: json['path']),
+        PdfBook(title: getTitleFromPath(json['path']), path: json['path']),
         json['pageNumber']);
   }
 
@@ -95,7 +95,7 @@ class TextBookTab extends OpenedTab {
     List<String> uniquePaths = paths.toSet().toList();
     uniquePaths.sort();
     List<Book> uniqueCommentaries = uniquePaths
-        .map((e) => Book(
+        .map((e) => TextBook(
               title: getTitleFromPath(e),
             ))
         .toList();
@@ -120,7 +120,7 @@ class TextBookTab extends OpenedTab {
           title: json['title'],
         ),
         commentaries: json['commentaries']
-            .map<Book>((json) => Book(title: json.toString()))
+            .map<Book>((json) => TextBook(title: json.toString()))
             .toList());
   }
 

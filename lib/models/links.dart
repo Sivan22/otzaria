@@ -1,5 +1,5 @@
-import 'package:otzaria/data/file_system_data.dart';
-import 'package:otzaria/model/books.dart';
+import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/models/books.dart';
 import 'dart:isolate';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
