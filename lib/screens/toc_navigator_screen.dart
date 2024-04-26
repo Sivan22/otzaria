@@ -4,16 +4,16 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/books.dart';
 
 class TocViewer extends StatefulWidget {
-  final Future<List<TocEntry>> toc;
-  final ItemScrollController scrollController;
-  final void Function() closeLeftPaneCallback;
-
   TocViewer({
     super.key,
     required this.toc,
     required this.scrollController,
     required this.closeLeftPaneCallback,
   });
+
+  final void Function() closeLeftPaneCallback;
+  final ItemScrollController scrollController;
+  final Future<List<TocEntry>> toc;
 
   @override
   State<TocViewer> createState() => _TocViewerState();
@@ -22,19 +22,7 @@ class TocViewer extends StatefulWidget {
 class _TocViewerState extends State<TocViewer>
     with AutomaticKeepAliveClientMixin<TocViewer> {
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder(
-        future: widget.toc,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return ListView(
-              children: _buildTree(snapshot.data!),
-            );
-          }
-          return const Center(child: CircularProgressIndicator());
-        });
-  }
+  bool get wantKeepAlive => true;
 
   List<Widget> _buildTree(List<TocEntry> entries) {
     List<Widget> widgets = [];
@@ -77,5 +65,17 @@ class _TocViewerState extends State<TocViewer>
   }
 
   @override
-  bool get wantKeepAlive => true;
+  Widget build(BuildContext context) {
+    super.build(context);
+    return FutureBuilder(
+        future: widget.toc,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView(
+              children: _buildTree(snapshot.data!),
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
+        });
+  }
 }

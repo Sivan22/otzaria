@@ -23,12 +23,63 @@ import 'package:otzaria/models/links.dart';
 /// The metadata is stored in a JSON file.
 ///
 class FileSystemData extends Data {
-  Map<String, String> titleToPath = {};
-  String? libraryPath;
-  static FileSystemData instance = FileSystemData();
-
   FileSystemData() {
     init();
+  }
+
+  static FileSystemData instance = FileSystemData();
+
+  String? libraryPath;
+  Map<String, String> titleToPath = {};
+
+  ///the implementation of the links from app's model, based on the filesystem.
+  ///the links are in the folder 'links' with the name '<book_title>_links.json'
+  @override
+  Future<List<Link>> getAllLinksForBook(String title) async {
+    try {
+      File file = File(_getLinksPath(title));
+      final jsonString = await file.readAsString();
+      final jsonList =
+          await Isolate.run(() async => jsonDecode(jsonString) as List);
+      return jsonList.map((json) => Link.fromJson(json)).toList();
+    } on Exception {
+      return [];
+    }
+  }
+
+  @override
+
+  /// Retrieves the text for a book with the given title asynchronously (using Isolate).
+  /// supports docx files
+  Future<String> getBookText(String title) {
+    return Isolate.run(() async {
+      String path = await _getBookPath(title);
+      File file = File(path);
+      if (path.endsWith('.docx')) {
+        final bytes = await file.readAsBytes();
+        return docxToText(bytes);
+      } else {
+        return await file.readAsString();
+      }
+    });
+  }
+
+  @override
+
+  /// Returns the library,  (b/c it is a file system data provider,
+  ///  it is based on the library path that was provided in the initialization of the data provider.)
+  Library getLibrary() {
+    return _getLibraryFromDirectory(
+        libraryPath! + Platform.pathSeparator + 'אוצריא');
+  }
+
+  @override
+
+  /// an file system approach to get the content of a link.
+  /// we read the file line by line and return the content of the line with the given index.
+  Future<String> getLinkContent(Link link) async {
+    String path = _getBookPath(getBookTitle(link.path2));
+    return Isolate.run(() async => await getLineFromFile(path, link.index2));
   }
 
   /// Initializes the data for the application.
@@ -64,6 +115,42 @@ class FileSystemData extends Data {
     _fetchMetadata(libraryPath!);
   }
 
+  /// Returns a list of all the book paths in the library directory.
+  List<String> getAllBooksPathsFromDirecctory(String path) {
+    List<String> paths = [];
+    final files = Directory(path).listSync(recursive: true);
+    for (var file in files) {
+      paths.add(file.path);
+    }
+    return paths;
+  }
+
+  /// Returns the title of the book with the given path.
+  String getBookTitle(String path) {
+    //get only the name of the book, without the extension and the directory path
+    return path.split(Platform.pathSeparator).last.split('.').first;
+  }
+
+// Retrieves the table of contents for a book with the given title.
+  Future<List<TocEntry>> getBookToc(String title) async {
+    return _parseToc(getBookText(title));
+  }
+
+  ///gets a line from file in an efficient way, using a stream that is closed right
+  /// after the line with the given index is found. the function
+  ///
+  ///the function gets a path to the file and an int index, and returns a Future<String>.
+  Future<String> getLineFromFile(String path, int index) async {
+    File file = File(path);
+    final lines = file
+        .openRead()
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .take(index)
+        .toList();
+    return (await lines).last;
+  }
+
   /// Updates the title to path mapping using the provided library path.
   void _updateTitleToPath(String libraryPath) {
     List<String> paths = getAllBooksPathsFromDirecctory(libraryPath);
@@ -97,22 +184,6 @@ class FileSystemData extends Data {
     }
   }
 
-  /// Returns a list of all the book paths in the library directory.
-  List<String> getAllBooksPathsFromDirecctory(String path) {
-    List<String> paths = [];
-    final files = Directory(path).listSync(recursive: true);
-    for (var file in files) {
-      paths.add(file.path);
-    }
-    return paths;
-  }
-
-  /// Returns the title of the book with the given path.
-  String getBookTitle(String path) {
-    //get only the name of the book, without the extension and the directory path
-    return path.split(Platform.pathSeparator).last.split('.').first;
-  }
-
   /// Returns the path of the book with the given title.
   String _getBookPath(String title) {
     //make sure the map is not empty
@@ -121,28 +192,6 @@ class FileSystemData extends Data {
     }
     //return the path of the book with the given title
     return titleToPath[title] ?? 'error: book path not found: $title';
-  }
-
-  @override
-
-  /// Retrieves the text for a book with the given title asynchronously (using Isolate).
-  /// supports docx files
-  Future<String> getBookText(String title) {
-    return Isolate.run(() async {
-      String path = await _getBookPath(title);
-      File file = File(path);
-      if (path.endsWith('.docx')) {
-        final bytes = await file.readAsBytes();
-        return docxToText(bytes);
-      } else {
-        return await file.readAsString();
-      }
-    });
-  }
-
-// Retrieves the table of contents for a book with the given title.
-  Future<List<TocEntry>> getBookToc(String title) async {
-    return _parseToc(getBookText(title));
   }
 
   ///a function that parses the table of contents from a string, based on the heading level: for example, h1, h2, h3, etc.
@@ -184,15 +233,6 @@ class FileSystemData extends Data {
     return toc;
   }
 
-  @override
-
-  /// Returns the library,  (b/c it is a file system data provider,
-  ///  it is based on the library path that was provided in the initialization of the data provider.)
-  Library getLibrary() {
-    return _getLibraryFromDirectory(
-        libraryPath! + Platform.pathSeparator + 'אוצריא');
-  }
-
   ///this is the way to get the library using the file system.
   ///every directory represents a category, and every file represents a book.
   ///the
@@ -221,32 +261,17 @@ class FileSystemData extends Data {
       return category;
     }
 
+    //first initialize an empty library
     Library library = Library(categories: []);
 
+    //then get all the categories and books from the top directory recursively
     for (FileSystemEntity entity in Directory(path).listSync()) {
       if (entity is Directory) {
         library.subCategories.add(getAllCategoriesAndBooksFromDirectory(
             Directory(entity.path), library));
       }
-
-      library.parent = library;
     }
     return library;
-  }
-
-  ///the implementation of the links from app's model, based on the filesystem.
-  ///the links are in the folder 'links' with the name '<book_title>_links.json'
-  @override
-  Future<List<Link>> getAllLinksForBook(String title) async {
-    try {
-      File file = File(_getLinksPath(title));
-      final jsonString = await file.readAsString();
-      final jsonList =
-          await Isolate.run(() async => jsonDecode(jsonString) as List);
-      return jsonList.map((json) => Link.fromJson(json)).toList();
-    } on Exception {
-      return [];
-    }
   }
 
   ///gets the path of the link file asocciated with the book title.
@@ -257,29 +282,5 @@ class FileSystemData extends Data {
         Platform.pathSeparator +
         title +
         '_links.json';
-  }
-
-  @override
-
-  /// an file system approach to get the content of a link.
-  /// we read the file line by line and return the content of the line with the given index.
-  Future<String> getLinkContent(Link link) async {
-    String path = _getBookPath(getBookTitle(link.path2));
-    return Isolate.run(() async => await getLineFromFile(path, link.index2));
-  }
-
-  ///gets a line from file in an efficient way, using a stream that is closed right
-  /// after the line with the given index is found. the function
-  ///
-  ///the function gets a path to the file and an int index, and returns a Future<String>.
-  Future<String> getLineFromFile(String path, int index) async {
-    File file = File(path);
-    final lines = file
-        .openRead()
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .take(index)
-        .toList();
-    return (await lines).last;
   }
 }

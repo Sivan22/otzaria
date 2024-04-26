@@ -45,7 +45,7 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
       key: Key(directory.path), // Ensure unique keys for ExpansionTiles
       title: Text(path.basename(directory.path)),
 
-      tilePadding: EdgeInsets.symmetric(horizontal: 16 + (level-1) * 16),
+      tilePadding: EdgeInsets.symmetric(horizontal: 16 + (level - 1) * 16),
       leading: SizedBox.fromSize(
         size: const Size.fromWidth(60.0),
         child: Row(
@@ -66,7 +66,7 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
             title: Row(children: [
               Text(
                 path.basename(entity.path),
-              )
+              ),
             ]),
             value: widget.checkedItems.contains(entity.path),
             onChanged: (value) => _onItemChecked(entity, value!),
@@ -76,7 +76,9 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
         } else if (entity.path.endsWith('.pdf')) {
           return const SizedBox.shrink();
         } else {
-          return ListTile(title: Text('Unknown: ${entity.path}'));
+          return ListTile(
+            title: Text('Unknown: ${entity.path}'),
+          );
         }
       }).toList(),
     );
@@ -88,8 +90,10 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
       body: Column(
         children: [
           Expanded(
-              child: SingleChildScrollView(
-                  child: _buildTreeView(selectedDirectory, 0)))
+            child: SingleChildScrollView(
+              child: _buildTreeView(selectedDirectory, 0),
+            ),
+          )
         ],
       ),
     );
