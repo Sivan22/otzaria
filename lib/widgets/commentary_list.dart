@@ -34,7 +34,7 @@ class _CommentaryListState extends State<CommentaryList>
   void initState() {
     super.initState();
     thisLinks = getLinksforIndexs(
-        links: widget.textBookTab.links,
+        links: widget.textBookTab.book.links,
         commentatorsToShow: widget.textBookTab.commentariesToShow.value,
         indexes: [widget.index]);
 
@@ -44,7 +44,7 @@ class _CommentaryListState extends State<CommentaryList>
         if (mounted) {
           setState(() {
             thisLinks = getLinksforIndexs(
-              links: widget.textBookTab.links,
+              links: widget.textBookTab.book.links,
               commentatorsToShow: widget.textBookTab.commentariesToShow.value,
               indexes: widget.textBookTab.positionsListener.itemPositions.value
                   .map((e) => e.index)

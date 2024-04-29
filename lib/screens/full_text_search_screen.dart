@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
@@ -10,14 +11,12 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
-  final String libraryRootPath;
   final FullTextSearcher searcher;
 
   const TextFileSearchScreen({
     super.key,
     required this.openBookCallback,
     required this.searcher,
-    required this.libraryRootPath,
   });
 
   @override
@@ -107,8 +106,9 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
           ),
           Expanded(
               child: FileTreeViewScreen(
-            libraryRootPath:
-                widget.libraryRootPath + Platform.pathSeparator + 'אוצריא',
+            libraryRootPath: Settings.getValue('key-library-path') +
+                Platform.pathSeparator +
+                'אוצריא',
             checkedItems: widget.searcher.booksToSearch,
           )),
         ],
@@ -199,7 +199,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
             widget.openBookCallback(
               TextBookTab(
                   book: TextBook(title: utils.getTitleFromPath(result.path)),
-                  result.index,
+                  initalIndex: result.index,
                   searchText: result.query),
             );
           },

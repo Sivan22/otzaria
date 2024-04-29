@@ -28,10 +28,6 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 class TextBookViewer extends StatefulWidget {
   final TextBookTab tab;
   final void Function(OpenedTab) openBookCallback;
-  final void Function(
-      {required String ref,
-      required String title,
-      required int index}) addBookmarkCallback;
   final Future<String> data;
 
   /// Creates a new [TextBookViewer].
@@ -46,7 +42,6 @@ class TextBookViewer extends StatefulWidget {
     Key? key,
     required this.tab,
     required this.openBookCallback,
-    required this.addBookmarkCallback,
     required this.data,
   }) : super(key: key);
 
@@ -59,11 +54,8 @@ class _TextBookViewerState extends State<TextBookViewer>
     with
         AutomaticKeepAliveClientMixin<TextBookViewer>,
         TickerProviderStateMixin {
-  double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
-  final showLeftPane = ValueNotifier<bool>(false);
-  final pinLeftPane = ValueNotifier<bool>(false);
   final FocusNode textSearchFocusNode = FocusNode();
-  final ValueNotifier<bool> showSplitedView = ValueNotifier<bool>(true);
+
   late TabController tabController;
 
   @override
@@ -101,9 +93,9 @@ class _TextBookViewerState extends State<TextBookViewer>
                         child: NotificationListener<UserScrollNotification>(
                             onNotification: (scrollNotification) {
                               //unless links is shown, close left pane on scrolling
-                              if (!pinLeftPane.value) {
+                              if (!widget.tab.pinLeftPane.value) {
                                 Future.microtask(() {
-                                  showLeftPane.value = false;
+                                  widget.tab.showLeftPane.value = false;
                                 });
                               }
 
@@ -113,7 +105,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                                 bindings: <ShortcutActivator, VoidCallback>{
                                   LogicalKeySet(LogicalKeyboardKey.control,
                                       LogicalKeyboardKey.keyF): () {
-                                    showLeftPane.value = true;
+                                    widget.tab.showLeftPane.value = true;
                                     tabController.index = 1;
                                   },
                                 },
@@ -123,13 +115,15 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     autofocus:
                                         Platform.isAndroid ? false : true,
                                     child: ValueListenableBuilder(
-                                      valueListenable: showSplitedView,
+                                      valueListenable:
+                                          widget.tab.showSplitedView,
                                       builder: (context, value, child) =>
                                           ValueListenableBuilder(
                                               valueListenable:
                                                   widget.tab.commentariesToShow,
                                               builder: (context, value, child) {
-                                                if (showSplitedView.value &&
+                                                if (widget.tab.showSplitedView
+                                                        .value &&
                                                     widget
                                                         .tab
                                                         .commentariesToShow
@@ -171,9 +165,9 @@ class _TextBookViewerState extends State<TextBookViewer>
                           : widget.tab.positionsListener.itemPositions.value
                               .first.index,
                       textBookTab: widget.tab,
-                      fontSize: textFontSize,
+                      fontSize: widget.tab.textFontSize,
                       openBookCallback: widget.openBookCallback,
-                      showSplitView: showSplitedView,
+                      showSplitView: widget.tab.showSplitedView,
                     ),
                   ),
                   buildCombinedView(snapshot, searchTextController)
@@ -186,9 +180,9 @@ class _TextBookViewerState extends State<TextBookViewer>
       key: PageStorageKey(widget.tab),
       tab: widget.tab,
       data: snapshot.data!.split('\n'),
-      textSize: textFontSize,
+      textSize: widget.tab.textFontSize,
       openBookCallback: widget.openBookCallback,
-      showSplitedView: showSplitedView,
+      showSplitedView: widget.tab.showSplitedView,
     );
   }
 
@@ -196,7 +190,7 @@ class _TextBookViewerState extends State<TextBookViewer>
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       child: ValueListenableBuilder(
-        valueListenable: showLeftPane,
+        valueListenable: widget.tab.showLeftPane,
         builder: (context, showLeftPane, child) => SizedBox(
           width: showLeftPane ? 400 : 0,
           child: child!,
@@ -223,10 +217,11 @@ class _TextBookViewerState extends State<TextBookViewer>
                   ),
                 ),
                 ValueListenableBuilder(
-                  valueListenable: pinLeftPane,
+                  valueListenable: widget.tab.pinLeftPane,
                   builder: (context, pinLeftPanel, child) => IconButton(
                     onPressed: () {
-                      pinLeftPane.value = !pinLeftPane.value;
+                      widget.tab.pinLeftPane.value =
+                          !widget.tab.pinLeftPane.value;
                     },
                     icon: const Icon(
                       Icons.push_pin,
@@ -270,7 +265,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   Widget buildTocViewer() {
     return TocViewer(
-      toc: widget.tab.toc,
+      toc: widget.tab.book.tableOfContents,
       scrollController: widget.tab.scrollController,
       closeLeftPaneCallback: closeLeftPane,
     );
@@ -278,7 +273,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   LinksViewer buildLinkView() {
     return LinksViewer(
-      links: widget.tab.links,
+      links: widget.tab.book.links,
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: widget.tab.positionsListener,
       closeLeftPanelCallback: closeLeftPane,
@@ -310,20 +305,21 @@ class _TextBookViewerState extends State<TextBookViewer>
           icon: const Icon(Icons.menu),
           tooltip: "ניווט וחיפוש",
           onPressed: () {
-            showLeftPane.value = !showLeftPane.value;
+            widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
           }),
       actions: [
         // button to switch between splitted view and combined view
         ValueListenableBuilder(
-          valueListenable: showSplitedView,
+          valueListenable: widget.tab.showSplitedView,
           builder: (context, showSplitedViewValue, child) => IconButton(
             onPressed: () {
-              showSplitedView.value = !showSplitedView.value;
+              widget.tab.showSplitedView.value =
+                  !widget.tab.showSplitedView.value;
             },
-            icon: Icon(!showSplitedView.value
+            icon: Icon(!widget.tab.showSplitedView.value
                 ? Icons.vertical_split_outlined
                 : Icons.horizontal_split_outlined),
-            tooltip: !showSplitedView.value
+            tooltip: !widget.tab.showSplitedView.value
                 ? ' הצגת מפרשים בצד הטקסט'
                 : 'הצגת מפרשים מתחת הטקסט',
           ),
@@ -331,14 +327,15 @@ class _TextBookViewerState extends State<TextBookViewer>
 
         //button to add a bookmark
         IconButton(
-          onPressed: () async {
-            int index =
-                widget.tab.positionsListener.itemPositions.value.first.index;
-            widget.addBookmarkCallback(
-                ref: widget.tab.title + await refFromIndex(index),
-                title: utils.getTitleFromPath(widget.tab.book.title),
-                index: index);
-          },
+          onPressed: () {},
+          // () async {
+          //   int index =
+          //       widget.tab.positionsListener.itemPositions.value.first.index;
+          //   widget.addBookmarkCallback(
+          //       ref: widget.tab.title + await refFromIndex(index),
+          //       title: utils.getTitleFromPath(widget.tab.book.title),
+          //       index: index);
+          // },
           icon: const Icon(
             Icons.bookmark_add,
           ),
@@ -348,7 +345,7 @@ class _TextBookViewerState extends State<TextBookViewer>
         // button to search
         IconButton(
           onPressed: () {
-            showLeftPane.value = true;
+            widget.tab.showLeftPane.value = true;
             tabController.index = 1;
             textSearchFocusNode.requestFocus();
           },
@@ -365,7 +362,8 @@ class _TextBookViewerState extends State<TextBookViewer>
             ),
             tooltip: 'הגדלת טקסט',
             onPressed: () => setState(() {
-                  textFontSize = min(50.0, textFontSize + 3);
+                  widget.tab.textFontSize =
+                      min(50.0, widget.tab.textFontSize + 3);
                 })),
         IconButton(
           icon: const Icon(
@@ -373,7 +371,7 @@ class _TextBookViewerState extends State<TextBookViewer>
           ),
           tooltip: 'הקטנת טקסט',
           onPressed: () => setState(() {
-            textFontSize = max(15.0, textFontSize - 3);
+            widget.tab.textFontSize = max(15.0, widget.tab.textFontSize - 3);
           }),
         ),
         // button to scroll all the way up
@@ -427,11 +425,11 @@ class _TextBookViewerState extends State<TextBookViewer>
   }
 
   void closeLeftPane() {
-    showLeftPane.value = false;
+    widget.tab.showLeftPane.value = false;
   }
 
   Future<String> refFromIndex(int index) async {
-    List<TocEntry> toc = await widget.tab.toc;
+    List<TocEntry> toc = await widget.tab.book.tableOfContents;
     List<String> texts = [];
 
     void searchToc(List<TocEntry> entries, int index) {

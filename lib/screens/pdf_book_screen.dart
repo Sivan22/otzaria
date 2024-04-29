@@ -10,15 +10,12 @@ import 'package:otzaria/models/tabs.dart';
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;
   final PdfViewerController controller;
-  final void Function(
-      {required String ref,
-      required String title,
-      required int index}) addBookmarkCallback;
-  const PdfBookViewr(
-      {super.key,
-      required this.tab,
-      required this.controller,
-      required this.addBookmarkCallback});
+
+  const PdfBookViewr({
+    super.key,
+    required this.tab,
+    required this.controller,
+  });
 
   @override
   State<PdfBookViewr> createState() => _PdfBookViewrState();
@@ -64,12 +61,14 @@ class _PdfBookViewrState extends State<PdfBookViewr>
           IconButton(
             icon: const Icon(Icons.bookmark_add),
             tooltip: 'הוספת סימניה',
-            onPressed: () => widget.addBookmarkCallback(
-                ref:
-                    '${widget.tab.title} עמוד ${widget.controller.pageNumber ?? 1}',
-                title: widget.tab.title,
-                index: widget.controller.pageNumber ?? 1),
+            onPressed: () => null,
           ),
+          //   onPressed: () => widget.addBookmarkCallback(
+          //       ref:
+          //           '${widget.tab.title} עמוד ${widget.controller.pageNumber ?? 1}',
+          //       title: widget.tab.title,
+          //       index: widget.controller.pageNumber ?? 1),
+          // ),
           IconButton(
             icon: const Icon(
               Icons.zoom_in,

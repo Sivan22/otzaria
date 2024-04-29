@@ -1,16 +1,15 @@
-/* this is a class that will hold all the tabs that have been opened */
+/* this is a representation of the tabs that could be open in the app.
+a tab is either a pdf book or a text book, or a full text search window*/
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'dart:isolate';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 
 class OpenedTab {
   String title;
@@ -19,64 +18,116 @@ class OpenedTab {
 
   factory OpenedTab.fromJson(Map<String, dynamic> json) {
     String type = json['type'];
-    if (type == 'BookTabWindow') {
+    if (type == 'TextBookTab') {
       return TextBookTab.fromJson(json);
-    } else if (type == 'SearchingTabWindow') {
-      return SearchingTab.fromJson(json);
+    } else if (type == 'PdfBookTab') {
+      return PdfBookTab.fromJson(json);
     }
-    return PdfBookTab.fromJson(json);
+    return SearchingTab.fromJson(json);
   }
 }
 
+/// Represents a tab with a PDF book.
+///
+/// The [PdfBookTab] class contains information about the PDF book,
+/// such as its [book] and the current [pageNumber].
+/// It also contains a [pdfViewerController] to control the viewer.
 class PdfBookTab extends OpenedTab {
+  /// The PDF book.
   final PdfBook book;
+
+  /// The current page number.
   final int pageNumber;
+
+  /// The pdf viewer controller.
   final PdfViewerController pdfViewerController = PdfViewerController();
 
-  PdfBookTab(this.book, this.pageNumber)
-      : super(book.path.split(Platform.pathSeparator).last);
+  /// Creates a new instance of [PdfBookTab].
+  ///
+  /// The [book] parameter represents the PDF book, and the [pageNumber]
+  /// parameter represents the current page number.
+  PdfBookTab(this.book, this.pageNumber) : super(book.title);
 
-  @override
+  /// Creates a new instance of [PdfBookTab] from a JSON map.
+  ///
+  /// The JSON map should have 'path' and 'pageNumber' keys.
   factory PdfBookTab.fromJson(Map<String, dynamic> json) {
     return PdfBookTab(
         PdfBook(title: getTitleFromPath(json['path']), path: json['path']),
         json['pageNumber']);
   }
 
+  /// Converts the [PdfBookTab] instance into a JSON map.
+  ///
+  /// The JSON map contains 'path', 'pageNumber' and 'type' keys.
   Map<String, dynamic> toJson() {
     return {
       'path': book.path,
       'pageNumber':
           (pdfViewerController.isReady ? pdfViewerController.pageNumber : 0),
-      'type': 'PdfPageTab'
+      'type': 'PdfBookTab'
     };
   }
 }
 
+/// Represents a tab that contains a text book.
+///
+/// It contains various properties such as the book itself,
+/// the book's data, links, table of contents, list of available
+/// commentators, and more. It also contains controllers for
+/// scrolling, searching, and storing scroll positions.
 class TextBookTab extends OpenedTab {
-  late TextBook book;
-  late Future<String> bookData;
-  late Future<List<Link>> links;
-  late Future<List<TocEntry>> toc;
-  late Future<List<Book>> availableCommentators;
-  ValueNotifier<List<Book>> commentariesToShow = ValueNotifier([]);
+  /// The text book.
+  final TextBook book;
+
+  ///caching the text, since it takes a while to load
+  late final Future<String> text;
+
+  /// The initial index of the scrollable list.
   int initalIndex;
+
+  /// The future that resolves to the list of available commentators.
+  late Future<List<Book>> availableCommentators;
+
+  /// The list of commentaries to show.
+  ValueNotifier<List<Book>> commentariesToShow = ValueNotifier([]);
+
+  ///the size of the font to view this book
+  double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
+
+  ///
+  final showLeftPane = ValueNotifier<bool>(false);
+
+  final pinLeftPane = ValueNotifier<bool>(false);
+
+  final ValueNotifier<bool> showSplitedView = ValueNotifier<bool>(true);
+
+  /// The controller for scrolling by index.
   ItemScrollController scrollController = ItemScrollController();
+
+  /// The controller for scrolling by offset.
   ScrollOffsetController scrollOffsetController = ScrollOffsetController();
+
+  /// The controller for searching.
   TextEditingController searchTextController = TextEditingController();
+
+  /// The controller for storing scroll positions.
   ItemPositionsListener positionsListener = ItemPositionsListener.create();
 
-  TextBookTab(this.initalIndex,
-      {required TextBook book,
+  /// Creates a new instance of [TextBookTab].
+  ///
+  /// The [initalIndex] parameter represents the initial index of the item in the scrollable list,
+  /// and the [book] parameter represents the text book.
+  /// The [searchText] parameter represents the initial search text,
+  /// and the [commentaries] parameter represents the list of commentaries.
+  TextBookTab(
+      {required this.book,
+      required this.initalIndex,
       String searchText = '',
       List<Book>? commentaries})
       : super(book.title) {
-    book = TextBook(
-      title: title,
-    );
-    bookData = book.text;
-    links = book.links;
-    toc = book.tableOfContents;
+    ///load the text
+    text = (() async => await book.text)();
     availableCommentators = getAvailableCommentators(book.links);
     if (searchText != '') {
       searchTextController.text = searchText;
@@ -85,6 +136,11 @@ class TextBookTab extends OpenedTab {
       commentariesToShow.value = commentaries;
     }
   }
+
+  /// Returns a list of available commentators.
+  ///
+  /// Filters the links in the book to find commentaries and targums,
+  /// and returns a list of unique commentaries.
   Future<List<Book>> getAvailableCommentators(Future<List<Link>> links) async {
     List<Link> filteredLinks = (await links)
         .where((link) =>
@@ -94,44 +150,41 @@ class TextBookTab extends OpenedTab {
     List<String> paths = filteredLinks.map((e) => e.path2).toList();
     List<String> uniquePaths = paths.toSet().toList();
     uniquePaths.sort();
-    List<Book> uniqueCommentaries = uniquePaths
+    List<Book> availableCommentators = uniquePaths
         .map((e) => TextBook(
               title: getTitleFromPath(e),
             ))
         .toList();
-    return uniqueCommentaries;
+    return availableCommentators;
   }
 
-  Future<Map<String, String>> cacheCommentators(
-      Future<List<TextBook>> availableCommentators) async {
-    List<TextBook> availableCommentatorsList = await availableCommentators;
-    Map<String, String> availableCommentatorsData = {};
-    for (int av = 0; av < availableCommentatorsList.length; av++) {
-      availableCommentatorsData[availableCommentatorsList[av].title] =
-          await availableCommentatorsList[av].text;
-    }
-    return availableCommentatorsData;
-  }
-
-  @override
+  /// Creates a new instance of [TextBookTab] from a JSON map.
+  ///
+  /// The JSON map should have 'initalIndex', 'title', 'commentaries',
+  /// and 'type' keys.
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
-    return TextBookTab(json['initalIndex'],
+    return TextBookTab(
+        initalIndex: json['initalIndex'],
         book: TextBook(
           title: json['title'],
         ),
-        commentaries: json['commentaries']
+        commentaries: json['commentators']
             .map<Book>((json) => TextBook(title: json.toString()))
             .toList());
   }
 
+  /// Converts the [TextBookTab] instance into a JSON map.
+  ///
+  /// The JSON map contains 'title', 'initalIndex', 'commentaries',
+  /// and 'type' keys.
   Map<String, dynamic> toJson() {
     return {
       'title': title,
       'initalIndex': positionsListener.itemPositions.value.isNotEmpty
           ? positionsListener.itemPositions.value.first.index
           : 0,
-      'commentaries': commentariesToShow.value,
-      'type': 'BookTabWindow'
+      'commentators': commentariesToShow.value,
+      'type': 'TextBookTab'
     };
   }
 }

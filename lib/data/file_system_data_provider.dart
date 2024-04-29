@@ -19,14 +19,15 @@ import 'package:otzaria/models/links.dart';
 /// The `FileSystemData` class represents an implementation of the data layer based on the filesystem.
 /// It provides methods for accessing the library, book text, book table of contents, and links for a book.
 ///
-/// The inner representation of the library is a tree of directories and files, which every book is stored in a file, and every directory is represents a category.
+/// The inner representation of the library is a tree of directories and files,
+///  which every book is stored in a file,  and every directory is represents a category.
 /// The metadata is stored in a JSON file.
-///
 class FileSystemData extends Data {
   FileSystemData() {
     init();
   }
 
+  ///
   static FileSystemData instance = FileSystemData();
 
   String? libraryPath;
@@ -69,6 +70,9 @@ class FileSystemData extends Data {
   /// Returns the library,  (b/c it is a file system data provider,
   ///  it is based on the library path that was provided in the initialization of the data provider.)
   Library getLibrary() {
+    if (libraryPath == null) {
+      init();
+    }
     return _getLibraryFromDirectory(
         libraryPath! + Platform.pathSeparator + 'אוצריא');
   }

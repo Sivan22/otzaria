@@ -262,7 +262,7 @@ packages:
     source: hosted
     version: "1.1.6"
   get_it:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: get_it
       sha256: d85128a5dae4ea777324730dc65edd9c9f43155c109d5cc0a69cab74139fbac1
@@ -621,22 +621,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
-  quiver:
-    dependency: transitive
-    description:
-      name: quiver
-      sha256: b1c1ac5ce6688d77f65f3375a9abb9319b3cb32486bdc7a1e0fdf004d7ba4e47
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.1"
-  responsive_grid_list:
-    dependency: "direct main"
-    description:
-      name: responsive_grid_list
-      sha256: e6cd1754240795cb8b08a4520c9eb5d28856ecf71de5fe6e64535a68c0913563
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.0"
   rxdart:
     dependency: transitive
     description:

@@ -1,67 +1,38 @@
-import 'dart:io';
-import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/screens/reading_screen.dart';
+
 //imports from otzaria
 import 'package:otzaria/models/tabs.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
 import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
-import 'pdf_book_screen.dart';
-import 'text_book_screen.dart';
-import 'find_book_screen.dart';
-import 'full_text_search_screen.dart';
-import 'package:otzaria/utils/text_manipulation.dart' as utils;
-import 'package:otzaria/helper/shortcuts_list.dart';
+import 'package:provider/provider.dart';
 
 class MainWindowView extends StatefulWidget {
-  final ValueNotifier<bool> isDarkMode;
-  final ValueNotifier<Color> seedColor;
-
-  const MainWindowView({
-    required this.isDarkMode,
-    required this.seedColor,
-    Key? key,
-  }) : super(
-          key: key,
-        );
-
+  const MainWindowView({Key? key}) : super(key: key);
   @override
   MainWindowViewState createState() => MainWindowViewState();
 }
 
 class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  ValueNotifier<int> selectedIndex = ValueNotifier(0);
-  late List<OpenedTab> tabs;
-  late TabController tabController = TabController(
-      length: tabs.length, vsync: this, initialIndex: max(0, tabs.length - 1));
-
+  ValueNotifier selectedIndex = ValueNotifier(0);
   final showBookmarksView = ValueNotifier<bool>(false);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
-  late Future<String?> libraryRootPath;
+
   final List<dynamic> rawBookmarks =
       Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
   late List<Bookmark> bookmarks;
 
   @override
   void initState() {
-    () async {
-      if (Platform.isAndroid) {
-        await Permission.manageExternalStorage.request();
-      }
-    }();
     WidgetsBinding.instance.addObserver(this);
-    tabs = List<OpenedTab>.from(
-        ((Hive.box(name: 'tabs').get('key-tabs') ?? []) as List)
-            .map((e) => OpenedTab.fromJson(e))
-            .toList());
     bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
 
     if (Settings.getValue('key-font-size') == null) {
@@ -70,24 +41,6 @@ class MainWindowViewState extends State<MainWindowView>
     if (Settings.getValue('key-font-family') == null) {
       Settings.setValue('key-font-family', 'FrankRuhlCLM');
     }
-
-    libraryRootPath = () async {
-      // first try to get the library path from settings
-      if (Settings.getValue<String>('key-library-path') != null) {
-        return Settings.getValue<String>('key-library-path');
-        //if faild, ask the user on android to find the path
-      } else {
-        if (Platform.isAndroid) {
-          String? path = await FilePicker.platform.getDirectoryPath();
-          if (path != null) {
-            Settings.setValue<String>('key-library-path', path);
-            return path;
-          }
-        }
-        //on windows/linux, just use the application path
-        return '.';
-      }
-    }();
 
     super.initState();
   }
@@ -102,200 +55,58 @@ class MainWindowViewState extends State<MainWindowView>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.hidden ||
         state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      Hive.box(name: 'tabs').put("key-tabs", tabs);
-    }
+        state == AppLifecycleState.detached) {}
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
-        body: OrientationBuilder(builder: (context, orientation) {
-          Widget mainWindow = Container();
-          switch (selectedIndex.value) {
-            case (0):
-              mainWindow = buildLibraryBrowser();
-              break;
-            case (1 || 2 || 3):
-              mainWindow = buildTabBarAndTabView();
-              break;
-            case (4):
-              mainWindow = buildSettingsScreen();
-          }
-          if (orientation == Orientation.landscape) {
-            return buildHorizontalLayout(mainWindow);
-          } else {
-            return Column(children: [
-              Expanded(
-                child: Row(children: [buildBookmarksView(), mainWindow]),
-              ),
-              buildNavigationBottomBar(),
-            ]);
-          }
-        }),
-      ),
-    );
-  }
-
-  Widget buildHorizontalLayout(Widget mainWindow) {
-    return CallbackShortcuts(
-        bindings: <ShortcutActivator, VoidCallback>{
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-book-browser') !=
-                      null
-                  ? Settings.getValue<String>('key-shortcut-open-book-browser')
-                  : 'ctrl+b']!: () {},
-          shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
-              ? Settings.getValue<String>('key-shortcut-close-tab')
-              : 'ctrl+w']!: () {
-            setState(() {
-              closeTab(tabs[tabController.index]);
-            });
-          },
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-close-all-tabs') != null
-                  ? Settings.getValue<String>('key-shortcut-close-all-tabs')
-                  : 'ctrl+x']!: () {
-            setState(() {
-              tabs.removeRange(0, tabs.length);
-              Hive.box(name: 'tabs').put("key-tabs", tabs);
-              tabController = TabController(length: tabs.length, vsync: this);
-            });
-          },
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-book-search') != null
-                  ? Settings.getValue<String>('key-shortcut-open-book-search')
-                  : 'ctrl+o']!: () {},
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-new-search') != null
-                  ? Settings.getValue<String>('key-shortcut-open-new-search')
-                  : 'ctrl+q']!: () {
-            setState(() {
-              addTab(SearchingTab('חיפוש'));
-            });
-          },
-        },
-        child: FocusScope(
-          node: mainFocusScopeNode,
-          //on android don't autofocus, so keyboard won't show
-          autofocus: Platform.isAndroid ? false : true,
-          child: ListenableBuilder(
-              listenable: selectedIndex,
-              builder: (context, child) {
-                return Row(children: [
-                  buildNavigationSideBar(),
-                  buildBookmarksView(),
-                  mainWindow
-                ]);
-              }),
-        ));
-  }
-
-  Widget buildLibraryBrowser() {
-    return Expanded(
-      child: Container(
-          color: Colors.white,
-          child: LibraryBrowser(
-            onBookClickCallback: openBook,
-          )),
-    );
-  }
-
-  Widget buildTabBarAndTabView() {
-    if (tabs.isEmpty) {
-      return const Expanded(child: Center(child: Text('לא נבחרו ספרים')));
-    }
-    return Expanded(
-      child: NotificationListener<UserScrollNotification>(
-        onNotification: (scrollNotification) {
-          Future.microtask(() {
-            showBookmarksView.value = false;
-          });
-          return false; // Don't block the notification
-        },
-        child: Scaffold(
-          appBar: buildTabBar(),
-          body: Row(children: [
-            Expanded(
-              child: buildTabBarView(),
-            ),
-          ]),
+      child: Consumer<AppModel>(
+        builder: (context, appModel, child) => Scaffold(
+          body: OrientationBuilder(builder: (context, orientation) {
+            Widget mainWindow = Container();
+            switch (appModel.currentView) {
+              case (0):
+                mainWindow = buildLibraryBrowser(appModel);
+                break;
+              case (1 || 2 || 3):
+                mainWindow = const ReadingScreen();
+                break;
+              case (4):
+                mainWindow = buildSettingsScreen();
+            }
+            if (orientation == Orientation.landscape) {
+              return buildHorizontalLayout(mainWindow, appModel);
+            } else {
+              return Column(children: [
+                Expanded(
+                  child:
+                      Row(children: [buildBookmarksView(appModel), mainWindow]),
+                ),
+                buildNavigationBottomBar(),
+              ]);
+            }
+          }),
         ),
       ),
     );
   }
 
-  TabBarView buildTabBarView() {
-    return TabBarView(
-        controller: tabController,
-        children: tabs.map((tab) {
-          if (tab is PdfBookTab) {
-            return PdfBookViewr(
-              key: PageStorageKey(tab),
-              tab: tab,
-              controller: tab.pdfViewerController,
-              addBookmarkCallback: addBookmark,
-            );
-          } else if (tab is TextBookTab) {
-            return TextBookViewer(
-              tab: tab,
-              openBookCallback: addTab,
-              data: tab.bookData,
-              addBookmarkCallback: addBookmark,
-            );
-          } else if (tab is SearchingTab) {
-            return FutureBuilder(
-                future: libraryRootPath,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return TextFileSearchScreen(
-                      openBookCallback: addTab,
-                      searcher: tab.searcher,
-                      libraryRootPath: snapshot.data!,
-                    );
-                  }
-
-                  return const Center(child: CircularProgressIndicator());
-                });
-          }
-          return const SizedBox.shrink();
-        }).toList());
+  Widget buildHorizontalLayout(Widget mainWindow, AppModel appModel) {
+    return Row(children: [
+      buildNavigationSideBar(appModel),
+      buildBookmarksView(appModel),
+      mainWindow
+    ]);
   }
 
-  TabBar buildTabBar() {
-    return TabBar(
-      controller: tabController,
-      isScrollable: true,
-      tabAlignment: TabAlignment.center,
-      tabs: tabs
-          .map((tab) => Listener(
-                // close tab on middle mouse button click
-                onPointerDown: (PointerDownEvent event) {
-                  if (event.buttons == 4) {
-                    closeTab(tab);
-                  }
-                },
-                child: Tab(
-                  child: Row(children: [
-                    Text(
-                      tab is SearchingTab
-                          ? '${tab.title}:  ${tab.searcher.queryController.text}'
-                          : tab.title,
-                    ),
-                    IconButton(
-                        onPressed: () {
-                          closeTab(tab);
-                        },
-                        icon: const Icon(Icons.close, size: 10))
-                  ]),
-                ),
-              ))
-          .toList(),
+  Widget buildLibraryBrowser(AppModel appModel) {
+    return Expanded(
+      child: Container(color: Colors.white, child: const LibraryBrowser()),
     );
   }
 
-  AnimatedSize buildBookmarksView() {
+  AnimatedSize buildBookmarksView(AppModel appModel) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       child: ValueListenableBuilder(
@@ -306,7 +117,7 @@ class MainWindowViewState extends State<MainWindowView>
                 child: child!,
               ),
           child: BookmarkView(
-            openBookmarkCallBack: openBook,
+            openBookmarkCallBack: appModel.openBook,
             bookmarks: bookmarks,
             closeLeftPaneCallback: closeLeftPanel,
           )),
@@ -315,12 +126,11 @@ class MainWindowViewState extends State<MainWindowView>
 
   Widget buildSettingsScreen() {
     return Expanded(
-      child: MySettingsScreen(
-          isDarkMode: widget.isDarkMode, seedColor: widget.seedColor),
+      child: MySettingsScreen(),
     );
   }
 
-  SizedBox buildNavigationSideBar() {
+  SizedBox buildNavigationSideBar(AppModel appModel) {
     return SizedBox.fromSize(
       size: const Size.fromWidth(80),
       child: NavigationRail(
@@ -347,13 +157,15 @@ class MainWindowViewState extends State<MainWindowView>
               label: Text('הגדרות'),
             ),
           ],
-          selectedIndex: selectedIndex.value,
+          selectedIndex: appModel.currentView,
           onDestinationSelected: (int index) {
             setState(() {
-              selectedIndex.value = index;
+              appModel.currentView = index;
               switch (index) {
                 case 2:
                   _openBookmarksScreen();
+                case 3:
+                  _openSearchScreen(appModel);
               }
             });
           }),
@@ -390,50 +202,8 @@ class MainWindowViewState extends State<MainWindowView>
         });
   }
 
-  void openBook(Book book, int index) {
-    if (book is PdfBook) {
-      addTab(PdfBookTab(book, index));
-    } else if (book is TextBook) {
-      addTab(TextBookTab(book: book, index));
-    }
-    selectedIndex.value = 1;
-  }
-
-  void addTab(OpenedTab tab) {
-    setState(() {
-      int newIndex = tabController.length == 0 ? 0 : tabController.index + 1;
-      tabs.insert(newIndex, tab);
-      tabController = TabController(length: tabs.length, vsync: this);
-      tabController.index = newIndex;
-    });
-    Hive.box(name: 'tabs').put("key-tabs", tabs);
-  }
-
-  void closeTab(OpenedTab tab) {
-    setState(() {
-      if (tabs.isNotEmpty) {
-        int newIndex = tabs.indexOf(tab) <= tabController.index
-            ? max(0, tabController.index - 1)
-            : tabController.index;
-        tabs.remove(tab);
-        tabController = TabController(
-            length: tabs.length, vsync: this, initialIndex: newIndex);
-      }
-    });
-    Hive.box(name: 'tabs').put("key-tabs", tabs);
-  }
-
-  void _openSettingsScreen() async {
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => MySettingsScreen(
-                isDarkMode: widget.isDarkMode, seedColor: widget.seedColor)));
-    setState(() {});
-  }
-
-  void _openSearchScreen() async {
-    addTab(SearchingTab('חיפוש'));
+  void _openSearchScreen(AppModel appModel) async {
+    appModel.addTab(SearchingTab('חיפוש'));
   }
 
   void _openBookmarksScreen() {

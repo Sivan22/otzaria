@@ -74,11 +74,14 @@ class _LinksViewerState extends State<LinksViewer>
                   snapshot.data![index].heRef,
                 ),
                 onTap: () {
-                  widget.openTabcallback(TextBookTab(
-                      book: TextBook(
+                  widget.openTabcallback(
+                    TextBookTab(
+                        book: TextBook(
                           title: utils
-                              .getTitleFromPath(snapshot.data![index].path2)),
-                      snapshot.data![index].index2 - 1));
+                              .getTitleFromPath(snapshot.data![index].path2),
+                        ),
+                        initalIndex: snapshot.data![index].index2 - 1),
+                  );
                   widget.closeLeftPanelCallback();
                 },
               ),

@@ -6,7 +6,9 @@ import 'package:pdfrx/pdfrx.dart';
 
 /// Represents a book in the application.
 ///
-/// A `Book` object has a [title] which is the name of the book.
+/// A `Book` object has a [title] which is the name of the book,
+/// and an [author], [heShortDesc], [pubPlace], [pubDate], and [order] if available.
+///
 abstract class Book {
   /// The title of the book.
   final String title;
@@ -39,7 +41,7 @@ abstract class Book {
 
 ///a representation of a text book (opposite PDF book).
 ///a text book has a getter 'text' which returns a [Future] that resolvs to a [String].
-///it has also a 'tableOfContents' field thatreturns a [Future] that resolvs to a list of [TocEntry]
+///it has also a 'tableOfContents' field that returns a [Future] that resolvs to a list of [TocEntry]s
 class TextBook extends Book {
   TextBook({required String title}) : super(title: title);
 
@@ -108,7 +110,7 @@ class PdfBook extends Book {
       pageNumber: 1,
     );
     //free the memory
-    //document.dispose();
+    document.dispose();
     return result;
   }
 

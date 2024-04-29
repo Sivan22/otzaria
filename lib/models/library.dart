@@ -11,7 +11,7 @@ import 'package:otzaria/data/file_system_data_provider.dart';
 /// The [title] is a string representing the name of the category.
 /// The [subCategories] is a list of categories that are contained in this category.
 /// The [books] is a list of books that are contained in this category.
-/// The [parent] is a pointer to the parent category, or null if this is a top level category.
+/// The [parent] is a pointer to the parent category. the top level category's parent is the library itself
 ///
 /// The [description], [shortDescription], and [order] properties retrieve additional
 /// information about the category from [Data.metadata].

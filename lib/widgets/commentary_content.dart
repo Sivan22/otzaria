@@ -39,7 +39,7 @@ class _CommentaryContentState extends State<CommentaryContent>
       onDoubleTap: () {
         widget.openBookCallback(TextBookTab(
           book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
-          widget.link.index2 - 1,
+          initalIndex: widget.link.index2 - 1,
         ));
       },
       child: FutureBuilder(
