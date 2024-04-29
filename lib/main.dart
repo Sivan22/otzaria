@@ -4,21 +4,16 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
-import 'package:otzaria/models/bookmark.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:hive/hive.dart';
+
 import 'package:otzaria/data/cache_provider.dart';
+import 'package:otzaria/data/hive_data_provider.dart';
 
 void main() async {
   // initializing all the hive components
   await () async {
     await Settings.init(cacheProvider: HiveCache());
+    await initHiveBoxes();
     WidgetsFlutterBinding.ensureInitialized();
-    Hive.registerAdapter<Bookmark>(
-        'Bookmark', (json) => Bookmark.fromJson(json));
-    Hive.defaultDirectory = (await getApplicationSupportDirectory()).path;
-    Hive.box(name: 'bookmarks');
-    Hive.box(name: 'tabs');
   }();
   runApp(FileExplorerApp());
 }

@@ -83,8 +83,9 @@ class AppModel with ChangeNotifier {
   ///
   /// [tab] The tab to add.
   void addTab(OpenedTab tab) {
-    tabs.insert(currentTab, tab);
-    currentTab = currentTab + 1;
+    //add the tab after the current tab, or at the beginning if there is no open tab
+    tabs.insert(min(currentTab + 1, tabs.length), tab);
+    currentTab++;
     notifyListeners();
     saveTabsToDisk();
   }

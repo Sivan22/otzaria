@@ -4,7 +4,6 @@ import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'dart:math';
-
 import 'package:provider/provider.dart';
 
 class LibraryBrowser extends StatefulWidget {
@@ -95,11 +94,12 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         for (Book book in category.books) {
           books.add(
             BookGridItem(
-              book: book,
-              onBookClickCallback: () =>
+                book: book,
+                onBookClickCallback: () {
                   Provider.of<AppModel>(context, listen: false)
-                      .openBook(book, 0),
-            ),
+                      .openBook(book, 0);
+                  Provider.of<AppModel>(context, listen: false).currentView = 1;
+                }),
           );
         }
         return books;
