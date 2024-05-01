@@ -100,6 +100,10 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  void closeCurrentTab() {
+    closeTab(tabs[currentTab]);
+  }
+
   /// Closes all tabs.
   void closeAllTabs() {
     tabs = [];
