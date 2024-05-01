@@ -1,3 +1,5 @@
+import 'dart:isolate';
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/widgets/grid_items.dart';
 import 'package:otzaria/models/library.dart';
@@ -17,6 +19,7 @@ class LibraryBrowser extends StatefulWidget {
 
 class _LibraryBrowserState extends State<LibraryBrowser> {
   late Category currentTopCategory;
+  TextEditingController searchController = TextEditingController();
   late Future<List<Widget>> items;
   int depth = 0;
   @override
@@ -24,13 +27,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     currentTopCategory = Provider.of<AppModel>(context, listen: false).library;
     super.initState();
     items = getGrids(currentTopCategory);
-  }
-
-  void _openCategory(Category category) {
-    depth += 1;
-    currentTopCategory = category;
-    items = getGrids(currentTopCategory);
-    setState(() {});
   }
 
   @override
@@ -53,6 +49,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 icon: const Icon(Icons.arrow_upward),
                 tooltip: 'חזרה לתיקיה הקודמת',
                 onPressed: () => setState(() {
+                  searchController.clear();
                   depth = max(0, depth - 1);
                   currentTopCategory = currentTopCategory.parent!.parent!;
                   items = getGrids(currentTopCategory);
@@ -60,24 +57,87 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
               ),
             ),
           ),
-          // SizedBox.fromSize(
-          //     size: const Size.fromWidth(400), child: buildSearchBar()),
         ]),
       ),
-      body: FutureBuilder(
-          future: items,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  children: snapshot.data!,
-                ),
-              );
+      body: Column(
+        children: [
+          buildSearchBar(),
+          Expanded(
+            child: FutureBuilder(
+                future: items,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: Column(
+                        children: snapshot.data!,
+                      ),
+                    );
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+          controller: searchController,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            border: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8.0))),
+            hintText: 'איתור ספר ב' + currentTopCategory.title,
+          ),
+          onChanged: (value) {
+            if (value.length < 3) {
+              items = getGrids(currentTopCategory);
+            } else {
+              items = getFilteredBooks();
+              items = (() async => [
+                    Column(children: [MyGridView(items: items)])
+                  ])();
             }
-            return const Center(child: CircularProgressIndicator());
+            setState(() {});
           }),
     );
+  }
+
+  Future<List<Widget>> getFilteredBooks() async {
+    List<Book> books = currentTopCategory.getAllBooks().where((element) {
+      bool result = true;
+      for (final word in searchController.text.split(' ')) {
+        result = result && element.title.contains(word);
+      }
+      return result;
+    }).toList();
+
+    books = sortBooks(books, searchController.text);
+
+    List<Widget> items = [];
+
+    for (final book in books) {
+      items.add(
+        BookGridItem(
+            book: book,
+            onBookClickCallback: () {
+              Provider.of<AppModel>(context, listen: false).openBook(book, 0);
+              Provider.of<AppModel>(context, listen: false).currentView = 1;
+            }),
+      );
+    }
+    return items;
+  }
+
+  List<Book> sortBooks(List<Book> books, String query) {
+    books.sort(
+      (a, b) => ratio(query, b.title).compareTo(ratio(query, a.title)),
+    );
+    return books;
   }
 
   Future<List<Widget>> getGrids(Category category) async {
@@ -147,7 +207,14 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       );
     }
 
-    //}
     return items;
+  }
+
+  void _openCategory(Category category) {
+    depth += 1;
+    currentTopCategory = category;
+    setState(() {
+      items = getGrids(currentTopCategory);
+    });
   }
 }

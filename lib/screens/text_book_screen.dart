@@ -177,7 +177,6 @@ class _TextBookViewerState extends State<TextBookViewer>
   Widget buildCombinedView(
       AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
     return CombinedView(
-      key: PageStorageKey(widget.tab),
       tab: widget.tab,
       data: snapshot.data!.split('\n'),
       textSize: widget.tab.textFontSize,
@@ -273,7 +272,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   LinksViewer buildLinkView() {
     return LinksViewer(
-      links: widget.tab.book.links,
+      links: widget.tab.links,
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: widget.tab.positionsListener,
       closeLeftPanelCallback: closeLeftPane,

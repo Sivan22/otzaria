@@ -57,7 +57,7 @@ class AppModel with ChangeNotifier {
             .toList());
 
     currentTab = Hive.box(name: 'tabs')
-        .get('key-current-tab', defaultValue: tabs.length);
+        .get('key-current-tab', defaultValue: tabs.length - 1);
 
     seedColor.addListener(() {
       notifyListeners();

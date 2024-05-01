@@ -121,24 +121,14 @@ class BookGridItem extends StatelessWidget {
               trailing: book is TextBook
                   ? null
                   : SizedBox.fromSize(
-                      size: const Size.fromWidth(64),
-                      child: ClipRect(
-                        child: Builder(builder: (context) {
-                          final pdfbook = book as PdfBook;
-                          return FutureBuilder(
-                            future: pdfbook.thumbnail,
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return snapshot.data!;
-                              } else if (snapshot.hasError) {
-                                return Text(snapshot.error.toString());
-                              } else {
-                                return const Icon(Icons.picture_as_pdf);
-                              }
-                            },
-                          );
-                        }),
-                      ),
+                      size: Size.square(30),
+                      child: const Center(
+                          child: Icon(
+                        Icons.picture_as_pdf,
+                      )
+                          //}
+                          // },
+                          ),
                     ),
             ),
             collapsed: const SizedBox.shrink(),

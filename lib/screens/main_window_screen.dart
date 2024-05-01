@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
@@ -55,7 +54,9 @@ class MainWindowViewState extends State<MainWindowView>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.hidden ||
         state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {}
+        state == AppLifecycleState.detached) {
+      Provider.of<AppModel>(context, listen: false).saveTabsToDisk();
+    }
   }
 
   @override

@@ -39,6 +39,16 @@ class Category {
   /// A pointer to the parent category, or null if this is a top level category.
   Category? parent;
 
+  ///returns all the books in this category and its subcategories
+  List<Book> getAllBooks() {
+    List<Book> books = [];
+    books.addAll(this.books);
+    for (Category category in subCategories) {
+      books.addAll(category.getAllBooks());
+    }
+    return books;
+  }
+
   /// Initialize a new [Category] instance.
   ///
   /// The [title] is the name of the category, [subCategories] are the categories

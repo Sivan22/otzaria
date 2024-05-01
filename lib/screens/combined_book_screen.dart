@@ -59,6 +59,7 @@ class _CombinedViewState extends State<CombinedView>
 
   Widget buildOuterList() {
     return SelectionArea(
+      key: PageStorageKey(widget.tab),
       selectionControls: DesktopTextSelectionControls(),
       child: ScrollablePositionedList.builder(
           initialScrollIndex: widget.tab.initalIndex,

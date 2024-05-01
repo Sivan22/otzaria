@@ -2,7 +2,7 @@ import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
-import 'package:pdfrx/pdfrx.dart';
+//import 'package:pdfrx/pdfrx.dart';
 
 /// Represents a book in the application.
 ///
@@ -100,19 +100,19 @@ class PdfBook extends Book {
   PdfBook({required String title, required this.path}) : super(title: title);
 
   ///get a preview of the first page in the book (returns a [Widget] viewing the page)
-  Future<PdfPageView> get thumbnail async {
-    //TODO memory efiiciecy is needed
-    var document = await PdfDocument.openFile(
-      path,
-    );
-    var result = PdfPageView(
-      document: document,
-      pageNumber: 1,
-    );
-    //free the memory
-    document.dispose();
-    return result;
-  }
+  // Future<PdfPageView> get thumbnail async {
+  //   //TODO memory efiiciecy is needed
+  //   var document = await PdfDocument.openFile(
+  //     path,
+  //   );
+  //   var result = PdfPageView(
+  //     document: document,
+  //     pageNumber: 1,
+  //   );
+  //   //free the memory
+  //   document.dispose();
+  //   return result;
+  // }
 
   factory PdfBook.fromJson(Map<String, dynamic> json) {
     return PdfBook(
