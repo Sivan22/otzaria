@@ -6,7 +6,6 @@ import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/screens/full_text_search_screen.dart';
 import 'package:otzaria/screens/pdf_book_screen.dart';
 import 'package:otzaria/screens/text_book_screen.dart';
-import 'package:otzaria/widgets/keyboard_shortcuts.dart';
 import 'package:provider/provider.dart';
 
 class ReadingScreen extends StatefulWidget {
@@ -23,32 +22,31 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardShortcuts(
-      child: Consumer<AppModel>(
-        builder: (context, appModel, child) {
-          if (appModel.tabs.isEmpty) {
-            return const Expanded(child: Center(child: Text('לא נבחרו ספרים')));
-          }
-          return Builder(
-            builder: (context) {
-              final controller = TabController(
-                  length: appModel.tabs.length,
-                  vsync: this,
-                  initialIndex:
-                      min(appModel.currentTab, appModel.tabs.length - 1));
-              controller.addListener(() {
-                appModel.currentTab = controller.index;
-              });
-              return Expanded(
-                child: Scaffold(
-                  appBar: buildTabBar(appModel, controller),
-                  body: buildTabBarView(appModel, controller),
-                ),
-              );
-            },
-          );
-        },
-      ),
+    super.build(context);
+    return Consumer<AppModel>(
+      builder: (context, appModel, child) {
+        if (appModel.tabs.isEmpty) {
+          return const Expanded(child: Center(child: Text('לא נבחרו ספרים')));
+        }
+        return Builder(
+          builder: (context) {
+            final controller = TabController(
+                length: appModel.tabs.length,
+                vsync: this,
+                initialIndex:
+                    min(appModel.currentTab, appModel.tabs.length - 1));
+            controller.addListener(() {
+              appModel.currentTab = controller.index;
+            });
+            return Expanded(
+              child: Scaffold(
+                appBar: buildTabBar(appModel, controller),
+                body: buildTabBarView(appModel, controller),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

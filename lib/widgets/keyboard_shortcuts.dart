@@ -93,7 +93,9 @@ class KeyboardShortcuts extends StatelessWidget {
               Settings.getValue<String>('key-shortcut-open-book-browser') !=
                       null
                   ? Settings.getValue<String>('key-shortcut-open-book-browser')
-                  : 'ctrl+b']!: () {},
+                  : 'ctrl+b']!: () {
+            appModel.currentView = 0;
+          },
           shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
               ? Settings.getValue<String>('key-shortcut-close-tab')
               : 'ctrl+w']!: () {
@@ -109,13 +111,14 @@ class KeyboardShortcuts extends StatelessWidget {
               Settings.getValue<String>('key-shortcut-open-book-search') != null
                   ? Settings.getValue<String>('key-shortcut-open-book-search')
                   : 'ctrl+o']!: () {
-            //TODO implement open book locator
+            appModel.currentView = 0;
+            appModel.bookLocatorFocusNode.requestFocus();
           },
           shortcuts[
               Settings.getValue<String>('key-shortcut-open-new-search') != null
                   ? Settings.getValue<String>('key-shortcut-open-new-search')
                   : 'ctrl+q']!: () {
-            //TODO implement open bew search tab
+            appModel.openNewSearchTab();
           },
         },
         child: this.child,

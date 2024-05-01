@@ -31,7 +31,14 @@ class AppModel with ChangeNotifier {
   int currentTab = 0;
 
   /// The index of the current view.
-  int currentView = 0;
+  int _currentView = 0;
+
+  int get currentView => _currentView;
+
+  set currentView(int i) {
+    _currentView = i;
+    notifyListeners();
+  }
 
   /// Flag indicating if the app is in dark mode.
   final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(
@@ -43,6 +50,9 @@ class AppModel with ChangeNotifier {
     ConversionUtils.colorFromString(
         Settings.getValue<String>('key-swatch-color') ?? ('#ff2c1b02')),
   );
+
+  /// a focus node for the search field in libraryBrowser
+  FocusNode bookLocatorFocusNode = FocusNode();
 
   /// Constructs a new AppModel instance.
   ///
@@ -79,13 +89,16 @@ class AppModel with ChangeNotifier {
     }
   }
 
+  void openNewSearchTab() {
+    addTab(SearchingTab('חיפוש'));
+  }
+
   /// Adds a new tab to the list of opened tabs.
   ///
   /// [tab] The tab to add.
   void addTab(OpenedTab tab) {
     //add the tab after the current tab, or at the beginning if there is no open tab
     tabs.insert(min(currentTab + 1, tabs.length), tab);
-    currentTab++;
     notifyListeners();
     saveTabsToDisk();
   }
@@ -95,7 +108,6 @@ class AppModel with ChangeNotifier {
   /// [tab] The tab to close.
   void closeTab(OpenedTab tab) {
     tabs.remove(tab);
-    currentTab = max(currentTab - 1, 0);
     notifyListeners();
     saveTabsToDisk();
   }

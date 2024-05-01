@@ -10,6 +10,7 @@ import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
 import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
+import 'package:otzaria/widgets/keyboard_shortcuts.dart';
 import 'package:provider/provider.dart';
 
 class MainWindowView extends StatefulWidget {
@@ -62,32 +63,34 @@ class MainWindowViewState extends State<MainWindowView>
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Consumer<AppModel>(
-        builder: (context, appModel, child) => Scaffold(
-          body: OrientationBuilder(builder: (context, orientation) {
-            Widget mainWindow = Container();
-            switch (appModel.currentView) {
-              case (0):
-                mainWindow = buildLibraryBrowser(appModel);
-                break;
-              case (1 || 2 || 3):
-                mainWindow = const ReadingScreen();
-                break;
-              case (4):
-                mainWindow = buildSettingsScreen();
-            }
-            if (orientation == Orientation.landscape) {
-              return buildHorizontalLayout(mainWindow, appModel);
-            } else {
-              return Column(children: [
-                Expanded(
-                  child:
-                      Row(children: [buildBookmarksView(appModel), mainWindow]),
-                ),
-                buildNavigationBottomBar(),
-              ]);
-            }
-          }),
+      child: KeyboardShortcuts(
+        child: Consumer<AppModel>(
+          builder: (context, appModel, child) => Scaffold(
+            body: OrientationBuilder(builder: (context, orientation) {
+              Widget mainWindow = Container();
+              switch (appModel.currentView) {
+                case (0):
+                  mainWindow = buildLibraryBrowser(appModel);
+                  break;
+                case (1 || 2 || 3):
+                  mainWindow = const Expanded(child: ReadingScreen());
+                  break;
+                case (4):
+                  mainWindow = buildSettingsScreen();
+              }
+              if (orientation == Orientation.landscape) {
+                return buildHorizontalLayout(mainWindow, appModel);
+              } else {
+                return Column(children: [
+                  Expanded(
+                    child: Row(
+                        children: [buildBookmarksView(appModel), mainWindow]),
+                  ),
+                  buildNavigationBottomBar(),
+                ]);
+              }
+            }),
+          ),
         ),
       ),
     );
@@ -103,7 +106,7 @@ class MainWindowViewState extends State<MainWindowView>
 
   Widget buildLibraryBrowser(AppModel appModel) {
     return Expanded(
-      child: Container(color: Colors.white, child: const LibraryBrowser()),
+      child: const LibraryBrowser(),
     );
   }
 
@@ -166,7 +169,7 @@ class MainWindowViewState extends State<MainWindowView>
                 case 2:
                   _openBookmarksScreen();
                 case 3:
-                  _openSearchScreen(appModel);
+                  appModel.openNewSearchTab();
               }
             });
           }),
@@ -201,10 +204,6 @@ class MainWindowViewState extends State<MainWindowView>
         onDestinationSelected: (int index) {
           setState(() {});
         });
-  }
-
-  void _openSearchScreen(AppModel appModel) async {
-    appModel.addTab(SearchingTab('חיפוש'));
   }
 
   void _openBookmarksScreen() {

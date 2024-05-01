@@ -41,21 +41,15 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                   fontWeight: FontWeight.bold,
                 ))),
         leading: Row(children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SizedBox.fromSize(
-              size: const Size.fromWidth(64),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_upward),
-                tooltip: 'חזרה לתיקיה הקודמת',
-                onPressed: () => setState(() {
-                  searchController.clear();
-                  depth = max(0, depth - 1);
-                  currentTopCategory = currentTopCategory.parent!.parent!;
-                  items = getGrids(currentTopCategory);
-                }),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.arrow_upward),
+            tooltip: 'חזרה לתיקיה הקודמת',
+            onPressed: () => setState(() {
+              searchController.clear();
+              depth = max(0, depth - 1);
+              currentTopCategory = currentTopCategory.parent!.parent!;
+              items = getGrids(currentTopCategory);
+            }),
           ),
         ]),
       ),
@@ -86,6 +80,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextField(
+          focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
           controller: searchController,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
