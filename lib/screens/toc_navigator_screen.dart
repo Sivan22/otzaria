@@ -4,7 +4,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/books.dart';
 
 class TocViewer extends StatefulWidget {
-  TocViewer({
+  const TocViewer({
     super.key,
     required this.toc,
     required this.scrollController,

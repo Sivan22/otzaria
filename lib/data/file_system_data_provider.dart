@@ -27,6 +27,38 @@ class FileSystemData extends Data {
     init();
   }
 
+  /// Initializes the data for the application.
+  ///
+  /// This function initializes the data for the application by performing the following steps:
+  /// 1. Initializes the settings using the provided cache provider.
+  /// 2. Ensures that the Flutter binding is initialized.
+  /// 3. Sets the default directory for Hive to the path obtained from the application support directory.
+  /// 4. Creates Hive boxes for bookmarks, tabs, and app preferences.
+  /// 5. Retrieves the library path using the file picker.
+  /// 6. Updates the title to path mapping using the retrieved library path.
+  /// 7. Registers the Bookmark adapter for Hive serialization.
+  ///
+  /// Returns a `Future` that completes when the initialization is done.
+  ///
+  init() async {
+    //taking care of getting the library path
+    await () async {
+      //first try to get the library path from settings
+      libraryPath = Settings.getValue('key-library-path');
+      //if faild, ask the user to choose the path
+      while (libraryPath == null) {
+        libraryPath = await FilePicker.platform
+            .getDirectoryPath(dialogTitle: "הגדר את מיקום ספריית אוצריא");
+        Settings.setValue('key-library-path', libraryPath);
+      }
+    }();
+
+    //updating the title to path index
+    _updateTitleToPath(libraryPath!);
+    //fetching the metadata for the books in the library
+    _fetchMetadata(libraryPath!);
+  }
+
   ///
   static FileSystemData instance = FileSystemData();
 
@@ -54,7 +86,7 @@ class FileSystemData extends Data {
   /// supports docx files
   Future<String> getBookText(String title) {
     return Isolate.run(() async {
-      String path = await _getBookPath(title);
+      String path = _getBookPath(title);
       File file = File(path);
       if (path.endsWith('.docx')) {
         final bytes = await file.readAsBytes();
@@ -74,7 +106,7 @@ class FileSystemData extends Data {
       init();
     }
     return _getLibraryFromDirectory(
-        libraryPath! + Platform.pathSeparator + 'אוצריא');
+        '${libraryPath!}${Platform.pathSeparator}אוצריא');
   }
 
   @override
@@ -84,39 +116,6 @@ class FileSystemData extends Data {
   Future<String> getLinkContent(Link link) async {
     String path = _getBookPath(getBookTitle(link.path2));
     return Isolate.run(() async => await getLineFromFile(path, link.index2));
-  }
-
-  /// Initializes the data for the application.
-  ///
-  /// This function initializes the data for the application by performing the following steps:
-  /// 1. Initializes the settings using the provided cache provider.
-  /// 2. Ensures that the Flutter binding is initialized.
-  /// 3. Sets the default directory for Hive to the path obtained from the application support directory.
-  /// 4. Creates Hive boxes for bookmarks, tabs, and app preferences.
-  /// 5. Retrieves the library path using the file picker.
-  /// 6. Updates the title to path mapping using the retrieved library path.
-  /// 7. Registers the Bookmark adapter for Hive serialization.
-  ///
-  /// Returns a `Future` that completes when the initialization is done.
-  ///
-
-  init() async {
-    //taking care of getting the library path
-    await () async {
-      //first try to get the library path from settings
-      libraryPath = Settings.getValue('key-library-path');
-      //if faild, ask the user to choose the path
-      while (libraryPath == null) {
-        libraryPath = await FilePicker.platform
-            .getDirectoryPath(dialogTitle: "הגדר את מיקום ספריית אוצריא");
-        Settings.setValue('key-library-path', libraryPath);
-      }
-    }();
-
-    //updating the title to path index
-    _updateTitleToPath(libraryPath!);
-    //fetching the metadata for the books in the library
-    _fetchMetadata(libraryPath!);
   }
 
   /// Returns a list of all the book paths in the library directory.
@@ -136,6 +135,7 @@ class FileSystemData extends Data {
   }
 
 // Retrieves the table of contents for a book with the given title.
+  @override
   Future<List<TocEntry>> getBookToc(String title) async {
     return _parseToc(getBookText(title));
   }
@@ -166,7 +166,7 @@ class FileSystemData extends Data {
   ///fetches the metadata for the books in the library from a json file using the provided library path.
   void _fetchMetadata(String libraryPath) {
     String metadataPath =
-        (libraryPath + Platform.pathSeparator + 'metadata.json');
+        ('$libraryPath${Platform.pathSeparator}metadata.json');
     File metadataFile = File(metadataPath);
     String metadataString = metadataFile.readAsStringSync();
     final tempMetadata = jsonDecode(metadataString) as List<dynamic>;
@@ -227,7 +227,7 @@ class FileSystemData extends Data {
             parents[level] = entry;
           } else {
             // Handle cases where heading levels might be skipped
-            print("Warning: Found h$level without a parent h${level - 1}");
+            //print("Warning: Found h$level without a parent h${level - 1}");
             toc.add(entry);
           }
         }
@@ -280,11 +280,6 @@ class FileSystemData extends Data {
 
   ///gets the path of the link file asocciated with the book title.
   String _getLinksPath(String title) {
-    return (Settings.getValue<String>('key-library-path') ?? '.') +
-        Platform.pathSeparator +
-        'links' +
-        Platform.pathSeparator +
-        title +
-        '_links.json';
+    return '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}links${Platform.pathSeparator}${title}_links.json';
   }
 }

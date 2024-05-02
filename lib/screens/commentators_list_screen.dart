@@ -16,11 +16,6 @@ class CommentaryListViewState extends State<CommentaryListView>
   String _filterQuery = "";
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     return FutureBuilder(

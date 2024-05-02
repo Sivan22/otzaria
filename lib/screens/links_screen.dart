@@ -14,7 +14,7 @@ class LinksViewer extends StatefulWidget {
   final ItemPositionsListener itemPositionsListener;
   final void Function() closeLeftPanelCallback;
 
-  LinksViewer({
+  const LinksViewer({
     super.key,
     required this.links,
     required this.openTabcallback,

@@ -71,10 +71,14 @@ dependencies:
 
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
   image_path: "assets/icon/icon.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 256 # min:48, max:256, default: 48
 
 dev_dependencies:
   flutter_test:

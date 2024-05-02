@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:get_it/get_it.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 

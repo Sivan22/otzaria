@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
-import 'dart:isolate';
 import 'dart:io';
 
 class BookSearchScreen extends StatefulWidget {
@@ -30,7 +29,7 @@ class BookSearchScreenState extends State<BookSearchScreen> {
   initState() {
     super.initState();
     books =
-        Directory(widget.libraryRootPath + Platform.pathSeparator + 'אוצריא')
+        Directory('${widget.libraryRootPath}${Platform.pathSeparator}אוצריא')
             .listSync(recursive: true)
             .whereType<File>()
             .map((e) => e.path)

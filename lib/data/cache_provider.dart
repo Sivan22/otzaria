@@ -78,7 +78,7 @@ class HiveCache extends CacheProvider {
   @override
   Future<void> remove(String key) async {
     if (containsKey(key)) {
-      await _preferences?.delete(key);
+      _preferences?.delete(key);
     }
   }
 

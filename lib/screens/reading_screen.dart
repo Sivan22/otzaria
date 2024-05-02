@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs.dart';
@@ -26,7 +25,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     return Consumer<AppModel>(
       builder: (context, appModel, child) {
         if (appModel.tabs.isEmpty) {
-          return const Expanded(child: Center(child: Text('לא נבחרו ספרים')));
+          return const Center(child: Text('לא נבחרו ספרים'));
         }
         return Builder(
           builder: (context) {
@@ -38,11 +37,9 @@ class _ReadingScreenState extends State<ReadingScreen>
             controller.addListener(() {
               appModel.currentTab = controller.index;
             });
-            return Expanded(
-              child: Scaffold(
-                appBar: buildTabBar(appModel, controller),
-                body: buildTabBarView(appModel, controller),
-              ),
+            return Scaffold(
+              appBar: buildTabBar(appModel, controller),
+              body: buildTabBarView(appModel, controller),
             );
           },
         );

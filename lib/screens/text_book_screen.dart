@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
 import '../models/books.dart';
 import 'package:otzaria/screens/text_book_search_screen.dart';
@@ -12,7 +11,6 @@ import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// A [StatefulWidget] that displays a text book.
 ///

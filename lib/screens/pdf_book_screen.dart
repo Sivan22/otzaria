@@ -61,7 +61,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
           IconButton(
             icon: const Icon(Icons.bookmark_add),
             tooltip: 'הוספת סימניה',
-            onPressed: () => null,
+            onPressed: () {},
           ),
           //   onPressed: () => widget.addBookmarkCallback(
           //       ref:

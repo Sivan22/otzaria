@@ -121,7 +121,7 @@ class BookGridItem extends StatelessWidget {
               trailing: book is TextBook
                   ? null
                   : SizedBox.fromSize(
-                      size: Size.square(30),
+                      size: const Size.square(30),
                       child: const Center(
                           child: Icon(
                         Icons.picture_as_pdf,

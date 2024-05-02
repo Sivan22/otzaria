@@ -6,6 +6,7 @@ import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/data/cache_provider.dart';
 import 'package:otzaria/data/hive_data_provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() async {
   // initializing all the hive components
@@ -14,11 +15,21 @@ void main() async {
     await initHiveBoxes();
     WidgetsFlutterBinding.ensureInitialized();
   }();
-  runApp(FileExplorerApp());
+  await () async {
+    //first try to get the library path from settings
+    String? libraryPath = Settings.getValue('key-library-path');
+    //if faild, ask the user to choose the path
+    while (libraryPath == null) {
+      libraryPath = await FilePicker.platform
+          .getDirectoryPath(dialogTitle: "מיקום ספריית אוצריא נדרש");
+      Settings.setValue('key-library-path', libraryPath);
+    }
+  }();
+  runApp(const FileExplorerApp());
 }
 
 class FileExplorerApp extends StatelessWidget {
-  FileExplorerApp({Key? key}) : super(key: key);
+  const FileExplorerApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,6 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/reading_screen.dart';
 
 //imports from otzaria
-import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
 import 'package:otzaria/screens/library_browser.dart';
@@ -105,8 +104,8 @@ class MainWindowViewState extends State<MainWindowView>
   }
 
   Widget buildLibraryBrowser(AppModel appModel) {
-    return Expanded(
-      child: const LibraryBrowser(),
+    return const Expanded(
+      child: LibraryBrowser(),
     );
   }
 
@@ -129,7 +128,7 @@ class MainWindowViewState extends State<MainWindowView>
   }
 
   Widget buildSettingsScreen() {
-    return Expanded(
+    return const Expanded(
       child: MySettingsScreen(),
     );
   }

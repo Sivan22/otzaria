@@ -1,7 +1,6 @@
 /* this is a representation of the tabs that could be open in the app.
 a tab is either a pdf book or a text book, or a full text search window*/
 
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';

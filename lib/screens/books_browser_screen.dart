@@ -27,7 +27,7 @@ class BooksBrowserState extends State<BooksBrowser> {
     super.initState();
 
     _fileList =
-        Directory(widget.libraryRootPath + Platform.pathSeparator + "אוצריא")
+        Directory("${widget.libraryRootPath}${Platform.pathSeparator}אוצריא")
             .listSync()
             .toList();
 

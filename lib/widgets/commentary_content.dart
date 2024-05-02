@@ -5,7 +5,6 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
-import 'dart:isolate';
 
 class CommentaryContent extends StatefulWidget {
   const CommentaryContent({

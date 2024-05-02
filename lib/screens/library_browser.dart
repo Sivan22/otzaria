@@ -1,4 +1,5 @@
 import 'dart:isolate';
+
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/widgets/grid_items.dart';
@@ -62,7 +63,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return SingleChildScrollView(
-                      physics: const ClampingScrollPhysics(),
                       child: Column(
                         children: snapshot.data!,
                       ),
@@ -86,7 +86,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
             prefixIcon: const Icon(Icons.search),
             border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8.0))),
-            hintText: 'איתור ספר ב' + currentTopCategory.title,
+            hintText: 'איתור ספר ב${currentTopCategory.title}',
           ),
           onChanged: (value) {
             if (value.length < 3) {
@@ -111,7 +111,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       return result;
     }).toList();
 
-    books = sortBooks(books, searchController.text);
+    books = await sortBooks(books, searchController.text);
 
     List<Widget> items = [];
 
@@ -128,10 +128,13 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     return items;
   }
 
-  List<Book> sortBooks(List<Book> books, String query) {
+  Future<List<Book>> sortBooks(List<Book> books, String query) async {
+    final titles = books.map((book) => book.title).toList();
+    await Isolate.run(() => titles.sort(
+          (a, b) => ratio(query, b).compareTo(ratio(query, a)),
+        ));
     books.sort(
-      (a, b) => ratio(query, b.title).compareTo(ratio(query, a.title)),
-    );
+        (a, b) => titles.indexOf(a.title).compareTo(titles.indexOf(b.title)));
     return books;
   }
 
@@ -162,13 +165,9 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       items.add(MyGridView(items: books));
 
       for (Category subCategory in category.subCategories) {
-        try {
-          subCategory.books.sort((a, b) => a.order.compareTo(b.order));
-          subCategory.subCategories.sort((a, b) => a.order.compareTo(b.order));
-        } catch (e) {
-          print(e.toString());
-          print(subCategory.toString());
-        }
+        subCategory.books.sort((a, b) => a.order.compareTo(b.order));
+        subCategory.subCategories.sort((a, b) => a.order.compareTo(b.order));
+
         items.add(Center(child: HeaderItem(category: subCategory)));
         items.add(MyGridView(items: _getGridItems(subCategory)));
       }

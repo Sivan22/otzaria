@@ -100,9 +100,9 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     return Expanded(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: const Text("רשימת הספרים לחיפוש:"),
+          const Padding(
+            padding: EdgeInsets.all(15.0),
+            child: Text("רשימת הספרים לחיפוש:"),
           ),
           Expanded(
               child: FileTreeViewScreen(
