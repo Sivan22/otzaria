@@ -31,6 +31,16 @@ abstract class Book {
   /// The order of the book in the list of books. If not available, defaults to 999.
   int get order => data.metadata[title]?['order'] ?? 999;
 
+  Map<String, dynamic> toJson();
+
+  factory Book.fromJson(Map<String, dynamic> json) {
+    if (json['type'] == 'TextBook') {
+      return TextBook(title: json['title']);
+    } else {
+      return PdfBook(title: json['title'], path: json['path']);
+    }
+  }
+
   /// Creates a new `Book` instance.
   ///
   /// The [title] parameter is required and cannot be null.
@@ -72,8 +82,12 @@ class TextBook extends Book {
   /// Converts the `Book` instance into a JSON object.
   ///
   /// Returns a JSON object with a 'title' key.
+  @override
   Map<String, dynamic> toJson() {
-    return {'title': title};
+    return {
+      'title': title,
+      'type': 'TextBook',
+    };
   }
 }
 
@@ -121,8 +135,9 @@ class PdfBook extends Book {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
-    return {'title': title, 'path': path};
+    return {'title': title, 'path': path, 'type': 'PdfBook'};
   }
 
   @override

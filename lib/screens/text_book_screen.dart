@@ -293,10 +293,12 @@ class _TextBookViewerState extends State<TextBookViewer>
           listenable: widget.tab.positionsListener.itemPositions,
           builder: (context, _) {
             return FutureBuilder(
-              future: refFromIndex(widget
-                      .tab.positionsListener.itemPositions.value.isNotEmpty
-                  ? widget.tab.positionsListener.itemPositions.value.first.index
-                  : 0),
+              future: utils.refFromIndex(
+                  widget.tab.positionsListener.itemPositions.value.isNotEmpty
+                      ? widget
+                          .tab.positionsListener.itemPositions.value.first.index
+                      : 0,
+                  widget.tab.tableOfContents),
               builder: (context, snapshot) => snapshot.hasData
                   ? Text(snapshot.data!)
                   : const SizedBox.shrink(),
@@ -333,8 +335,10 @@ class _TextBookViewerState extends State<TextBookViewer>
               int index =
                   widget.tab.positionsListener.itemPositions.value.first.index;
               Provider.of<AppModel>(context, listen: false).addBookmark(
-                  ref: widget.tab.title + await refFromIndex(index),
-                  title: utils.getTitleFromPath(widget.tab.book.title),
+                  ref: widget.tab.title +
+                      await utils.refFromIndex(
+                          index, widget.tab.tableOfContents),
+                  book: widget.tab.book,
                   index: index);
             }();
             // notify user
@@ -436,30 +440,6 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   void closeLeftPane() {
     widget.tab.showLeftPane.value = false;
-  }
-
-  Future<String> refFromIndex(int index) async {
-    List<TocEntry> toc = await widget.tab.book.tableOfContents;
-    List<String> texts = [];
-
-    void searchToc(List<TocEntry> entries, int index) {
-      for (final TocEntry entry in entries) {
-        if (entry.index > index) {
-          return;
-        }
-        if (entry.level > texts.length) {
-          texts.add(entry.text);
-        } else {
-          texts[entry.level - 1] = entry.text;
-        }
-
-        searchToc(entry.children, index);
-      }
-    }
-
-    searchToc(toc, index);
-
-    return texts.join(',');
   }
 
   @override

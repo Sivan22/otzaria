@@ -1,3 +1,5 @@
+import 'package:otzaria/models/books.dart';
+
 /// Represents a bookmark in the application.
 ///
 /// A `Bookmark` object has a [ref] which is a reference to a specific
@@ -9,7 +11,7 @@ class Bookmark {
   final String ref;
 
   /// The name of the book.
-  final String title;
+  final Book book;
 
   /// The index of the bookmark in the text.
   final int index;
@@ -17,7 +19,7 @@ class Bookmark {
   /// Creates a new `Bookmark` instance.
   ///
   /// The [ref], [title], and [index] parameters must not be null.
-  Bookmark({required this.ref, required this.title, required this.index});
+  Bookmark({required this.ref, required this.book, required this.index});
 
   /// Creates a new `Bookmark` instance from a JSON object.
   ///
@@ -25,7 +27,7 @@ class Bookmark {
   factory Bookmark.fromJson(Map<String, dynamic> json) {
     return Bookmark(
       ref: json['ref'] as String,
-      title: json['title'] as String,
+      book: Book.fromJson(json['book'] as Map<String, dynamic>),
       index: json['index'] as int,
     );
   }
@@ -36,7 +38,7 @@ class Bookmark {
   Map<String, dynamic> toJson() {
     return {
       'ref': ref,
-      'title': title,
+      'book': book.toJson(),
       'index': index,
     };
   }

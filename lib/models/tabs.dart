@@ -86,6 +86,9 @@ class TextBookTab extends OpenedTab {
   ///caching the links, since it takes a while to load
   late final Future<List<Link>> links;
 
+  //caching the table of contents, since it takes a while to load
+  late final Future<List<TocEntry>> tableOfContents;
+
   /// The initial index of the scrollable list.
   int initalIndex;
 
@@ -137,6 +140,7 @@ class TextBookTab extends OpenedTab {
     ///load the text
     text = (() async => await book.text)();
     links = (() async => await book.links)();
+    tableOfContents = (() async => await book.tableOfContents)();
     availableCommentators = getAvailableCommentators(book.links);
     if (searchText != '') {
       searchTextController.text = searchText;

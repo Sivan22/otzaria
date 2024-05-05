@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:otzaria/models/app_model.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:provider/provider.dart';
 import 'pdf_search_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'pdf_outlines_screen.dart';
@@ -59,16 +61,25 @@ class _PdfBookViewrState extends State<PdfBookViewr>
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_add),
-            tooltip: 'הוספת סימניה',
-            onPressed: () {},
-          ),
-          //   onPressed: () => widget.addBookmarkCallback(
-          //       ref:
-          //           '${widget.tab.title} עמוד ${widget.controller.pageNumber ?? 1}',
-          //       title: widget.tab.title,
-          //       index: widget.controller.pageNumber ?? 1),
-          // ),
+              icon: const Icon(Icons.bookmark_add),
+              tooltip: 'הוספת סימניה',
+              onPressed: () {
+                int index = widget.controller.isReady
+                    ? widget.controller.pageNumber!
+                    : 1;
+                Provider.of<AppModel>(context, listen: false).addBookmark(
+                    ref: '${widget.tab.title} עמוד $index',
+                    book: widget.tab.book,
+                    index: index);
+                // notify user
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('הסימניה נוספה בהצלחה'),
+                    ),
+                  );
+                }
+              }),
           IconButton(
             icon: const Icon(
               Icons.zoom_in,

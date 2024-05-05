@@ -12,13 +12,13 @@ import 'package:otzaria/screens/settings_screen.dart';
 import 'package:otzaria/widgets/keyboard_shortcuts.dart';
 import 'package:provider/provider.dart';
 
-class MainWindowView extends StatefulWidget {
-  const MainWindowView({Key? key}) : super(key: key);
+class MainWindowScreen extends StatefulWidget {
+  const MainWindowScreen({Key? key}) : super(key: key);
   @override
-  MainWindowViewState createState() => MainWindowViewState();
+  MainWindowScreenState createState() => MainWindowScreenState();
 }
 
-class MainWindowViewState extends State<MainWindowView>
+class MainWindowScreenState extends State<MainWindowScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   ValueNotifier selectedIndex = ValueNotifier(0);
   final bookSearchfocusNode = FocusNode();
@@ -107,24 +107,6 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
-  // AnimatedSize buildBookmarksView(AppModel appModel) {
-  //   return AnimatedSize(
-  //     duration: const Duration(milliseconds: 300),
-  //     child: ValueListenableBuilder(
-  //         valueListenable: showBookmarksView,
-  //         builder: (context, showBookmarksView, child) => SizedBox(
-  //               width: showBookmarksView ? 300 : 0,
-  //               height: showBookmarksView ? null : 0,
-  //                 child: child!,
-  //               ),
-  //           child: BookmarkView(
-  //             openBookmarkCallBack: appModel.openBook,
-  //             bookmarks: bookmarks,
-  //             closeLeftPaneCallback: closeLeftPanel,
-  //           )),
-  //     );
-  //   }
-
   Widget buildSettingsScreen() {
     return const Expanded(
       child: MySettingsScreen(),
@@ -171,33 +153,41 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
-  NavigationBar buildNavigationBottomBar() {
-    return NavigationBar(
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.library_books),
-            label: 'ספרייה',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book),
-            label: 'קריאה',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.search),
-            label: 'חיפוש',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bookmark),
-            label: 'סימניות',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'הגדרות',
-          ),
-        ],
-        selectedIndex: selectedIndex.value,
-        onDestinationSelected: (int index) {
-          setState(() {});
-        });
+  Widget buildNavigationBottomBar() {
+    return Consumer<AppModel>(
+      builder: (context, appModel, child) => NavigationBar(
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.library_books),
+              label: 'ספרייה',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.menu_book),
+              label: 'קריאה',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.star),
+              label: 'מועדפים',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.search),
+              label: 'חיפוש',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings),
+              label: 'הגדרות',
+            ),
+          ],
+          selectedIndex: selectedIndex.value,
+          onDestinationSelected: (int index) {
+            setState(() {
+              appModel.currentView = index;
+              switch (index) {
+                case 3:
+                  appModel.openNewSearchTab();
+              }
+            });
+          }),
+    );
   }
 }

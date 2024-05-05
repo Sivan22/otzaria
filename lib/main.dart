@@ -25,11 +25,11 @@ void main() async {
       Settings.setValue('key-library-path', libraryPath);
     }
   }();
-  runApp(const FileExplorerApp());
+  runApp(const OtzariaApp());
 }
 
-class FileExplorerApp extends StatelessWidget {
-  const FileExplorerApp({Key? key}) : super(key: key);
+class OtzariaApp extends StatelessWidget {
+  const OtzariaApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,7 @@ class FileExplorerApp extends StatelessWidget {
                           TextStyle(fontSize: 18.0, fontFamily: 'candara'),
                     ),
                   ),
-            home: const MainWindowView(),
+            home: const MainWindowScreen(),
           ),
         );
       },

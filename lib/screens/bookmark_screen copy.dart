@@ -1,42 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:provider/provider.dart';
 
-class BookmarkView extends StatefulWidget {
-  const BookmarkView({
+class HistoryView extends StatefulWidget {
+  const HistoryView({
     Key? key,
   }) : super(key: key);
 
   @override
-  State<BookmarkView> createState() => _BookmarkViewState();
+  State<HistoryView> createState() => _HistoryViewState();
 }
 
-class _BookmarkViewState extends State<BookmarkView> {
+class _HistoryViewState extends State<HistoryView> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppModel>(builder: (context, appModel, child) {
-      return appModel.bookmarks.isEmpty
-          ? const Center(child: Text('אין סימניות'))
+      return appModel.history.isEmpty
+          ? const Center(child: Text('אין היסטוריה'))
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: appModel.bookmarks.length,
+                    itemCount: appModel.history.length,
                     itemBuilder: (context, index) => ListTile(
-                        title: Text(appModel.bookmarks[index].ref),
+                        title: Text(appModel.history[index].ref),
                         onTap: () => appModel.openBook(
-                            appModel.bookmarks[index].book,
-                            appModel.bookmarks[index].index),
+                            appModel.history[index].book,
+                            appModel.history[index].index),
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.delete_forever,
                           ),
                           onPressed: () {
-                            appModel.removeBookmark(index);
+                            appModel.removeHistory(index);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('הסימניה נמחקה'),
+                                content: Text('נמחק בהצלחה'),
                               ),
                             );
                             setState(() {});
@@ -48,15 +47,15 @@ class _BookmarkViewState extends State<BookmarkView> {
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                     onPressed: () {
-                      appModel.clearBookmarks();
+                      appModel.clearHistory();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('כל הסימניות נמחקו'),
+                          content: Text('כל ההיסטוריה נמחקה'),
                         ),
                       );
                       setState(() {});
                     },
-                    child: const Text('מחק את כל הסימניות'),
+                    child: const Text('מחק את כל ההיסטוריה'),
                   ),
                 ),
               ],

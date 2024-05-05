@@ -12,6 +12,7 @@ import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:hive/hive.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// Represents the state of the application.
 ///
@@ -41,9 +42,9 @@ class AppModel with ChangeNotifier {
     notifyListeners();
   }
 
-  final List<dynamic> rawBookmarks =
-      Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
   late List<Bookmark> bookmarks;
+
+  late List<Bookmark> history;
 
   /// Flag indicating if the app is in dark mode.
   final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(
@@ -74,7 +75,13 @@ class AppModel with ChangeNotifier {
     currentTab = Hive.box(name: 'tabs')
         .get('key-current-tab', defaultValue: tabs.length - 1);
 
+    final List<dynamic> rawBookmarks =
+        Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
     bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
+
+    final List<dynamic> rawHistory =
+        Hive.box(name: 'history').get('key-history') ?? [];
+    history = rawHistory.map((e) => Bookmark.fromJson(e)).toList();
 
     seedColor.addListener(() {
       notifyListeners();
@@ -94,6 +101,7 @@ class AppModel with ChangeNotifier {
     } else if (book is TextBook) {
       addTab(TextBookTab(book: book, initalIndex: index));
     }
+    currentView = 1;
   }
 
   void openNewSearchTab() {
@@ -116,6 +124,27 @@ class AppModel with ChangeNotifier {
   ///
   /// [tab] The tab to close.
   void closeTab(OpenedTab tab) {
+    if (tab is PdfBookTab) {
+      int index = tab.pdfViewerController.isReady
+          ? tab.pdfViewerController.pageNumber!
+          : 1;
+      addHistory(
+        ref: '${tab.title} עמוד $index',
+        book: tab.book,
+        index: index,
+      );
+    }
+    if (tab is TextBookTab) {
+      final index = tab.positionsListener.itemPositions.value.isEmpty
+          ? 0
+          : tab.positionsListener.itemPositions.value.first.index;
+      (() async => addHistory(
+          ref: tab.book.title +
+              await utils.refFromIndex(index, tab.tableOfContents),
+          book: tab.book,
+          index: tab.initalIndex))();
+    }
+
     tabs.remove(tab);
     notifyListeners();
     saveTabsToDisk();
@@ -127,7 +156,10 @@ class AppModel with ChangeNotifier {
 
   /// Closes all tabs.
   void closeAllTabs() {
-    tabs = [];
+    // for (final tab in tabs) {
+    //   (() async => closeTab(tab))();
+    // }
+    tabs = List<OpenedTab>.empty();
     currentTab = 0;
     notifyListeners();
     saveTabsToDisk();
@@ -140,8 +172,8 @@ class AppModel with ChangeNotifier {
   }
 
   void addBookmark(
-      {required String ref, required String title, required int index}) {
-    bookmarks.add(Bookmark(ref: ref, title: title, index: index));
+      {required String ref, required Book book, required int index}) {
+    bookmarks.add(Bookmark(ref: ref, book: book, index: index));
     // write to disk
     Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
   }
@@ -154,5 +186,22 @@ class AppModel with ChangeNotifier {
   void clearBookmarks() {
     bookmarks.clear();
     Hive.box(name: 'bookmarks').clear();
+  }
+
+  void addHistory(
+      {required String ref, required Book book, required int index}) {
+    history.add(Bookmark(ref: ref, book: book, index: index));
+    // write to disk
+    Hive.box(name: 'history').put('key-history', history);
+  }
+
+  void removeHistory(int index) {
+    history.removeAt(index);
+    Hive.box(name: 'history').put('key-history', history);
+  }
+
+  void clearHistory() {
+    history.clear();
+    Hive.box(name: 'history').clear();
   }
 }

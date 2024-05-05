@@ -89,56 +89,62 @@ class BookGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: onBookClickCallback,
-        child: Card(
-            child: SingleChildScrollView(
+      onTap: onBookClickCallback,
+      child: Card(
+        child: ListView(
+          shrinkWrap: true,
           physics: const ClampingScrollPhysics(),
-          child: ExpandablePanel(
-            theme: ExpandableThemeData(
-                headerAlignment: ExpandablePanelHeaderAlignment.center,
-                tapBodyToExpand: false,
-                tapHeaderToExpand: false,
-                hasIcon: book.heShortDesc != null && book.heShortDesc != ''
-                    ? true
-                    : false,
-                iconPlacement: ExpandablePanelIconPlacement.right,
-                alignment: Alignment.center,
-                expandIcon: Icons.info_outline,
-                collapseIcon: Icons.keyboard_arrow_up,
-                iconSize: 15),
-            header: ListTile(
-              title: Text(
-                book.title,
-                style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          children: [
+            ExpandablePanel(
+              theme: ExpandableThemeData(
+                  headerAlignment: ExpandablePanelHeaderAlignment.center,
+                  tapBodyToExpand: false,
+                  tapHeaderToExpand: false,
+                  hasIcon: book.heShortDesc != null && book.heShortDesc != ''
+                      ? true
+                      : false,
+                  iconPlacement: ExpandablePanelIconPlacement.right,
+                  alignment: Alignment.center,
+                  expandIcon: Icons.info_outline,
+                  collapseIcon: Icons.keyboard_arrow_up,
+                  iconSize: 15),
+              header: ListTile(
+                title: Text(
+                  book.title,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                    (book.author == "" || book.author == null)
+                        ? ''
+                        : ('${book.author!} ${book.pubDate ?? ''}'),
+                    style: const TextStyle(fontSize: 14)),
+                isThreeLine: true,
+                trailing: book is TextBook
+                    ? null
+                    : SizedBox.fromSize(
+                        size: const Size.square(30),
+                        child: const Center(
+                            child: Icon(
+                          Icons.picture_as_pdf,
+                        )
+                            //}
+                            // },
+                            ),
+                      ),
               ),
-              subtitle: Text(
-                  (book.author == "" || book.author == null)
-                      ? ''
-                      : ('${book.author!} ${book.pubDate ?? ''}'),
-                  style: const TextStyle(fontSize: 14)),
-              isThreeLine: true,
-              trailing: book is TextBook
-                  ? null
-                  : SizedBox.fromSize(
-                      size: const Size.square(30),
-                      child: const Center(
-                          child: Icon(
-                        Icons.picture_as_pdf,
-                      )
-                          //}
-                          // },
-                          ),
-                    ),
+              collapsed: const SizedBox.shrink(),
+              expanded: Text(
+                book.heShortDesc ?? '',
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.secondary),
+              ),
             ),
-            collapsed: const SizedBox.shrink(),
-            expanded: Text(
-              book.heShortDesc ?? '',
-              style: TextStyle(
-                  fontSize: 14, color: Theme.of(context).colorScheme.secondary),
-            ),
-          ),
-        )));
+          ],
+        ),
+      ),
+    );
   }
 }
 

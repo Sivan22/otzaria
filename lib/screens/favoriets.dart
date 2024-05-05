@@ -1,5 +1,7 @@
-/// a widget that contains two tabs: history and bookmarks. The bookmarks tab is BookmarkView and the history is HistoryView.
+/// a widget that contains two tabs: history and bookmarks.
+///  The bookmarks tab is BookmarkView and the history is HistoryView.
 import 'package:flutter/material.dart';
+import 'package:otzaria/screens/bookmark_screen%20copy.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
 
 class FavouritesScreen extends StatelessWidget {
@@ -29,8 +31,7 @@ class FavouritesScreen extends StatelessWidget {
         body: TabBarView(
           children: [
             BookmarkView(),
-            Expanded(child: Center(child: Text('אין היסטוריה'))),
-            // HistoryView(),
+            HistoryView(),
           ],
         ),
       ),
