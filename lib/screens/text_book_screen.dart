@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
 import 'package:provider/provider.dart';
-import '../models/books.dart';
 import 'package:otzaria/screens/text_book_search_screen.dart';
 import 'dart:io';
 import 'package:otzaria/screens/toc_navigator_screen.dart';

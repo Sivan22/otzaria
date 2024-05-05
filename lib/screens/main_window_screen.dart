@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/favoriets.dart';
 import 'package:otzaria/screens/reading_screen.dart';
 
 //imports from otzaria
-import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
 import 'package:otzaria/widgets/keyboard_shortcuts.dart';
@@ -178,7 +176,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: 'הגדרות',
             ),
           ],
-          selectedIndex: selectedIndex.value,
+          selectedIndex: appModel.currentView,
           onDestinationSelected: (int index) {
             setState(() {
               appModel.currentView = index;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:provider/provider.dart';
 
 class BookmarkView extends StatefulWidget {
