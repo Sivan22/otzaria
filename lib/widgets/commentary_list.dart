@@ -40,7 +40,7 @@ class _CommentaryListState extends State<CommentaryList>
 
     // in case we are inside a splited view, we need to listen to the item positions
     if (widget.showSplitView.value) {
-      widget.textBookTab.positionsListener.itemPositions.addListener(() {
+      widget.textBookTab.positionsListener.itemPositions.addListener(()  {
         if (mounted) {
           setState(() {
             thisLinks = getLinksforIndexs(

@@ -7,6 +7,7 @@ import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/books.dart';
@@ -40,6 +41,10 @@ class AppModel with ChangeNotifier {
     notifyListeners();
   }
 
+  final List<dynamic> rawBookmarks =
+      Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
+  late List<Bookmark> bookmarks;
+
   /// Flag indicating if the app is in dark mode.
   final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(
     Settings.getValue<bool>('key-dark-mode') ?? false,
@@ -68,6 +73,8 @@ class AppModel with ChangeNotifier {
 
     currentTab = Hive.box(name: 'tabs')
         .get('key-current-tab', defaultValue: tabs.length - 1);
+
+    bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
 
     seedColor.addListener(() {
       notifyListeners();
@@ -130,5 +137,22 @@ class AppModel with ChangeNotifier {
   void saveTabsToDisk() {
     Hive.box(name: 'tabs').put("key-tabs", tabs);
     Hive.box(name: 'tabs').put("key-current-tab", currentTab);
+  }
+
+  void addBookmark(
+      {required String ref, required String title, required int index}) {
+    bookmarks.add(Bookmark(ref: ref, title: title, index: index));
+    // write to disk
+    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
+  }
+
+  void removeBookmark(int index) {
+    bookmarks.removeAt(index);
+    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
+  }
+
+  void clearBookmarks() {
+    bookmarks.clear();
+    Hive.box(name: 'bookmarks').clear();
   }
 }

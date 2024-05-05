@@ -2,6 +2,7 @@
 a tab is either a pdf book or a text book, or a full text search window*/
 
 import 'package:flutter/material.dart';
+import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -98,11 +99,16 @@ class TextBookTab extends OpenedTab {
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
 
   ///
-  final showLeftPane = ValueNotifier<bool>(false);
+  final showLeftPane = ValueNotifier<bool>(true);
 
   final pinLeftPane = ValueNotifier<bool>(false);
 
+  /// a flag that tells if the comentaries should be shown in splited view or not
   final ValueNotifier<bool> showSplitedView = ValueNotifier<bool>(true);
+
+  /// The split contloller.
+  MultiSplitViewController splitController =
+      MultiSplitViewController(areas: Area.weights([0.4, 0.6]));
 
   /// The controller for scrolling by index.
   ItemScrollController scrollController = ItemScrollController();
@@ -167,13 +173,14 @@ class TextBookTab extends OpenedTab {
   /// and 'type' keys.
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
     return TextBookTab(
-        initalIndex: json['initalIndex'],
-        book: TextBook(
-          title: json['title'],
-        ),
-        commentaries: json['commentators']
-            .map<Book>((json) => TextBook(title: json.toString()))
-            .toList());
+      initalIndex: json['initalIndex'],
+      book: TextBook(
+        title: json['title'],
+      ),
+      // commentaries: json['commentators']
+      //     .map<Book>((json) => TextBook(title: json.toString()))
+      //     .toList()
+    );
   }
 
   /// Converts the [TextBookTab] instance into a JSON map.
@@ -186,7 +193,8 @@ class TextBookTab extends OpenedTab {
       'initalIndex': positionsListener.itemPositions.value.isNotEmpty
           ? positionsListener.itemPositions.value.first.index
           : 0,
-      'commentators': commentariesToShow.value,
+      'commentators':
+          commentariesToShow.value.map((book) => book.title).toList(),
       'type': 'TextBookTab'
     };
   }

@@ -1,5 +1,4 @@
 import 'dart:isolate';
-
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/widgets/grid_items.dart';
@@ -207,6 +206,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   void _openCategory(Category category) {
     depth += 1;
     currentTopCategory = category;
+
     setState(() {
       items = getGrids(currentTopCategory);
     });

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
+import 'package:provider/provider.dart';
 import '../models/books.dart';
 import 'package:otzaria/screens/text_book_search_screen.dart';
 import 'dart:io';
@@ -11,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
 import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// A [StatefulWidget] that displays a text book.
 ///
@@ -149,6 +152,7 @@ class _TextBookViewerState extends State<TextBookViewer>
     return ValueListenableBuilder(
         valueListenable: widget.tab.commentariesToShow,
         builder: (context, commentariesNames, child) => MultiSplitView(
+                controller: widget.tab.splitController,
                 axis: Axis.horizontal,
                 resizable: true,
                 dividerBuilder: (axis, index, resizable, dragging, highlighted,
@@ -324,15 +328,24 @@ class _TextBookViewerState extends State<TextBookViewer>
 
         //button to add a bookmark
         IconButton(
-          onPressed: () {},
-          // () async {
-          //   int index =
-          //       widget.tab.positionsListener.itemPositions.value.first.index;
-          //   widget.addBookmarkCallback(
-          //       ref: widget.tab.title + await refFromIndex(index),
-          //       title: utils.getTitleFromPath(widget.tab.book.title),
-          //       index: index);
-          // },
+          onPressed: () {
+            () async {
+              int index =
+                  widget.tab.positionsListener.itemPositions.value.first.index;
+              Provider.of<AppModel>(context, listen: false).addBookmark(
+                  ref: widget.tab.title + await refFromIndex(index),
+                  title: utils.getTitleFromPath(widget.tab.book.title),
+                  index: index);
+            }();
+            // notify user
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('הסימניה נוספה בהצלחה'),
+                ),
+              );
+            }
+          },
           icon: const Icon(
             Icons.bookmark_add,
           ),

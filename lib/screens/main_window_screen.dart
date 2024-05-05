@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/screens/favoriets.dart';
 import 'package:otzaria/screens/reading_screen.dart';
 
 //imports from otzaria
 import 'package:otzaria/models/bookmark.dart';
-import 'package:otzaria/screens/bookmark_screen.dart';
 import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
 import 'package:otzaria/widgets/keyboard_shortcuts.dart';
@@ -21,18 +21,12 @@ class MainWindowView extends StatefulWidget {
 class MainWindowViewState extends State<MainWindowView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   ValueNotifier selectedIndex = ValueNotifier(0);
-  final showBookmarksView = ValueNotifier<bool>(false);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
-
-  final List<dynamic> rawBookmarks =
-      Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
-  late List<Bookmark> bookmarks;
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
 
     if (Settings.getValue('key-font-size') == null) {
       Settings.setValue('key-font-size', 25.0);
@@ -71,9 +65,11 @@ class MainWindowViewState extends State<MainWindowView>
                 case (0):
                   mainWindow = buildLibraryBrowser(appModel);
                   break;
-                case (1 || 2 || 3):
+                case (1 || 3):
                   mainWindow = const Expanded(child: ReadingScreen());
                   break;
+                case (2):
+                  mainWindow = const Expanded(child: FavouritesScreen());
                 case (4):
                   mainWindow = buildSettingsScreen();
               }
@@ -82,8 +78,10 @@ class MainWindowViewState extends State<MainWindowView>
               } else {
                 return Column(children: [
                   Expanded(
-                    child: Row(
-                        children: [buildBookmarksView(appModel), mainWindow]),
+                    child: Row(children: [
+                      //buildBookmarksView(appModel),
+                      mainWindow,
+                    ]),
                   ),
                   buildNavigationBottomBar(),
                 ]);
@@ -98,7 +96,7 @@ class MainWindowViewState extends State<MainWindowView>
   Widget buildHorizontalLayout(Widget mainWindow, AppModel appModel) {
     return Row(children: [
       buildNavigationSideBar(appModel),
-      buildBookmarksView(appModel),
+      //buildBookmarksView(appModel),
       mainWindow
     ]);
   }
@@ -109,23 +107,23 @@ class MainWindowViewState extends State<MainWindowView>
     );
   }
 
-  AnimatedSize buildBookmarksView(AppModel appModel) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      child: ValueListenableBuilder(
-          valueListenable: showBookmarksView,
-          builder: (context, showBookmarksView, child) => SizedBox(
-                width: showBookmarksView ? 300 : 0,
-                height: showBookmarksView ? null : 0,
-                child: child!,
-              ),
-          child: BookmarkView(
-            openBookmarkCallBack: appModel.openBook,
-            bookmarks: bookmarks,
-            closeLeftPaneCallback: closeLeftPanel,
-          )),
-    );
-  }
+  // AnimatedSize buildBookmarksView(AppModel appModel) {
+  //   return AnimatedSize(
+  //     duration: const Duration(milliseconds: 300),
+  //     child: ValueListenableBuilder(
+  //         valueListenable: showBookmarksView,
+  //         builder: (context, showBookmarksView, child) => SizedBox(
+  //               width: showBookmarksView ? 300 : 0,
+  //               height: showBookmarksView ? null : 0,
+  //                 child: child!,
+  //               ),
+  //           child: BookmarkView(
+  //             openBookmarkCallBack: appModel.openBook,
+  //             bookmarks: bookmarks,
+  //             closeLeftPaneCallback: closeLeftPanel,
+  //           )),
+  //     );
+  //   }
 
   Widget buildSettingsScreen() {
     return const Expanded(
@@ -148,8 +146,8 @@ class MainWindowViewState extends State<MainWindowView>
               label: Text('קריאה'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.bookmark),
-              label: Text('סימניות'),
+              icon: Icon(Icons.star),
+              label: Text('מועדפים'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.search),
@@ -165,8 +163,6 @@ class MainWindowViewState extends State<MainWindowView>
             setState(() {
               appModel.currentView = index;
               switch (index) {
-                case 2:
-                  _openBookmarksScreen();
                 case 3:
                   appModel.openNewSearchTab();
               }
@@ -203,28 +199,5 @@ class MainWindowViewState extends State<MainWindowView>
         onDestinationSelected: (int index) {
           setState(() {});
         });
-  }
-
-  void _openBookmarksScreen() {
-    showBookmarksView.value = !showBookmarksView.value;
-  }
-
-  void addBookmark(
-      {required String ref, required String title, required int index}) {
-    bookmarks.add(Bookmark(ref: ref, title: title, index: index));
-    // write to disk
-    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-    // notify user
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('הסימניה נוספה בהצלחה'),
-        ),
-      );
-    }
-  }
-
-  void closeLeftPanel() {
-    showBookmarksView.value = false;
   }
 }

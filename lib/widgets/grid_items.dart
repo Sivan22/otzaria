@@ -158,7 +158,7 @@ class MyGridView extends StatelessWidget {
                   //max number of items per row is 5 and min is 2
                   crossAxisCount: max(2, min(constraints.maxWidth ~/ 200, 5)),
                   shrinkWrap: true,
-                  childAspectRatio: 2.5,
+                  childAspectRatio: 2.0,
                   physics: const ClampingScrollPhysics(),
                   children: snapshot.data!,
                 );
