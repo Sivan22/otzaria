@@ -101,9 +101,10 @@ class TextBookTab extends OpenedTab {
   ///the size of the font to view this book
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
 
-  ///
+  ///a flag that tells if the left pane should be shown
   late final ValueNotifier<bool> showLeftPane;
 
+  ///a flag that tells if the left pane should be pinned on scrolling
   final pinLeftPane = ValueNotifier<bool>(false);
 
   /// a flag that tells if the comentaries should be shown in splited view or not

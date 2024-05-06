@@ -25,7 +25,21 @@ class _ReadingScreenState extends State<ReadingScreen>
     return Consumer<AppModel>(
       builder: (context, appModel, child) {
         if (appModel.tabs.isEmpty) {
-          return const Center(child: Text('לא נבחרו ספרים'));
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: const Text('לא נבחרו ספרים'),
+              ),
+              // a button to open the library browser
+              ElevatedButton(
+                onPressed: (() => appModel.currentView = 0),
+                child: const Text('עיון בספריה'),
+              ),
+            ],
+          );
         }
         return Builder(
           builder: (context) {

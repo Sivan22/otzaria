@@ -75,6 +75,10 @@ class AppModel with ChangeNotifier {
     currentTab = Hive.box(name: 'tabs')
         .get('key-current-tab', defaultValue: tabs.length - 1);
 
+    if (tabs.isNotEmpty) {
+      currentView = 1;
+    }
+
     final List<dynamic> rawBookmarks =
         Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
     bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();

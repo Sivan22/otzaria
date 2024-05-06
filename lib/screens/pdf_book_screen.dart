@@ -42,7 +42,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
     textSearcher.removeListener(_update);
     textSearcher.dispose();
     showLeftPane.dispose();
-    outline.dispose();
+    //outline.dispose();
     documentRef.dispose();
     super.dispose();
   }
