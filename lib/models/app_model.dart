@@ -95,11 +95,12 @@ class AppModel with ChangeNotifier {
   ///
   /// [book] The book to open.
   /// [index] The index of the book.
-  void openBook(Book book, int index) {
+  void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
       addTab(PdfBookTab(book, index));
     } else if (book is TextBook) {
-      addTab(TextBookTab(book: book, initalIndex: index));
+      addTab(TextBookTab(
+          book: book, initalIndex: index, openLeftPane: openLeftPane));
     }
     currentView = 1;
   }
@@ -124,6 +125,13 @@ class AppModel with ChangeNotifier {
   ///
   /// [tab] The tab to close.
   void closeTab(OpenedTab tab) {
+    addTabToHistory(tab);
+    tabs.remove(tab);
+    notifyListeners();
+    saveTabsToDisk();
+  }
+
+  void addTabToHistory(OpenedTab tab) {
     if (tab is PdfBookTab) {
       int index = tab.pdfViewerController.isReady
           ? tab.pdfViewerController.pageNumber!
@@ -139,15 +147,10 @@ class AppModel with ChangeNotifier {
           ? 0
           : tab.positionsListener.itemPositions.value.first.index;
       (() async => addHistory(
-          ref: tab.book.title +
-              await utils.refFromIndex(index, tab.tableOfContents),
+          ref: await utils.refFromIndex(index, tab.tableOfContents),
           book: tab.book,
-          index: tab.initalIndex))();
+          index: index))();
     }
-
-    tabs.remove(tab);
-    notifyListeners();
-    saveTabsToDisk();
   }
 
   void closeCurrentTab() {
@@ -156,10 +159,10 @@ class AppModel with ChangeNotifier {
 
   /// Closes all tabs.
   void closeAllTabs() {
-    // for (final tab in tabs) {
-    //   (() async => closeTab(tab))();
-    // }
-    tabs = List<OpenedTab>.empty();
+    for (final tab in tabs) {
+      addTabToHistory(tab);
+    }
+    tabs = [];
     currentTab = 0;
     notifyListeners();
     saveTabsToDisk();

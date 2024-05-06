@@ -28,7 +28,7 @@ class TextBookSearcher {
     // Perform search asynchronously to avoid blocking the main thread
     Future(() async {
       searchResults.clear();
-      var matches = _findAllMatches(_markdownData, query);
+      var matches = await _findAllMatches(_markdownData, query);
       searchResults.addAll(matches);
 
       // Update search session and mark search as complete
@@ -39,7 +39,8 @@ class TextBookSearcher {
     });
   }
 
-  List<TextSearchResult> _findAllMatches(String data, String query) {
+  Future<List<TextSearchResult>> _findAllMatches(
+      String data, String query) async {
     List<String> sections = data.split('\n');
     List<TextSearchResult> results = [];
     List<String> address = [];

@@ -61,10 +61,9 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 future: items,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    return SingleChildScrollView(
-                      child: Column(
-                        children: snapshot.data!,
-                      ),
+                    return ListView(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      children: snapshot.data!,
                     );
                   }
                   return const Center(child: CircularProgressIndicator());
@@ -119,7 +118,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         BookGridItem(
             book: book,
             onBookClickCallback: () {
-              Provider.of<AppModel>(context, listen: false).openBook(book, 0);
+              Provider.of<AppModel>(context, listen: false)
+                  .openBook(book, 0, openLeftPane: true);
               Provider.of<AppModel>(context, listen: false).currentView = 1;
             }),
       );
@@ -128,10 +128,13 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   }
 
   Future<List<Book>> sortBooks(List<Book> books, String query) async {
-    final titles = books.map((book) => book.title).toList();
-    await Isolate.run(() => titles.sort(
-          (a, b) => ratio(query, b).compareTo(ratio(query, a)),
-        ));
+    List<String> titles = books.map((book) => book.title).toList();
+    titles = await Isolate.run(() {
+      titles.sort(
+        (a, b) => ratio(query, b).compareTo(ratio(query, a)),
+      );
+      return titles;
+    });
     books.sort(
         (a, b) => titles.indexOf(a.title).compareTo(titles.indexOf(b.title)));
     return books;
@@ -154,7 +157,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 book: book,
                 onBookClickCallback: () {
                   Provider.of<AppModel>(context, listen: false)
-                      .openBook(book, 0);
+                      .openBook(book, 0, openLeftPane: true);
                   Provider.of<AppModel>(context, listen: false).currentView = 1;
                 }),
           );
@@ -186,7 +189,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         BookGridItem(
             book: book,
             onBookClickCallback: () {
-              Provider.of<AppModel>(context, listen: false).openBook(book, 0);
+              Provider.of<AppModel>(context, listen: false)
+                  .openBook(book, 0, openLeftPane: true);
               Provider.of<AppModel>(context, listen: false).currentView = 1;
             }),
       );

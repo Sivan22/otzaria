@@ -88,6 +88,10 @@ Future<List<Link>> getLinksforIndexs(
           .toList();
       allLinks += thisLinks;
     }
+
+    allLinks.sort(
+      (a, b) => a.heRef.compareTo(b.heRef),
+    );
     //sort by the order of the commentatorstoshow
     allLinks.sort((a, b) => titles
         .indexOf(utils.getTitleFromPath(a.path2))

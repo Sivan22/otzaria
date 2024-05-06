@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:expandable/expandable.dart';
 import 'package:otzaria/models/books.dart';
@@ -41,6 +42,8 @@ class CategoryGridItem extends StatelessWidget {
       onTap: onCategoryClickCallback,
       child: Card(
           child: SingleChildScrollView(
+        //should
+        physics: const ClampingScrollPhysics(),
         child: ExpandablePanel(
           theme: ExpandableThemeData(
               headerAlignment: ExpandablePanelHeaderAlignment.center,
@@ -67,7 +70,7 @@ class CategoryGridItem extends StatelessWidget {
             child: Text(
               category.shortDescription,
               style: TextStyle(
-                  fontSize: 14, color: Theme.of(context).colorScheme.secondary),
+                  fontSize: 13, color: Theme.of(context).colorScheme.secondary),
             ),
           ),
         ),
@@ -93,7 +96,7 @@ class BookGridItem extends StatelessWidget {
       child: Card(
         child: ListView(
           shrinkWrap: true,
-          physics: const ClampingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
             ExpandablePanel(
               theme: ExpandableThemeData(
@@ -112,14 +115,14 @@ class BookGridItem extends StatelessWidget {
                 title: Text(
                   book.title,
                   style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.bold),
+                      fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                     (book.author == "" || book.author == null)
                         ? ''
                         : ('${book.author!} ${book.pubDate ?? ''}'),
-                    style: const TextStyle(fontSize: 14)),
-                isThreeLine: true,
+                    style: const TextStyle(fontSize: 13)),
+                //isThreeLine: true,
                 trailing: book is TextBook
                     ? null
                     : SizedBox.fromSize(
@@ -137,7 +140,7 @@ class BookGridItem extends StatelessWidget {
               expanded: Text(
                 book.heShortDesc ?? '',
                 style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Theme.of(context).colorScheme.secondary),
               ),
             ),
@@ -160,13 +163,15 @@ class MyGridView extends StatelessWidget {
             future: items,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                return GridView.count(
-                  //max number of items per row is 5 and min is 2
-                  crossAxisCount: max(2, min(constraints.maxWidth ~/ 200, 5)),
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    //max number of items per row is 5 and min is 2
+                    crossAxisCount: max(2, min(constraints.maxWidth ~/ 200, 5)),
+                    childAspectRatio: 2.0,
+                  ),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) => snapshot.data![index],
                   shrinkWrap: true,
-                  childAspectRatio: 2.0,
-                  physics: const ClampingScrollPhysics(),
-                  children: snapshot.data!,
                 );
               }
               return const Center(child: CircularProgressIndicator());

@@ -102,7 +102,7 @@ class TextBookTab extends OpenedTab {
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
 
   ///
-  final showLeftPane = ValueNotifier<bool>(true);
+  late final ValueNotifier<bool> showLeftPane;
 
   final pinLeftPane = ValueNotifier<bool>(false);
 
@@ -135,12 +135,14 @@ class TextBookTab extends OpenedTab {
       {required this.book,
       required this.initalIndex,
       String searchText = '',
-      List<Book>? commentaries})
+      List<Book>? commentaries,
+      bool openLeftPane = false})
       : super(book.title) {
     ///load the text
     text = (() async => await book.text)();
     links = (() async => await book.links)();
     tableOfContents = (() async => await book.tableOfContents)();
+    showLeftPane = ValueNotifier<bool>(openLeftPane);
     availableCommentators = getAvailableCommentators(book.links);
     if (searchText != '') {
       searchTextController.text = searchText;

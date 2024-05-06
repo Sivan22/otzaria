@@ -7,6 +7,7 @@ String stripHtmlIfNeeded(String text) {
 }
 
 String removeVolwels(String s) {
+  s = s.replaceAll('־', ' ');
   return s.replaceAll(RegExp(r'[\u0591-\u05C7]'), '');
 }
 

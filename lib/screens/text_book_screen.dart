@@ -90,55 +90,65 @@ class _TextBookViewerState extends State<TextBookViewer>
                     valueListenable: widget.tab.searchTextController,
                     builder: (context, searchTextController, child) => Padding(
                         padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
-                        child: NotificationListener<UserScrollNotification>(
-                            onNotification: (scrollNotification) {
-                              //unless links is shown, close left pane on scrolling
-                              if (!widget.tab.pinLeftPane.value) {
-                                Future.microtask(() {
-                                  widget.tab.showLeftPane.value = false;
-                                });
-                              }
+                        //zoom in or zoom out fe
+                        child: GestureDetector(
+                          onScaleUpdate: (details) {
+                            widget.tab.textFontSize =
+                                (widget.tab.textFontSize * details.scale)
+                                    .clamp(15, 60);
+                            setState(() {});
+                          },
+                          child: NotificationListener<UserScrollNotification>(
+                              onNotification: (scrollNotification) {
+                                //unless links is shown, close left pane on scrolling
+                                if (!widget.tab.pinLeftPane.value) {
+                                  Future.microtask(() {
+                                    widget.tab.showLeftPane.value = false;
+                                  });
+                                }
 
-                              return false; // Don't block the notification
-                            },
-                            child: CallbackShortcuts(
-                                bindings: <ShortcutActivator, VoidCallback>{
-                                  LogicalKeySet(LogicalKeyboardKey.control,
-                                      LogicalKeyboardKey.keyF): () {
-                                    widget.tab.showLeftPane.value = true;
-                                    tabController.index = 1;
+                                return false; // Don't block the notification
+                              },
+                              child: CallbackShortcuts(
+                                  bindings: <ShortcutActivator, VoidCallback>{
+                                    LogicalKeySet(LogicalKeyboardKey.control,
+                                        LogicalKeyboardKey.keyF): () {
+                                      widget.tab.showLeftPane.value = true;
+                                      tabController.index = 1;
+                                    },
                                   },
-                                },
-                                child: Focus(
-                                    focusNode: FocusNode(),
-                                    //don't autofocus on android, so that the keyboard doesn't appear
-                                    autofocus:
-                                        Platform.isAndroid ? false : true,
-                                    child: ValueListenableBuilder(
-                                      valueListenable:
-                                          widget.tab.showSplitedView,
-                                      builder: (context, value, child) =>
-                                          ValueListenableBuilder(
-                                              valueListenable:
-                                                  widget.tab.commentariesToShow,
-                                              builder: (context, value, child) {
-                                                if (widget.tab.showSplitedView
-                                                        .value &&
-                                                    widget
-                                                        .tab
-                                                        .commentariesToShow
-                                                        .value
-                                                        .isNotEmpty) {
-                                                  return buildSplitedView(
-                                                      snapshot,
-                                                      searchTextController);
-                                                } else {
-                                                  return buildCombinedView(
-                                                      snapshot,
-                                                      searchTextController);
-                                                }
-                                              }),
-                                    ))))));
+                                  child: Focus(
+                                      focusNode: FocusNode(),
+                                      //don't autofocus on android, so that the keyboard doesn't appear
+                                      autofocus:
+                                          Platform.isAndroid ? false : true,
+                                      child: ValueListenableBuilder(
+                                        valueListenable:
+                                            widget.tab.showSplitedView,
+                                        builder: (context, value, child) =>
+                                            ValueListenableBuilder(
+                                                valueListenable: widget
+                                                    .tab.commentariesToShow,
+                                                builder:
+                                                    (context, value, child) {
+                                                  if (widget.tab.showSplitedView
+                                                          .value &&
+                                                      widget
+                                                          .tab
+                                                          .commentariesToShow
+                                                          .value
+                                                          .isNotEmpty) {
+                                                    return buildSplitedView(
+                                                        snapshot,
+                                                        searchTextController);
+                                                  } else {
+                                                    return buildCombinedView(
+                                                        snapshot,
+                                                        searchTextController);
+                                                  }
+                                                }),
+                                      )))),
+                        )));
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -334,9 +344,8 @@ class _TextBookViewerState extends State<TextBookViewer>
               int index =
                   widget.tab.positionsListener.itemPositions.value.first.index;
               Provider.of<AppModel>(context, listen: false).addBookmark(
-                  ref: widget.tab.title +
-                      await utils.refFromIndex(
-                          index, widget.tab.tableOfContents),
+                  ref: await utils.refFromIndex(
+                      index, widget.tab.tableOfContents),
                   book: widget.tab.book,
                   index: index);
             }();
