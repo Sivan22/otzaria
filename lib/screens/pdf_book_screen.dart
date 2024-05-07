@@ -11,12 +11,10 @@ import 'package:otzaria/models/tabs.dart';
 
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;
-  final PdfViewerController controller;
 
   const PdfBookViewr({
     super.key,
     required this.tab,
-    required this.controller,
   });
 
   @override
@@ -25,10 +23,7 @@ class PdfBookViewr extends StatefulWidget {
 
 class _PdfBookViewrState extends State<PdfBookViewr>
     with AutomaticKeepAliveClientMixin<PdfBookViewr> {
-  final documentRef = ValueNotifier<PdfDocumentRef?>(null);
-  final showLeftPane = ValueNotifier<bool>(false);
-  final outline = ValueNotifier<List<PdfOutlineNode>?>(null);
-  late final textSearcher = PdfTextSearcher(widget.controller)
+  late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
     ..addListener(_update);
 
   void _update() {
@@ -41,9 +36,10 @@ class _PdfBookViewrState extends State<PdfBookViewr>
   void dispose() {
     textSearcher.removeListener(_update);
     textSearcher.dispose();
-    showLeftPane.dispose();
-    //outline.dispose();
-    documentRef.dispose();
+    widget.tab.outline.dispose();
+    widget.tab.documentRef.dispose();
+    widget.tab.showLeftPane.dispose();
+
     super.dispose();
   }
 
@@ -56,7 +52,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
           icon: const Icon(Icons.menu),
           tooltip: 'חיפוש וניווט',
           onPressed: () {
-            showLeftPane.value = !showLeftPane.value;
+            widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
           },
         ),
         actions: [
@@ -64,8 +60,8 @@ class _PdfBookViewrState extends State<PdfBookViewr>
               icon: const Icon(Icons.bookmark_add),
               tooltip: 'הוספת סימניה',
               onPressed: () {
-                int index = widget.controller.isReady
-                    ? widget.controller.pageNumber!
+                int index = widget.tab.pdfViewerController.isReady
+                    ? widget.tab.pdfViewerController.pageNumber!
                     : 1;
                 Provider.of<AppModel>(context, listen: false).addBookmark(
                     ref: '${widget.tab.title} עמוד $index',
@@ -85,23 +81,24 @@ class _PdfBookViewrState extends State<PdfBookViewr>
               Icons.zoom_in,
             ),
             tooltip: 'הגדל',
-            onPressed: () => widget.controller.zoomUp(),
+            onPressed: () => widget..tab.pdfViewerController.zoomUp(),
           ),
           IconButton(
             icon: const Icon(Icons.zoom_out),
             tooltip: 'הקטן',
-            onPressed: () => widget.controller.zoomDown(),
+            onPressed: () => widget.tab.pdfViewerController.zoomDown(),
           ),
           IconButton(
             icon: const Icon(Icons.first_page),
             tooltip: 'תחילת הספר',
-            onPressed: () => widget.controller.goToPage(pageNumber: 1),
+            onPressed: () =>
+                widget.tab.pdfViewerController.goToPage(pageNumber: 1),
           ),
           IconButton(
             icon: const Icon(Icons.last_page),
             tooltip: 'סוף הספר',
-            onPressed: () => widget.controller
-                .goToPage(pageNumber: widget.controller.pages.length),
+            onPressed: () => widget.tab.pdfViewerController.goToPage(
+                pageNumber: widget.tab.pdfViewerController.pages.length),
           ),
         ],
       ),
@@ -110,7 +107,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             child: ValueListenableBuilder(
-              valueListenable: showLeftPane,
+              valueListenable: widget.tab.showLeftPane,
               builder: (context, showLeftPane, child) => SizedBox(
                 width: showLeftPane ? 300 : 0,
                 child: child!,
@@ -132,23 +129,23 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                             // NOTE: documentRef is not explicitly used but it indicates that
                             // the document is changed.
                             ValueListenableBuilder(
-                              valueListenable: documentRef,
+                              valueListenable: widget.tab.documentRef,
                               builder: (context, documentRef, child) => child!,
                               child:
                                   PdfBookSearchView(textSearcher: textSearcher),
                             ),
                             ValueListenableBuilder(
-                              valueListenable: outline,
+                              valueListenable: widget.tab.outline,
                               builder: (context, outline, child) => OutlineView(
                                 outline: outline,
-                                controller: widget.controller,
+                                controller: widget.tab.pdfViewerController,
                               ),
                             ),
                             ValueListenableBuilder(
-                              valueListenable: documentRef,
+                              valueListenable: widget.tab.documentRef,
                               builder: (context, documentRef, child) => child!,
-                              child:
-                                  ThumbnailsView(controller: widget.controller),
+                              child: ThumbnailsView(
+                                  controller: widget.tab.pdfViewerController),
                             ),
                           ],
                         ),
@@ -176,7 +173,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                   //       : 'https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf'),
                   // Set password provider to show password dialog
                   passwordProvider: () => passwordDialog(context),
-                  controller: widget.controller,
+                  controller: widget.tab.pdfViewerController,
                   params: PdfViewerParams(
                     enableTextSelection: true,
                     maxScale: 8,
@@ -211,7 +208,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     viewerOverlayBuilder: (context, size) => [
                       // Show vertical scroll thumb on the right; it has page number on it
                       PdfViewerScrollThumb(
-                        controller: widget.controller,
+                        controller: widget.tab.pdfViewerController,
                         orientation: ScrollbarOrientation.right,
                         thumbSize: const Size(40, 25),
                         thumbBuilder:
@@ -228,7 +225,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                       ),
                       // Just a simple horizontal scroll thumb on the bottom
                       PdfViewerScrollThumb(
-                        controller: widget.controller,
+                        controller: widget.tab.pdfViewerController,
                         orientation: ScrollbarOrientation.bottom,
                         thumbSize: const Size(80, 5),
                         thumbBuilder:
@@ -264,7 +261,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           if (link.url != null) {
                             navigateToUrl(link.url!);
                           } else if (link.dest != null) {
-                            widget.controller.goToDest(link.dest);
+                            widget..tab.pdfViewerController.goToDest(link.dest);
                           }
                         },
                         hoverColor: Colors.blue.withOpacity(0.2),
@@ -275,13 +272,13 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     ],
                     onDocumentChanged: (document) async {
                       if (document == null) {
-                        documentRef.value = null;
-                        outline.value = null;
+                        widget.tab.documentRef.value = null;
+                        widget.tab.outline.value = null;
                       }
                     },
                     onViewerReady: (document, controller) async {
-                      documentRef.value = controller.documentRef;
-                      outline.value = await document.loadOutline();
+                      widget.tab.documentRef.value = controller.documentRef;
+                      widget.tab.outline.value = await document.loadOutline();
                     },
                   ),
                 ),

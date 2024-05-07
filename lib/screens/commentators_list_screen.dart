@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/tabs.dart';
 
-class CommentaryListView extends StatefulWidget {
+class CommentatorsListView extends StatefulWidget {
   final TextBookTab tab;
 
-  const CommentaryListView({Key? key, required this.tab}) : super(key: key);
+  const CommentatorsListView({Key? key, required this.tab}) : super(key: key);
 
   @override
-  State<CommentaryListView> createState() => CommentaryListViewState();
+  State<CommentatorsListView> createState() => CommentatorsListViewState();
 }
 
-class CommentaryListViewState extends State<CommentaryListView>
-    with AutomaticKeepAliveClientMixin<CommentaryListView> {
+class CommentatorsListViewState extends State<CommentatorsListView> {
   bool _selectAll = false;
   String _filterQuery = "";
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return FutureBuilder(
         future: widget.tab.availableCommentators,
         builder: (context, snapshot) {
@@ -45,12 +43,12 @@ class CommentaryListViewState extends State<CommentaryListView>
                   setState(() {
                     _selectAll = value!;
                     if (_selectAll) {
-                      widget.tab.commentariesToShow.value
+                      widget.tab.commentatorsToShow.value
                           .addAll(snapshot.data!);
                     } else {
-                      widget.tab.commentariesToShow.value.clear();
+                      widget.tab.commentatorsToShow.value.clear();
                     }
-                    widget.tab.commentariesToShow.notifyListeners();
+                    widget.tab.commentatorsToShow.notifyListeners();
                   });
                 },
               ),
@@ -64,17 +62,17 @@ class CommentaryListViewState extends State<CommentaryListView>
                     itemCount: filteredCommentaries.length,
                     itemBuilder: (context, index) => CheckboxListTile(
                       title: Text(filteredCommentaries[index].title),
-                      value: widget.tab.commentariesToShow.value
+                      value: widget.tab.commentatorsToShow.value
                           .contains(filteredCommentaries[index]),
                       onChanged: (value) {
                         if (value!) {
-                          widget.tab.commentariesToShow.value
+                          widget.tab.commentatorsToShow.value
                               .add(filteredCommentaries[index]);
                         } else {
-                          widget.tab.commentariesToShow.value
+                          widget.tab.commentatorsToShow.value
                               .remove(filteredCommentaries[index]);
                         }
-                        widget.tab.commentariesToShow.notifyListeners();
+                        widget.tab.commentatorsToShow.notifyListeners();
                         setState(() {});
                       },
                     ),

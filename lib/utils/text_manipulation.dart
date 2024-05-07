@@ -19,6 +19,9 @@ String highLight(String data, String searchQuery) {
 }
 
 String getTitleFromPath(String path) {
+  path = path
+      .replaceAll('/', Platform.pathSeparator)
+      .replaceAll('\\', Platform.pathSeparator);
   return path.split(Platform.pathSeparator).last.split('.').first;
 }
 

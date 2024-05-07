@@ -94,7 +94,7 @@ class KeyboardShortcuts extends StatelessWidget {
                       null
                   ? Settings.getValue<String>('key-shortcut-open-book-browser')
                   : 'ctrl+b']!: () {
-            appModel.currentView = 0;
+            appModel.currentView.value = 0;
           },
           shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
               ? Settings.getValue<String>('key-shortcut-close-tab')
@@ -111,7 +111,7 @@ class KeyboardShortcuts extends StatelessWidget {
               Settings.getValue<String>('key-shortcut-open-book-search') != null
                   ? Settings.getValue<String>('key-shortcut-open-book-search')
                   : 'ctrl+o']!: () {
-            appModel.currentView = 0;
+            appModel.currentView.value = 0;
             appModel.bookLocatorFocusNode.requestFocus();
           },
           shortcuts[

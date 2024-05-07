@@ -33,14 +33,7 @@ class AppModel with ChangeNotifier {
   int currentTab = 0;
 
   /// The index of the current view.
-  int _currentView = 0;
-
-  int get currentView => _currentView;
-
-  set currentView(int i) {
-    _currentView = i;
-    notifyListeners();
-  }
+  ValueNotifier<int> currentView = ValueNotifier(0);
 
   late List<Bookmark> bookmarks;
 
@@ -76,7 +69,7 @@ class AppModel with ChangeNotifier {
         .get('key-current-tab', defaultValue: tabs.length - 1);
 
     if (tabs.isNotEmpty) {
-      currentView = 1;
+      currentView.value = 1;
     }
 
     final List<dynamic> rawBookmarks =
@@ -101,12 +94,12 @@ class AppModel with ChangeNotifier {
   /// [index] The index of the book.
   void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
-      addTab(PdfBookTab(book, index));
+      addTab(PdfBookTab(book, max(index, 1)));
     } else if (book is TextBook) {
       addTab(TextBookTab(
           book: book, initalIndex: index, openLeftPane: openLeftPane));
     }
-    currentView = 1;
+    currentView.value = 1;
   }
 
   void openNewSearchTab() {

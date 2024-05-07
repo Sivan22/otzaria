@@ -62,7 +62,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return ListView(
-                      physics: AlwaysScrollableScrollPhysics(),
                       children: snapshot.data!,
                     );
                   }
@@ -118,9 +117,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         BookGridItem(
             book: book,
             onBookClickCallback: () {
+              Provider.of<AppModel>(context, listen: false).currentView.value =
+                  1;
               Provider.of<AppModel>(context, listen: false)
                   .openBook(book, 0, openLeftPane: true);
-              Provider.of<AppModel>(context, listen: false).currentView = 1;
             }),
       );
     }
@@ -158,7 +158,9 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 onBookClickCallback: () {
                   Provider.of<AppModel>(context, listen: false)
                       .openBook(book, 0, openLeftPane: true);
-                  Provider.of<AppModel>(context, listen: false).currentView = 1;
+                  Provider.of<AppModel>(context, listen: false)
+                      .currentView
+                      .value = 1;
                 }),
           );
         }
@@ -191,7 +193,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
             onBookClickCallback: () {
               Provider.of<AppModel>(context, listen: false)
                   .openBook(book, 0, openLeftPane: true);
-              Provider.of<AppModel>(context, listen: false).currentView = 1;
+              Provider.of<AppModel>(context, listen: false).currentView.value =
+                  1;
             }),
       );
     }

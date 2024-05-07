@@ -35,17 +35,17 @@ class _CommentaryListState extends State<CommentaryList>
     super.initState();
     thisLinks = getLinksforIndexs(
         links: widget.textBookTab.links,
-        commentatorsToShow: widget.textBookTab.commentariesToShow.value,
+        commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
         indexes: [widget.index]);
 
     // in case we are inside a splited view, we need to listen to the item positions
     if (widget.showSplitView.value) {
-      widget.textBookTab.positionsListener.itemPositions.addListener(()  {
+      widget.textBookTab.positionsListener.itemPositions.addListener(() {
         if (mounted) {
           setState(() {
             thisLinks = getLinksforIndexs(
               links: widget.textBookTab.links,
-              commentatorsToShow: widget.textBookTab.commentariesToShow.value,
+              commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
               indexes: widget.textBookTab.positionsListener.itemPositions.value
                   .map((e) => e.index)
                   .toList(),

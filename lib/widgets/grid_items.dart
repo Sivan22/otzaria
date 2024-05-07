@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:expandable/expandable.dart';
 import 'package:otzaria/models/books.dart';
@@ -96,7 +95,8 @@ class BookGridItem extends StatelessWidget {
       child: Card(
         child: ListView(
           shrinkWrap: true,
-          physics: const AlwaysScrollableScrollPhysics(),
+          primary: true,
+          physics: const ScrollPhysics(),
           children: [
             ExpandablePanel(
               theme: ExpandableThemeData(
@@ -167,11 +167,12 @@ class MyGridView extends StatelessWidget {
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     //max number of items per row is 5 and min is 2
                     crossAxisCount: max(2, min(constraints.maxWidth ~/ 200, 5)),
-                    childAspectRatio: 2.0,
+                    childAspectRatio: 1.5,
                   ),
                   itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) => snapshot.data![index],
                   shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
                 );
               }
               return const Center(child: CircularProgressIndicator());

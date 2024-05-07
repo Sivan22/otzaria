@@ -37,10 +37,16 @@ class PdfBookTab extends OpenedTab {
   final PdfBook book;
 
   /// The current page number.
-  final int pageNumber;
+  int pageNumber;
 
   /// The pdf viewer controller.
   final PdfViewerController pdfViewerController = PdfViewerController();
+
+  final outline = ValueNotifier<List<PdfOutlineNode>?>(null);
+
+  final documentRef = ValueNotifier<PdfDocumentRef?>(null);
+
+  final showLeftPane = ValueNotifier<bool>(false);
 
   /// Creates a new instance of [PdfBookTab].
   ///
@@ -64,7 +70,7 @@ class PdfBookTab extends OpenedTab {
     return {
       'path': book.path,
       'pageNumber':
-          (pdfViewerController.isReady ? pdfViewerController.pageNumber : 0),
+          (pdfViewerController.isReady ? pdfViewerController.pageNumber : 1),
       'type': 'PdfBookTab'
     };
   }
@@ -96,7 +102,7 @@ class TextBookTab extends OpenedTab {
   late Future<List<Book>> availableCommentators;
 
   /// The list of commentaries to show.
-  ValueNotifier<List<Book>> commentariesToShow = ValueNotifier([]);
+  ValueNotifier<List<Book>> commentatorsToShow = ValueNotifier([]);
 
   ///the size of the font to view this book
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
@@ -149,7 +155,7 @@ class TextBookTab extends OpenedTab {
       searchTextController.text = searchText;
     }
     if (commentaries != null && commentaries.isNotEmpty) {
-      commentariesToShow.value = commentaries;
+      commentatorsToShow.value = commentaries;
     }
   }
 
@@ -201,7 +207,7 @@ class TextBookTab extends OpenedTab {
           ? positionsListener.itemPositions.value.first.index
           : 0,
       'commentators':
-          commentariesToShow.value.map((book) => book.title).toList(),
+          commentatorsToShow.value.map((book) => book.title).toList(),
       'type': 'TextBookTab'
     };
   }

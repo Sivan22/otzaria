@@ -51,9 +51,7 @@ class TextBookViewer extends StatefulWidget {
 }
 
 class _TextBookViewerState extends State<TextBookViewer>
-    with
-        AutomaticKeepAliveClientMixin<TextBookViewer>,
-        TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final FocusNode textSearchFocusNode = FocusNode();
 
   late TabController tabController;
@@ -66,100 +64,105 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return Scaffold(
         appBar: buildAppBar(),
-        body: Row(children: [
-          buildTabBar(),
-          buildHTMLViewer(),
-        ]));
+        body: LayoutBuilder(builder: (context, constraints) {
+          //if the screen is small, display the tab bar ontop of the viewer
+          if (constraints.maxWidth < 600) {
+            return Stack(children: [
+              buildHTMLViewer(),
+              Container(color: Colors.white, child: buildTabBar()),
+            ]);
+          }
+          return Row(children: [
+            buildTabBar(),
+            Expanded(child: buildHTMLViewer()),
+          ]);
+        }));
   }
 
   Widget buildHTMLViewer() {
-    return Expanded(
-      child: FutureBuilder(
-          future: widget.data,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-
-              if (snapshot.hasData) {
-                return ValueListenableBuilder(
-                    valueListenable: widget.tab.searchTextController,
-                    builder: (context, searchTextController, child) => Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
-                        //zoom in or zoom out fe
-                        child: GestureDetector(
-                          onScaleUpdate: (details) {
-                            widget.tab.textFontSize =
-                                (widget.tab.textFontSize * details.scale)
-                                    .clamp(15, 60);
-                            setState(() {});
-                          },
-                          child: NotificationListener<UserScrollNotification>(
-                              onNotification: (scrollNotification) {
-                                //unless links is shown, close left pane on scrolling
-                                if (!widget.tab.pinLeftPane.value) {
-                                  Future.microtask(() {
-                                    widget.tab.showLeftPane.value = false;
-                                  });
-                                }
-
-                                return false; // Don't block the notification
-                              },
-                              child: CallbackShortcuts(
-                                  bindings: <ShortcutActivator, VoidCallback>{
-                                    LogicalKeySet(LogicalKeyboardKey.control,
-                                        LogicalKeyboardKey.keyF): () {
-                                      widget.tab.showLeftPane.value = true;
-                                      tabController.index = 1;
-                                    },
-                                  },
-                                  child: Focus(
-                                      focusNode: FocusNode(),
-                                      //don't autofocus on android, so that the keyboard doesn't appear
-                                      autofocus:
-                                          Platform.isAndroid ? false : true,
-                                      child: ValueListenableBuilder(
-                                        valueListenable:
-                                            widget.tab.showSplitedView,
-                                        builder: (context, value, child) =>
-                                            ValueListenableBuilder(
-                                                valueListenable: widget
-                                                    .tab.commentariesToShow,
-                                                builder:
-                                                    (context, value, child) {
-                                                  if (widget.tab.showSplitedView
-                                                          .value &&
-                                                      widget
-                                                          .tab
-                                                          .commentariesToShow
-                                                          .value
-                                                          .isNotEmpty) {
-                                                    return buildSplitedView(
-                                                        snapshot,
-                                                        searchTextController);
-                                                  } else {
-                                                    return buildCombinedView(
-                                                        snapshot,
-                                                        searchTextController);
-                                                  }
-                                                }),
-                                      )))),
-                        )));
-              }
+    return FutureBuilder(
+        future: widget.data,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
             }
-            return const Center(child: CircularProgressIndicator());
-          }),
-    );
+
+            if (snapshot.hasData) {
+              return ValueListenableBuilder(
+                  valueListenable: widget.tab.searchTextController,
+                  builder: (context, searchTextController, child) => Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
+                      //zoom in or zoom out fe
+                      child: GestureDetector(
+                        onScaleUpdate: (details) {
+                          widget.tab.textFontSize =
+                              (widget.tab.textFontSize * details.scale)
+                                  .clamp(15, 60);
+                          setState(() {});
+                        },
+                        child: NotificationListener<UserScrollNotification>(
+                            onNotification: (scrollNotification) {
+                              //unless links is shown, close left pane on scrolling
+                              if (!widget.tab.pinLeftPane.value) {
+                                Future.microtask(() {
+                                  widget.tab.showLeftPane.value = false;
+                                });
+                              }
+
+                              return false; // Don't block the notification
+                            },
+                            child: CallbackShortcuts(
+                                bindings: <ShortcutActivator, VoidCallback>{
+                                  LogicalKeySet(LogicalKeyboardKey.control,
+                                      LogicalKeyboardKey.keyF): () {
+                                    widget.tab.showLeftPane.value = true;
+                                    tabController.index = 1;
+                                  },
+                                },
+                                child: Focus(
+                                    focusNode: FocusNode(),
+                                    //don't autofocus on android, so that the keyboard doesn't appear
+                                    autofocus:
+                                        Platform.isAndroid ? false : true,
+                                    child: ValueListenableBuilder(
+                                      valueListenable:
+                                          widget.tab.showSplitedView,
+                                      builder: (context, value, child) =>
+                                          ValueListenableBuilder(
+                                              valueListenable:
+                                                  widget.tab.commentatorsToShow,
+                                              builder: (context, value, child) {
+                                                if (widget.tab.showSplitedView
+                                                        .value &&
+                                                    widget
+                                                        .tab
+                                                        .commentatorsToShow
+                                                        .value
+                                                        .isNotEmpty) {
+                                                  return buildSplitedView(
+                                                      snapshot,
+                                                      searchTextController);
+                                                } else {
+                                                  return buildCombinedView(
+                                                      snapshot,
+                                                      searchTextController);
+                                                }
+                                              }),
+                                    )))),
+                      )));
+            }
+          }
+          return const Center(child: CircularProgressIndicator());
+        });
   }
 
   Widget buildSplitedView(
       AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
     return ValueListenableBuilder(
-        valueListenable: widget.tab.commentariesToShow,
+        valueListenable: widget.tab.commentatorsToShow,
         builder: (context, commentariesNames, child) => MultiSplitView(
                 controller: widget.tab.splitController,
                 axis: Axis.horizontal,
@@ -228,16 +231,19 @@ class _TextBookViewerState extends State<TextBookViewer>
                 ),
                 ValueListenableBuilder(
                   valueListenable: widget.tab.pinLeftPane,
-                  builder: (context, pinLeftPanel, child) => IconButton(
-                    onPressed: () {
-                      widget.tab.pinLeftPane.value =
-                          !widget.tab.pinLeftPane.value;
-                    },
-                    icon: const Icon(
-                      Icons.push_pin,
-                    ),
-                    isSelected: pinLeftPanel,
-                  ),
+                  builder: (context, pinLeftPanel, child) =>
+                      MediaQuery.of(context).size.width < 600
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              onPressed: () {
+                                widget.tab.pinLeftPane.value =
+                                    !widget.tab.pinLeftPane.value;
+                              },
+                              icon: const Icon(
+                                Icons.push_pin,
+                              ),
+                              isSelected: pinLeftPanel,
+                            ),
                 )
               ],
             ),
@@ -290,8 +296,8 @@ class _TextBookViewerState extends State<TextBookViewer>
     );
   }
 
-  CommentaryListView buildCommentaryView() {
-    return CommentaryListView(
+  CommentatorsListView buildCommentaryView() {
+    return CommentatorsListView(
       tab: widget.tab,
     );
   }
@@ -378,24 +384,29 @@ class _TextBookViewerState extends State<TextBookViewer>
         ),
 
         // button to zoom in
-        IconButton(
-            icon: const Icon(
-              Icons.zoom_in,
-            ),
-            tooltip: 'הגדלת טקסט',
-            onPressed: () => setState(() {
+        MediaQuery.of(context).size.width < 600
+            ? SizedBox.shrink()
+            : IconButton(
+                icon: const Icon(
+                  Icons.zoom_in,
+                ),
+                tooltip: 'הגדלת טקסט',
+                onPressed: () => setState(() {
+                      widget.tab.textFontSize =
+                          min(50.0, widget.tab.textFontSize + 3);
+                    })),
+        MediaQuery.of(context).size.width < 600
+            ? SizedBox.shrink()
+            : IconButton(
+                icon: const Icon(
+                  Icons.zoom_out,
+                ),
+                tooltip: 'הקטנת טקסט',
+                onPressed: () => setState(() {
                   widget.tab.textFontSize =
-                      min(50.0, widget.tab.textFontSize + 3);
-                })),
-        IconButton(
-          icon: const Icon(
-            Icons.zoom_out,
-          ),
-          tooltip: 'הקטנת טקסט',
-          onPressed: () => setState(() {
-            widget.tab.textFontSize = max(15.0, widget.tab.textFontSize - 3);
-          }),
-        ),
+                      max(15.0, widget.tab.textFontSize - 3);
+                }),
+              ),
         // button to scroll all the way up
         IconButton(
             icon: const Icon(Icons.first_page),

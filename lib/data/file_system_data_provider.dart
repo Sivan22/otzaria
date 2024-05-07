@@ -114,7 +114,7 @@ class FileSystemData extends Data {
   /// an file system approach to get the content of a link.
   /// we read the file line by line and return the content of the line with the given index.
   Future<String> getLinkContent(Link link) async {
-    String path = _getBookPath(getBookTitle(link.path2));
+    String path = _getBookPath(getTitleFromPath(link.path2));
     return Isolate.run(() async => await getLineFromFile(path, link.index2));
   }
 
@@ -129,10 +129,6 @@ class FileSystemData extends Data {
   }
 
   /// Returns the title of the book with the given path.
-  String getBookTitle(String path) {
-    //get only the name of the book, without the extension and the directory path
-    return path.split(Platform.pathSeparator).last.split('.').first;
-  }
 
 // Retrieves the table of contents for a book with the given title.
   @override
@@ -159,7 +155,7 @@ class FileSystemData extends Data {
   void _updateTitleToPath(String libraryPath) {
     List<String> paths = getAllBooksPathsFromDirecctory(libraryPath);
     for (var path in paths) {
-      titleToPath[getBookTitle(path)] = path;
+      titleToPath[getTitleFromPath(path)] = path;
     }
   }
 
@@ -245,7 +241,7 @@ class FileSystemData extends Data {
     Category getAllCategoriesAndBooksFromDirectory(
         Directory dir, Category? parent) {
       Category category = Category(
-          title: getBookTitle(dir.path),
+          title: getTitleFromPath(dir.path),
           subCategories: [],
           books: [],
           parent: parent);
@@ -257,9 +253,10 @@ class FileSystemData extends Data {
         } else {
           // add the book to the category (the type of book is based on the file extension)
           entity.path.toLowerCase().endsWith('.pdf')
-              ? category.books.add(
-                  PdfBook(title: getBookTitle(entity.path), path: entity.path))
-              : category.books.add(TextBook(title: getBookTitle(entity.path)));
+              ? category.books.add(PdfBook(
+                  title: getTitleFromPath(entity.path), path: entity.path))
+              : category.books
+                  .add(TextBook(title: getTitleFromPath(entity.path)));
         }
       }
       return category;

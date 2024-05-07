@@ -21,7 +21,8 @@ class MainWindowScreenState extends State<MainWindowScreen>
   ValueNotifier selectedIndex = ValueNotifier(0);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
-
+  PageController pageController =
+      PageController(initialPage: 0, keepPage: true);
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
@@ -32,6 +33,13 @@ class MainWindowScreenState extends State<MainWindowScreen>
     if (Settings.getValue('key-font-family') == null) {
       Settings.setValue('key-font-family', 'FrankRuhlCLM');
     }
+
+    Provider.of<AppModel>(context, listen: false).currentView.addListener(() {
+      pageController.animateToPage(
+          Provider.of<AppModel>(context, listen: false).currentView.value,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.linear);
+    });
 
     super.initState();
   }
@@ -58,28 +66,22 @@ class MainWindowScreenState extends State<MainWindowScreen>
         child: Consumer<AppModel>(
           builder: (context, appModel, child) => Scaffold(
             body: OrientationBuilder(builder: (context, orientation) {
-              Widget mainWindow = Container();
-              switch (appModel.currentView) {
-                case (0):
-                  mainWindow = buildLibraryBrowser(appModel);
-                  break;
-                case (1 || 3):
-                  mainWindow = const Expanded(child: ReadingScreen());
-                  break;
-                case (2):
-                  mainWindow = const Expanded(child: FavouritesScreen());
-                case (4):
-                  mainWindow = buildSettingsScreen();
-              }
               if (orientation == Orientation.landscape) {
-                return buildHorizontalLayout(mainWindow, appModel);
+                return buildHorizontalLayout(appModel);
               } else {
                 return Column(children: [
                   Expanded(
-                    child: Row(children: [
-                      //buildBookmarksView(appModel),
-                      mainWindow,
-                    ]),
+                    child: PageView(
+                      scrollDirection: Axis.vertical,
+                      physics: const NeverScrollableScrollPhysics(),
+                      controller: pageController,
+                      children: <Widget>[
+                        LibraryBrowser(),
+                        ReadingScreen(),
+                        FavouritesScreen(),
+                        MySettingsScreen(),
+                      ],
+                    ),
                   ),
                   buildNavigationBottomBar(),
                 ]);
@@ -91,11 +93,24 @@ class MainWindowScreenState extends State<MainWindowScreen>
     );
   }
 
-  Widget buildHorizontalLayout(Widget mainWindow, AppModel appModel) {
+  Widget buildHorizontalLayout(AppModel appModel) {
     return Row(children: [
       buildNavigationSideBar(appModel),
-      //buildBookmarksView(appModel),
-      mainWindow
+      //mainWindow
+      Expanded(
+        child: PageView(
+          scrollDirection: Axis.vertical,
+          physics: const NeverScrollableScrollPhysics(),
+          controller: pageController,
+          children: <Widget>[
+            LibraryBrowser(),
+            Container(child: ReadingScreen()),
+            FavouritesScreen(),
+            MySettingsScreen(),
+          ],
+          //index: appModel.currentView == 3 ? 1 : appModel.currentView,
+        ),
+      ),
     ]);
   }
 
@@ -138,10 +153,11 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: Text('הגדרות'),
             ),
           ],
-          selectedIndex: appModel.currentView,
+          selectedIndex: appModel.currentView.value,
           onDestinationSelected: (int index) {
             setState(() {
-              appModel.currentView = index;
+              appModel.currentView.value = index;
+
               switch (index) {
                 case 3:
                   appModel.openNewSearchTab();
@@ -176,10 +192,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: 'הגדרות',
             ),
           ],
-          selectedIndex: appModel.currentView,
+          selectedIndex: appModel.currentView.value,
           onDestinationSelected: (int index) {
             setState(() {
-              appModel.currentView = index;
+              appModel.currentView.value = index;
               switch (index) {
                 case 3:
                   appModel.openNewSearchTab();

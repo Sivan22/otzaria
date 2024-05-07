@@ -15,62 +15,15 @@ class ReadingScreen extends StatefulWidget {
 }
 
 class _ReadingScreenState extends State<ReadingScreen>
-    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return Consumer<AppModel>(
-      builder: (context, appModel, child) {
-        if (appModel.tabs.isEmpty) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: const Text('לא נבחרו ספרים'),
-              ),
-              // a button to open the library browser
-              ElevatedButton(
-                onPressed: (() => appModel.currentView = 0),
-                child: const Text('עיון בספריה'),
-              ),
-            ],
-          );
-        }
-        return Builder(
-          builder: (context) {
-            final controller = TabController(
-                length: appModel.tabs.length,
-                vsync: this,
-                initialIndex:
-                    min(appModel.currentTab, appModel.tabs.length - 1));
-            controller.addListener(() {
-              appModel.currentTab = controller.index;
-            });
-            return Scaffold(
-              appBar: buildTabBar(appModel, controller),
-              body: buildTabBarView(appModel, controller),
-            );
-          },
-        );
-      },
-    );
-  }
-
+    with TickerProviderStateMixin {
   Widget buildTabBarView(AppModel appModel, TabController? controller) {
-    final tabs = appModel.tabs;
     return TabBarView(
         controller: controller,
-        children: tabs.map((tab) {
+        children: appModel.tabs.map((tab) {
           if (tab is PdfBookTab) {
             return PdfBookViewr(
               key: PageStorageKey(tab),
               tab: tab,
-              controller: tab.pdfViewerController,
             );
           } else if (tab is TextBookTab) {
             return TextBookViewer(
@@ -86,6 +39,55 @@ class _ReadingScreenState extends State<ReadingScreen>
           }
           return const SizedBox.shrink();
         }).toList());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AppModel>(
+      builder: (context, appModel, child) {
+        if (appModel.tabs.isEmpty) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Center(child: Text('לא נבחרו ספרים')),
+              ),
+              // a button to open the library browser
+              Center(
+                child: ElevatedButton(
+                  onPressed: (() => appModel.currentView.value = 0),
+                  child: const Text('עיון בספריה'),
+                ),
+              ),
+            ],
+          );
+        }
+        return Builder(
+          builder: (context) {
+            final controller = TabController(
+                length: appModel.tabs.length,
+                vsync: this,
+                initialIndex:
+                    min(appModel.currentTab, appModel.tabs.length - 1));
+            controller.addListener(() {
+              appModel.currentTab = controller.index;
+            });
+            try {
+              return Scaffold(
+                appBar: buildTabBar(appModel, controller),
+                body: SizedBox.fromSize(
+                    size: MediaQuery.of(context).size,
+                    child: buildTabBarView(appModel, controller)),
+              );
+            } catch (e) {
+              return Text(e.toString());
+            }
+          },
+        );
+      },
+    );
   }
 }
 
