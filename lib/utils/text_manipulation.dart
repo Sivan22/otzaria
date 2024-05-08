@@ -39,6 +39,7 @@ Future<String> refFromIndex(
         texts.add(entry.text);
       } else {
         texts[entry.level - 1] = entry.text;
+        texts = texts.getRange(0, entry.level - 1).toList();
       }
 
       searchToc(entry.children, index);

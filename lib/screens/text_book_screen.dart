@@ -315,7 +315,10 @@ class _TextBookViewerState extends State<TextBookViewer>
                       : 0,
                   widget.tab.tableOfContents),
               builder: (context, snapshot) => snapshot.hasData
-                  ? Text(snapshot.data!)
+                  ? Center(
+                      child:
+                          Text(snapshot.data!, style: TextStyle(fontSize: 17)),
+                    )
                   : const SizedBox.shrink(),
             );
           }),
@@ -379,17 +382,19 @@ class _TextBookViewerState extends State<TextBookViewer>
         ),
 
         // button to search
-        IconButton(
-          onPressed: () {
-            widget.tab.showLeftPane.value = true;
-            tabController.index = 1;
-            textSearchFocusNode.requestFocus();
-          },
-          icon: const Icon(
-            Icons.search,
-          ),
-          tooltip: 'חיפוש',
-        ),
+        MediaQuery.of(context).size.width < 600
+            ? SizedBox.shrink()
+            : IconButton(
+                onPressed: () {
+                  widget.tab.showLeftPane.value = true;
+                  tabController.index = 1;
+                  textSearchFocusNode.requestFocus();
+                },
+                icon: const Icon(
+                  Icons.search,
+                ),
+                tooltip: 'חיפוש',
+              ),
 
         // button to zoom in
         MediaQuery.of(context).size.width < 600
