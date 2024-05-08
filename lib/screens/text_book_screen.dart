@@ -343,6 +343,14 @@ class _TextBookViewerState extends State<TextBookViewer>
           ),
         ),
 
+        // button to toggle remove nikud
+        IconButton(
+          onPressed: () {
+            widget.tab.removeNikud.value = !widget.tab.removeNikud.value;
+          },
+          icon: Icon(Icons.format_overline),
+          tooltip: 'הצג או הסתר ניקוד',
+        ),
         //button to add a bookmark
         IconButton(
           onPressed: () {

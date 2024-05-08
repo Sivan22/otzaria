@@ -1,6 +1,8 @@
 // a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:otzaria/models/app_model.dart';
+import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
@@ -84,17 +86,24 @@ class _CombinedViewState extends State<CombinedView>
         iconColor: Colors.transparent,
         tilePadding: const EdgeInsets.all(0.0),
         collapsedIconColor: Colors.transparent,
-        title: Html(
-            data: highLight(
-                widget.data[index], widget.tab.searchTextController.text),
+        title: ValueListenableBuilder(
+          valueListenable: widget.tab.removeNikud,
+          builder: (context, removeNikud, child) => Html(
+            //remove nikud if needed
+            data: removeNikud
+                ? highLight(removeVolwels(widget.data[index]),
+                    widget.tab.searchTextController.text)
+                : highLight(
+                    widget.data[index], widget.tab.searchTextController.text),
             style: {
               'body': Style(
                   fontSize: FontSize(widget.textSize),
                   fontFamily: Settings.getValue('key-font-family') ?? 'candara',
                   textAlign: TextAlign.justify),
-            }),
+            },
+          ),
+        ),
         children: [
-          //on splited view we don't need the Inner list
           widget.showSplitedView.value
               ? const SizedBox.shrink()
               : CommentaryList(

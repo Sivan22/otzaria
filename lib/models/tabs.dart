@@ -132,6 +132,9 @@ class TextBookTab extends OpenedTab {
   /// The controller for storing scroll positions.
   ItemPositionsListener positionsListener = ItemPositionsListener.create();
 
+  /// a flag that tells if to remove Nikud from the text
+  final ValueNotifier<bool> removeNikud = ValueNotifier<bool>(false);
+
   /// Creates a new instance of [TextBookTab].
   ///
   /// The [initalIndex] parameter represents the initial index of the item in the scrollable list,

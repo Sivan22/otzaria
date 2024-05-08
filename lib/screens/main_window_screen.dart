@@ -21,8 +21,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
   ValueNotifier selectedIndex = ValueNotifier(0);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
-  PageController pageController =
-      PageController(initialPage: 0, keepPage: true);
+  PageController? pageController;
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
@@ -34,11 +33,17 @@ class MainWindowScreenState extends State<MainWindowScreen>
       Settings.setValue('key-font-family', 'FrankRuhlCLM');
     }
 
-    Provider.of<AppModel>(context, listen: false).currentView.addListener(() {
-      pageController.animateToPage(
-          Provider.of<AppModel>(context, listen: false).currentView.value,
+    final currentView =
+        Provider.of<AppModel>(context, listen: false).currentView;
+    pageController =
+        PageController(initialPage: currentView.value, keepPage: true);
+
+    currentView.addListener(() {
+      pageController!.animateToPage(
+          currentView.value == 2 ? 1 : currentView.value,
           duration: const Duration(milliseconds: 300),
           curve: Curves.linear);
+      setState(() {});
     });
 
     super.initState();
@@ -78,6 +83,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                       children: <Widget>[
                         LibraryBrowser(),
                         ReadingScreen(),
+                        SizedBox.shrink(),
                         FavouritesScreen(),
                         MySettingsScreen(),
                       ],
@@ -104,7 +110,8 @@ class MainWindowScreenState extends State<MainWindowScreen>
           controller: pageController,
           children: <Widget>[
             LibraryBrowser(),
-            Container(child: ReadingScreen()),
+            ReadingScreen(),
+            SizedBox.shrink(),
             FavouritesScreen(),
             MySettingsScreen(),
           ],
@@ -141,12 +148,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: Text('קריאה'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.star),
-              label: Text('מועדפים'),
-            ),
-            NavigationRailDestination(
               icon: Icon(Icons.search),
               label: Text('חיפוש'),
+            ),
+            NavigationRailDestination(
+              icon: Icon(Icons.star),
+              label: Text('מועדפים'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.settings),
@@ -155,14 +162,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
           ],
           selectedIndex: appModel.currentView.value,
           onDestinationSelected: (int index) {
-            setState(() {
-              appModel.currentView.value = index;
-
-              switch (index) {
-                case 3:
-                  appModel.openNewSearchTab();
-              }
-            });
+            appModel.currentView.value = index;
+            switch (index) {
+              case 2:
+                appModel.openNewSearchTab();
+            }
+            setState(() {});
           }),
     );
   }
@@ -180,12 +185,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: 'קריאה',
             ),
             NavigationDestination(
-              icon: Icon(Icons.star),
-              label: 'מועדפים',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.search),
               label: 'חיפוש',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.star),
+              label: 'מועדפים',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings),
