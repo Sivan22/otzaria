@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -65,7 +66,7 @@ class FileTreeViewScreenState extends State<FileTreeViewScreen> {
           return CheckboxListTile(
             title: Row(children: [
               Text(
-                path.basename(entity.path),
+                getTitleFromPath(entity.path),
               ),
             ]),
             value: widget.checkedItems.contains(entity.path),

@@ -7,7 +7,7 @@ String stripHtmlIfNeeded(String text) {
 }
 
 String removeVolwels(String s) {
-  s = s.replaceAll('־', ' ');
+  s = s.replaceAll('־', ' ').replaceAll(' ׀', '');
   return s.replaceAll(RegExp(r'[\u0591-\u05C7]'), '');
 }
 
@@ -39,7 +39,7 @@ Future<String> refFromIndex(
         texts.add(entry.text);
       } else {
         texts[entry.level - 1] = entry.text;
-        texts = texts.getRange(0, entry.level - 1).toList();
+        texts = texts.getRange(0, entry.level).toList();
       }
 
       searchToc(entry.children, index);

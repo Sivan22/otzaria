@@ -80,7 +80,7 @@ class _LinksViewerState extends State<LinksViewer>
                           title: utils
                               .getTitleFromPath(snapshot.data![index].path2),
                         ),
-                        initalIndex: snapshot.data![index].index2 - 1),
+                        index: snapshot.data![index].index2 - 1),
                   );
                   widget.closeLeftPanelCallback();
                 },

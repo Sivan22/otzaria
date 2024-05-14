@@ -82,6 +82,10 @@ class KeyboardShortcuts extends StatelessWidget {
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit8),
     'ctrl+9':
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit9),
+    'ctrl+tab':
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab),
+    'ctrl+shift+tab': LogicalKeySet(LogicalKeyboardKey.control,
+        LogicalKeyboardKey.tab, LogicalKeyboardKey.shift),
   };
 
   @override
@@ -94,7 +98,7 @@ class KeyboardShortcuts extends StatelessWidget {
                       null
                   ? Settings.getValue<String>('key-shortcut-open-book-browser')
                   : 'ctrl+b']!: () {
-            appModel.currentView.value = 0;
+            appModel.currentView.value = Screens.library;
           },
           shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
               ? Settings.getValue<String>('key-shortcut-close-tab')
@@ -111,7 +115,7 @@ class KeyboardShortcuts extends StatelessWidget {
               Settings.getValue<String>('key-shortcut-open-book-search') != null
                   ? Settings.getValue<String>('key-shortcut-open-book-search')
                   : 'ctrl+o']!: () {
-            appModel.currentView.value = 0;
+            appModel.currentView.value = Screens.library;
             appModel.bookLocatorFocusNode.requestFocus();
           },
           shortcuts[
@@ -120,6 +124,12 @@ class KeyboardShortcuts extends StatelessWidget {
                   : 'ctrl+q']!: () {
             appModel.openNewSearchTab();
           },
+          shortcuts['ctrl+shift+tab']!: () {
+            appModel.goToPreviousTab();
+          },
+          shortcuts['ctrl+tab']!: () {
+            appModel.goToNextTab();
+          }
         },
         child: this.child,
       ),

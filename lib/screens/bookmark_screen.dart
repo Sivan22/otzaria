@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/tabs.dart';
 import 'package:provider/provider.dart';
 
 class BookmarkView extends StatefulWidget {
@@ -24,9 +25,9 @@ class _BookmarkViewState extends State<BookmarkView> {
                     itemCount: appModel.bookmarks.length,
                     itemBuilder: (context, index) => ListTile(
                         title: Text(appModel.bookmarks[index].ref),
-                        onTap: () => appModel.openBook(
-                            appModel.bookmarks[index].book,
-                            appModel.bookmarks[index].index),
+                        onTap: () => appModel.openTab(
+                            OpenedTab.from(appModel.bookmarks[index].tab),
+                            index: appModel.bookmarks[index].index),
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.delete_forever,

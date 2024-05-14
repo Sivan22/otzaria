@@ -23,16 +23,13 @@ class CommentaryList extends StatefulWidget {
   State<CommentaryList> createState() => _CommentaryListState();
 }
 
-class _CommentaryListState extends State<CommentaryList>
-    with AutomaticKeepAliveClientMixin<CommentaryList> {
+class _CommentaryListState extends State<CommentaryList> {
   late Future<List<Link>> thisLinks;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
+
     thisLinks = getLinksforIndexs(
         links: widget.textBookTab.links,
         commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
@@ -64,7 +61,6 @@ class _CommentaryListState extends State<CommentaryList>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return FutureBuilder(
       future: thisLinks,
       builder: (context, thisLinksSnapshot) {

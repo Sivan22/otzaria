@@ -73,10 +73,9 @@ class Link {
 Future<List<Link>> getLinksforIndexs(
     {required List<int> indexes,
     required Future<List<Link>> links,
-    required List<Book> commentatorsToShow}) async {
+    required List<String> commentatorsToShow}) async {
   List<Link> doneLinks = await links;
   List<Link> allLinks = [];
-  final titles = commentatorsToShow.map((e) => e.title).toList();
   allLinks = await Isolate.run(() {
     for (int i = 0; i < indexes.length; i++) {
       List<Link> thisLinks = doneLinks
@@ -84,18 +83,22 @@ Future<List<Link>> getLinksforIndexs(
               link.index1 == indexes[i] + 1 &&
               (link.connectionType == "commentary" ||
                   link.connectionType == "targum") &&
-              titles.contains(utils.getTitleFromPath(link.path2)))
+              commentatorsToShow.contains(utils.getTitleFromPath(link.path2)))
           .toList();
       allLinks += thisLinks;
     }
 
     allLinks.sort(
-      (a, b) => a.heRef.compareTo(b.heRef),
-    );
-    //sort by the order of the commentatorstoshow
-    allLinks.sort((a, b) => titles
-        .indexOf(utils.getTitleFromPath(a.path2))
-        .compareTo(titles.indexOf(utils.getTitleFromPath(a.path2))));
+        //sort by the order of the commentators to show and then by the heRef
+        (a, b) {
+      if (utils.getTitleFromPath(a.path2) == utils.getTitleFromPath(a.path2)) {
+        return a.heRef.compareTo(b.heRef);
+      }
+      return commentatorsToShow
+          .indexOf(utils.getTitleFromPath(a.path2))
+          .compareTo(
+              commentatorsToShow.indexOf(utils.getTitleFromPath(b.path2)));
+    });
     return allLinks;
   });
   return allLinks;

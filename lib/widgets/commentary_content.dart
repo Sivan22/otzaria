@@ -21,8 +21,7 @@ class CommentaryContent extends StatefulWidget {
   State<CommentaryContent> createState() => _CommentaryContentState();
 }
 
-class _CommentaryContentState extends State<CommentaryContent>
-    with AutomaticKeepAliveClientMixin<CommentaryContent> {
+class _CommentaryContentState extends State<CommentaryContent> {
   late Future<String> content;
 
   @override
@@ -33,12 +32,11 @@ class _CommentaryContentState extends State<CommentaryContent>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return GestureDetector(
       onDoubleTap: () {
         widget.openBookCallback(TextBookTab(
           book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
-          initalIndex: widget.link.index2 - 1,
+          index: widget.link.index2 - 1,
         ));
       },
       child: FutureBuilder(
@@ -59,7 +57,4 @@ class _CommentaryContentState extends State<CommentaryContent>
           }),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

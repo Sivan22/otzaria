@@ -1,8 +1,6 @@
 // a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:otzaria/models/app_model.dart';
-import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
@@ -29,13 +27,11 @@ class CombinedView extends StatefulWidget {
   State<CombinedView> createState() => _CombinedViewState();
 }
 
-class _CombinedViewState extends State<CombinedView>
-    with AutomaticKeepAliveClientMixin<CombinedView> {
+class _CombinedViewState extends State<CombinedView> {
   FocusNode focusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return buildKeyboardListener();
   }
 
@@ -64,7 +60,7 @@ class _CombinedViewState extends State<CombinedView>
       key: PageStorageKey(widget.tab),
       selectionControls: DesktopTextSelectionControls(),
       child: ScrollablePositionedList.builder(
-          initialScrollIndex: widget.tab.initalIndex,
+          initialScrollIndex: widget.tab.index,
           itemPositionsListener: widget.tab.positionsListener,
           itemScrollController: widget.tab.scrollController,
           scrollOffsetController: widget.tab.scrollOffsetController,
@@ -115,7 +111,4 @@ class _CombinedViewState extends State<CombinedView>
                 )
         ]);
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

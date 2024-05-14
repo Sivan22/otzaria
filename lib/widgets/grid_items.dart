@@ -37,44 +37,50 @@ class CategoryGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onCategoryClickCallback,
-      child: Card(
-          child: SingleChildScrollView(
-        //should
-        physics: const ClampingScrollPhysics(),
-        child: ExpandablePanel(
-          theme: ExpandableThemeData(
-              headerAlignment: ExpandablePanelHeaderAlignment.center,
-              tapBodyToExpand: false,
-              tapHeaderToExpand: false,
-              hasIcon: category.shortDescription != '' ? true : false,
-              iconPlacement: ExpandablePanelIconPlacement.right,
-              alignment: Alignment.center,
-              expandIcon: Icons.info_outline,
-              collapseIcon: Icons.keyboard_arrow_up,
-              iconSize: 12),
-          header: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                category.title,
-                style: Theme.of(context).textTheme.headlineSmall,
+    return Card(
+        child: InkWell(
+      borderRadius: BorderRadius.circular(12.0),
+      hoverColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+      hoverDuration: Durations.medium1,
+      onTap: () => onCategoryClickCallback(),
+      child: ListView(
+          shrinkWrap: true,
+          //should
+          physics: const ClampingScrollPhysics(),
+          children: [
+            ExpandablePanel(
+              theme: ExpandableThemeData(
+                  headerAlignment: ExpandablePanelHeaderAlignment.center,
+                  tapBodyToExpand: false,
+                  tapHeaderToExpand: false,
+                  hasIcon: category.shortDescription != '' ? true : false,
+                  iconPlacement: ExpandablePanelIconPlacement.right,
+                  alignment: Alignment.center,
+                  expandIcon: Icons.info_outline,
+                  collapseIcon: Icons.keyboard_arrow_up,
+                  iconSize: 12),
+              header: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    category.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+              ),
+              collapsed: const SizedBox.shrink(),
+              expanded: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  category.shortDescription,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.secondary),
+                ),
               ),
             ),
-          ),
-          collapsed: const SizedBox.shrink(),
-          expanded: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              category.shortDescription,
-              style: TextStyle(
-                  fontSize: 13, color: Theme.of(context).colorScheme.secondary),
-            ),
-          ),
-        ),
-      )),
-    );
+          ]),
+    ));
   }
 }
 
@@ -91,60 +97,65 @@ class BookGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onBookClickCallback,
       child: Card(
-        child: ListView(
-          shrinkWrap: true,
-          primary: true,
-          physics: const ScrollPhysics(),
-          children: [
-            ExpandablePanel(
-              theme: ExpandableThemeData(
-                  headerAlignment: ExpandablePanelHeaderAlignment.center,
-                  tapBodyToExpand: false,
-                  tapHeaderToExpand: false,
-                  hasIcon: book.heShortDesc != null && book.heShortDesc != ''
-                      ? true
-                      : false,
-                  iconPlacement: ExpandablePanelIconPlacement.right,
-                  alignment: Alignment.center,
-                  expandIcon: Icons.info_outline,
-                  collapseIcon: Icons.keyboard_arrow_up,
-                  iconSize: 15),
-              header: ListTile(
-                title: Text(
-                  book.title,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12.0),
+          hoverColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+          onTap: () => onBookClickCallback(),
+          hoverDuration: Durations.medium1,
+          child: ListView(
+            shrinkWrap: true,
+            primary: true,
+            physics: const ScrollPhysics(),
+            children: [
+              ExpandablePanel(
+                theme: ExpandableThemeData(
+                    headerAlignment: ExpandablePanelHeaderAlignment.center,
+                    tapBodyToExpand: false,
+                    tapHeaderToExpand: false,
+                    hasIcon: book.heShortDesc != null && book.heShortDesc != ''
+                        ? true
+                        : false,
+                    iconPlacement: ExpandablePanelIconPlacement.right,
+                    alignment: Alignment.center,
+                    expandIcon: Icons.info_outline,
+                    collapseIcon: Icons.keyboard_arrow_up,
+                    iconSize: 15),
+                header: ListTile(
+                  title: Text(
+                    book.title,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                      (book.author == "" || book.author == null)
+                          ? ''
+                          : ('${book.author!} ${book.pubDate ?? ''}'),
+                      style: const TextStyle(fontSize: 13)),
+                  //isThreeLine: true,
+                  trailing: book is TextBook
+                      ? null
+                      : SizedBox.fromSize(
+                          size: const Size.square(30),
+                          child: const Center(
+                              child: Icon(
+                            Icons.picture_as_pdf,
+                          )
+                              //}
+                              // },
+                              ),
+                        ),
                 ),
-                subtitle: Text(
-                    (book.author == "" || book.author == null)
-                        ? ''
-                        : ('${book.author!} ${book.pubDate ?? ''}'),
-                    style: const TextStyle(fontSize: 13)),
-                //isThreeLine: true,
-                trailing: book is TextBook
-                    ? null
-                    : SizedBox.fromSize(
-                        size: const Size.square(30),
-                        child: const Center(
-                            child: Icon(
-                          Icons.picture_as_pdf,
-                        )
-                            //}
-                            // },
-                            ),
-                      ),
+                collapsed: const SizedBox.shrink(),
+                expanded: Text(
+                  book.heShortDesc ?? '',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.secondary),
+                ),
               ),
-              collapsed: const SizedBox.shrink(),
-              expanded: Text(
-                book.heShortDesc ?? '',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.secondary),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -163,16 +174,21 @@ class MyGridView extends StatelessWidget {
             future: items,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    //max number of items per row is 5 and min is 2
-                    crossAxisCount: max(2, min(constraints.maxWidth ~/ 200, 5)),
-                    childAspectRatio: 1.5,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 45),
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        //max number of items per row is 5 and min is 2
+                        crossAxisCount:
+                            max(2, min(constraints.maxWidth ~/ 200, 5)),
+                        childAspectRatio: 1.5,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4),
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (context, index) => snapshot.data![index],
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                   ),
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) => snapshot.data![index],
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
                 );
               }
               return const Center(child: CircularProgressIndicator());

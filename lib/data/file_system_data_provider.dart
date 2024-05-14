@@ -13,6 +13,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/links.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 /// An implementation of the data layer based on the filesystem.
 ///
@@ -40,13 +41,15 @@ class FileSystemData extends Data {
   ///
   /// Returns a `Future` that completes when the initialization is done.
   ///
-  init() async {
+  init() {
     //taking care of getting the library path
-    await () async {
+    () async {
       //first try to get the library path from settings
       libraryPath = Settings.getValue('key-library-path');
-      //if faild, ask the user to choose the path
-      while (libraryPath == null) {
+      //if faild, or the path doesn't conatains 'אוצריא', ask the user to choose the path
+      while (libraryPath == null ||
+          (!Directory('$libraryPath${Platform.pathSeparator}אוצריא')
+              .existsSync())) {
         libraryPath = await FilePicker.platform
             .getDirectoryPath(dialogTitle: "הגדר את מיקום ספריית אוצריא");
         Settings.setValue('key-library-path', libraryPath);
@@ -54,9 +57,9 @@ class FileSystemData extends Data {
     }();
 
     //updating the title to path index
-    _updateTitleToPath(libraryPath!);
+    _updateTitleToPath();
     //fetching the metadata for the books in the library
-    _fetchMetadata(libraryPath!);
+    _fetchMetadata();
   }
 
   ///
@@ -152,19 +155,22 @@ class FileSystemData extends Data {
   }
 
   /// Updates the title to path mapping using the provided library path.
-  void _updateTitleToPath(String libraryPath) {
-    List<String> paths = getAllBooksPathsFromDirecctory(libraryPath);
+  void _updateTitleToPath() {
+    List<String> paths = getAllBooksPathsFromDirecctory(libraryPath!);
     for (var path in paths) {
       titleToPath[getTitleFromPath(path)] = path;
     }
   }
 
   ///fetches the metadata for the books in the library from a json file using the provided library path.
-  void _fetchMetadata(String libraryPath) {
-    String metadataPath =
-        ('$libraryPath${Platform.pathSeparator}metadata.json');
-    File metadataFile = File(metadataPath);
-    String metadataString = metadataFile.readAsStringSync();
+  void _fetchMetadata() {
+    String metadataString = '';
+    try {
+      File file = File('${libraryPath!}${Platform.pathSeparator}metadata.json');
+      metadataString = file.readAsStringSync();
+    } catch (e) {
+      return;
+    }
     final tempMetadata = jsonDecode(metadataString) as List<dynamic>;
     for (int i = 0; i < tempMetadata.length; i++) {
       final row = tempMetadata[i] as Map<String, dynamic>;
@@ -188,7 +194,7 @@ class FileSystemData extends Data {
   String _getBookPath(String title) {
     //make sure the map is not empty
     if (titleToPath.isEmpty) {
-      _updateTitleToPath(libraryPath!);
+      _updateTitleToPath();
     }
     //return the path of the book with the given title
     return titleToPath[title] ?? 'error: book path not found: $title';

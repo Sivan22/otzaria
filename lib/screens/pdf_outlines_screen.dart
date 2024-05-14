@@ -24,7 +24,8 @@ class OutlineView extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = list[index];
           return InkWell(
-            onTap: () => controller.goToDest(item.node.dest),
+            onTap: () =>
+                controller.goToPage(pageNumber: item.node.dest!.pageNumber),
             child: Container(
               margin: EdgeInsets.only(
                 left: item.level * 16.0 + 8,

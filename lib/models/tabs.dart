@@ -2,6 +2,7 @@
 a tab is either a pdf book or a text book, or a full text search window*/
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -11,10 +12,26 @@ import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
 
-class OpenedTab {
+abstract class OpenedTab {
   String title;
 
   OpenedTab(this.title);
+
+  factory OpenedTab.from(OpenedTab tab) {
+    if (tab is TextBookTab) {
+      return TextBookTab(
+        index: tab.index,
+        book: tab.book,
+        commentators: tab.commentatorsToShow.value,
+      );
+    } else if (tab is PdfBookTab) {
+      return PdfBookTab(
+        tab.book,
+        tab.pageNumber,
+      );
+    }
+    return tab;
+  }
 
   factory OpenedTab.fromJson(Map<String, dynamic> json) {
     String type = json['type'];
@@ -25,6 +42,7 @@ class OpenedTab {
     }
     return SearchingTab.fromJson(json);
   }
+  Map<String, dynamic> toJson();
 }
 
 /// Represents a tab with a PDF book.
@@ -46,13 +64,20 @@ class PdfBookTab extends OpenedTab {
 
   final documentRef = ValueNotifier<PdfDocumentRef?>(null);
 
-  final showLeftPane = ValueNotifier<bool>(false);
+  ///a flag that tells if the left pane should be shown
+  late final ValueNotifier<bool> showLeftPane;
+
+  ///a flag that tells if the left pane should be pinned on scrolling
+  final pinLeftPane = ValueNotifier<bool>(false);
 
   /// Creates a new instance of [PdfBookTab].
   ///
   /// The [book] parameter represents the PDF book, and the [pageNumber]
   /// parameter represents the current page number.
-  PdfBookTab(this.book, this.pageNumber) : super(book.title);
+  PdfBookTab(this.book, this.pageNumber, {bool openLeftPane = false})
+      : super(book.title) {
+    showLeftPane = ValueNotifier<bool>(openLeftPane);
+  }
 
   /// Creates a new instance of [PdfBookTab] from a JSON map.
   ///
@@ -95,14 +120,14 @@ class TextBookTab extends OpenedTab {
   //caching the table of contents, since it takes a while to load
   late final Future<List<TocEntry>> tableOfContents;
 
-  /// The initial index of the scrollable list.
-  int initalIndex;
+  /// The index of the scrollable list.
+  int index;
 
   /// The future that resolves to the list of available commentators.
-  late Future<List<Book>> availableCommentators;
+  late Future<List<String>> availableCommentators;
 
   /// The list of commentaries to show.
-  ValueNotifier<List<Book>> commentatorsToShow = ValueNotifier([]);
+  ValueNotifier<List<String>> commentatorsToShow = ValueNotifier([]);
 
   ///the size of the font to view this book
   double textFontSize = Settings.getValue('key-font-size') ?? 25.0;
@@ -114,7 +139,7 @@ class TextBookTab extends OpenedTab {
   final pinLeftPane = ValueNotifier<bool>(false);
 
   /// a flag that tells if the comentaries should be shown in splited view or not
-  final ValueNotifier<bool> showSplitedView = ValueNotifier<bool>(true);
+  late ValueNotifier<bool> showSplitedView;
 
   /// The split contloller.
   MultiSplitViewController splitController =
@@ -137,28 +162,47 @@ class TextBookTab extends OpenedTab {
 
   /// Creates a new instance of [TextBookTab].
   ///
-  /// The [initalIndex] parameter represents the initial index of the item in the scrollable list,
+  /// The [index] parameter represents the initial index of the item in the scrollable list,
   /// and the [book] parameter represents the text book.
   /// The [searchText] parameter represents the initial search text,
-  /// and the [commentaries] parameter represents the list of commentaries.
+  /// and the [commentators] parameter represents the list of commentaries to show.
   TextBookTab(
       {required this.book,
-      required this.initalIndex,
+      required this.index,
       String searchText = '',
-      List<Book>? commentaries,
-      bool openLeftPane = false})
+      List<String>? commentators,
+      bool openLeftPane = false,
+      bool splitedView = true})
       : super(book.title) {
     ///load the text
     text = (() async => await book.text)();
+
+    ///load the links
     links = (() async => await book.links)();
+
+    ///load the table of contents
     tableOfContents = (() async => await book.tableOfContents)();
+
+    ///init the left pane flag
     showLeftPane = ValueNotifier<bool>(openLeftPane);
+
+    ///init the splited view flag
+    showSplitedView = ValueNotifier<bool>(
+        Settings.getValue('key-splited-view') ?? splitedView);
+
+    //sync the the index with the scroll positions
+    positionsListener.itemPositions.addListener(() {
+      index = positionsListener.itemPositions.value.first.index;
+    });
+
+    //get the available commentaries
     availableCommentators = getAvailableCommentators(book.links);
     if (searchText != '') {
       searchTextController.text = searchText;
     }
-    if (commentaries != null && commentaries.isNotEmpty) {
-      commentatorsToShow.value = commentaries;
+    //set the list of commentaries to show
+    if (commentators != null && commentators.isNotEmpty) {
+      commentatorsToShow.value = commentators;
     }
   }
 
@@ -166,7 +210,8 @@ class TextBookTab extends OpenedTab {
   ///
   /// Filters the links in the book to find commentaries and targums,
   /// and returns a list of unique commentaries.
-  Future<List<Book>> getAvailableCommentators(Future<List<Link>> links) async {
+  Future<List<String>> getAvailableCommentators(
+      Future<List<Link>> links) async {
     List<Link> filteredLinks = (await links)
         .where((link) =>
             link.connectionType == 'commentary' ||
@@ -174,12 +219,14 @@ class TextBookTab extends OpenedTab {
         .toList();
     List<String> paths = filteredLinks.map((e) => e.path2).toList();
     List<String> uniquePaths = paths.toSet().toList();
-    uniquePaths.sort();
-    List<Book> availableCommentators = uniquePaths
-        .map((e) => TextBook(
-              title: getTitleFromPath(e),
-            ))
+    List<String> availableCommentators = uniquePaths
+        .map(
+          (e) => getTitleFromPath(e),
+        )
         .toList();
+    availableCommentators.sort(
+      (a, b) => a.compareTo(b),
+    );
     return availableCommentators;
   }
 
@@ -189,13 +236,12 @@ class TextBookTab extends OpenedTab {
   /// and 'type' keys.
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
     return TextBookTab(
-      initalIndex: json['initalIndex'],
+      index: json['initalIndex'],
       book: TextBook(
         title: json['title'],
       ),
-      // commentaries: json['commentators']
-      //     .map<Book>((json) => TextBook(title: json.toString()))
-      //     .toList()
+      commentators: List<String>.from(json['commentators']),
+      splitedView: json['splitedView'],
     );
   }
 
@@ -203,14 +249,13 @@ class TextBookTab extends OpenedTab {
   ///
   /// The JSON map contains 'title', 'initalIndex', 'commentaries',
   /// and 'type' keys.
+  @override
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'initalIndex': positionsListener.itemPositions.value.isNotEmpty
-          ? positionsListener.itemPositions.value.first.index
-          : 0,
-      'commentators':
-          commentatorsToShow.value.map((book) => book.title).toList(),
+      'initalIndex': index,
+      'commentators': commentatorsToShow.value,
+      'splitedView': showSplitedView.value,
       'type': 'TextBookTab'
     };
   }

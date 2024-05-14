@@ -24,6 +24,9 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
               child: CircularProgressIndicator(),
             );
           }
+          if (snapshot.data!.isEmpty) {
+            return const Center(child: Text('לא נמצאו פרשנים'));
+          }
           return Column(
             children: [
               TextField(
@@ -55,13 +58,12 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
               Expanded(
                 child: Builder(builder: (context) {
                   final filteredCommentaries = snapshot.data!
-                      .where((book) =>
-                          book.title.toLowerCase().contains(_filterQuery))
+                      .where((title) => title.contains(_filterQuery))
                       .toList();
                   return ListView.builder(
                     itemCount: filteredCommentaries.length,
                     itemBuilder: (context, index) => CheckboxListTile(
-                      title: Text(filteredCommentaries[index].title),
+                      title: Text(filteredCommentaries[index]),
                       value: widget.tab.commentatorsToShow.value
                           .contains(filteredCommentaries[index]),
                       onChanged: (value) {
@@ -69,8 +71,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                           widget.tab.commentatorsToShow.value
                               .add(filteredCommentaries[index]);
                         } else {
-                          widget.tab.commentatorsToShow.value
-                              .remove(filteredCommentaries[index]);
+                          widget.tab.commentatorsToShow.value.removeWhere(
+                              (s) => s == filteredCommentaries[index]);
                         }
                         widget.tab.commentatorsToShow.notifyListeners();
                         setState(() {});
@@ -83,7 +85,4 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
           );
         });
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

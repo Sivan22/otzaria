@@ -33,7 +33,7 @@ class AppModel with ChangeNotifier {
   int currentTab = 0;
 
   /// The index of the current view.
-  ValueNotifier<int> currentView = ValueNotifier(0);
+  ValueNotifier<Screens> currentView = ValueNotifier(Screens.library);
 
   late List<Bookmark> bookmarks;
 
@@ -56,29 +56,50 @@ class AppModel with ChangeNotifier {
   /// Constructs a new AppModel instance.
   ///
   /// This constructor initializes the library and tabs list, and loads the
-  /// tabs list from disk.
+  /// tabs list and history from disk.
   AppModel() {
     library = data.getLibrary();
 
-    tabs = List<OpenedTab>.from(
-        ((Hive.box(name: 'tabs').get('key-tabs') ?? []) as List)
-            .map((e) => OpenedTab.fromJson(e))
-            .toList());
-
-    currentTab = Hive.box(name: 'tabs')
-        .get('key-current-tab', defaultValue: tabs.length - 1);
-
-    if (tabs.isNotEmpty) {
-      currentView.value = 1;
+//load tabs from disk. if fails, delete the tabs from disk
+    try {
+      tabs = List<OpenedTab>.from(
+          ((Hive.box(name: 'tabs').get('key-tabs', defaultValue: [])) as List)
+              .map((e) => OpenedTab.fromJson(e))
+              .toList());
+    } catch (e) {
+      print('error loading tabs from disk: $e');
+      Hive.box(name: 'tabs').put('key-tabs', []);
     }
 
-    final List<dynamic> rawBookmarks =
-        Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
-    bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
+    ///load the current tab from disk
+    currentTab = Hive.box(name: 'tabs').get('key-current-tab', defaultValue: 0);
 
-    final List<dynamic> rawHistory =
-        Hive.box(name: 'history').get('key-history') ?? [];
-    history = rawHistory.map((e) => Bookmark.fromJson(e)).toList();
+    //if there are any tabs, set the current view to reading
+    if (tabs.isNotEmpty) {
+      currentView.value = Screens.reading;
+    }
+
+    //load bookmarks
+    try {
+      final List<dynamic> rawBookmarks =
+          Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
+      bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
+    } catch (e) {
+      bookmarks = [];
+      print('error loading bookmarks from disk: $e');
+      Hive.box(name: 'bookmarks').put('key-bookmarks', []);
+    }
+
+    //load history
+    try {
+      final List<dynamic> rawHistory =
+          Hive.box(name: 'history').get('key-history') ?? [];
+      history = rawHistory.map((e) => Bookmark.fromJson(e)).toList();
+    } catch (e) {
+      history = [];
+      print('error loading history from disk: $e');
+      Hive.box(name: 'history').put('key-history', []);
+    }
 
     seedColor.addListener(() {
       notifyListeners();
@@ -94,28 +115,45 @@ class AppModel with ChangeNotifier {
   /// [index] The index of the book.
   void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
-      addTab(PdfBookTab(book, max(index, 1)));
+      _addTab(PdfBookTab(book, max(index, 1)));
     } else if (book is TextBook) {
-      addTab(TextBookTab(
-          book: book, initalIndex: index, openLeftPane: openLeftPane));
+      _addTab(
+          TextBookTab(book: book, index: index, openLeftPane: openLeftPane));
     }
-    currentView.value = 1;
+    //show the reading screen
+    currentView.value = Screens.reading;
   }
 
+  /// Opens a new search tab.
+  ///
+  /// This function creates a new `SearchingTab` instance with the title "חיפוש"
+  /// and adds it to the list of opened tabs.
+  ///
+  /// Does not return anything.
   void openNewSearchTab() {
-    addTab(SearchingTab('חיפוש'));
+    _addTab(SearchingTab('חיפוש'));
   }
 
   /// Adds a new tab to the list of opened tabs.
   ///
   /// [tab] The tab to add.
-  void addTab(OpenedTab tab) {
+  void _addTab(OpenedTab tab) {
     //add the tab after the current tab, or at the end if this is the last tab
     tabs.insert(min(currentTab + 1, tabs.length), tab);
     //opdate the current tab, while making sure it is not goes beyond the list.
     currentTab = min(currentTab + 1, tabs.length - 1);
     notifyListeners();
     saveTabsToDisk();
+  }
+
+  void openTab(OpenedTab tab, {int index = 1}) {
+    if (tab is PdfBookTab) {
+      openBook(tab.book, index);
+      return;
+    } else {
+      _addTab(tab);
+      currentView.value = Screens.reading;
+    }
   }
 
   /// Closes a tab.
@@ -135,7 +173,7 @@ class AppModel with ChangeNotifier {
           : 1;
       addHistory(
         ref: '${tab.title} עמוד $index',
-        book: tab.book,
+        tab: tab,
         index: index,
       );
     }
@@ -145,13 +183,27 @@ class AppModel with ChangeNotifier {
           : tab.positionsListener.itemPositions.value.first.index;
       (() async => addHistory(
           ref: await utils.refFromIndex(index, tab.tableOfContents),
-          book: tab.book,
+          tab: tab,
           index: index))();
     }
   }
 
   void closeCurrentTab() {
     closeTab(tabs[currentTab]);
+  }
+
+  void goToPreviousTab() {
+    if (currentTab > 0) {
+      currentTab--;
+      notifyListeners();
+    }
+  }
+
+  void goToNextTab() {
+    if (currentTab < tabs.length - 1) {
+      currentTab++;
+      notifyListeners();
+    }
   }
 
   /// Closes all tabs.
@@ -172,8 +224,8 @@ class AppModel with ChangeNotifier {
   }
 
   void addBookmark(
-      {required String ref, required Book book, required int index}) {
-    bookmarks.add(Bookmark(ref: ref, book: book, index: index));
+      {required String ref, required OpenedTab tab, required int index}) {
+    bookmarks.add(Bookmark(ref: ref, tab: tab, index: index));
     // write to disk
     Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
   }
@@ -189,8 +241,8 @@ class AppModel with ChangeNotifier {
   }
 
   void addHistory(
-      {required String ref, required Book book, required int index}) {
-    history.add(Bookmark(ref: ref, book: book, index: index));
+      {required String ref, required OpenedTab tab, required int index}) {
+    history.insert(0, Bookmark(ref: ref, tab: tab, index: index));
     // write to disk
     Hive.box(name: 'history').put('key-history', history);
   }
@@ -205,3 +257,7 @@ class AppModel with ChangeNotifier {
     Hive.box(name: 'history').clear();
   }
 }
+
+
+/// An enum that represents the different screens in the application.
+enum Screens { library, reading, search, favorites, settings }

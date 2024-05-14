@@ -1,4 +1,6 @@
 import 'dart:isolate';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/widgets/grid_items.dart';
@@ -33,25 +35,43 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(
-            child: Text('ספריית אוצריא',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ))),
-        leading: Row(children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_upward),
-            tooltip: 'חזרה לתיקיה הקודמת',
-            onPressed: () => setState(() {
-              searchController.clear();
-              depth = max(0, depth - 1);
-              currentTopCategory = currentTopCategory.parent!.parent!;
-              items = getGrids(currentTopCategory);
-            }),
-          ),
-        ]),
+        title: Row(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                icon: const Icon(Icons.home),
+                tooltip: 'חזרה לתיקיה הראשית',
+                onPressed: () => setState(() {
+                  searchController.clear();
+                  depth = 0;
+                  currentTopCategory =
+                      Provider.of<AppModel>(context, listen: false).library;
+                  items = getGrids(currentTopCategory);
+                }),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                  child: Text(currentTopCategory.title,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ))),
+            ),
+          ],
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_upward),
+          tooltip: 'חזרה לתיקיה הקודמת',
+          onPressed: () => setState(() {
+            searchController.clear();
+            depth = max(0, depth - 1);
+            currentTopCategory = currentTopCategory.parent!.parent!;
+            items = getGrids(currentTopCategory);
+          }),
+        ),
       ),
       body: Column(
         children: [
@@ -80,7 +100,11 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
           focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
           controller: searchController,
           decoration: InputDecoration(
+            constraints: const BoxConstraints(maxWidth: 400),
             prefixIcon: const Icon(Icons.search),
+            suffixIcon: IconButton(
+                onPressed: () => searchController.clear(),
+                icon: const Icon(Icons.cancel)),
             border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8.0))),
             hintText: 'איתור ספר ב${currentTopCategory.title}',
@@ -117,8 +141,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         BookGridItem(
             book: book,
             onBookClickCallback: () {
-              Provider.of<AppModel>(context, listen: false).currentView.value =
-                  1;
               Provider.of<AppModel>(context, listen: false)
                   .openBook(book, 0, openLeftPane: true);
             }),
@@ -158,9 +180,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 onBookClickCallback: () {
                   Provider.of<AppModel>(context, listen: false)
                       .openBook(book, 0, openLeftPane: true);
-                  Provider.of<AppModel>(context, listen: false)
-                      .currentView
-                      .value = 1;
                 }),
           );
         }
@@ -193,8 +212,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
             onBookClickCallback: () {
               Provider.of<AppModel>(context, listen: false)
                   .openBook(book, 0, openLeftPane: true);
-              Provider.of<AppModel>(context, listen: false).currentView.value =
-                  1;
             }),
       );
     }

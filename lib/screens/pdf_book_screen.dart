@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -65,7 +67,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     : 1;
                 Provider.of<AppModel>(context, listen: false).addBookmark(
                     ref: '${widget.tab.title} עמוד $index',
-                    book: widget.tab.book,
+                    tab: widget.tab,
                     index: index);
                 // notify user
                 if (mounted) {
@@ -95,6 +97,23 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 widget.tab.pdfViewerController.goToPage(pageNumber: 1),
           ),
           IconButton(
+              icon: const Icon(Icons.chevron_left),
+              tooltip: 'הקודם',
+              onPressed: () => widget.tab.pdfViewerController.isReady
+                  ? widget.tab.pdfViewerController.goToPage(
+                      pageNumber: max(
+                          widget.tab.pdfViewerController.pageNumber! - 1, 1))
+                  : null),
+          IconButton(
+            onPressed: () => widget.tab.pdfViewerController.isReady
+                ? widget.tab.pdfViewerController.goToPage(
+                    pageNumber: min(
+                        widget.tab.pdfViewerController.pageNumber! + 1,
+                        widget.tab.pdfViewerController.pages.length))
+                : null,
+            icon: const Icon(Icons.chevron_right),
+          ),
+          IconButton(
             icon: const Icon(Icons.last_page),
             tooltip: 'סוף הספר',
             onPressed: () => widget.tab.pdfViewerController.goToPage(
@@ -119,8 +138,8 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                   child: Column(
                     children: [
                       const TabBar(tabs: [
-                        Tab(text: 'חיפוש'),
                         Tab(text: 'ניווט'),
+                        Tab(text: 'חיפוש'),
                         Tab(text: 'דפים'),
                       ]),
                       Expanded(
@@ -128,18 +147,19 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           children: [
                             // NOTE: documentRef is not explicitly used but it indicates that
                             // the document is changed.
-                            ValueListenableBuilder(
-                              valueListenable: widget.tab.documentRef,
-                              builder: (context, documentRef, child) => child!,
-                              child:
-                                  PdfBookSearchView(textSearcher: textSearcher),
-                            ),
+
                             ValueListenableBuilder(
                               valueListenable: widget.tab.outline,
                               builder: (context, outline, child) => OutlineView(
                                 outline: outline,
                                 controller: widget.tab.pdfViewerController,
                               ),
+                            ),
+                            ValueListenableBuilder(
+                              valueListenable: widget.tab.documentRef,
+                              builder: (context, documentRef, child) => child!,
+                              child:
+                                  PdfBookSearchView(textSearcher: textSearcher),
                             ),
                             ValueListenableBuilder(
                               valueListenable: widget.tab.documentRef,
@@ -261,7 +281,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           if (link.url != null) {
                             navigateToUrl(link.url!);
                           } else if (link.dest != null) {
-                            widget..tab.pdfViewerController.goToDest(link.dest);
+                            widget.tab.pdfViewerController.goToDest(link.dest);
                           }
                         },
                         hoverColor: Colors.blue.withOpacity(0.2),

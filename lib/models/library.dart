@@ -74,7 +74,7 @@ class Library extends Category {
   /// this library.
   Library({required List<Category> categories})
       : super(
-            title: 'אוצריא',
+            title: 'ספריית אוצריא',
             subCategories: categories,
             books: [],
             parent: null) {

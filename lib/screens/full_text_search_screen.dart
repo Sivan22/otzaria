@@ -199,7 +199,7 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
             widget.openBookCallback(
               TextBookTab(
                   book: TextBook(title: utils.getTitleFromPath(result.path)),
-                  initalIndex: result.index,
+                  index: result.index,
                   searchText: result.query),
             );
           },

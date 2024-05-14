@@ -54,7 +54,7 @@ class _TocViewerState extends State<TocViewer>
             padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
             child: ExpansionTile(
               initiallyExpanded: entry.level == 1,
-              shape: Border(),
+              shape: const Border(),
               title: Text(entry.text),
               children:
                   _buildTree(entry.children), // Recursively build children

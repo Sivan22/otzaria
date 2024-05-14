@@ -316,8 +316,8 @@ class _TextBookViewerState extends State<TextBookViewer>
                   widget.tab.tableOfContents),
               builder: (context, snapshot) => snapshot.hasData
                   ? Center(
-                      child:
-                          Text(snapshot.data!, style: TextStyle(fontSize: 17)),
+                      child: Text(snapshot.data!,
+                          style: const TextStyle(fontSize: 17)),
                     )
                   : const SizedBox.shrink(),
             );
@@ -351,7 +351,7 @@ class _TextBookViewerState extends State<TextBookViewer>
           onPressed: () {
             widget.tab.removeNikud.value = !widget.tab.removeNikud.value;
           },
-          icon: Icon(Icons.format_overline),
+          icon: const Icon(Icons.format_overline),
           tooltip: 'הצג או הסתר ניקוד',
         ),
         //button to add a bookmark
@@ -363,7 +363,7 @@ class _TextBookViewerState extends State<TextBookViewer>
               Provider.of<AppModel>(context, listen: false).addBookmark(
                   ref: await utils.refFromIndex(
                       index, widget.tab.tableOfContents),
-                  book: widget.tab.book,
+                  tab: widget.tab,
                   index: index);
             }();
             // notify user
@@ -383,7 +383,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
         // button to search
         MediaQuery.of(context).size.width < 600
-            ? SizedBox.shrink()
+            ? const SizedBox.shrink()
             : IconButton(
                 onPressed: () {
                   widget.tab.showLeftPane.value = true;
@@ -398,7 +398,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
         // button to zoom in
         MediaQuery.of(context).size.width < 600
-            ? SizedBox.shrink()
+            ? const SizedBox.shrink()
             : IconButton(
                 icon: const Icon(
                   Icons.zoom_in,
@@ -409,7 +409,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                           min(50.0, widget.tab.textFontSize + 3);
                     })),
         MediaQuery.of(context).size.width < 600
-            ? SizedBox.shrink()
+            ? const SizedBox.shrink()
             : IconButton(
                 icon: const Icon(
                   Icons.zoom_out,
@@ -473,7 +473,4 @@ class _TextBookViewerState extends State<TextBookViewer>
   void closeLeftPane() {
     widget.tab.showLeftPane.value = false;
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

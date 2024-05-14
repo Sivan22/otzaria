@@ -1,4 +1,4 @@
-import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/tabs.dart';
 
 /// Represents a bookmark in the application.
 ///
@@ -10,8 +10,8 @@ class Bookmark {
   /// The reference to a specific part of a text.
   final String ref;
 
-  /// The name of the book.
-  final Book book;
+  /// all the information to restore the book and comentators
+  final OpenedTab tab;
 
   /// The index of the bookmark in the text.
   final int index;
@@ -19,7 +19,7 @@ class Bookmark {
   /// Creates a new `Bookmark` instance.
   ///
   /// The [ref], [title], and [index] parameters must not be null.
-  Bookmark({required this.ref, required this.book, required this.index});
+  Bookmark({required this.ref, required this.tab, required this.index});
 
   /// Creates a new `Bookmark` instance from a JSON object.
   ///
@@ -27,7 +27,7 @@ class Bookmark {
   factory Bookmark.fromJson(Map<String, dynamic> json) {
     return Bookmark(
       ref: json['ref'] as String,
-      book: Book.fromJson(json['book'] as Map<String, dynamic>),
+      tab: OpenedTab.fromJson(json['tab'] as Map<String, dynamic>),
       index: json['index'] as int,
     );
   }
@@ -38,7 +38,7 @@ class Bookmark {
   Map<String, dynamic> toJson() {
     return {
       'ref': ref,
-      'book': book.toJson(),
+      'tab': tab.toJson(),
       'index': index,
     };
   }

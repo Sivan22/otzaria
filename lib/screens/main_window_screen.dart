@@ -36,11 +36,14 @@ class MainWindowScreenState extends State<MainWindowScreen>
     final currentView =
         Provider.of<AppModel>(context, listen: false).currentView;
     pageController =
-        PageController(initialPage: currentView.value, keepPage: true);
+        PageController(initialPage: currentView.value.index, keepPage: true);
 
     currentView.addListener(() {
       pageController!.animateToPage(
-          currentView.value == 2 ? 1 : currentView.value,
+          //show the requested screen, unless it is the search screen, in which case show the reading screen
+          currentView.value == Screens.search
+              ? Screens.reading.index
+              : currentView.value.index,
           duration: const Duration(milliseconds: 300),
           curve: Curves.linear);
       setState(() {});
@@ -80,7 +83,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                       scrollDirection: Axis.vertical,
                       physics: const NeverScrollableScrollPhysics(),
                       controller: pageController,
-                      children: <Widget>[
+                      children: const <Widget>[
                         LibraryBrowser(),
                         ReadingScreen(),
                         SizedBox.shrink(),
@@ -104,19 +107,22 @@ class MainWindowScreenState extends State<MainWindowScreen>
       buildNavigationSideBar(appModel),
       //mainWindow
       Expanded(
-        child: PageView(
-          scrollDirection: Axis.vertical,
-          physics: const NeverScrollableScrollPhysics(),
-          controller: pageController,
-          children: <Widget>[
-            LibraryBrowser(),
-            ReadingScreen(),
-            SizedBox.shrink(),
-            FavouritesScreen(),
-            MySettingsScreen(),
-          ],
-          //index: appModel.currentView == 3 ? 1 : appModel.currentView,
-        ),
+        child: OrientationBuilder(builder: (context, orientation) {
+          return PageView(
+            scrollDirection: orientation == Orientation.landscape
+                ? Axis.vertical
+                : Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            controller: pageController,
+            children: const <Widget>[
+              LibraryBrowser(),
+              ReadingScreen(),
+              SizedBox.shrink(),
+              FavouritesScreen(),
+              MySettingsScreen(),
+            ],
+          );
+        }),
       ),
     ]);
   }
@@ -141,11 +147,11 @@ class MainWindowScreenState extends State<MainWindowScreen>
           destinations: const [
             NavigationRailDestination(
               icon: Icon(Icons.library_books),
-              label: Text('ספריה'),
+              label: Text('ספרייה'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.menu_book),
-              label: Text('קריאה'),
+              label: Text('עיון'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.search),
@@ -160,9 +166,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: Text('הגדרות'),
             ),
           ],
-          selectedIndex: appModel.currentView.value,
+          selectedIndex: appModel.currentView.value.index,
           onDestinationSelected: (int index) {
-            appModel.currentView.value = index;
+            appModel.currentView.value = Screens.values[index];
+            pageController = PageController(initialPage: index, keepPage: true);
             switch (index) {
               case 2:
                 appModel.openNewSearchTab();
@@ -182,7 +189,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
             ),
             NavigationDestination(
               icon: Icon(Icons.menu_book),
-              label: 'קריאה',
+              label: 'עיון',
             ),
             NavigationDestination(
               icon: Icon(Icons.search),
@@ -197,12 +204,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
               label: 'הגדרות',
             ),
           ],
-          selectedIndex: appModel.currentView.value,
+          selectedIndex: appModel.currentView.value.index,
           onDestinationSelected: (int index) {
             setState(() {
-              appModel.currentView.value = index;
+              appModel.currentView.value = Screens.values[index];
               switch (index) {
-                case 3:
+                case 2:
                   appModel.openNewSearchTab();
               }
             });

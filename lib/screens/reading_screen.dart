@@ -28,12 +28,12 @@ class _ReadingScreenState extends State<ReadingScreen>
           } else if (tab is TextBookTab) {
             return TextBookViewer(
               tab: tab,
-              openBookCallback: appModel.addTab,
+              openBookCallback: appModel.openTab,
               data: tab.text,
             );
           } else if (tab is SearchingTab) {
             return TextFileSearchScreen(
-              openBookCallback: appModel.addTab,
+              openBookCallback: appModel.openTab,
               searcher: tab.searcher,
             );
           }
@@ -57,8 +57,9 @@ class _ReadingScreenState extends State<ReadingScreen>
               // a button to open the library browser
               Center(
                 child: ElevatedButton(
-                  onPressed: (() => appModel.currentView.value = 0),
-                  child: const Text('עיון בספריה'),
+                  onPressed: (() =>
+                      appModel.currentView.value = Screens.library),
+                  child: const Text('דפדוף בספריה'),
                 ),
               ),
             ],
