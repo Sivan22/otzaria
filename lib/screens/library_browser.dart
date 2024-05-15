@@ -82,6 +82,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return ListView(
+                      key: PageStorageKey(currentTopCategory.toString()),
                       children: snapshot.data!,
                     );
                   }
