@@ -188,7 +188,7 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-the code is currently Unlicensed. it may change in the future.
+the code is currently Unlicensed. it may change in the future, but it will allways stay open-sourced.
 
 the texts has different open licenses. you may check Sefaria's site for more info on that.
 
