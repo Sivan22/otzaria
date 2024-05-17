@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
@@ -110,6 +110,17 @@ class MySettingsScreen extends StatelessWidget {
                       leading: const Icon(Icons.font_download_outlined),
                       onChange: (value) {},
                     ),
+                    SliderSettingsTile(
+                      title: 'רוחב השוליים בצידי הטקסט',
+                      settingKey: 'key-padding-size',
+                      defaultValue: 10,
+                      min: 0,
+                      max: 300,
+                      step: 1,
+                      leading: Icon(Icons.horizontal_distribute),
+                      decimalPrecision: 0,
+                      onChange: (p0) => appModel.paddingSize.value = p0,
+                    ),
                   ],
                 ),
                 Platform.isAndroid
@@ -181,19 +192,24 @@ class MySettingsScreen extends StatelessWidget {
                   title: 'כללי',
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
-                    TextInputSettingsTile(
-                      settingKey: 'key-library-path',
-                      title: 'מיקום הספריה',
-                      leading: IconButton(
-                        icon: const Icon(Icons.folder),
-                        onPressed: () async {
-                          String? path =
-                              await FilePicker.platform.getDirectoryPath();
-                          if (path != null) {
-                            Settings.setValue<String>('key-library-path', path);
-                          }
-                        },
-                      ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.folder),
+                          onPressed: () async {
+                            String? path =
+                                await FilePicker.platform.getDirectoryPath();
+                            if (path != null) {
+                              Settings.setValue<String>(
+                                  'key-library-path', path);
+                            }
+                          },
+                        ),
+                        const TextInputSettingsTile(
+                          settingKey: 'key-library-path',
+                          title: 'מיקום הספריה',
+                        ),
+                      ],
                     ),
                   ],
                 )

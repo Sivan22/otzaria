@@ -3,7 +3,7 @@ it includes the library, a list of the opened tabs, the current tab, the current
 and the some other app settings like dark mode and the seed color*/
 
 import 'dart:math';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
@@ -49,6 +49,10 @@ class AppModel with ChangeNotifier {
     ConversionUtils.colorFromString(
         Settings.getValue<String>('key-swatch-color') ?? ('#ff2c1b02')),
   );
+
+  /// The color used as seed.
+  final ValueNotifier<double> paddingSize = ValueNotifier<double>(
+      Settings.getValue<double>('key-swatch-color') ?? 10);
 
   /// a focus node for the search field in libraryBrowser
   FocusNode bookLocatorFocusNode = FocusNode();
@@ -257,7 +261,6 @@ class AppModel with ChangeNotifier {
     Hive.box(name: 'history').clear();
   }
 }
-
 
 /// An enum that represents the different screens in the application.
 enum Screens { library, reading, search, favorites, settings }

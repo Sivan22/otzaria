@@ -6,7 +6,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 import 'package:docx_to_text/docx_to_text.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/models/books.dart';

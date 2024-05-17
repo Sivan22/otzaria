@@ -10,7 +10,7 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:flutter_settings_screen_ex/flutter_settings_screen_ex.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 abstract class OpenedTab {
   String title;

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:expandable/expandable.dart';
 import 'package:otzaria/models/books.dart';
@@ -38,49 +40,45 @@ class CategoryGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-        child: InkWell(
-      borderRadius: BorderRadius.circular(12.0),
-      hoverColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-      hoverDuration: Durations.medium1,
-      onTap: () => onCategoryClickCallback(),
-      child: ListView(
-          shrinkWrap: true,
-          //should
-          physics: const ClampingScrollPhysics(),
-          children: [
-            ExpandablePanel(
-              theme: ExpandableThemeData(
-                  headerAlignment: ExpandablePanelHeaderAlignment.center,
-                  tapBodyToExpand: false,
-                  tapHeaderToExpand: false,
-                  hasIcon: category.shortDescription != '' ? true : false,
-                  iconPlacement: ExpandablePanelIconPlacement.right,
-                  alignment: Alignment.center,
-                  expandIcon: Icons.info_outline,
-                  collapseIcon: Icons.keyboard_arrow_up,
-                  iconSize: 12),
-              header: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    category.title,
-                    style: Theme.of(context).textTheme.headlineSmall,
+      child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
+        borderRadius: BorderRadius.circular(12.0),
+        hoverColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+        hoverDuration: Durations.medium1,
+        onTap: () => onCategoryClickCallback(),
+        child: Align(
+            alignment: Alignment.topRight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ListTile(
+                    title: Text(
+                      category.title,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
-              ),
-              collapsed: const SizedBox.shrink(),
-              expanded: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  category.shortDescription,
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.secondary),
-                ),
-              ),
-            ),
-          ]),
-    ));
+                category.shortDescription.isEmpty
+                    ? SizedBox.shrink()
+                    : Tooltip(
+                        margin: EdgeInsetsDirectional.only(end: 20),
+                        richMessage: TextSpan(
+                          text: category.shortDescription,
+                        ),
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.info_outline),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withOpacity(0.6),
+                        ),
+                      )
+              ],
+            )),
+      ),
+    );
   }
 }
 
@@ -99,62 +97,47 @@ class BookGridItem extends StatelessWidget {
     return GestureDetector(
       child: Card(
         child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
           borderRadius: BorderRadius.circular(12.0),
           hoverColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
           onTap: () => onBookClickCallback(),
           hoverDuration: Durations.medium1,
-          child: ListView(
-            shrinkWrap: true,
-            primary: true,
-            physics: const ScrollPhysics(),
-            children: [
-              ExpandablePanel(
-                theme: ExpandableThemeData(
-                    headerAlignment: ExpandablePanelHeaderAlignment.center,
-                    tapBodyToExpand: false,
-                    tapHeaderToExpand: false,
-                    hasIcon: book.heShortDesc != null && book.heShortDesc != ''
-                        ? true
-                        : false,
-                    iconPlacement: ExpandablePanelIconPlacement.right,
-                    alignment: Alignment.center,
-                    expandIcon: Icons.info_outline,
-                    collapseIcon: Icons.keyboard_arrow_up,
-                    iconSize: 15),
-                header: ListTile(
-                  title: Text(
-                    book.title,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ListTile(
+                    title: Text(
+                      book.title,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                        (book.author == "" || book.author == null)
+                            ? ''
+                            : ('${book.author!} ${book.pubDate ?? ''}'),
+                        style: const TextStyle(fontSize: 13)),
                   ),
-                  subtitle: Text(
-                      (book.author == "" || book.author == null)
-                          ? ''
-                          : ('${book.author!} ${book.pubDate ?? ''}'),
-                      style: const TextStyle(fontSize: 13)),
-                  //isThreeLine: true,
-                  trailing: book is TextBook
-                      ? null
-                      : SizedBox.fromSize(
-                          size: const Size.square(30),
-                          child: const Center(
-                              child: Icon(
-                            Icons.picture_as_pdf,
-                          )
-                              //}
-                              // },
-                              ),
+                ),
+                book.heShortDesc == null || book.heShortDesc == ''
+                    ? SizedBox.shrink()
+                    : Tooltip(
+                        height: 50,
+                        richMessage: TextSpan(
+                          text: book.heShortDesc,
                         ),
-                ),
-                collapsed: const SizedBox.shrink(),
-                expanded: Text(
-                  book.heShortDesc ?? '',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.secondary),
-                ),
-              ),
-            ],
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.info_outline),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withOpacity(0.6),
+                        ),
+                      ),
+              ],
+            ),
           ),
         ),
       ),
@@ -178,10 +161,10 @@ class MyGridView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 45),
                   child: GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        //max number of items per row is 5 and min is 2
+                        //max number of items per row is 5 and min is 1
                         crossAxisCount:
-                            max(2, min(constraints.maxWidth ~/ 200, 5)),
-                        childAspectRatio: 1.5,
+                            max(1, min(constraints.maxWidth ~/ 250, 5)),
+                        childAspectRatio: 2.5,
                         crossAxisSpacing: 4,
                         mainAxisSpacing: 4),
                     itemCount: snapshot.data!.length,

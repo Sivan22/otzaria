@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
 import 'package:provider/provider.dart';
@@ -68,15 +69,10 @@ class _TextBookViewerState extends State<TextBookViewer>
         appBar: buildAppBar(),
         body: LayoutBuilder(builder: (context, constraints) {
           //if the screen is small, display the tab bar ontop of the viewer
-          if (constraints.maxWidth < 600) {
-            return Stack(children: [
-              buildHTMLViewer(),
-              Container(color: Colors.white, child: buildTabBar()),
-            ]);
-          }
-          return Row(children: [
-            buildTabBar(),
-            Expanded(child: buildHTMLViewer()),
+
+          return Stack(children: [
+            buildHTMLViewer(),
+            Container(color: Colors.white, child: buildTabBar()),
           ]);
         }));
   }
@@ -127,36 +123,37 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     //don't autofocus on android, so that the keyboard doesn't appear
                                     autofocus:
                                         Platform.isAndroid ? false : true,
-                                    child: ValueListenableBuilder(
-                                      valueListenable:
-                                          widget.tab.showSplitedView,
-                                      builder: (context, value, child) =>
-                                          ValueListenableBuilder(
-                                              valueListenable:
-                                                  widget.tab.commentatorsToShow,
-                                              builder: (context, value, child) {
-                                                if (widget.tab.showSplitedView
-                                                        .value &&
-                                                    widget
-                                                        .tab
-                                                        .commentatorsToShow
-                                                        .value
-                                                        .isNotEmpty) {
-                                                  return buildSplitedView(
-                                                      snapshot,
-                                                      searchTextController);
-                                                } else {
-                                                  return buildCombinedView(
-                                                      snapshot,
-                                                      searchTextController);
-                                                }
-                                              }),
-                                    )))),
+                                    child: buildSplitedOrCombinedView(
+                                        snapshot, searchTextController)))),
                       )));
             }
           }
           return const Center(child: CircularProgressIndicator());
         });
+  }
+
+  ValueListenableBuilder<bool> buildSplitedOrCombinedView(
+      AsyncSnapshot<String> snapshot, TextEditingValue searchTextController) {
+    return ValueListenableBuilder(
+        valueListenable: widget.tab.showSplitedView,
+        builder: (context, value, child) => ValueListenableBuilder(
+            valueListenable: widget.tab.commentatorsToShow,
+            builder: (context, value, child) {
+              if (widget.tab.showSplitedView.value &&
+                  widget.tab.commentatorsToShow.value.isNotEmpty) {
+                return buildSplitedView(snapshot, searchTextController);
+              } else {
+                return ValueListenableBuilder(
+                    valueListenable: Provider.of<AppModel>(context).paddingSize,
+                    builder: (context, value, child) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: value),
+                        child:
+                            buildCombinedView(snapshot, searchTextController),
+                      );
+                    });
+              }
+            }));
   }
 
   Widget buildSplitedView(

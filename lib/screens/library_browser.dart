@@ -1,6 +1,4 @@
 import 'dart:isolate';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/widgets.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:flutter/material.dart';
 import 'package:otzaria/widgets/grid_items.dart';
@@ -82,7 +80,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return ListView(
-                      key: PageStorageKey(currentTopCategory.toString()),
+                      //key: PageStorageKey(currentTopCategory.toString()),
                       children: snapshot.data!,
                     );
                   }
