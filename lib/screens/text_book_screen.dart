@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
 import 'package:provider/provider.dart';

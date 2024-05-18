@@ -13,7 +13,6 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/links.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
 /// An implementation of the data layer based on the filesystem.
 ///
@@ -46,6 +45,7 @@ class FileSystemData extends Data {
     () async {
       //first try to get the library path from settings
       libraryPath = Settings.getValue('key-library-path');
+
       //if faild, or the path doesn't conatains 'אוצריא', ask the user to choose the path
       while (libraryPath == null ||
           (!Directory('$libraryPath${Platform.pathSeparator}אוצריא')
@@ -102,12 +102,8 @@ class FileSystemData extends Data {
 
   @override
 
-  /// Returns the library,  (b/c it is a file system data provider,
-  ///  it is based on the library path that was provided in the initialization of the data provider.)
+  /// Returns the library
   Library getLibrary() {
-    if (libraryPath == null) {
-      init();
-    }
     return _getLibraryFromDirectory(
         '${libraryPath!}${Platform.pathSeparator}אוצריא');
   }

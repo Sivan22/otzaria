@@ -62,10 +62,21 @@ class CategoryGridItem extends StatelessWidget {
                 category.shortDescription.isEmpty
                     ? SizedBox.shrink()
                     : Tooltip(
-                        margin: EdgeInsetsDirectional.only(end: 20),
-                        richMessage: TextSpan(
-                          text: category.shortDescription,
-                        ),
+                        richMessage: WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              constraints: const BoxConstraints(maxWidth: 250),
+                              child: Text(
+                                category.shortDescription,
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary),
+                              ),
+                            )),
                         child: IconButton(
                           onPressed: () {},
                           icon: const Icon(Icons.info_outline),
@@ -106,8 +117,19 @@ class BookGridItem extends StatelessWidget {
             alignment: Alignment.topRight,
             child: Row(
               children: [
+                book is PdfBook
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                        child: Icon(Icons.picture_as_pdf,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .secondary
+                                .withOpacity(0.6)),
+                      )
+                    : const SizedBox.shrink(),
                 Expanded(
                   child: ListTile(
+                    mouseCursor: SystemMouseCursors.click,
                     title: Text(
                       book.title,
                       style: const TextStyle(
@@ -121,13 +143,26 @@ class BookGridItem extends StatelessWidget {
                   ),
                 ),
                 book.heShortDesc == null || book.heShortDesc == ''
-                    ? SizedBox.shrink()
+                    ? const SizedBox.shrink()
                     : Tooltip(
-                        height: 50,
-                        richMessage: TextSpan(
-                          text: book.heShortDesc,
-                        ),
+                        triggerMode: TooltipTriggerMode.tap,
+                        richMessage: WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              constraints: const BoxConstraints(maxWidth: 250),
+                              child: Text(
+                                book.heShortDesc!,
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary),
+                              ),
+                            )),
                         child: IconButton(
+                          mouseCursor: SystemMouseCursors.basic,
                           onPressed: () {},
                           icon: const Icon(Icons.info_outline),
                           color: Theme.of(context)

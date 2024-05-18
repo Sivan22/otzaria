@@ -97,6 +97,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       padding: const EdgeInsets.all(8.0),
       child: TextField(
           focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
+          autofocus: true,
           controller: searchController,
           decoration: InputDecoration(
             constraints: const BoxConstraints(maxWidth: 400),

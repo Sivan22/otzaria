@@ -5,11 +5,16 @@ import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 
-class MySettingsScreen extends StatelessWidget {
+class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({
     Key? key,
   }) : super(key: key);
 
+  @override
+  State<MySettingsScreen> createState() => _MySettingsScreenState();
+}
+
+class _MySettingsScreenState extends State<MySettingsScreen> {
   @override
   Widget build(BuildContext context) {
     const Map<String, String> shortcuctsList = {
@@ -59,6 +64,7 @@ class MySettingsScreen extends StatelessWidget {
               title: 'הגדרות',
               children: [
                 SettingsGroup(
+                  titleAlignment: Alignment.centerRight,
                   title: 'הגדרות עיצוב',
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: <Widget>[
@@ -126,6 +132,7 @@ class MySettingsScreen extends StatelessWidget {
                 Platform.isAndroid
                     ? const SizedBox.shrink()
                     : const SettingsGroup(
+                        titleAlignment: Alignment.centerRight,
                         title: "קיצורי מקשים",
                         titleTextStyle: TextStyle(fontSize: 25),
                         children: [
@@ -167,6 +174,7 @@ class MySettingsScreen extends StatelessWidget {
                           ]),
                 const SettingsGroup(
                     title: 'הגדרות ממשק',
+                    titleAlignment: Alignment.centerRight,
                     titleTextStyle: TextStyle(fontSize: 25),
                     children: [
                       //       Platform.isAndroid
@@ -190,26 +198,24 @@ class MySettingsScreen extends StatelessWidget {
                     ]),
                 SettingsGroup(
                   title: 'כללי',
+                  titleAlignment: Alignment.centerRight,
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.folder),
-                          onPressed: () async {
-                            String? path =
-                                await FilePicker.platform.getDirectoryPath();
-                            if (path != null) {
-                              Settings.setValue<String>(
-                                  'key-library-path', path);
-                            }
-                          },
-                        ),
-                        const TextInputSettingsTile(
-                          settingKey: 'key-library-path',
-                          title: 'מיקום הספריה',
-                        ),
-                      ],
+                    SimpleSettingsTile(
+                      title: 'מיקום הספרייה',
+                      subtitle:
+                          '${Settings.getValue<String>('key-library-path') ?? 'לא קיים'}',
+                      leading: Icon(Icons.folder),
+                      onTap: () async {
+                        String? path =
+                            await FilePicker.platform.getDirectoryPath();
+                        if (path != null) {
+                          Settings.setValue<String>('key-library-path', path);
+                          setState(
+                            () {},
+                          );
+                        }
+                      },
                     ),
                   ],
                 )
