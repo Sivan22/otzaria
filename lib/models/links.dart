@@ -91,9 +91,12 @@ Future<List<Link>> getLinksforIndexs(
     allLinks.sort(
         //sort by the order of the commentators to show and then by the heRef
         (a, b) {
-      if (utils.getTitleFromPath(a.path2) == utils.getTitleFromPath(a.path2)) {
-        return a.heRef.compareTo(b.heRef);
-      }
+      return a.heRef.compareTo(b.heRef);
+    });
+
+    allLinks.sort(
+        //sort by the order of the commentators to show and then by the heRef
+        (a, b) {
       return commentatorsToShow
           .indexOf(utils.getTitleFromPath(a.path2))
           .compareTo(

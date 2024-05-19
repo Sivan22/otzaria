@@ -52,6 +52,7 @@ class CategoryGridItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: ListTile(
+                    mouseCursor: SystemMouseCursors.click,
                     title: Text(
                       category.title,
                       style: const TextStyle(
@@ -78,6 +79,7 @@ class CategoryGridItem extends StatelessWidget {
                               ),
                             )),
                         child: IconButton(
+                          mouseCursor: SystemMouseCursors.basic,
                           onPressed: () {},
                           icon: const Icon(Icons.info_outline),
                           color: Theme.of(context)

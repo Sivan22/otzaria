@@ -52,7 +52,7 @@ class AppModel with ChangeNotifier {
 
   /// The color used as seed.
   final ValueNotifier<double> paddingSize = ValueNotifier<double>(
-      Settings.getValue<double>('key-swatch-color') ?? 10);
+      Settings.getValue<double>('key-padding-size') ?? 10);
 
   /// a focus node for the search field in libraryBrowser
   FocusNode bookLocatorFocusNode = FocusNode();
