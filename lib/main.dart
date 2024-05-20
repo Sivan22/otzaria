@@ -7,6 +7,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/cache_provider.dart';
 import 'package:otzaria/data/hive_data_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 void main() async {
   // initializing all the hive components
@@ -18,10 +19,17 @@ void main() async {
   await () async {
     //first try to get the library path from settings
     String? libraryPath = Settings.getValue('key-library-path');
+    //on windows, if the path is not set, defaults to C:/אוצריא
+    if (Platform.isWindows && libraryPath == null) {
+      libraryPath = 'C:/אוצריא';
+      Settings.setValue('key-library-path', libraryPath);
+    }
     //if faild, ask the user to choose the path
-    while (libraryPath == null) {
+    while (libraryPath == null ||
+        (!Directory('$libraryPath${Platform.pathSeparator}אוצריא')
+            .existsSync())) {
       libraryPath = await FilePicker.platform
-          .getDirectoryPath(dialogTitle: "מיקום ספריית אוצריא נדרש");
+          .getDirectoryPath(dialogTitle: "הגדר את מיקום ספריית אוצריא");
       Settings.setValue('key-library-path', libraryPath);
     }
   }();

@@ -40,22 +40,9 @@ class FileSystemData extends Data {
   ///
   /// Returns a `Future` that completes when the initialization is done.
   ///
-  init() {
+  init() async {
     //taking care of getting the library path
-    () async {
-      //first try to get the library path from settings
-      libraryPath = Settings.getValue('key-library-path');
-
-      //if faild, or the path doesn't conatains 'אוצריא', ask the user to choose the path
-      while (libraryPath == null ||
-          (!Directory('$libraryPath${Platform.pathSeparator}אוצריא')
-              .existsSync())) {
-        libraryPath = await FilePicker.platform
-            .getDirectoryPath(dialogTitle: "הגדר את מיקום ספריית אוצריא");
-        Settings.setValue('key-library-path', libraryPath);
-      }
-    }();
-
+    await getLibraryPath();
     //updating the title to path index
     _updateTitleToPath();
     //fetching the metadata for the books in the library
@@ -67,6 +54,11 @@ class FileSystemData extends Data {
 
   String? libraryPath;
   Map<String, String> titleToPath = {};
+
+  getLibraryPath() async {
+    //get the library path from settings (as it was initialized in main())
+    libraryPath = Settings.getValue('key-library-path');
+  }
 
   ///the implementation of the links from app's model, based on the filesystem.
   ///the links are in the folder 'links' with the name '<book_title>_links.json'
