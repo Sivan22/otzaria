@@ -7,15 +7,33 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/cache_provider.dart';
 import 'package:otzaria/data/hive_data_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
+/// The main entry point of the application.
+///
+/// This function is responsible for initializing the application and running
+/// it. It performs the following steps:
+/// 1. Requests external storage permission on Android.
+/// 2. Initializes all the Hive components.
+/// 3. Initializes the library path.
+///
+/// This function does not take any parameters and does not return any values.
+///
+
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // requesting external storage permission on android
+  while (
+      Platform.isAndroid && !await Permission.manageExternalStorage.isGranted) {
+    Permission.manageExternalStorage.request();
+  }
   // initializing all the hive components
   await () async {
     await Settings.init(cacheProvider: HiveCache());
     await initHiveBoxes();
-    WidgetsFlutterBinding.ensureInitialized();
   }();
+  // initializing the library path
   await () async {
     //first try to get the library path from settings
     String? libraryPath = Settings.getValue('key-library-path');

@@ -166,6 +166,7 @@ class AppModel with ChangeNotifier {
   void closeTab(OpenedTab tab) {
     addTabToHistory(tab);
     tabs.remove(tab);
+    currentTab = max(currentTab - 1, 0);
     notifyListeners();
     saveTabsToDisk();
   }

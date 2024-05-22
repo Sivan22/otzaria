@@ -147,7 +147,6 @@ class BookGridItem extends StatelessWidget {
                 book.heShortDesc == null || book.heShortDesc == ''
                     ? const SizedBox.shrink()
                     : Tooltip(
-                        triggerMode: TooltipTriggerMode.tap,
                         richMessage: WidgetSpan(
                             alignment: PlaceholderAlignment.baseline,
                             baseline: TextBaseline.alphabetic,

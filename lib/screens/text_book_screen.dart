@@ -312,8 +312,10 @@ class _TextBookViewerState extends State<TextBookViewer>
                   widget.tab.tableOfContents),
               builder: (context, snapshot) => snapshot.hasData
                   ? Center(
-                      child: Text(snapshot.data!,
-                          style: const TextStyle(fontSize: 17)),
+                      child: SelectionArea(
+                        child: Text(snapshot.data!,
+                            style: const TextStyle(fontSize: 17)),
+                      ),
                     )
                   : const SizedBox.shrink(),
             );

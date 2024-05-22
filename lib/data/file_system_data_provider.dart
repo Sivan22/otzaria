@@ -5,9 +5,8 @@ and every directory is represents a category */
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
-import 'package:docx_to_text/docx_to_text.dart';
+import 'package:otzaria/utils/docx_to_otzaria.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/data/data.dart';
@@ -85,7 +84,7 @@ class FileSystemData extends Data {
       File file = File(path);
       if (path.endsWith('.docx')) {
         final bytes = await file.readAsBytes();
-        return docxToText(bytes);
+        return docxToText(bytes, title);
       } else {
         return await file.readAsString();
       }
@@ -245,12 +244,14 @@ class FileSystemData extends Data {
           category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
               Directory(entity.path), category));
         } else {
-          // add the book to the category (the type of book is based on the file extension)
-          entity.path.toLowerCase().endsWith('.pdf')
-              ? category.books.add(PdfBook(
-                  title: getTitleFromPath(entity.path), path: entity.path))
-              : category.books
-                  .add(TextBook(title: getTitleFromPath(entity.path)));
+          if (entity.path.toLowerCase().endsWith('.pdf')) {
+            category.books.add(PdfBook(
+                title: getTitleFromPath(entity.path), path: entity.path));
+          }
+          if (entity.path.toLowerCase().endsWith('.txt') ||
+              entity.path.toLowerCase().endsWith('.docx')) {
+            category.books.add(TextBook(title: getTitleFromPath(entity.path)));
+          }
         }
       }
       return category;

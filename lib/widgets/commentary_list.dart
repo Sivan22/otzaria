@@ -67,20 +67,24 @@ class _CommentaryListState extends State<CommentaryList> {
         if (thisLinksSnapshot.hasData) {
           return thisLinksSnapshot.data!.isEmpty
               ? const SizedBox.shrink()
-              : ListView.builder(
-                  key: PageStorageKey(thisLinksSnapshot.data![0].heRef),
-                  physics: const ClampingScrollPhysics(),
-                  primary: true,
-                  shrinkWrap: true,
-                  itemCount: thisLinksSnapshot.data!.length,
-                  itemBuilder: (context, index1) => GestureDetector(
-                    child: ListTile(
-                      title: Text(thisLinksSnapshot.data![index1].heRef),
-                      subtitle:
-                          buildCommentaryContent(index1, thisLinksSnapshot),
-                    ),
-                  ),
-                );
+              : ValueListenableBuilder(
+                  valueListenable: widget.textBookTab.removeNikud,
+                  builder: (context, _, child) {
+                    return ListView.builder(
+                      key: PageStorageKey(thisLinksSnapshot.data![0].heRef),
+                      physics: const ClampingScrollPhysics(),
+                      primary: true,
+                      shrinkWrap: true,
+                      itemCount: thisLinksSnapshot.data!.length,
+                      itemBuilder: (context, index1) => GestureDetector(
+                        child: ListTile(
+                          title: Text(thisLinksSnapshot.data![index1].heRef),
+                          subtitle:
+                              buildCommentaryContent(index1, thisLinksSnapshot),
+                        ),
+                      ),
+                    );
+                  });
         }
         return const Center(
           child: CircularProgressIndicator(),
@@ -95,6 +99,7 @@ class _CommentaryListState extends State<CommentaryList> {
       link: snapshot.data![smallindex],
       fontSize: widget.fontSize,
       openBookCallback: widget.openBookCallback,
+      removeNikud: widget.textBookTab.removeNikud.value,
     );
   }
 }

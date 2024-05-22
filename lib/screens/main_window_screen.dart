@@ -243,6 +243,8 @@ class MainWindowScreenState extends State<MainWindowScreen>
           onDestinationSelected: (int index) {
             setState(() {
               appModel.currentView.value = Screens.values[index];
+              pageController =
+                  PageController(initialPage: index, keepPage: true);
               switch (index) {
                 case 2:
                   appModel.openNewSearchTab();

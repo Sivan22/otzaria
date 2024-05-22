@@ -48,5 +48,6 @@ Future<String> refFromIndex(
 
   searchToc(toc, index);
 
-  return texts.join(',').replaceAll(' , ', '');
+  texts = texts.map((e) => e.trim()).toList();
+  return texts.join(', ');
 }

@@ -12,7 +12,9 @@ class CommentaryContent extends StatefulWidget {
     required this.link,
     required this.fontSize,
     required this.openBookCallback,
+    required this.removeNikud,
   });
+  final bool removeNikud;
   final Link link;
   final double fontSize;
   final Function(TextBookTab) openBookCallback;
@@ -43,7 +45,11 @@ class _CommentaryContentState extends State<CommentaryContent> {
           future: content,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return Html(data: snapshot.data, style: {
+              String text = snapshot.data!;
+              if (widget.removeNikud) {
+                text = utils.removeVolwels(text);
+              }
+              return Html(data: text, style: {
                 'body': Style(
                     fontSize: FontSize(widget.fontSize / 1.2),
                     fontFamily:
