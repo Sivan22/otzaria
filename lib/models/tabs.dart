@@ -123,6 +123,9 @@ class TextBookTab extends OpenedTab {
   /// The index of the scrollable list.
   int index;
 
+  /// if the user selects particular section, we save it in order to show the comentaries of that section
+  ValueNotifier<int?> selectedIndex = ValueNotifier(null);
+
   /// The future that resolves to the list of available commentators.
   late Future<List<String>> availableCommentators;
 
@@ -193,6 +196,7 @@ class TextBookTab extends OpenedTab {
     //sync the the index with the scroll positions
     positionsListener.itemPositions.addListener(() {
       index = positionsListener.itemPositions.value.first.index;
+      selectedIndex.value = null;
     });
 
     //get the available commentaries

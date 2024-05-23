@@ -40,12 +40,15 @@ String docxToText(Uint8List bytes, String title) {
         //get the numbering level
         var numbering = paragraph.getElement('w:pPr')?.getElement('w:numPr');
         if (numbering != null) {
-          final level = numbering.getElement('w:ilvl')?.getAttribute('w:val');
+          String? level = numbering.getElement('w:ilvl')?.getAttribute('w:val');
           if (level != null) {
             // indent the text with the correct amount of spaces (0 for first level)
-            String spacing = '     ' * (int.parse(level));
-            text = '$spacing• $text';
-          }
+            int levelInt = int.parse(level);
+            text = '• $text';
+            for (int i = 0; i < levelInt; i++) {
+              text = '\t$text';
+            }
+          } 
         }
         list.add(text);
       }

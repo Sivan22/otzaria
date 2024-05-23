@@ -25,28 +25,45 @@ class CommentaryList extends StatefulWidget {
 
 class _CommentaryListState extends State<CommentaryList> {
   late Future<List<Link>> thisLinks;
+  late List<int> indexes;
+
+  void _updateThisLinks() {
+    thisLinks = getLinksforIndexs(
+        links: widget.textBookTab.links,
+        commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
+        indexes: indexes);
+  }
 
   @override
   void initState() {
     super.initState();
+    indexes = [widget.index];
+    _updateThisLinks();
 
-    thisLinks = getLinksforIndexs(
-        links: widget.textBookTab.links,
-        commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
-        indexes: [widget.index]);
+    //we listen to the commentators
+    widget.textBookTab.commentatorsToShow.addListener(() => setState(() {
+          _updateThisLinks();
+        }));
 
-    // in case we are inside a splited view, we need to listen to the item positions
+    // in case we are inside a splited view, we need to listen to the selected item and item positions
     if (widget.showSplitView.value) {
+      /// listen to the selected item
+      widget.textBookTab.selectedIndex.addListener(() {
+        if (widget.textBookTab.selectedIndex.value != null) {
+          setState(() {
+            indexes = [widget.textBookTab.selectedIndex.value!];
+            _updateThisLinks();
+          });
+        }
+      });
+      //listen to item positions
       widget.textBookTab.positionsListener.itemPositions.addListener(() {
         if (mounted) {
           setState(() {
-            thisLinks = getLinksforIndexs(
-              links: widget.textBookTab.links,
-              commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
-              indexes: widget.textBookTab.positionsListener.itemPositions.value
-                  .map((e) => e.index)
-                  .toList(),
-            );
+            indexes = widget.textBookTab.positionsListener.itemPositions.value
+                .map((e) => e.index)
+                .toList();
+            _updateThisLinks();
           });
         }
       });
@@ -56,6 +73,8 @@ class _CommentaryListState extends State<CommentaryList> {
   @override
   void dispose() {
     widget.textBookTab.positionsListener.itemPositions.removeListener(() {});
+    widget.textBookTab.commentatorsToShow.removeListener(() {});
+    widget.textBookTab.selectedIndex.removeListener(() {});
     super.dispose();
   }
 
@@ -79,8 +98,12 @@ class _CommentaryListState extends State<CommentaryList> {
                       itemBuilder: (context, index1) => GestureDetector(
                         child: ListTile(
                           title: Text(thisLinksSnapshot.data![index1].heRef),
-                          subtitle:
-                              buildCommentaryContent(index1, thisLinksSnapshot),
+                          subtitle: CommentaryContent(
+                            link: thisLinksSnapshot.data![index1],
+                            fontSize: widget.fontSize,
+                            openBookCallback: widget.openBookCallback,
+                            removeNikud: widget.textBookTab.removeNikud.value,
+                          ),
                         ),
                       ),
                     );
@@ -90,16 +113,6 @@ class _CommentaryListState extends State<CommentaryList> {
           child: CircularProgressIndicator(),
         );
       },
-    );
-  }
-
-  Widget buildCommentaryContent(
-      int smallindex, AsyncSnapshot<List<Link>> snapshot) {
-    return CommentaryContent(
-      link: snapshot.data![smallindex],
-      fontSize: widget.fontSize,
-      openBookCallback: widget.openBookCallback,
-      removeNikud: widget.textBookTab.removeNikud.value,
     );
   }
 }

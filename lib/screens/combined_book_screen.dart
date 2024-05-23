@@ -8,12 +8,6 @@ import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 
 class CombinedView extends StatefulWidget {
-  final List<String> data;
-  final TextBookTab tab;
-  final double textSize;
-  final Function(OpenedTab) openBookCallback;
-  final ValueNotifier<bool> showSplitedView;
-
   const CombinedView({
     super.key,
     required this.tab,
@@ -23,17 +17,18 @@ class CombinedView extends StatefulWidget {
     required this.showSplitedView,
   });
 
+  final List<String> data;
+  final Function(OpenedTab) openBookCallback;
+  final ValueNotifier<bool> showSplitedView;
+  final TextBookTab tab;
+  final double textSize;
+
   @override
   State<CombinedView> createState() => _CombinedViewState();
 }
 
 class _CombinedViewState extends State<CombinedView> {
   FocusNode focusNode = FocusNode();
-
-  @override
-  Widget build(BuildContext context) {
-    return buildKeyboardListener();
-  }
 
   KeyboardListener buildKeyboardListener() {
     return KeyboardListener(
@@ -110,5 +105,10 @@ class _CombinedViewState extends State<CombinedView> {
                   showSplitView: ValueNotifier<bool>(false),
                 )
         ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return buildKeyboardListener();
   }
 }
