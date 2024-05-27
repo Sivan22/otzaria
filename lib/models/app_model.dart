@@ -222,6 +222,31 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  void closeOthers(OpenedTab tab) {
+    for (int i = 0; i < tabs.length; i++) {
+      if (tabs[i] != tab) {
+        addTabToHistory(tabs[i]);
+      }
+    }
+    tabs = [tab];
+    currentTab = 0;
+    notifyListeners();
+    saveTabsToDisk();
+  }
+
+  void cloneTab(OpenedTab tab) {
+    _addTab(OpenedTab.from(tab));
+  }
+
+  void moveTab(OpenedTab tab, int newIndex) {
+    tabs.remove(tab);
+    tabs.insert(
+      newIndex,
+      OpenedTab.from(tab),
+    );
+    notifyListeners();
+  }
+
   /// Saves the list of tabs and  the current tab index to disk.
   void saveTabsToDisk() {
     Hive.box(name: 'tabs').put("key-tabs", tabs);

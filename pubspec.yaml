@@ -69,6 +69,7 @@ dependencies:
   expandable: ^5.0.1
   multi_split_view: ^2.4.0
   updat: ^1.3.2
+  flutter_context_menu: ^0.1.3
 
 
 flutter_launcher_icons:
