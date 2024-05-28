@@ -49,6 +49,22 @@ class Category {
     return books;
   }
 
+  List<Category> getAllCategories() {
+    List<Category> categories = [];
+    categories.addAll(subCategories);
+    for (Category category in subCategories) {
+      categories.addAll(category.getAllCategories());
+    }
+    return categories;
+  }
+
+  List<dynamic> getAllBooksAndCategories() {
+    List<dynamic> booksAndCategories = [];
+    booksAndCategories.addAll(getAllBooks());
+    booksAndCategories.addAll(getAllCategories());
+    return booksAndCategories;
+  }
+
   /// Initialize a new [Category] instance.
   ///
   /// The [title] is the name of the category, [subCategories] are the categories

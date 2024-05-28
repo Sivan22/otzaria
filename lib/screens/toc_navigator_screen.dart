@@ -25,7 +25,7 @@ class _TocViewerState extends State<TocViewer>
   @override
   bool get wantKeepAlive => true;
 
-  List<Widget> _buildTree(List<TocEntry> entries) {
+  List<Widget> _buildTree(List<TocEntry> entries, BuildContext context) {
     List<Widget> widgets = [];
     for (final TocEntry entry in entries) {
       if (entry.children.isEmpty) {
@@ -74,9 +74,9 @@ class _TocViewerState extends State<TocViewer>
                   },
                 ),
                 expanded: Column(
-                  children: _buildTree(entry.children),
+                  children: _buildTree(entry.children, context),
                 ),
-                theme: const ExpandableThemeData(
+                theme: ExpandableThemeData(
                   tapBodyToCollapse: false,
                   tapBodyToExpand: false,
                   hasIcon: true,
@@ -84,6 +84,7 @@ class _TocViewerState extends State<TocViewer>
                   collapseIcon: Icons.keyboard_arrow_down_outlined,
                   expandIcon: Icons.chevron_right_rounded,
                   iconPadding: EdgeInsets.fromLTRB(0, 12, 0, 0),
+                  iconColor: Theme.of(context).colorScheme.primary,
                   tapHeaderToExpand: false,
                 ),
                 // Recursively build children,
@@ -105,7 +106,7 @@ class _TocViewerState extends State<TocViewer>
           if (snapshot.hasData) {
             return ListView(
               shrinkWrap: true,
-              children: _buildTree(snapshot.data!),
+              children: _buildTree(snapshot.data!, context),
             );
           }
           return const Center(child: CircularProgressIndicator());

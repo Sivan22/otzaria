@@ -130,6 +130,8 @@ class _ReadingScreenState extends State<ReadingScreen>
                               child: Draggable<OpenedTab>(
                                 axis: Axis.horizontal,
                                 data: tab,
+                                childWhenDragging:
+                                    SizedBox.fromSize(size: Size.fromWidth(2)),
                                 feedback: Container(
                                   decoration: BoxDecoration(
                                       borderRadius: BorderRadius.only(
@@ -138,13 +140,15 @@ class _ReadingScreenState extends State<ReadingScreen>
                                       color: Colors.white),
                                   child: Padding(
                                     padding: const EdgeInsets.fromLTRB(
-                                        10, 20, 10, 0),
+                                        20, 10, 20, 15),
                                     child: Text(
                                       tab is SearchingTab
                                           ? '${tab.title}:  ${tab.searcher.queryController.text}'
                                           : tab.title,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.none,
                                         color: Theme.of(context).primaryColor,
                                       ),
                                     ),

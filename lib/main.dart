@@ -79,7 +79,7 @@ class OtzariaApp extends StatelessWidget {
                 ? ThemeData.dark(useMaterial3: true)
                 : ThemeData(
                     visualDensity: VisualDensity.adaptivePlatformDensity,
-                    fontFamily: 'candara',
+                    fontFamily: 'Roboto',
                     colorScheme: ColorScheme.fromSeed(
                       seedColor: appModel.seedColor.value,
                     ),

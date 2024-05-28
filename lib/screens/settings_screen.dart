@@ -217,6 +217,14 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         }
                       },
                     ),
+                    const SwitchSettingsTile(
+                      settingKey: 'key-dev-channel',
+                      title: 'עדכון לגרסאות מפתחים',
+                      enabledLabel:
+                          'קבלת עדכונים על גרסאות בדיקה, ייתכנו באגים וחוסר יציבות',
+                      disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
+                      leading: Icon(Icons.bug_report),
+                    )
                   ],
                 )
               ],

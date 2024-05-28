@@ -178,7 +178,7 @@ class AppModel with ChangeNotifier {
           : 1;
       addHistory(
         ref: '${tab.title} עמוד $index',
-        tab: tab,
+        book: tab.book,
         index: index,
       );
     }
@@ -188,7 +188,7 @@ class AppModel with ChangeNotifier {
           : tab.positionsListener.itemPositions.value.first.index;
       (() async => addHistory(
           ref: await utils.refFromIndex(index, tab.tableOfContents),
-          tab: tab,
+          book: tab.book,
           index: index))();
     }
   }
@@ -242,7 +242,7 @@ class AppModel with ChangeNotifier {
     tabs.remove(tab);
     tabs.insert(
       newIndex,
-      OpenedTab.from(tab),
+      tab,
     );
     notifyListeners();
   }
@@ -254,8 +254,8 @@ class AppModel with ChangeNotifier {
   }
 
   void addBookmark(
-      {required String ref, required OpenedTab tab, required int index}) {
-    bookmarks.add(Bookmark(ref: ref, tab: tab, index: index));
+      {required String ref, required Book book, required int index}) {
+    bookmarks.add(Bookmark(ref: ref, book: book, index: index));
     // write to disk
     Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
   }
@@ -271,8 +271,10 @@ class AppModel with ChangeNotifier {
   }
 
   void addHistory(
-      {required String ref, required OpenedTab tab, required int index}) {
-    history.insert(0, Bookmark(ref: ref, tab: tab, index: index));
+      {required String ref, required Book book, required int index}) {
+    if (book is TextBook) {
+      history.insert(0, Bookmark(ref: ref, book: book, index: index));
+    }
     // write to disk
     Hive.box(name: 'history').put('key-history', history);
   }

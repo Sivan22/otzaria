@@ -79,9 +79,11 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 future: items,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    return ListView(
-                      //key: PageStorageKey(currentTopCategory.toString()),
-                      children: snapshot.data!,
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      key: PageStorageKey(currentTopCategory.toString()),
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) => snapshot.data![index],
                     );
                   }
                   return const Center(child: CircularProgressIndicator());
@@ -124,7 +126,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   }
 
   Future<List<Widget>> getFilteredBooks() async {
-    List<Book> books = currentTopCategory.getAllBooks().where((element) {
+    List<dynamic> entries =
+        currentTopCategory.getAllBooksAndCategories().where((element) {
       bool result = true;
       for (final word in searchController.text.split(' ')) {
         result = result && element.title.contains(word);
@@ -132,25 +135,35 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       return result;
     }).toList();
 
-    books = await sortBooks(books, searchController.text);
+    entries = await sortEntries(entries, searchController.text);
 
     List<Widget> items = [];
 
-    for (final book in books) {
-      items.add(
-        BookGridItem(
-            book: book,
-            onBookClickCallback: () {
-              Provider.of<AppModel>(context, listen: false)
-                  .openBook(book, 0, openLeftPane: true);
-            }),
-      );
+    for (final entry in entries.getRange(0, 50)) {
+      if (entry is Book) {
+        items.add(
+          BookGridItem(
+              book: entry,
+              onBookClickCallback: () {
+                Provider.of<AppModel>(context, listen: false)
+                    .openBook(entry, 0, openLeftPane: true);
+              }),
+        );
+      }
+      if (entry is Category) {
+        items.add(
+          CategoryGridItem(
+            category: entry,
+            onCategoryClickCallback: () => _openCategory(entry),
+          ),
+        );
+      }
     }
     return items;
   }
 
-  Future<List<Book>> sortBooks(List<Book> books, String query) async {
-    List<String> titles = books.map((book) => book.title).toList();
+  Future<List<dynamic>> sortEntries(List<dynamic> books, String query) async {
+    List<String> titles = books.map<String>((book) => book.title).toList();
     titles = await Isolate.run(() {
       titles.sort(
         (a, b) => ratio(query, b).compareTo(ratio(query, a)),

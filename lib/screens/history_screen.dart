@@ -25,9 +25,9 @@ class _HistoryViewState extends State<HistoryView> {
                     itemCount: appModel.history.length,
                     itemBuilder: (context, index) => ListTile(
                         title: Text(appModel.history[index].ref),
-                        onTap: () => appModel.openTab(
-                            OpenedTab.from(appModel.history[index].tab),
-                            index: appModel.history[index].index),
+                        onTap: () => appModel.openBook(
+                            appModel.history[index].book,
+                            appModel.history[index].index),
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.delete_forever,

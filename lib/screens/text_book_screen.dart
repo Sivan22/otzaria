@@ -127,7 +127,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                   Provider.of<AppModel>(context, listen: false).addBookmark(
                       ref: await utils.refFromIndex(
                           index, widget.tab.tableOfContents),
-                      tab: widget.tab,
+                      book: widget.tab.book,
                       index: index);
                 }();
                 // notify user
