@@ -81,7 +81,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                   if (snapshot.hasData) {
                     return ListView.builder(
                       shrinkWrap: true,
-                      key: PageStorageKey(currentTopCategory.toString()),
+                      key: PageStorageKey(currentTopCategory.title),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) => snapshot.data![index],
                     );
@@ -139,11 +139,12 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
 
     List<Widget> items = [];
 
-    for (final entry in entries.getRange(0, 50)) {
+    for (final entry in entries.getRange(0, min(entries.length, 50))) {
       if (entry is Book) {
         items.add(
           BookGridItem(
               book: entry,
+              showCategory: true,
               onBookClickCallback: () {
                 Provider.of<AppModel>(context, listen: false)
                     .openBook(entry, 0, openLeftPane: true);
@@ -164,6 +165,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
 
   Future<List<dynamic>> sortEntries(List<dynamic> books, String query) async {
     List<String> titles = books.map<String>((book) => book.title).toList();
+
     titles = await Isolate.run(() {
       titles.sort(
         (a, b) => ratio(query, b).compareTo(ratio(query, a)),

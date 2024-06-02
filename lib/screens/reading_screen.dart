@@ -1,7 +1,5 @@
 import 'dart:math';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/screens/full_text_search_screen.dart';
@@ -113,27 +111,18 @@ class _ReadingScreenState extends State<ReadingScreen>
                                   ),
                                   MenuItem.submenu(
                                     label: 'רשימת הכרטיסיות ',
-                                    items: appModel.tabs
-                                        .map(
-                                          (tab) => MenuItem(
-                                              label: tab.title,
-                                              onSelected: () {
-                                                appModel.currentTab =
-                                                    appModel.tabs.indexOf(tab);
-                                                setState(() {});
-                                              }),
-                                        )
-                                        .toList() as List<ContextMenuEntry>,
+                                    items:
+                                        getMenuItems(appModel.tabs, appModel),
                                   )
                                 ],
                               ),
                               child: Draggable<OpenedTab>(
                                 axis: Axis.horizontal,
                                 data: tab,
-                                childWhenDragging:
-                                    SizedBox.fromSize(size: Size.fromWidth(2)),
+                                childWhenDragging: SizedBox.fromSize(
+                                    size: const Size.fromWidth(2)),
                                 feedback: Container(
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                       borderRadius: BorderRadius.only(
                                           topLeft: Radius.circular(10),
                                           topRight: Radius.circular(10)),
@@ -216,5 +205,30 @@ class _ReadingScreenState extends State<ReadingScreen>
         );
       },
     );
+  }
+
+  /// Generates a list of context menu entries based on the provided list of opened tabs and the app model.
+  ///
+  /// The [tabs] parameter is a list of [OpenedTab] objects representing the opened tabs.
+  /// The [appModel] parameter is the [AppModel] object containing the current state of the app.
+  ///
+  /// Returns a list of [ContextMenuEntry] objects representing the context menu items.
+  /// The list is sorted in ascending order based on the label of each menu item.
+  List<ContextMenuEntry> getMenuItems(List<OpenedTab> tabs, AppModel appModel) {
+    List<MenuItem> items = <MenuItem>[];
+    for (OpenedTab tab in tabs) {
+      items.add(
+        MenuItem(
+          label: tab.title,
+          onSelected: () {
+            setState(() {
+              appModel.currentTab = appModel.tabs.indexOf(tab);
+            });
+          },
+        ),
+      );
+    }
+    items.sort((a, b) => a.label.compareTo(b.label));
+    return items;
   }
 }

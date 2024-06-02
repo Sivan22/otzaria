@@ -58,13 +58,13 @@ class CategoryGridItem extends StatelessWidget {
                   ),
                 ),
                 category.shortDescription.isEmpty
-                    ? SizedBox.shrink()
+                    ? const SizedBox.shrink()
                     : Tooltip(
                         richMessage: WidgetSpan(
                             alignment: PlaceholderAlignment.baseline,
                             baseline: TextBaseline.alphabetic,
                             child: Container(
-                              padding: EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(10),
                               constraints: const BoxConstraints(maxWidth: 250),
                               child: Text(
                                 category.shortDescription,
@@ -93,6 +93,7 @@ class CategoryGridItem extends StatelessWidget {
 }
 
 class BookGridItem extends StatelessWidget {
+  final bool showCategory;
   final Book book;
   final VoidCallback onBookClickCallback;
 
@@ -100,6 +101,7 @@ class BookGridItem extends StatelessWidget {
     Key? key,
     required this.book,
     required this.onBookClickCallback,
+    this.showCategory = false,
   }) : super(key: key);
 
   @override
@@ -125,12 +127,21 @@ class BookGridItem extends StatelessWidget {
                                 .secondary
                                 .withOpacity(0.6)),
                       )
-                    : const SizedBox.shrink(),
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                        child: Icon(Icons.article,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .secondary
+                                .withOpacity(0.6)),
+                      ),
                 Expanded(
                   child: ListTile(
                     mouseCursor: SystemMouseCursors.click,
                     title: Text(
-                      book.title,
+                      showCategory
+                          ? '${book.category?.parent?.title}/${book.category?.title}/${book.title}'
+                          : book.title,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.bold),
                     ),
@@ -148,7 +159,7 @@ class BookGridItem extends StatelessWidget {
                             alignment: PlaceholderAlignment.baseline,
                             baseline: TextBaseline.alphabetic,
                             child: Container(
-                              padding: EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(10),
                               constraints: const BoxConstraints(maxWidth: 250),
                               child: Text(
                                 book.heShortDesc!,

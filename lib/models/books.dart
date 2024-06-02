@@ -1,5 +1,6 @@
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
 //import 'package:pdfrx/pdfrx.dart';
@@ -10,6 +11,9 @@ import 'dart:isolate';
 /// and an [author], [heShortDesc], [pubPlace], [pubDate], and [order] if available.
 ///
 abstract class Book {
+  ///the category of the book
+  Category? category;
+
   /// The title of the book.
   final String title;
 
@@ -44,16 +48,14 @@ abstract class Book {
   /// Creates a new `Book` instance.
   ///
   /// The [title] parameter is required and cannot be null.
-  Book({
-    required this.title,
-  });
+  Book({required this.title, this.category});
 }
 
 ///a representation of a text book (opposite PDF book).
 ///a text book has a getter 'text' which returns a [Future] that resolvs to a [String].
 ///it has also a 'tableOfContents' field that returns a [Future] that resolvs to a list of [TocEntry]s
 class TextBook extends Book {
-  TextBook({required String title}) : super(title: title);
+  TextBook({required String title, super.category}) : super(title: title);
 
   /// Retrieves the table of contents of the book.
   ///
@@ -111,22 +113,8 @@ class TocEntry {
 ///is required
 class PdfBook extends Book {
   final String path;
-  PdfBook({required String title, required this.path}) : super(title: title);
-
-  ///get a preview of the first page in the book (returns a [Widget] viewing the page)
-  // Future<PdfPageView> get thumbnail async {
-  //   //TODO memory efiiciecy is needed
-  //   var document = await PdfDocument.openFile(
-  //     path,
-  //   );
-  //   var result = PdfPageView(
-  //     document: document,
-  //     pageNumber: 1,
-  //   );
-  //   //free the memory
-  //   document.dispose();
-  //   return result;
-  // }
+  PdfBook({required String title, required this.path, super.category})
+      : super(title: title);
 
   factory PdfBook.fromJson(Map<String, dynamic> json) {
     return PdfBook(

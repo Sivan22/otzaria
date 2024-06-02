@@ -245,12 +245,17 @@ class FileSystemData extends Data {
               Directory(entity.path), category));
         } else {
           if (entity.path.toLowerCase().endsWith('.pdf')) {
-            category.books.add(PdfBook(
-                title: getTitleFromPath(entity.path), path: entity.path));
+            category.books.add(
+              PdfBook(
+                  title: getTitleFromPath(entity.path),
+                  path: entity.path,
+                  category: category),
+            );
           }
           if (entity.path.toLowerCase().endsWith('.txt') ||
               entity.path.toLowerCase().endsWith('.docx')) {
-            category.books.add(TextBook(title: getTitleFromPath(entity.path)));
+            category.books.add(TextBook(
+                title: getTitleFromPath(entity.path), category: category));
           }
         }
       }

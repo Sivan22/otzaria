@@ -58,9 +58,9 @@ class _TocViewerState extends State<TocViewer>
                 controller:
                     ExpandableController(initialExpanded: entry.level == 1),
                 key: PageStorageKey(entry),
-                collapsed: SizedBox.shrink(),
+                collapsed: const SizedBox.shrink(),
                 header: ListTile(
-                  contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                  contentPadding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
                   title: Text(entry.text),
                   onTap: () {
                     widget.scrollController.scrollTo(
@@ -83,7 +83,7 @@ class _TocViewerState extends State<TocViewer>
                   iconPlacement: ExpandablePanelIconPlacement.left,
                   collapseIcon: Icons.keyboard_arrow_down_outlined,
                   expandIcon: Icons.chevron_right_rounded,
-                  iconPadding: EdgeInsets.fromLTRB(0, 12, 0, 0),
+                  iconPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
                   iconColor: Theme.of(context).colorScheme.primary,
                   tapHeaderToExpand: false,
                 ),

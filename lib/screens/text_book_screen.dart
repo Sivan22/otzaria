@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
+import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/splited_view_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/screens/text_book_search_screen.dart';
@@ -93,6 +94,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                 widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
               }),
           actions: [
+           
             // button to switch between splitted view and combined view
             ValueListenableBuilder(
               valueListenable: widget.tab.showSplitedView,
@@ -231,6 +233,22 @@ class _TextBookViewerState extends State<TextBookViewer>
                       index: await widget.data.then((value) => value.length),
                       duration: const Duration(milliseconds: 300));
                 }),
+                 //button to print
+            IconButton(
+              icon: const Icon(Icons.print),
+              tooltip: 'הדפסה',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => PrintingScreen(
+                    data: widget.tab.removeNikud.value
+                        ? widget.data
+                        : widget.data,
+                    startLine: widget.tab.index,
+                    removeNikud: widget.tab.removeNikud.value,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
         body: LayoutBuilder(

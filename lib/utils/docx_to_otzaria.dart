@@ -48,7 +48,7 @@ String docxToText(Uint8List bytes, String title) {
             for (int i = 0; i < levelInt; i++) {
               text = '\t$text';
             }
-          } 
+          }
         }
         list.add(text);
       }

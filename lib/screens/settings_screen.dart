@@ -123,7 +123,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                       min: 0,
                       max: 500,
                       step: 2,
-                      leading: Icon(Icons.horizontal_distribute),
+                      leading: const Icon(Icons.horizontal_distribute),
                       decimalPrecision: 0,
                       onChange: (p0) => appModel.paddingSize.value = p0,
                     ),
@@ -203,9 +203,9 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                   children: [
                     SimpleSettingsTile(
                       title: 'מיקום הספרייה',
-                      subtitle:
-                          '${Settings.getValue<String>('key-library-path') ?? 'לא קיים'}',
-                      leading: Icon(Icons.folder),
+                      subtitle: Settings.getValue<String>('key-library-path') ??
+                          'לא קיים',
+                      leading: const Icon(Icons.folder),
                       onTap: () async {
                         String? path =
                             await FilePicker.platform.getDirectoryPath();

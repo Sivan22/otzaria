@@ -49,7 +49,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         },
         child: SelectionArea(
           key: PageStorageKey(widget.tab),
-          selectionControls: DesktopTextSelectionControls(),
           child: ScrollablePositionedList.builder(
               initialScrollIndex: widget.tab.index,
               itemPositionsListener: widget.tab.positionsListener,

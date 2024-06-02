@@ -76,7 +76,9 @@ class OtzariaApp extends StatelessWidget {
                 "he", "IL"), // OR Locale('ar', 'AE') OR Other RTL locales,
             title: 'אוצריא',
             theme: appModel.isDarkMode.value
-                ? ThemeData.dark(useMaterial3: true)
+                ? ThemeData.dark(useMaterial3: true).copyWith(
+                    colorScheme: ColorScheme.fromSeed(
+                        seedColor: appModel.seedColor.value))
                 : ThemeData(
                     visualDensity: VisualDensity.adaptivePlatformDensity,
                     fontFamily: 'Roboto',

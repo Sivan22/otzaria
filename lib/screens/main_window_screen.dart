@@ -111,7 +111,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
             ));
             return jsonDecode(data.body)["body"];
           },
-          currentVersion: '0.1.7+6',
+          currentVersion: '0.1.7+7',
           updateChipBuilder: flatChip,
 
           callback: (status) {},

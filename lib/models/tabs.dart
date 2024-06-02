@@ -91,6 +91,7 @@ class PdfBookTab extends OpenedTab {
   /// Converts the [PdfBookTab] instance into a JSON map.
   ///
   /// The JSON map contains 'path', 'pageNumber' and 'type' keys.
+  @override
   Map<String, dynamic> toJson() {
     return {
       'path': book.path,
@@ -282,6 +283,7 @@ class SearchingTab extends OpenedTab {
     return SearchingTab(json['title']);
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {'title': title, 'type': 'SearchingTabWindow'};
   }

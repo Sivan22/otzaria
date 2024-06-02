@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/models/tabs.dart';
 import 'package:provider/provider.dart';
 
 class HistoryView extends StatefulWidget {
