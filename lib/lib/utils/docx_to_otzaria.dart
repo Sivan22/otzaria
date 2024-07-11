@@ -22,8 +22,15 @@ String docxToText(Uint8List bytes, String title) {
       final paragraphNodes = document.findAllElements('w:p');
 
       for (final paragraph in paragraphNodes) {
-        final textNodes = paragraph.findAllElements('w:t');
-        var text = textNodes.map((node) => node.innerText).join();
+        final textNodes = paragraph.findAllElements('w:r');
+        var text = textNodes.map((node) {
+          final innerText = node.getElement('w:t')?.innerText ?? '';
+          //mark bold text
+          if (node.getElement('w:rPr')?.getElement('w:b') != null) {
+            return '<b>$innerText</b>';
+          }
+          return innerText;
+        }).join();
 
         //mark up headings
         var style = paragraph

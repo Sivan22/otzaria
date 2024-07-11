@@ -33,7 +33,7 @@ msix_config:
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.7
+version: 0.1.8-dev.0
 
 environment:
   sdk: ">=3.2.6 <4.0.0"
@@ -73,7 +73,6 @@ dependencies:
   printing:
   pdf: ^3.10.8
 
-
 flutter_launcher_icons:
   android: true
   ios: true
@@ -109,7 +108,6 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/metadata.json
-
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
@@ -150,5 +148,3 @@ flutter:
     - family: NotoSerifHebrew
       fonts:
         - asset: fonts/NotoSerifHebrew-VariableFont_wdth,wght.ttf
-
- 

@@ -138,12 +138,30 @@ class BookGridItem extends StatelessWidget {
                 Expanded(
                   child: ListTile(
                     mouseCursor: SystemMouseCursors.click,
-                    title: Text(
-                      showCategory
-                          ? '${book.category?.parent?.title}/${book.category?.title}/${book.title}'
-                          : book.title,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.bold),
+                    title: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${book.title} ',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface),
+                          ),
+                          showCategory
+                              ? TextSpan(
+                                  text:
+                                      '(בתוך ${book.category?.parent?.title}/${book.category?.title})',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.7)),
+                                )
+                              : TextSpan()
+                        ],
+                      ),
                     ),
                     subtitle: Text(
                         (book.author == "" || book.author == null)

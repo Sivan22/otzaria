@@ -93,12 +93,13 @@ class KeyboardShortcuts extends StatelessWidget {
     return Consumer<AppModel>(
       builder: (context, appModel, child) => CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-book-browser') !=
-                      null
-                  ? Settings.getValue<String>('key-shortcut-open-book-browser')
-                  : 'ctrl+b']!: () {
+          shortcuts[Settings.getValue<String>(
+                      'key-shortcut-open-library-browser') !=
+                  null
+              ? Settings.getValue<String>('key-shortcut-open-library-browser')
+              : 'ctrl+o']!: () {
             appModel.currentView.value = Screens.library;
+            appModel.bookLocatorFocusNode.requestFocus();
           },
           shortcuts[Settings.getValue<String>('key-shortcut-close-tab') != null
               ? Settings.getValue<String>('key-shortcut-close-tab')
@@ -111,12 +112,12 @@ class KeyboardShortcuts extends StatelessWidget {
                   : 'ctrl+x']!: () {
             appModel.closeAllTabs();
           },
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-book-search') != null
-                  ? Settings.getValue<String>('key-shortcut-open-book-search')
-                  : 'ctrl+o']!: () {
-            appModel.currentView.value = Screens.library;
-            appModel.bookLocatorFocusNode.requestFocus();
+          shortcuts[Settings.getValue<String>(
+                      'key-shortcut-open-reading-screen') !=
+                  null
+              ? Settings.getValue<String>('key-shortcut-open-reading-screen')
+              : 'ctrl+r']!: () {
+            appModel.currentView.value = Screens.reading;
           },
           shortcuts[
               Settings.getValue<String>('key-shortcut-open-new-search') != null

@@ -125,20 +125,14 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 pageNumber: widget.tab.pdfViewerController.pages.length),
           ),
           IconButton(
-              icon: const Icon(Icons.print),
-              tooltip: 'הדפסה',
+              icon: const Icon(Icons.share),
+              tooltip: 'שיתוף',
               onPressed: () async {
                 //display dialog to choose the pages to print
 
-                if (widget.tab.pdfViewerController.isReady) {
-                  final pages = await showNumberOfPagesDialog(context);
-                  if (pages != null) {
-                    await Printing.layoutPdf(
-                      onLayout: (PdfPageFormat format) async =>
-                          File(widget.tab.book.path).readAsBytes(),
-                    );
-                  }
-                }
+                await Printing.sharePdf(
+                  bytes: File(widget.tab.book.path).readAsBytesSync(),
+                );
               }),
         ],
       ),

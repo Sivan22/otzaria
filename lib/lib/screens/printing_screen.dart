@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,7 +39,12 @@ class _PrintingScreenState extends State<PrintingScreen> {
   void initState() {
     super.initState();
     startLine = widget.startLine;
-    endLine = startLine + 3;
+    endLine = startLine;
+    () async {
+      endLine = min(startLine + 3, (await widget.data).split('\n').length);
+      setState(() {});
+    }();
+
     pdf = createPdf(format);
   }
 
