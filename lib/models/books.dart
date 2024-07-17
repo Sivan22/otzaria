@@ -38,10 +38,15 @@ abstract class Book {
   Map<String, dynamic> toJson();
 
   factory Book.fromJson(Map<String, dynamic> json) {
-    if (json['type'] == 'TextBook') {
-      return TextBook(title: json['title']);
-    } else {
-      return PdfBook(title: json['title'], path: json['path']);
+    switch (json['type']) {
+      case 'TextBook':
+        return TextBook(title: json['title']);
+      case 'PdfBook':
+        return PdfBook(title: json['title'], path: json['path']);
+      case 'OtzarBook':
+        return OtzarBook.fromJson(json);
+      default:
+        throw Exception('Unknown book type: ${json['type']}');
     }
   }
 
@@ -107,6 +112,88 @@ class TocEntry {
     required this.index,
     this.level = 1,
   });
+}
+
+/// Represents a book from the Otzar HaChochma digital library.
+///
+/// This class extends the [Book] class and includes additional properties
+/// specific to Otzar HaChochma books, such as the Otzar ID and online link.
+class OtzarBook extends Book {
+  /// The unique identifier for the book in the Otzar HaChochma system.
+  final int otzarId;
+
+  /// The author of the book.
+  final String? author;
+
+  /// The place where the book was printed.
+  final String? printPlace;
+
+  /// The year when the book was printed.
+  final String? printYear;
+
+  /// The topics or categories the book belongs to.
+  final String? topics;
+
+  /// The online link to access the book in the Otzar HaChochma system.
+  final String link;
+
+  /// Creates an [OtzarBook] instance.
+  ///
+  /// [title] and [otzarId] are required. Other parameters are optional.
+  /// [link] is required for online access to the book.
+  OtzarBook({
+    required String title,
+    required this.otzarId,
+    this.author,
+    this.printPlace,
+    this.printYear,
+    this.topics,
+    required this.link,
+  }) : super(title: title);
+
+  /// Returns the publication date of the book.
+  ///
+  /// This overrides the [pubDate] getter from the [Book] class.
+  @override
+  String? get pubDate => printYear;
+
+  /// Returns the publication place of the book.
+  ///
+  /// This overrides the [pubPlace] getter from the [Book] class.
+  @override
+  String? get pubPlace => printPlace;
+
+  /// Creates an [OtzarBook] instance from a JSON map.
+  ///
+  /// This factory constructor is used to deserialize OtzarBook objects.
+  factory OtzarBook.fromJson(Map<String, dynamic> json) {
+    return OtzarBook(
+      title: json['bookName'],
+      otzarId: json['id'],
+      author: json['author'],
+      printPlace: json['printPlace'],
+      printYear: json['printYear'],
+      topics: json['topics'],
+      link: json['link'],
+    );
+  }
+
+  /// Converts the [OtzarBook] instance to a JSON map.
+  ///
+  /// This method is used to serialize OtzarBook objects.
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'type': 'OtzarBook',
+      'otzarId': otzarId,
+      'author': author,
+      'printPlace': printPlace,
+      'printYear': printYear,
+      'topics': topics,
+      'link': link,
+    };
+  }
 }
 
 ///represents a PDF format book, which is always a file on the device, and there for the [String] fiels 'path'

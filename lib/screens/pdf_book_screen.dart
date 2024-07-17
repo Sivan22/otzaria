@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -11,8 +10,6 @@ import 'pdf_outlines_screen.dart';
 import '../widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:printing/printing.dart';
-import 'package:pdf/pdf.dart';
 
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;
@@ -61,8 +58,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
           },
         ),
         actions: [
-          //button for printing pdf
-
           IconButton(
               icon: const Icon(Icons.bookmark_add),
               tooltip: 'הוספת סימניה',
@@ -124,16 +119,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
             onPressed: () => widget.tab.pdfViewerController.goToPage(
                 pageNumber: widget.tab.pdfViewerController.pages.length),
           ),
-          IconButton(
-              icon: const Icon(Icons.share),
-              tooltip: 'שיתוף',
-              onPressed: () async {
-                //display dialog to choose the pages to print
-
-                await Printing.sharePdf(
-                  bytes: File(widget.tab.book.path).readAsBytesSync(),
-                );
-              }),
         ],
       ),
       body: Row(
@@ -377,52 +362,4 @@ class _PdfBookViewrState extends State<PdfBookViewr>
 
   @override
   bool get wantKeepAlive => true;
-
-  Future<List<int>?> showNumberOfPagesDialog(BuildContext context) async {
-    return await showDialog<List<int>?>(
-      context: context,
-      barrierDismissible:
-          false, // Prevent user from dismissing without entering a number
-      builder: (BuildContext context) {
-        int currentPage = (widget.tab.pdfViewerController.pageNumber ?? 1) - 1;
-        int start = currentPage;
-        int end =
-            max(currentPage + 1, widget.tab.pdfViewerController.pages.length);
-
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('בחר טווח עמודים להדפסה'),
-            content: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                showValueIndicator: ShowValueIndicator.always,
-              ),
-              child: RangeSlider(
-                  min: 0,
-                  max: widget.tab.pdfViewerController.pages.length.toDouble(),
-                  values: RangeValues(start.toDouble(), end.toDouble()),
-                  labels: RangeLabels(start.toString(), end.toString()),
-                  onChanged: (RangeValues values) {
-                    setState(() {
-                      start = values.start.toInt();
-                      end = values.end.toInt();
-                    });
-                  }),
-            ),
-            actions: [
-              TextButton(
-                child: const Text('ביטול'),
-                onPressed: () => Navigator.pop(context, null),
-              ),
-              TextButton(
-                child: const Text('הדפסה'),
-                onPressed: () {
-                  Navigator.pop(context, [start, end]);
-                },
-              ),
-            ],
-          );
-        });
-      },
-    );
-  }
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
@@ -111,7 +112,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
             ));
             return jsonDecode(data.body)["body"];
           },
-          currentVersion: '0.1.8-dev.0',
+          currentVersion: '0.1.8-dev.1',
           updateChipBuilder: flatChip,
 
           callback: (status) {},

@@ -207,6 +207,35 @@ class BookGridItem extends StatelessWidget {
   }
 }
 
+class OtzarBookGridItem extends StatelessWidget {
+  final OtzarBook book;
+  final VoidCallback onTap;
+
+  const OtzarBookGridItem({
+    Key? key,
+    required this.book,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(
+          book.title,
+          style: TextStyle(
+            color: Theme.of(context).primaryColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text('${book.author ?? ''} - ${book.printYear ?? ''}'),
+        trailing: Icon(Icons.open_in_new),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
 class MyGridView extends StatelessWidget {
   final Future<List<Widget>> items;
 
