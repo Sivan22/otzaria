@@ -402,6 +402,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
           items.add(
             BookGridItem(
               book: entry,
+              showCategory: true,
               onBookClickCallback: () {
                 Provider.of<AppModel>(context, listen: false)
                     .openBook(entry, 0, openLeftPane: true);
