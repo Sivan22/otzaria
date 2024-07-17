@@ -390,6 +390,26 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
             onCategoryClickCallback: () => _openCategory(entry),
           ),
         );
+      } else if (entry is Book) {
+        if (entry is OtzarBook) {
+          items.add(
+            OtzarBookGridItem(
+              book: entry,
+              onTap: () => _openOtzarBook(entry),
+            ),
+          );
+        } else {
+          items.add(
+            BookGridItem(
+              book: entry,
+              showCategory: true,
+              onBookClickCallback: () {
+                Provider.of<AppModel>(context, listen: false)
+                    .openBook(entry, 0, openLeftPane: true);
+              },
+            ),
+          );
+        }
       }
     }
     return items;
