@@ -40,9 +40,9 @@ abstract class Book {
   factory Book.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
       case 'TextBook':
-      return TextBook(title: json['title']);
+        return TextBook(title: json['title']);
       case 'PdfBook':
-      return PdfBook(title: json['title'], path: json['path']);
+        return PdfBook(title: json['title'], path: json['path']);
       case 'OtzarBook':
         return OtzarBook.fromJson(json);
       default:

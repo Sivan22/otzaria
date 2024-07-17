@@ -225,12 +225,12 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Column(
-        children: [
-          buildSearchBar(),
-          Expanded(
+              children: [
+                buildSearchBar(),
+                Expanded(
                   child: FutureBuilder<List<Widget>>(
-                future: items,
-                builder: (context, snapshot) {
+                    future: items,
+                    builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
@@ -246,21 +246,21 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                             ),
                           );
                         }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      key: PageStorageKey(currentTopCategory.title),
-                      itemCount: snapshot.data!.length,
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          key: PageStorageKey(currentTopCategory.title),
+                          itemCount: snapshot.data!.length,
                           itemBuilder: (context, index) =>
                               snapshot.data![index],
-                    );
+                        );
                       } else {
                         return Center(child: Text('No data available'));
-                  }
+                      }
                     },
                   ),
-          ),
-        ],
-      ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -270,31 +270,31 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       child: Row(
         children: [
           Expanded(
-      child: TextField(
-          focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
-          autofocus: true,
-          controller: searchController,
-          decoration: InputDecoration(
-            constraints: const BoxConstraints(maxWidth: 400),
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: IconButton(
-                onPressed: () => searchController.clear(),
-                icon: const Icon(Icons.cancel)),
-            border: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8.0))),
-            hintText: 'איתור ספר ב${currentTopCategory.title}',
-          ),
-          onChanged: (value) {
-            if (value.length < 3) {
-              items = getGrids(currentTopCategory);
-            } else {
-              items = getFilteredBooks();
-              items = (() async => [
-                    Column(children: [MyGridView(items: items)])
-                  ])();
-            }
-            setState(() {});
-          }),
+            child: TextField(
+                focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
+                autofocus: true,
+                controller: searchController,
+                decoration: InputDecoration(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                      onPressed: () => searchController.clear(),
+                      icon: const Icon(Icons.cancel)),
+                  border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8.0))),
+                  hintText: 'איתור ספר ב${currentTopCategory.title}',
+                ),
+                onChanged: (value) {
+                  if (value.length < 3) {
+                    items = getGrids(currentTopCategory);
+                  } else {
+                    items = getFilteredBooks();
+                    items = (() async => [
+                          Column(children: [MyGridView(items: items)])
+                        ])();
+                  }
+                  setState(() {});
+                }),
           ),
           IconButton(
             icon: Icon(Icons.filter_list),

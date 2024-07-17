@@ -11,7 +11,6 @@ import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/books.dart';
