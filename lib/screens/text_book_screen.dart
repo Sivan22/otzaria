@@ -94,7 +94,6 @@ class _TextBookViewerState extends State<TextBookViewer>
                 widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
               }),
           actions: [
-           
             // button to switch between splitted view and combined view
             ValueListenableBuilder(
               valueListenable: widget.tab.showSplitedView,
@@ -233,7 +232,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                       index: await widget.data.then((value) => value.length),
                       duration: const Duration(milliseconds: 300));
                 }),
-                 //button to print
+            //button to print
             IconButton(
               icon: const Icon(Icons.print),
               tooltip: 'הדפסה',
