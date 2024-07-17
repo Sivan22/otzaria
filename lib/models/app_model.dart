@@ -3,11 +3,15 @@ it includes the library, a list of the opened tabs, the current tab, the current
 and the some other app settings like dark mode and the seed color*/
 
 import 'dart:math';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:hive/hive.dart';
+import 'package:kosher_dart/kosher_dart.dart';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/models/bookmark.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/books.dart';
@@ -53,6 +57,11 @@ class AppModel with ChangeNotifier {
   /// The color used as seed.
   final ValueNotifier<double> paddingSize = ValueNotifier<double>(
       Settings.getValue<double>('key-padding-size') ?? 10);
+
+  // if you should show only otzar hachochma books
+  final ValueNotifier<bool> showOnlyOtzarHachochma = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-show-only-otzar-hachochma') ?? false,
+  );
 
   /// a focus node for the search field in libraryBrowser
   FocusNode bookLocatorFocusNode = FocusNode();
@@ -109,6 +118,11 @@ class AppModel with ChangeNotifier {
       notifyListeners();
     });
     isDarkMode.addListener(() {
+      notifyListeners();
+    });
+    showOnlyOtzarHachochma.addListener(() {
+      Settings.setValue(
+          'key-show-only-otzar-hachochma', showOnlyOtzarHachochma.value);
       notifyListeners();
     });
   }
@@ -287,6 +301,23 @@ class AppModel with ChangeNotifier {
   void clearHistory() {
     history.clear();
     Hive.box(name: 'history').clear();
+  }
+
+  String getDafYomi(DateTime date) {
+    JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(date);
+    Daf dafYomi = YomiCalculator.getDafYomiBavli(jewishCalendar);
+    int dafNumber = dafYomi.getDaf();
+    String masechtaNameHebrew = dafYomi.getMasechta();
+    Object dafNumberHebrew =
+        HebrewDateFormatter().formatHebrewNumber(dafNumber);
+    return '$masechtaNameHebrew $dafNumberHebrew';
+  }
+
+  String getHebrewDateFormattedAsString(DateTime dateTime) {
+    final hebrewCalendar = JewishCalendar.fromDateTime(dateTime);
+    HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter()
+      ..hebrewFormat = true;
+    return hebrewDateFormatter.format(hebrewCalendar);
   }
 }
 

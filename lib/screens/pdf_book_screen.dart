@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -12,7 +11,6 @@ import '../widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:printing/printing.dart';
-import 'package:pdf/pdf.dart';
 
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;
