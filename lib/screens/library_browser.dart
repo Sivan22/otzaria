@@ -187,7 +187,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                             ),
                             textDirection: TextDirection.rtl,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'דף היומי: ${appModel.getDafYomi(DateTime.now())}',
                             style: TextStyle(
@@ -254,7 +254,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                               snapshot.data![index],
                         );
                       } else {
-                        return Center(child: Text('No data available'));
+                        return const Center(child: Text('No data available'));
                       }
                     },
                   ),

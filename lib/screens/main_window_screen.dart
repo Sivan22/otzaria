@@ -8,7 +8,6 @@ import 'package:otzaria/screens/reading_screen.dart';
 import 'package:updat/theme/chips/flat.dart';
 import 'package:updat/updat_window_manager.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 //imports from otzaria
 import 'package:otzaria/screens/library_browser.dart';

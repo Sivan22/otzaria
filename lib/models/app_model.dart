@@ -13,8 +13,6 @@ import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:otzaria/models/books.dart';
-import 'package:hive/hive.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// Represents the state of the application.
