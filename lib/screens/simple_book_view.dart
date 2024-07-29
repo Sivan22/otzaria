@@ -1,6 +1,7 @@
 // a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/tabs.dart';
@@ -31,22 +32,10 @@ class _SimpleBookViewState extends State<SimpleBookView> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-        focusNode: focusNode,
-        autofocus: true,
-        onKeyEvent: (KeyEvent event) {
-          if (event.logicalKey.keyLabel == 'Arrow Down') {
-            widget.tab.scrollOffsetController.animateScroll(
-                offset: 150,
-                duration: const Duration(
-                    milliseconds: 300)); // Adjust scroll amount as needed
-          } else if (event.logicalKey.keyLabel == 'Arrow Up') {
-            widget.tab.scrollOffsetController.animateScroll(
-                offset: -150,
-                duration: const Duration(
-                    milliseconds: 300)); // Adjust scroll amount as needed
-          }
-        },
+    return ProgressiveScrollWrapper(
+        scrollController: widget.tab.scrollOffsetController,
+        maxSpeed: 50.0,
+        acceleration: 0.5,
         child: SelectionArea(
           key: PageStorageKey(widget.tab),
           child: ScrollablePositionedList.builder(
