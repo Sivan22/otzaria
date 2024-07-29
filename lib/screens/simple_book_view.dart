@@ -32,41 +32,36 @@ class _SimpleBookViewState extends State<SimpleBookView> {
 
   @override
   Widget build(BuildContext context) {
-    return ProgressiveScrollWrapper(
-        scrollController: widget.tab.scrollOffsetController,
-        maxSpeed: 50.0,
-        acceleration: 0.5,
-        child: SelectionArea(
-          key: PageStorageKey(widget.tab),
-          child: ScrollablePositionedList.builder(
-              initialScrollIndex: widget.tab.index,
-              itemPositionsListener: widget.tab.positionsListener,
-              itemScrollController: widget.tab.scrollController,
-              scrollOffsetController: widget.tab.scrollOffsetController,
-              itemCount: widget.data.length,
-              itemBuilder: (context, index) {
-                return ValueListenableBuilder(
-                  valueListenable: widget.tab.removeNikud,
-                  builder: (context, removeNikud, child) => InkWell(
-                    onTap: () => widget.tab.selectedIndex.value = index,
-                    child: Html(
-                        //remove nikud if needed
-                        data: removeNikud
-                            ? highLight(removeVolwels(widget.data[index]),
-                                widget.tab.searchTextController.text)
-                            : highLight(widget.data[index],
-                                widget.tab.searchTextController.text),
-                        style: {
-                          'body': Style(
-                              fontSize: FontSize(widget.textSize),
-                              fontFamily:
-                                  Settings.getValue('key-font-family') ??
-                                      'candara',
-                              textAlign: TextAlign.justify),
-                        }),
-                  ),
-                );
-              }),
-        ));
+    return SelectionArea(
+      key: PageStorageKey(widget.tab),
+      child: ScrollablePositionedList.builder(
+          initialScrollIndex: widget.tab.index,
+          itemPositionsListener: widget.tab.positionsListener,
+          itemScrollController: widget.tab.scrollController,
+          scrollOffsetController: widget.tab.scrollOffsetController,
+          itemCount: widget.data.length,
+          itemBuilder: (context, index) {
+            return ValueListenableBuilder(
+              valueListenable: widget.tab.removeNikud,
+              builder: (context, removeNikud, child) => InkWell(
+                onTap: () => widget.tab.selectedIndex.value = index,
+                child: Html(
+                    //remove nikud if needed
+                    data: removeNikud
+                        ? highLight(removeVolwels(widget.data[index]),
+                            widget.tab.searchTextController.text)
+                        : highLight(widget.data[index],
+                            widget.tab.searchTextController.text),
+                    style: {
+                      'body': Style(
+                          fontSize: FontSize(widget.textSize),
+                          fontFamily:
+                              Settings.getValue('key-font-family') ?? 'candara',
+                          textAlign: TextAlign.justify),
+                    }),
+              ),
+            );
+          }),
+    );
   }
 }

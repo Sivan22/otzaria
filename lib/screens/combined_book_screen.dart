@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
+import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
@@ -32,9 +33,10 @@ class _CombinedViewState extends State<CombinedView> {
   FocusNode focusNode = FocusNode();
 
   Widget buildKeyboardListener() {
-    return ProgressiveScrollWrapper(
-        maxSpeed: 5000.0,
-        acceleration: 10.0,
+    return ProgressiveScroll(
+        maxSpeed: 10000.0,
+        curve: 10.0,
+        accelerationFactor: 5,
         scrollController: widget.tab.scrollOffsetController,
         child: buildOuterList());
   }
