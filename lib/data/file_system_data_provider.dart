@@ -5,6 +5,8 @@ and every directory is represents a category */
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
+import 'package:csv/csv.dart';
+import 'package:flutter/services.dart';
 import 'package:otzaria/utils/docx_to_otzaria.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
@@ -46,6 +48,8 @@ class FileSystemData extends Data {
     _updateTitleToPath();
     //fetching the metadata for the books in the library
     _fetchMetadata();
+
+    otzarBooks = getOtzarBooksFromCsv();
   }
 
   ///
@@ -53,10 +57,35 @@ class FileSystemData extends Data {
 
   String? libraryPath;
   Map<String, String> titleToPath = {};
+  late Future<List<OtzarBook>> otzarBooks;
 
   getLibraryPath() async {
     //get the library path from settings (as it was initialized in main())
     libraryPath = Settings.getValue('key-library-path');
+  }
+
+  Future<List<OtzarBook>> getOtzarBooksFromCsv() async {
+    try {
+      print('Loading Otzar HaChochma books from CSV');
+      final csvData = await rootBundle.loadString('assets/otzar_books.csv');
+      List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
+
+      return csvTable.skip(1).map((row) {
+        // Skip the header row
+        return OtzarBook(
+          title: row[1],
+          otzarId: row[0],
+          author: row[2],
+          printPlace: row[3],
+          printYear: row[4],
+          topics: row[5],
+          link: row[7],
+        );
+      }).toList();
+    } catch (e) {
+      print('Error loading Otzar HaChochma books: $e');
+      return [];
+    }
   }
 
   ///the implementation of the links from app's model, based on the filesystem.

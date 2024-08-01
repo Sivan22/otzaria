@@ -1,8 +1,6 @@
 import 'dart:isolate';
 import 'dart:math';
-import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
@@ -19,19 +17,18 @@ class LibraryBrowser extends StatefulWidget {
 }
 
 class _LibraryBrowserState extends State<LibraryBrowser> {
-  static List<OtzarBook>? _cachedOtzarBooks;
-  List<OtzarBook> get otzarBooks => _cachedOtzarBooks ?? [];
+  late Future<List<OtzarBook>> otzarBooks;
   late Category currentTopCategory;
   TextEditingController searchController = TextEditingController();
   late Future<List<Widget>> items;
   int depth = 0;
-  bool isLoading = true;
   bool showOtzarBooks = false;
 
   @override
   void initState() {
     super.initState();
     currentTopCategory = Provider.of<AppModel>(context, listen: false).library;
+    otzarBooks = Provider.of<AppModel>(context, listen: false).otzarBooks;
     _initializeData();
   }
 
@@ -51,23 +48,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   }
 
   Future<void> _initializeData() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    await _loadUserPreferences();
-
-    if (showOtzarBooks) {
-      await loadOtzarBooks();
-    }
-
     items = getGrids(currentTopCategory);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   Future<void> _loadUserPreferences() async {
@@ -84,50 +66,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       setState(() {
         showOtzarBooks = newShowOtzarBooks;
       });
-      _reloadData();
-    }
-  }
-
-  Future<void> _reloadData() async {
-    setState(() {
-      isLoading = true;
-    });
-    if (showOtzarBooks) {
-      await loadOtzarBooks();
-    }
-    items = getGrids(currentTopCategory);
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  Future<void> loadOtzarBooks() async {
-    if (!showOtzarBooks) return;
-
-    if (_cachedOtzarBooks != null) {
-      print('Using cached Otzar HaChochma books');
-      return;
-    }
-
-    try {
-      print('Loading Otzar HaChochma books from CSV');
-      final csvData = await rootBundle.loadString('assets/otzar_books.csv');
-      List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
-
-      _cachedOtzarBooks = csvTable.skip(1).map((row) {
-        // Skip the header row
-        return OtzarBook(
-          title: row[1],
-          otzarId: row[0],
-          author: row[2],
-          printPlace: row[3],
-          printYear: row[4],
-          topics: row[5],
-          link: row[7],
-        );
-      }).toList();
-    } catch (e) {
-      print('Error loading Otzar HaChochma books: $e');
     }
   }
 
@@ -222,45 +160,52 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
           }),
         ),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                buildSearchBar(),
-                Expanded(
-                  child: FutureBuilder<List<Widget>>(
-                    future: items,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      } else if (snapshot.hasData) {
-                        if (snapshot.data!.isEmpty) {
+      body: FutureBuilder(
+        future: otzarBooks,
+        builder: (context, snapshot) => snapshot.connectionState ==
+                    ConnectionState.waiting &&
+                showOtzarBooks
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  buildSearchBar(),
+                  Expanded(
+                    child: FutureBuilder<List<Widget>>(
+                      future: items,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
                           return Center(
-                            child: Text(
-                              'אין תוצאות עבור "${searchController.text}"',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
+                              child: Text('Error: ${snapshot.error}'));
+                        } else if (snapshot.hasData) {
+                          if (snapshot.data!.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'אין תוצאות עבור "${searchController.text}"',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            key: PageStorageKey(currentTopCategory.title),
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) =>
+                                snapshot.data![index],
                           );
+                        } else {
+                          return const Center(child: Text('No data available'));
                         }
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          key: PageStorageKey(currentTopCategory.title),
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) =>
-                              snapshot.data![index],
-                        );
-                      } else {
-                        return const Center(child: Text('No data available'));
-                      }
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -371,7 +316,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
 
     List<OtzarBook> otzarEntries = [];
     if (showOtzarBooks) {
-      otzarEntries = otzarBooks.where((book) {
+      otzarEntries = (await otzarBooks).where((book) {
         final title = book.title.toLowerCase();
         return queryWords.every((word) => title.contains(word));
       }).toList();

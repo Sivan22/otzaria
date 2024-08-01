@@ -27,6 +27,9 @@ class AppModel with ChangeNotifier {
   /// The library of books.
   late Library library;
 
+  /// The list of otzar books.
+  Future<List<OtzarBook>> get otzarBooks => data.otzarBooks;
+
   /// The list of opened tabs.
   List<OpenedTab> tabs = [];
 

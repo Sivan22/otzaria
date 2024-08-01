@@ -31,6 +31,9 @@ abstract class Data {
   /// Returns the library.
   Library getLibrary();
 
+  ///returns the list of otzar books
+  Future<List<OtzarBook>> get otzarBooks;
+
   /// Returns the text of the book with the given title.
   Future<String> getBookText(String title);
 
