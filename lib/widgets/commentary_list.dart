@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:otzaria/widgets/commentary_content.dart';
+import 'package:otzaria/widgets/progressive_scrolling.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class CommentaryList extends StatefulWidget {
   final Function(TextBookTab) openBookCallback;
@@ -26,6 +28,7 @@ class CommentaryList extends StatefulWidget {
 class _CommentaryListState extends State<CommentaryList> {
   late Future<List<Link>> thisLinks;
   late List<int> indexes;
+  final ScrollOffsetController scrollController = ScrollOffsetController();
 
   void _updateThisLinks() {
     thisLinks = getLinksforIndexs(
@@ -89,20 +92,26 @@ class _CommentaryListState extends State<CommentaryList> {
               : ValueListenableBuilder(
                   valueListenable: widget.textBookTab.removeNikud,
                   builder: (context, _, child) {
-                    return ListView.builder(
-                      key: PageStorageKey(thisLinksSnapshot.data![0].heRef),
-                      physics: const ClampingScrollPhysics(),
-                      primary: true,
-                      shrinkWrap: true,
-                      itemCount: thisLinksSnapshot.data!.length,
-                      itemBuilder: (context, index1) => GestureDetector(
-                        child: ListTile(
-                          title: Text(thisLinksSnapshot.data![index1].heRef),
-                          subtitle: CommentaryContent(
-                            link: thisLinksSnapshot.data![index1],
-                            fontSize: widget.fontSize,
-                            openBookCallback: widget.openBookCallback,
-                            removeNikud: widget.textBookTab.removeNikud.value,
+                    return ProgressiveScroll(
+                      scrollController: scrollController,
+                      maxSpeed: 10000.0,
+                      curve: 10.0,
+                      accelerationFactor: 5,
+                      child: ScrollablePositionedList.builder(
+                        key: PageStorageKey(thisLinksSnapshot.data![0].heRef),
+                        physics: const ClampingScrollPhysics(),
+                        scrollOffsetController: scrollController,
+                        shrinkWrap: true,
+                        itemCount: thisLinksSnapshot.data!.length,
+                        itemBuilder: (context, index1) => GestureDetector(
+                          child: ListTile(
+                            title: Text(thisLinksSnapshot.data![index1].heRef),
+                            subtitle: CommentaryContent(
+                              link: thisLinksSnapshot.data![index1],
+                              fontSize: widget.fontSize,
+                              openBookCallback: widget.openBookCallback,
+                              removeNikud: widget.textBookTab.removeNikud.value,
+                            ),
                           ),
                         ),
                       ),

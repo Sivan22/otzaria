@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:otzaria/models/app_model.dart';
+import 'package:provider/provider.dart';
 import 'dart:math';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -44,7 +46,7 @@ class _ProgressiveScrollState extends State<ProgressiveScroll> {
         double curvedT = exp(widget.curve * t);
         _scrollSpeed = (curvedT * widget.accelerationFactor * _scrollDirection)
             .clamp(-widget.maxSpeed, widget.maxSpeed);
-        print('scroll speed: $_scrollSpeed');
+        //print('scroll speed: $_scrollSpeed');
       } else {
         _scrollSpeed = 0;
         _timePressedInSeconds = 0;
@@ -78,7 +80,7 @@ class _ProgressiveScrollState extends State<ProgressiveScroll> {
         _isKeyPressed = false;
         widget.scrollController.animateScroll(
           offset: 100.0 * _scrollDirection,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 150),
         );
         _scrollDirection = 0;
       }
@@ -88,7 +90,7 @@ class _ProgressiveScrollState extends State<ProgressiveScroll> {
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      focusNode: FocusNode(),
+      focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
       onKeyEvent: _handleKeyEvent,
       autofocus: true,
       child: widget.child,
