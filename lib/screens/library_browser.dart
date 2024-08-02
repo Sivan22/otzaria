@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'package:csv/csv.dart';
@@ -112,11 +113,17 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     try {
       print('Loading Otzar HaChochma books from CSV');
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
-      List<List<dynamic>> csvTable = const CsvToListConverter(
-        fieldDelimiter: ',',
-        eol: '\n',
-        textDelimiter: '"',
-      ).convert(csvData);
+      List<List<dynamic>> csvTable;
+      //on windows, it seems like the csv data is rendered differently....
+      if (Platform.isWindows) {
+        csvTable = CsvToListConverter().convert(csvData);
+      } else {
+        csvTable = const CsvToListConverter(
+          fieldDelimiter: ',',
+          eol: '\n',
+          textDelimiter: '"',
+        ).convert(csvData);
+      }
       _cachedOtzarBooks = csvTable.skip(1).map((row) {
         // Skip the header row
         return OtzarBook(
