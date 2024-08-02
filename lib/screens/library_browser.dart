@@ -113,29 +113,35 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     try {
       print('Loading Otzar HaChochma books from CSV');
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
+
+      // Normalize line endings
+      final normalizedCsvData =
+          csvData.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+
       List<List<dynamic>> csvTable;
-      //on windows, it seems like the csv data is rendered differently....
-      if (Platform.isWindows) {
-        csvTable = CsvToListConverter().convert(csvData);
-      } else {
-        csvTable = const CsvToListConverter(
-          fieldDelimiter: ',',
-          eol: '\n',
-          textDelimiter: '"',
-        ).convert(csvData);
-      }
+      csvTable = const CsvToListConverter(
+        fieldDelimiter: ',',
+        textDelimiter: '"',
+        eol: '\n',
+        shouldParseNumbers: false,
+      ).convert(normalizedCsvData);
+
+      print('Loaded ${csvTable.length} rows');
+
+      // Skip the header row
       _cachedOtzarBooks = csvTable.skip(1).map((row) {
-        // Skip the header row
         return OtzarBook(
+          otzarId: int.tryParse(row[0]) ?? -1,
           title: row[1],
-          otzarId: row[0],
           author: row[2],
           printPlace: row[3],
           printYear: row[4],
           topics: row[5],
-          link: row[7],
+          link: row[7], // Using the last column for the link
         );
       }).toList();
+
+      print('Processed ${_cachedOtzarBooks?.length} valid books');
     } catch (e) {
       print('Error loading Otzar HaChochma books: $e');
     }
