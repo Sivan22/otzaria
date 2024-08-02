@@ -34,4 +34,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+<!--    this is inorder to launch (otzar) links with URL launhcer-->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 </manifest>

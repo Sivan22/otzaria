@@ -219,18 +219,54 @@ class OtzarBookGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text(
-          book.title,
-          style: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
+    return GestureDetector(
+      child: Card(
+        child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
+          borderRadius: BorderRadius.circular(12.0),
+          hoverColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+          onTap: () => onTap(),
+          hoverDuration: Durations.medium1,
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                  child: Icon(
+                    Icons.open_in_new,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.6),
+                  ),
+                ),
+                Expanded(
+                  child: ListTile(
+                    mouseCursor: SystemMouseCursors.click,
+                    // isThreeLine: true,
+                    title: Text(
+                      book.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      (book.author == null || book.author!.isEmpty)
+                          ? book.printYear ?? ''
+                          : '${book.author} \n${book.printYear ?? ''}',
+                      style: const TextStyle(fontSize: 13),
+                      //
+                    ),
+                  ),
+                ),
+                // Add any OtzarBook-specific widgets here if needed
+              ],
+            ),
           ),
         ),
-        subtitle: Text('${book.author ?? ''} - ${book.printYear ?? ''}'),
-        trailing: Icon(Icons.open_in_new),
-        onTap: onTap,
       ),
     );
   }

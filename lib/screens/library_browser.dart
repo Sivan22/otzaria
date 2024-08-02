@@ -112,8 +112,11 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     try {
       print('Loading Otzar HaChochma books from CSV');
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
-      List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
-
+      List<List<dynamic>> csvTable = const CsvToListConverter(
+        fieldDelimiter: ',',
+        eol: '\n',
+        textDelimiter: '"',
+      ).convert(csvData);
       _cachedOtzarBooks = csvTable.skip(1).map((row) {
         // Skip the header row
         return OtzarBook(
