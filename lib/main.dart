@@ -22,17 +22,15 @@ import 'dart:io';
 ///
 
 void main() async {
+  await Settings.init(cacheProvider: HiveCache());
+  await initHiveBoxes();
   WidgetsFlutterBinding.ensureInitialized();
   // requesting external storage permission on android
   while (
       Platform.isAndroid && !await Permission.manageExternalStorage.isGranted) {
     Permission.manageExternalStorage.request();
   }
-  // initializing all the hive components
-  await () async {
-    await Settings.init(cacheProvider: HiveCache());
-    await initHiveBoxes();
-  }();
+
   // initializing the library path
   await () async {
     //first try to get the library path from settings

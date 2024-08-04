@@ -25,13 +25,11 @@ import 'package:otzaria/models/links.dart';
 /// The metadata is stored in a JSON file.
 class FileSystemData extends Data {
   FileSystemData() {
-    libraryPath = Settings.getValue('key-library-path');
     _updateTitleToPath();
   }
 
   static FileSystemData instance = FileSystemData();
-
-  late String libraryPath;
+  String libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
   Map<String, String> titleToPath = {};
 
   @override
