@@ -105,6 +105,7 @@ class _CommentaryListState extends State<CommentaryList> {
                         itemCount: thisLinksSnapshot.data!.length,
                         itemBuilder: (context, index1) => GestureDetector(
                           child: ListTile(
+                            focusNode: FocusNode(),
                             title: Text(thisLinksSnapshot.data![index1].heRef),
                             subtitle: CommentaryContent(
                               link: thisLinksSnapshot.data![index1],

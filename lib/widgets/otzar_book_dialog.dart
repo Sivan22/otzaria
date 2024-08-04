@@ -3,7 +3,7 @@ import '../models/books.dart';
 import '../utils/otzar_utils.dart';
 
 class OtzarBookDialog extends StatelessWidget {
-  final OtzarBook book;
+  final ExternalBook book;
 
   const OtzarBookDialog({Key? key, required this.book}) : super(key: key);
 
@@ -17,7 +17,7 @@ class OtzarBookDialog extends StatelessWidget {
         child: FutureBuilder<(bool, bool)>(
           future: Future.wait([
             OtzarUtils.canLaunchLocally(),
-            OtzarUtils.checkBookExistence(book.otzarId)
+            OtzarUtils.checkBookExistence(book.id)
           ]).then((results) => (results[0], results[1])),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -53,12 +53,14 @@ class OtzarBookDialog extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 24),
+                    _buildInfoRow(context, Icons.description, 'תיאור',
+                        book.heShortDesc ?? 'לא קיים'),
                     _buildInfoRow(context, Icons.person, 'מחבר',
                         book.author ?? 'לא ידוע'),
                     _buildInfoRow(context, Icons.location_on, 'מקום הדפסה',
-                        book.printPlace ?? 'לא ידוע'),
+                        book.pubPlace ?? 'לא ידוע'),
                     _buildInfoRow(context, Icons.calendar_today, 'שנת הדפסה',
-                        book.printYear ?? 'לא ידוע'),
+                        book.pubDate ?? 'לא ידוע'),
                     _buildInfoRow(context, Icons.category, 'נושאים',
                         book.topics ?? 'לא ידוע'),
                     SizedBox(height: 24),
@@ -114,7 +116,7 @@ class OtzarBookDialog extends StatelessWidget {
             label: Text('פתח מקומית'),
             onPressed: () {
               Navigator.of(context).pop();
-              OtzarUtils.launchOtzarLocal(book.otzarId);
+              OtzarUtils.launchOtzarLocal(book.id);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,

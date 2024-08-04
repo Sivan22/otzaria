@@ -90,7 +90,7 @@ class _ProgressiveScrollState extends State<ProgressiveScroll> {
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
+      focusNode: FocusNode(),
       onKeyEvent: _handleKeyEvent,
       autofocus: true,
       child: widget.child,

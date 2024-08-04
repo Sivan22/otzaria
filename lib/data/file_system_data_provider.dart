@@ -25,65 +25,145 @@ import 'package:otzaria/models/links.dart';
 /// The metadata is stored in a JSON file.
 class FileSystemData extends Data {
   FileSystemData() {
-    init();
-  }
-
-  /// Initializes the data for the application.
-  ///
-  /// This function initializes the data for the application by performing the following steps:
-  /// 1. Initializes the settings using the provided cache provider.
-  /// 2. Ensures that the Flutter binding is initialized.
-  /// 3. Sets the default directory for Hive to the path obtained from the application support directory.
-  /// 4. Creates Hive boxes for bookmarks, tabs, and app preferences.
-  /// 5. Retrieves the library path using the file picker.
-  /// 6. Updates the title to path mapping using the retrieved library path.
-  /// 7. Registers the Bookmark adapter for Hive serialization.
-  ///
-  /// Returns a `Future` that completes when the initialization is done.
-  ///
-  init() async {
-    //taking care of getting the library path
-    await getLibraryPath();
-    //updating the title to path index
+    libraryPath = Settings.getValue('key-library-path');
     _updateTitleToPath();
-    //fetching the metadata for the books in the library
-    _fetchMetadata();
-
-    otzarBooks = getOtzarBooksFromCsv();
   }
 
-  ///
   static FileSystemData instance = FileSystemData();
 
-  String? libraryPath;
+  late String libraryPath;
   Map<String, String> titleToPath = {};
-  late Future<List<OtzarBook>> otzarBooks;
 
-  getLibraryPath() async {
-    //get the library path from settings (as it was initialized in main())
-    libraryPath = Settings.getValue('key-library-path');
+  @override
+
+  /// Returns the library
+  Future<Library> getLibrary() async {
+    return _getLibraryFromDirectory(
+        '$libraryPath${Platform.pathSeparator}אוצריא');
   }
 
-  Future<List<OtzarBook>> getOtzarBooksFromCsv() async {
+  Future<Library> _getLibraryFromDirectory(String path) async {
+    /// a helper recursive function to get all the categories and books from a directory and its subdirectories
+    _fetchMetadata();
+    Category getAllCategoriesAndBooksFromDirectory(
+        Directory dir, Category? parent) {
+      Category category = Category(
+          title: getTitleFromPath(dir.path),
+          subCategories: [],
+          books: [],
+          parent: parent);
+      // get the books and categories from the directory
+      for (FileSystemEntity entity in dir.listSync()) {
+        if (entity is Directory) {
+          category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
+              Directory(entity.path), category));
+        } else {
+          if (entity.path.toLowerCase().endsWith('.pdf')) {
+            category.books.add(
+              PdfBook(
+                title: getTitleFromPath(entity.path),
+                path: entity.path,
+              ),
+            );
+          }
+          if (entity.path.toLowerCase().endsWith('.txt') ||
+              entity.path.toLowerCase().endsWith('.docx')) {
+            final title = getTitleFromPath(entity.path);
+            category.books.add(TextBook(
+                title: title,
+                author: metadata[title]?['author'],
+                heShortDesc: metadata[title]?['heShortDesc'],
+                pubDate: metadata[title]?['pubDate'],
+                pubPlace: metadata[title]?['pubPlace'],
+                order: metadata[title]?['order'] ?? 999,
+                topics: entity.path
+                    .split('אוצריא')[1]
+                    .replaceFirst('.txt', '')
+                    .split('\\')
+                    .join(',')));
+          }
+        }
+      }
+      return category;
+    }
+
+    //first initialize an empty library
+    Library library = Library(categories: []);
+
+    //then get all the categories and books from the top directory recursively
+    for (FileSystemEntity entity in Directory(path).listSync()) {
+      if (entity is Directory) {
+        library.subCategories.add(getAllCategoriesAndBooksFromDirectory(
+            Directory(entity.path), library));
+      }
+    }
+    return library;
+  }
+
+  @override
+  Future<List<ExternalBook>> getOtzarBooks() {
+    return _getOtzarBooks();
+  }
+
+  @override
+  Future<List<ExternalBook>> getHebrewBooks() {
+    return _getHebrewBooks();
+  }
+
+  Future<List<ExternalBook>> _getOtzarBooks() async {
     try {
       print('Loading Otzar HaChochma books from CSV');
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
-      List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
 
-      return csvTable.skip(1).map((row) {
-        // Skip the header row
-        return OtzarBook(
-          title: row[1],
-          otzarId: row[0],
-          author: row[2],
-          printPlace: row[3],
-          printYear: row[4],
-          topics: row[5],
-          link: row[7],
-        );
-      }).toList();
+      return Isolate.run(() {
+        List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
+        return csvTable.skip(1).map((row) {
+          // Skip the header row
+          return ExternalBook(
+            title: row[1],
+            id: row[0],
+            author: row[2],
+            pubPlace: row[3],
+            pubDate: row[4],
+            topics: row[5],
+            link: row[7],
+          );
+        }).toList();
+      });
     } catch (e) {
       print('Error loading Otzar HaChochma books: $e');
+      return [];
+    }
+  }
+
+  Future<List<ExternalBook>> _getHebrewBooks() async {
+    try {
+      print('Loading hebrewbooks from CSV');
+      final csvData = await rootBundle.loadString('assets/hebrew_books.csv');
+
+      return Isolate.run(() {
+        List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
+        return csvTable.skip(1).map((row) {
+          // Skip the header row
+          try {
+            return ExternalBook(
+              title: row[1].toString(),
+              id: 0,
+              author: row[2].toString(),
+              pubPlace: row[3].toString(),
+              pubDate: row[4].toString(),
+              topics: row[15].toString(),
+              heShortDesc: row[13].toString(),
+              link: 'https://beta.hebrewbooks.org/${row[0]}',
+            );
+          } catch (e) {
+            print('Error loading book: $e');
+            return ExternalBook(title: 'error', id: 0, link: '');
+          }
+        }).toList();
+      });
+    } catch (e) {
+      print('Error loading hebrewbooks: $e');
       return [];
     }
   }
@@ -118,14 +198,6 @@ class FileSystemData extends Data {
         return await file.readAsString();
       }
     });
-  }
-
-  @override
-
-  /// Returns the library
-  Library getLibrary() {
-    return _getLibraryFromDirectory(
-        '${libraryPath!}${Platform.pathSeparator}אוצריא');
   }
 
   @override
@@ -172,7 +244,7 @@ class FileSystemData extends Data {
 
   /// Updates the title to path mapping using the provided library path.
   void _updateTitleToPath() {
-    List<String> paths = getAllBooksPathsFromDirecctory(libraryPath!);
+    List<String> paths = getAllBooksPathsFromDirecctory(libraryPath);
     for (var path in paths) {
       titleToPath[getTitleFromPath(path)] = path;
     }
@@ -182,7 +254,7 @@ class FileSystemData extends Data {
   void _fetchMetadata() {
     String metadataString = '';
     try {
-      File file = File('${libraryPath!}${Platform.pathSeparator}metadata.json');
+      File file = File('${libraryPath}${Platform.pathSeparator}metadata.json');
       metadataString = file.readAsStringSync();
     } catch (e) {
       return;
@@ -258,51 +330,6 @@ class FileSystemData extends Data {
   ///this is the way to get the library using the file system.
   ///every directory represents a category, and every file represents a book.
   ///the
-  Library _getLibraryFromDirectory(String path) {
-    /// a helper recursive function to get all the categories and books from a directory and its subdirectories
-    Category getAllCategoriesAndBooksFromDirectory(
-        Directory dir, Category? parent) {
-      Category category = Category(
-          title: getTitleFromPath(dir.path),
-          subCategories: [],
-          books: [],
-          parent: parent);
-      // get the books and categories from the directory
-      for (FileSystemEntity entity in dir.listSync()) {
-        if (entity is Directory) {
-          category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
-              Directory(entity.path), category));
-        } else {
-          if (entity.path.toLowerCase().endsWith('.pdf')) {
-            category.books.add(
-              PdfBook(
-                  title: getTitleFromPath(entity.path),
-                  path: entity.path,
-                  category: category),
-            );
-          }
-          if (entity.path.toLowerCase().endsWith('.txt') ||
-              entity.path.toLowerCase().endsWith('.docx')) {
-            category.books.add(TextBook(
-                title: getTitleFromPath(entity.path), category: category));
-          }
-        }
-      }
-      return category;
-    }
-
-    //first initialize an empty library
-    Library library = Library(categories: []);
-
-    //then get all the categories and books from the top directory recursively
-    for (FileSystemEntity entity in Directory(path).listSync()) {
-      if (entity is Directory) {
-        library.subCategories.add(getAllCategoriesAndBooksFromDirectory(
-            Directory(entity.path), library));
-      }
-    }
-    return library;
-  }
 
   ///gets the path of the link file asocciated with the book title.
   String _getLinksPath(String title) {

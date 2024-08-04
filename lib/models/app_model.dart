@@ -2,9 +2,11 @@
 it includes the library, a list of the opened tabs, the current tab, the current view, 
 and the some other app settings like dark mode and the seed color*/
 
+import 'dart:isolate';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hive/hive.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 import 'package:otzaria/data/data.dart';
@@ -25,10 +27,13 @@ class AppModel with ChangeNotifier {
   Data data = FileSystemData.instance;
 
   /// The library of books.
-  late Library library;
+  late Future<Library> library;
 
   /// The list of otzar books.
-  Future<List<OtzarBook>> get otzarBooks => data.otzarBooks;
+  late Future<List<ExternalBook>> otzarBooks;
+
+  /// the list of hebrewBooks
+  late Future<List<ExternalBook>> hebrewBooks;
 
   /// The list of opened tabs.
   List<OpenedTab> tabs = [];
@@ -58,9 +63,14 @@ class AppModel with ChangeNotifier {
   final ValueNotifier<double> paddingSize = ValueNotifier<double>(
       Settings.getValue<double>('key-padding-size') ?? 10);
 
-  // if you should show only otzar hachochma books
-  final ValueNotifier<bool> showOnlyOtzarHachochma = ValueNotifier<bool>(
-    Settings.getValue<bool>('key-show-only-otzar-hachochma') ?? false,
+  // if you should show otzar hachochma books
+  final ValueNotifier<bool> showOtzarHachochma = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-show-otzar-hachochma') ?? false,
+  );
+
+  // if you should show hebrewbooks books
+  final ValueNotifier<bool> showHebrewBooks = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-show-hebrew-books') ?? false,
   );
 
   /// a focus node for the search field in libraryBrowser
@@ -72,6 +82,8 @@ class AppModel with ChangeNotifier {
   /// tabs list and history from disk.
   AppModel() {
     library = data.getLibrary();
+    otzarBooks = data.getOtzarBooks();
+    hebrewBooks = data.getHebrewBooks();
 
 //load tabs from disk. if fails, delete the tabs from disk
     try {
@@ -120,9 +132,9 @@ class AppModel with ChangeNotifier {
     isDarkMode.addListener(() {
       notifyListeners();
     });
-    showOnlyOtzarHachochma.addListener(() {
+    showOtzarHachochma.addListener(() {
       Settings.setValue(
-          'key-show-only-otzar-hachochma', showOnlyOtzarHachochma.value);
+          'key-show-only-otzar-hachochma', showOtzarHachochma.value);
       notifyListeners();
     });
   }
@@ -303,21 +315,29 @@ class AppModel with ChangeNotifier {
     Hive.box(name: 'history').clear();
   }
 
-  String getDafYomi(DateTime date) {
-    JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(date);
-    Daf dafYomi = YomiCalculator.getDafYomiBavli(jewishCalendar);
-    int dafNumber = dafYomi.getDaf();
-    String masechtaNameHebrew = dafYomi.getMasechta();
-    Object dafNumberHebrew =
-        HebrewDateFormatter().formatHebrewNumber(dafNumber);
-    return '$masechtaNameHebrew $dafNumberHebrew';
-  }
+  // Asynchronously finds books based on a query and optional category. Returns a list of filtered books.
+  Future<List<Book>> findBooks(String query, Category? category) async {
+    final queryWords = query.split(RegExp(r'\s+'));
+    var books = category?.getAllBooks() ?? (await library).getAllBooks();
+    if (showOtzarHachochma.value) {
+      books += await otzarBooks;
+    }
+    if (showHebrewBooks.value) {
+      books += await hebrewBooks;
+    }
+    final filteredBooks = books.where((book) {
+      final title = book.title.toLowerCase();
+      return queryWords.every((word) => title.contains(word));
+    }).toList();
 
-  String getHebrewDateFormattedAsString(DateTime dateTime) {
-    final hebrewCalendar = JewishCalendar.fromDateTime(dateTime);
-    HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter()
-      ..hebrewFormat = true;
-    return hebrewDateFormatter.format(hebrewCalendar);
+    return Isolate.run(() {
+      filteredBooks.sort((a, b) {
+        final scoreA = ratio(query, a.title);
+        final scoreB = ratio(query, b.title);
+        return scoreB.compareTo(scoreA);
+      });
+      return filteredBooks;
+    });
   }
 }
 

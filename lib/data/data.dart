@@ -29,10 +29,12 @@ abstract class Data {
   Map<String, Map<String, dynamic>> metadata = {};
 
   /// Returns the library.
-  Library getLibrary();
+  Future<Library> getLibrary();
 
   ///returns the list of otzar books
-  Future<List<OtzarBook>> get otzarBooks;
+  Future<List<ExternalBook>> getOtzarBooks();
+
+  Future<List<ExternalBook>> getHebrewBooks();
 
   /// Returns the text of the book with the given title.
   Future<String> getBookText(String title);

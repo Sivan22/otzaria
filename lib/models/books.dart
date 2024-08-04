@@ -11,9 +11,6 @@ import 'dart:isolate';
 /// and an [author], [heShortDesc], [pubPlace], [pubDate], and [order] if available.
 ///
 abstract class Book {
-  ///the category of the book
-  Category? category;
-
   /// The title of the book.
   final String title;
 
@@ -21,19 +18,21 @@ abstract class Book {
   final Data data = FileSystemData.instance;
 
   /// The author of the book, if available.
-  String? get author => data.metadata[title]?['author'];
+  String? author;
 
   /// A short description of the book, if available.
-  String? get heShortDesc => data.metadata[title]?['heShortDesc'];
+  String? heShortDesc;
 
   /// The publication date of the book, if available.
-  String? get pubDate => data.metadata[title]?['pubDate'];
+  String? pubDate;
 
   /// The place where the book was published, if available.
-  String? get pubPlace => data.metadata[title]?['pubPlace'];
+  String? pubPlace;
 
   /// The order of the book in the list of books. If not available, defaults to 999.
-  int get order => data.metadata[title]?['order'] ?? 999;
+  int order;
+
+  String? topics;
 
   Map<String, dynamic> toJson();
 
@@ -44,7 +43,7 @@ abstract class Book {
       case 'PdfBook':
         return PdfBook(title: json['title'], path: json['path']);
       case 'OtzarBook':
-        return OtzarBook.fromJson(json);
+        return ExternalBook.fromJson(json);
       default:
         throw Exception('Unknown book type: ${json['type']}');
     }
@@ -53,14 +52,30 @@ abstract class Book {
   /// Creates a new `Book` instance.
   ///
   /// The [title] parameter is required and cannot be null.
-  Book({required this.title, this.category});
+  Book({
+    required this.title,
+    this.author,
+    this.heShortDesc,
+    this.pubDate,
+    this.pubPlace,
+    this.order = 999,
+    this.topics,
+  });
 }
 
 ///a representation of a text book (opposite PDF book).
 ///a text book has a getter 'text' which returns a [Future] that resolvs to a [String].
 ///it has also a 'tableOfContents' field that returns a [Future] that resolvs to a list of [TocEntry]s
 class TextBook extends Book {
-  TextBook({required String title, super.category}) : super(title: title);
+  TextBook({
+    required String title,
+    super.author,
+    super.heShortDesc,
+    super.pubDate,
+    super.pubPlace,
+    super.order = 999,
+    super.topics,
+  }) : super(title: title);
 
   /// Retrieves the table of contents of the book.
   ///
@@ -118,78 +133,58 @@ class TocEntry {
 ///
 /// This class extends the [Book] class and includes additional properties
 /// specific to Otzar HaChochma books, such as the Otzar ID and online link.
-class OtzarBook extends Book {
+class ExternalBook extends Book {
   /// The unique identifier for the book in the Otzar HaChochma system.
-  final int otzarId;
-
-  /// The author of the book.
-  final String? author;
-
-  /// The place where the book was printed.
-  final String? printPlace;
-
-  /// The year when the book was printed.
-  final String? printYear;
-
-  /// The topics or categories the book belongs to.
-  final String? topics;
+  final int id;
 
   /// The online link to access the book in the Otzar HaChochma system.
   final String link;
 
-  /// Creates an [OtzarBook] instance.
+  /// Creates an [ExternalBook] instance.
   ///
-  /// [title] and [otzarId] are required. Other parameters are optional.
+  /// [title] and [id] are required. Other parameters are optional.
   /// [link] is required for online access to the book.
-  OtzarBook({
+  ExternalBook({
     required String title,
-    required this.otzarId,
-    this.author,
-    this.printPlace,
-    this.printYear,
-    this.topics,
+    required this.id,
+    super.author,
+    super.pubPlace,
+    super.pubDate,
+    super.topics,
+    super.heShortDesc,
     required this.link,
   }) : super(title: title);
 
   /// Returns the publication date of the book.
   ///
-  /// This overrides the [pubDate] getter from the [Book] class.
-  @override
-  String? get pubDate => printYear;
 
-  /// Returns the publication place of the book.
-  ///
-  /// This overrides the [pubPlace] getter from the [Book] class.
-  @override
-  String? get pubPlace => printPlace;
-
-  /// Creates an [OtzarBook] instance from a JSON map.
+  /// Creates an [ExternalBook] instance from a JSON map.
   ///
   /// This factory constructor is used to deserialize OtzarBook objects.
-  factory OtzarBook.fromJson(Map<String, dynamic> json) {
-    return OtzarBook(
+  factory ExternalBook.fromJson(Map<String, dynamic> json) {
+    return ExternalBook(
       title: json['bookName'],
-      otzarId: json['id'],
+      id: json['id'],
       author: json['author'],
-      printPlace: json['printPlace'],
-      printYear: json['printYear'],
+      pubPlace: json['pubPlace'],
+      pubDate: json['pubDate'],
       topics: json['topics'],
       link: json['link'],
     );
   }
 
-  /// Converts the [OtzarBook] instance to a JSON map.
+  /// Converts the [ExternalBook] instance to a JSON map.
   ///
   /// This method is used to serialize OtzarBook objects.
   @override
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'type': 'OtzarBook',
-      'otzarId': otzarId,
+      'type': 'ExternalBook',
+      'otzarId': id,
       'author': author,
-      'printPlace': printPlace,
-      'printYear': printYear,
+      'pubPlace': pubPlace,
+      'pubDate': pubDate,
       'topics': topics,
       'link': link,
     };
@@ -200,8 +195,7 @@ class OtzarBook extends Book {
 ///is required
 class PdfBook extends Book {
   final String path;
-  PdfBook({required String title, required this.path, super.category})
-      : super(title: title);
+  PdfBook({required String title, required this.path}) : super(title: title);
 
   factory PdfBook.fromJson(Map<String, dynamic> json) {
     return PdfBook(

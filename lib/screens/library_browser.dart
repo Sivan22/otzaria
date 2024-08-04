@@ -1,10 +1,12 @@
 import 'dart:isolate';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
+import 'package:otzaria/widgets/daf_yomi.dart';
 import 'package:otzaria/widgets/grid_items.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/widgets/otzar_book_dialog.dart';
@@ -17,199 +19,122 @@ class LibraryBrowser extends StatefulWidget {
 }
 
 class _LibraryBrowserState extends State<LibraryBrowser> {
-  late Future<List<OtzarBook>> otzarBooks;
-  late Category currentTopCategory;
+  late Future<Category> currentTopCategory;
   TextEditingController searchController = TextEditingController();
   late Future<List<Widget>> items;
   int depth = 0;
-  bool showOtzarBooks = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsFlutterBinding.ensureInitialized();
     currentTopCategory = Provider.of<AppModel>(context, listen: false).library;
-    otzarBooks = Provider.of<AppModel>(context, listen: false).otzarBooks;
-    _initializeData();
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    Provider.of<AppModel>(context, listen: true)
-        .addListener(_handleSettingsChange);
+    items = getGrids(currentTopCategory);
   }
 
   @override
   void dispose() {
-    Provider.of<AppModel>(context, listen: false)
-        .removeListener(_handleSettingsChange);
     searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _initializeData() async {
-    items = getGrids(currentTopCategory);
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
-  }
-
-  Future<void> _loadUserPreferences() async {
-    final appModel = Provider.of<AppModel>(context, listen: false);
-    setState(() {
-      showOtzarBooks = appModel.showOnlyOtzarHachochma.value;
-    });
-  }
-
-  void _handleSettingsChange() {
-    final appModel = Provider.of<AppModel>(context, listen: false);
-    bool newShowOtzarBooks = appModel.showOnlyOtzarHachochma.value;
-    if (newShowOtzarBooks != showOtzarBooks) {
-      setState(() {
-        showOtzarBooks = newShowOtzarBooks;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                icon: const Icon(Icons.home),
-                tooltip: 'חזרה לתיקיה הראשית',
+    return FutureBuilder(
+        future: currentTopCategory,
+        builder: (context, resolvedCurrentTopCategory) {
+          if (!resolvedCurrentTopCategory.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Scaffold(
+            appBar: AppBar(
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.home),
+                      tooltip: 'חזרה לתיקיה הראשית',
+                      onPressed: () => setState(() {
+                        searchController.clear();
+                        depth = 0;
+                        currentTopCategory =
+                            Provider.of<AppModel>(context, listen: false)
+                                .library;
+                        items = getGrids(currentTopCategory);
+                      }),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                        child: Text(resolvedCurrentTopCategory.data!.title,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ))),
+                  ),
+                  DafYomi()
+                ],
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_upward),
+                tooltip: 'חזרה לתיקיה הקודמת',
                 onPressed: () => setState(() {
                   searchController.clear();
-                  depth = 0;
-                  currentTopCategory =
-                      Provider.of<AppModel>(context, listen: false).library;
+                  depth = max(0, depth - 1);
+                  currentTopCategory = Future(
+                      () => resolvedCurrentTopCategory.data!.parent!.parent!);
                   items = getGrids(currentTopCategory);
                 }),
               ),
             ),
-            Expanded(
-              child: Center(
-                  child: Text(currentTopCategory.title,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.secondary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ))),
-            ),
-            Consumer<AppModel>(
-              builder: (context, appModel, child) {
-                return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.surface.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            appModel
-                                .getHebrewDateFormattedAsString(DateTime.now()),
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.secondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textDirection: TextDirection.rtl,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'דף היומי: ${appModel.getDafYomi(DateTime.now())}',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.secondary,
-                              fontSize: 11,
-                            ),
-                            textDirection: TextDirection.rtl,
-                          ),
-                        ],
-                      ),
-                      SizedBox(width: 10),
-                      Icon(
-                        Icons.calendar_month_outlined,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 24,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            )
-          ],
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_upward),
-          tooltip: 'חזרה לתיקיה הקודמת',
-          onPressed: () => setState(() {
-            searchController.clear();
-            depth = max(0, depth - 1);
-            currentTopCategory = currentTopCategory.parent!.parent!;
-            items = getGrids(currentTopCategory);
-          }),
-        ),
-      ),
-      body: FutureBuilder(
-        future: otzarBooks,
-        builder: (context, snapshot) => snapshot.connectionState ==
-                    ConnectionState.waiting &&
-                showOtzarBooks
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  buildSearchBar(),
-                  Expanded(
-                    child: FutureBuilder<List<Widget>>(
-                      future: items,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
+            body: Column(
+              children: [
+                buildSearchBar(resolvedCurrentTopCategory),
+                Expanded(
+                  child: FutureBuilder<List<Widget>>(
+                    future: items,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (snapshot.hasData) {
+                        if (snapshot.data!.isEmpty) {
                           return Center(
-                              child: Text('Error: ${snapshot.error}'));
-                        } else if (snapshot.hasData) {
-                          if (snapshot.data!.isEmpty) {
-                            return Center(
-                              child: Text(
-                                'אין תוצאות עבור "${searchController.text}"',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          }
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            key: PageStorageKey(currentTopCategory.title),
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) =>
-                                snapshot.data![index],
+                            child: Text(
+                              'אין תוצאות עבור "${searchController.text}"',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
                           );
-                        } else {
-                          return const Center(child: Text('No data available'));
                         }
-                      },
-                    ),
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          key: PageStorageKey(
+                            resolvedCurrentTopCategory.data!.title,
+                          ),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) =>
+                              snapshot.data![index],
+                        );
+                      } else {
+                        return const Center(child: Text('No data available'));
+                      }
+                    },
                   ),
-                ],
-              ),
-      ),
-    );
+                ),
+              ],
+            ),
+          );
+        });
   }
 
-  Widget buildSearchBar() {
+  Widget buildSearchBar(AsyncSnapshot resolvedCurrentTopCategory) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -227,7 +152,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                       icon: const Icon(Icons.cancel)),
                   border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8.0))),
-                  hintText: 'איתור ספר ב${currentTopCategory.title}',
+                  hintText:
+                      'איתור ספר ב${resolvedCurrentTopCategory.data!.title}',
                 ),
                 onChanged: (value) {
                   if (value.length < 3) {
@@ -251,53 +177,42 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   }
 
   void _showFilterDialog() {
-    bool tempShowOtzarBooks = showOtzarBooks;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            title: Text('הגדרות תצוגת ספרים'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CheckboxListTile(
                   title: Text('הצג ספרים מאוצר החכמה'),
-                  value: tempShowOtzarBooks,
+                  value:
+                      Provider.of<AppModel>(context).showOtzarHachochma.value,
                   onChanged: (bool? value) {
                     setState(() {
-                      tempShowOtzarBooks = value ?? false;
+                      Provider.of<AppModel>(context, listen: false)
+                          .showOtzarHachochma
+                          .value = value ?? false;
+                      Settings.setValue<bool?>(
+                          'key-show-otzar-hachochma', value);
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: Text('הצג ספרים מהיברובוקס'),
+                  value: Provider.of<AppModel>(context).showHebrewBooks.value,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      Provider.of<AppModel>(context, listen: false)
+                          .showHebrewBooks
+                          .value = value ?? false;
+                      Settings.setValue<bool?>('key-show-hebrew-books', value);
                     });
                   },
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                child: Text('ביטול'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text('שמור שינויים'),
-                onPressed: () {
-                  final appModel =
-                      Provider.of<AppModel>(context, listen: false);
-                  appModel.showOnlyOtzarHachochma.value = tempShowOtzarBooks;
-                  print(
-                      'Setting showOnlyOtzarHachochma to: ${appModel.showOnlyOtzarHachochma.value}');
-
-                  setState(() {
-                    showOtzarBooks = tempShowOtzarBooks;
-                  });
-
-                  _handleSettingsChange();
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
           );
         });
       },
@@ -309,20 +224,34 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     final queryWords = query.split(RegExp(r'\s+'));
 
     List<dynamic> localEntries =
-        currentTopCategory.getAllBooksAndCategories().where((element) {
+        (await currentTopCategory).getAllBooksAndCategories().where((element) {
       final title = element.title.toLowerCase();
       return queryWords.every((word) => title.contains(word));
     }).toList();
 
-    List<OtzarBook> otzarEntries = [];
-    if (showOtzarBooks) {
-      otzarEntries = (await otzarBooks).where((book) {
+    List<ExternalBook> otzarEntries = [];
+    if (Provider.of<AppModel>(context, listen: false)
+        .showOtzarHachochma
+        .value) {
+      final otzarBooksfinal =
+          await Provider.of<AppModel>(context, listen: false).otzarBooks;
+      otzarEntries = otzarBooksfinal.where((book) {
         final title = book.title.toLowerCase();
         return queryWords.every((word) => title.contains(word));
       }).toList();
     }
 
-    List<dynamic> allEntries = [...localEntries, ...otzarEntries];
+    List<ExternalBook> hebrewEntries = [];
+    if (Provider.of<AppModel>(context, listen: false).showHebrewBooks.value) {
+      final hebrewBooksfinal =
+          await Provider.of<AppModel>(context, listen: false).hebrewBooks;
+      hebrewEntries = hebrewBooksfinal.where((book) {
+        final title = book.title.toLowerCase();
+        return queryWords.every((word) => title.contains(word));
+      }).toList();
+    }
+
+    List<dynamic> allEntries = localEntries + otzarEntries + hebrewEntries;
     allEntries = await sortEntries(allEntries, query);
 
     List<Widget> items = [];
@@ -336,18 +265,18 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
           ),
         );
       } else if (entry is Book) {
-        if (entry is OtzarBook) {
+        if (entry is ExternalBook) {
           items.add(
-            OtzarBookGridItem(
+            BookGridItem(
               book: entry,
-              onTap: () => _openOtzarBook(entry),
+              onBookClickCallback: () => _openOtzarBook(entry),
             ),
           );
         } else {
           items.add(
             BookGridItem(
               book: entry,
-              showCategory: true,
+              showTopics: true,
               onBookClickCallback: () {
                 Provider.of<AppModel>(context, listen: false)
                     .openBook(entry, 0, openLeftPane: true);
@@ -373,7 +302,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     });
   }
 
-  void _openOtzarBook(OtzarBook book) {
+  void _openOtzarBook(ExternalBook book) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -382,7 +311,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     );
   }
 
-  Future<List<Widget>> getGrids(Category category) async {
+  Future<List<Widget>> getGrids(Future<Category> rawcategory) async {
+    final category = await rawcategory;
     List<Widget> items = [];
     category.books.sort(
       (a, b) => a.order.compareTo(b.order),
@@ -412,7 +342,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         subCategory.subCategories.sort((a, b) => a.order.compareTo(b.order));
 
         items.add(Center(child: HeaderItem(category: subCategory)));
-        items.add(MyGridView(items: _getGridItems(subCategory)));
+        items.add(MyGridView(items: _getGridItems(Future(() => subCategory))));
       }
     } else {
       items.add(MyGridView(
@@ -423,7 +353,8 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     return items;
   }
 
-  Future<List<Widget>> _getGridItems(Category category) async {
+  Future<List<Widget>> _getGridItems(Future<Category> rawcategory) async {
+    final category = await rawcategory;
     List<Widget> items = [];
     for (Book book in category.books) {
       items.add(
@@ -449,7 +380,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
 
   void _openCategory(Category category) {
     depth += 1;
-    currentTopCategory = category;
+    currentTopCategory = Future(() => category);
 
     setState(() {
       items = getGrids(currentTopCategory);

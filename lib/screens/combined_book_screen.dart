@@ -30,8 +30,6 @@ class CombinedView extends StatefulWidget {
 }
 
 class _CombinedViewState extends State<CombinedView> {
-  FocusNode focusNode = FocusNode();
-
   Widget buildKeyboardListener() {
     return ProgressiveScroll(
         maxSpeed: 10000.0,

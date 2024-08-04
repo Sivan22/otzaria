@@ -93,7 +93,7 @@ class CategoryGridItem extends StatelessWidget {
 }
 
 class BookGridItem extends StatelessWidget {
-  final bool showCategory;
+  final bool showTopics;
   final Book book;
   final VoidCallback onBookClickCallback;
 
@@ -101,7 +101,7 @@ class BookGridItem extends StatelessWidget {
     Key? key,
     required this.book,
     required this.onBookClickCallback,
-    this.showCategory = false,
+    this.showTopics = false,
   }) : super(key: key);
 
   @override
@@ -127,14 +127,23 @@ class BookGridItem extends StatelessWidget {
                                 .secondary
                                 .withOpacity(0.6)),
                       )
-                    : Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-                        child: Icon(Icons.article,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondary
-                                .withOpacity(0.6)),
-                      ),
+                    : book is ExternalBook
+                        ? Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                            child: Icon(Icons.open_in_new,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondary
+                                    .withOpacity(0.6)),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                            child: Icon(Icons.article,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondary
+                                    .withOpacity(0.6)),
+                          ),
                 Expanded(
                   child: ListTile(
                     mouseCursor: SystemMouseCursors.click,
@@ -142,22 +151,21 @@ class BookGridItem extends StatelessWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '${book.title} ',
+                            text: '${book.title} \n',
                             style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface),
+                                color: Theme.of(context).colorScheme.primary),
                           ),
-                          showCategory
+                          showTopics
                               ? TextSpan(
-                                  text:
-                                      '(בתוך ${book.category?.parent?.title}/${book.category?.title})',
+                                  text: book.topics,
                                   style: TextStyle(
                                       fontSize: 11,
                                       color: Theme.of(context)
                                           .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.7)),
+                                          .primary
+                                          .withOpacity(0.9)),
                                 )
                               : TextSpan()
                         ],
@@ -202,35 +210,6 @@ class BookGridItem extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class OtzarBookGridItem extends StatelessWidget {
-  final OtzarBook book;
-  final VoidCallback onTap;
-
-  const OtzarBookGridItem({
-    Key? key,
-    required this.book,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text(
-          book.title,
-          style: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text('${book.author ?? ''} - ${book.printYear ?? ''}'),
-        trailing: Icon(Icons.open_in_new),
-        onTap: onTap,
       ),
     );
   }
