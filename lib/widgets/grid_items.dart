@@ -151,7 +151,7 @@ class BookGridItem extends StatelessWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '${book.title} \n',
+                            text: '${book.title}',
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -159,7 +159,7 @@ class BookGridItem extends StatelessWidget {
                           ),
                           showTopics
                               ? TextSpan(
-                                  text: book.topics,
+                                  text: '\n${book.topics}',
                                   style: TextStyle(
                                       fontSize: 11,
                                       color: Theme.of(context)
@@ -174,7 +174,7 @@ class BookGridItem extends StatelessWidget {
                     subtitle: Text(
                         (book.author == "" || book.author == null)
                             ? ''
-                            : ('${book.author!} ${book.pubDate ?? ''}'),
+                            : ('${book.author!}\n${book.pubDate ?? ''}'),
                         style: const TextStyle(fontSize: 13)),
                   ),
                 ),
