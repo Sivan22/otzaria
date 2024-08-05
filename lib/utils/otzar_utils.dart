@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:path/path.dart' as path;
 import 'package:url_launcher/url_launcher_string.dart';
 
 class OtzarUtils {
@@ -33,7 +34,15 @@ class OtzarUtils {
 
   static Future<bool> checkBookExistence(int bookId) async {
     for (final drive in _availableDrives) {
+      //newer version teh path is under the /books folder with the extension .book
+      final bookPath = '$drive:\\books\\$bookId.book';
+      final bookFile = File(bookPath);
+      if (await bookFile.exists()) {
+        return true;
+      }
+
       final zipPath = '$drive:\\zip';
+
       try {
         final zipDir = Directory(zipPath);
         if (await zipDir.exists()) {
@@ -48,7 +57,7 @@ class OtzarUtils {
         continue;
       }
     }
-    print('Book $bookId not found in any "<drive>\\zip" folder');
+    print('Book $bookId not found in any "<drive>" <book> folder');
     return false;
   }
 
@@ -82,24 +91,39 @@ class OtzarUtils {
       throw Exception('Otzar.exe not found');
     }
 
-    final tabId = Random().nextInt(1000000);
+    final tabId = Random().nextInt(1000000); // Random tab ID
     final String bookLink =
-        'OtzarBook://book/$bookId/p/0/t/${tabId}/fs/0/start/0/end/0 /c';
+        'OtzarBook://book/$bookId/p/1/t/${tabId}/fs/0/start/0/end/0 /c';
     List<String> arguments = isVersion18OrAbove ? ['BOOK=$bookLink'] : [];
 
-    try {
-      final result = await Process.run(exePath, arguments);
+    final workingDir = path.dirname(exePath);
 
+    try {
       if (isVersion18OrAbove) {
-        if (result.exitCode == 0) {
-        } else {
-          throw Exception('otzar.exe exited with non-zero code');
+        // Try running with full path
+        final result = await Process.run(
+          exePath,
+          arguments,
+          workingDirectory: workingDir,
+        );
+
+        if (result.exitCode != 0) {
+          // If failed, try running through cmd
+          final cmdResult = await Process.run(
+            'cmd',
+            ['/c', 'start', '', exePath, ...arguments],
+            workingDirectory: workingDir,
+          );
+
+          if (cmdResult.exitCode != 0) {
+            throw Exception(
+                'otzar.exe exited with non-zero code: ${cmdResult.exitCode}\nError: ${cmdResult.stderr}');
+          }
         }
       } else {
-        print("Running version < 18");
+        Process.run(exePath, []);
+
         if (await checkBookExistence(bookId)) {
-          // Wait for 5 seconds before launching view.exe
-          // since inorder to open the book, the otzar.exe must be running
           await Future.delayed(
             Duration(seconds: 5),
             () => Process.run(
@@ -112,7 +136,7 @@ class OtzarUtils {
         }
       }
     } catch (e) {
-      throw Exception('Failed to launch Otzar');
+      throw Exception('Failed to launch Otzar: $e');
     }
   }
 
