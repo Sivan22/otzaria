@@ -136,7 +136,7 @@ class BookGridItem extends StatelessWidget {
                                       .toString()
                                       .contains('tablet.otzar.org')
                                   ? 'assets/logos/otzar.ico'
-                                  : 'assets/logos/git stashhebrew_books.png',
+                                  : 'assets/logos/hebrew_books.png',
                               width: 20,
                               height: 20,
                               fit: BoxFit.contain,
