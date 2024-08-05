@@ -67,6 +67,9 @@ class FileSystemData extends Data {
           if (entity.path.toLowerCase().endsWith('.txt') ||
               entity.path.toLowerCase().endsWith('.docx')) {
             final title = getTitleFromPath(entity.path);
+            var topics =
+                entity.path.split('אוצריא')[1].split('\\').skip(1).toList();
+            topics = topics.sublist(0, topics.length - 1);
             category.books.add(TextBook(
                 title: title,
                 author: metadata[title]?['author'],
@@ -74,11 +77,7 @@ class FileSystemData extends Data {
                 pubDate: metadata[title]?['pubDate'],
                 pubPlace: metadata[title]?['pubPlace'],
                 order: metadata[title]?['order'] ?? 999,
-                topics: entity.path
-                    .split('אוצריא')[1]
-                    .replaceFirst('.txt', '')
-                    .split('\\')
-                    .join(',')));
+                topics: topics.join(', ')));
           }
         }
       }
@@ -146,11 +145,11 @@ class FileSystemData extends Data {
           try {
             return ExternalBook(
               title: row[1].toString(),
-              id: 0,
+              id: -1,
               author: row[2].toString(),
               pubPlace: row[3].toString(),
               pubDate: row[4].toString(),
-              topics: row[15].toString(),
+              topics: row[15].toString().replaceAll(';', ', '),
               heShortDesc: row[13].toString(),
               link: 'https://beta.hebrewbooks.org/${row[0]}',
             );

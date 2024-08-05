@@ -172,7 +172,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                               values: shortcuctsList,
                             ),
                           ]),
-                const SettingsGroup(
+                SettingsGroup(
                     title: 'הגדרות ממשק',
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: TextStyle(fontSize: 25),
@@ -194,6 +194,27 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         disabledLabel: 'המפרשים יוצגו מתחת הטקסט',
                         leading: Icon(Icons.vertical_split),
                         defaultValue: false,
+                      ),
+                      SwitchSettingsTile(
+                        settingKey: 'key-show-external-books',
+                        title: 'איתור ספרים באתרים חיצוניים',
+                        enabledLabel: 'יוצגו גם ספרים מאתרים חיצוניים',
+                        disabledLabel: 'יוצגו רק ספרים מספריית אוצריא',
+                        leading: Icon(Icons.open_in_new),
+                        defaultValue: false,
+                        onChange: (value) {
+                          if (!value) {
+                            Provider.of<AppModel>(context, listen: false)
+                                .showHebrewBooks
+                                .value = value;
+                            Provider.of<AppModel>(context, listen: false)
+                                .showOtzarHachochma
+                                .value = value;
+                            Settings.setValue('key-show-hebrew-books', value);
+                            Settings.setValue(
+                                'key-show-otzar-hachochma', value);
+                          }
+                        },
                       ),
                     ]),
                 SettingsGroup(

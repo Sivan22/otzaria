@@ -18,7 +18,11 @@ class LibraryBrowser extends StatefulWidget {
   State<LibraryBrowser> createState() => _LibraryBrowserState();
 }
 
-class _LibraryBrowserState extends State<LibraryBrowser> {
+class _LibraryBrowserState extends State<LibraryBrowser>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late Future<Category> currentTopCategory;
   TextEditingController searchController = TextEditingController();
   late Future<List<Widget>> items;
@@ -41,6 +45,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return FutureBuilder(
         future: currentTopCategory,
         builder: (context, resolvedCurrentTopCategory) {
@@ -167,10 +172,12 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                   setState(() {});
                 }),
           ),
-          IconButton(
-            icon: Icon(Icons.filter_list),
-            onPressed: () => _showFilterDialog(),
-          ),
+          Settings.getValue<bool>('key-show-external-books') ?? false
+              ? IconButton(
+                  icon: Icon(Icons.filter_list),
+                  onPressed: () => _showFilterDialog(),
+                )
+              : SizedBox.shrink(),
         ],
       ),
     );
