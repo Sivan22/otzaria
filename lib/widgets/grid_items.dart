@@ -130,11 +130,17 @@ class BookGridItem extends StatelessWidget {
                     : book is ExternalBook
                         ? Padding(
                             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-                            child: Icon(Icons.open_in_new,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .secondary
-                                    .withOpacity(0.6)),
+                            child: Image.asset(
+                              (book as ExternalBook)
+                                      .link
+                                      .toString()
+                                      .contains('tablet.otzar.org')
+                                  ? 'assets/logos/otzar.ico'
+                                  : 'assets/logos/git stashhebrew_books.png',
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.contain,
+                            ),
                           )
                         : Padding(
                             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
