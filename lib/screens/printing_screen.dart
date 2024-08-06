@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
@@ -62,6 +63,8 @@ class _PrintingScreenState extends State<PrintingScreen> {
 
   Future<Uint8List> createPdf(PdfPageFormat format) async {
     final font = pw.Font.ttf(await rootBundle.load(fonts[fontName]!));
+    final fullBackFont = pw.Font.ttf(await rootBundle
+        .load('fonts/NotoSerifHebrew-VariableFont_wdth,wght.ttf'));
     String dataString = await widget.data;
     if (orientation == pw.PageOrientation.landscape) {
       format = format.landscape;
@@ -80,9 +83,8 @@ class _PrintingScreenState extends State<PrintingScreen> {
       final pdfData =
           pw.Document(compress: false, pageMode: PdfPageMode.outlines);
       pdfData.addPage(pw.MultiPage(
-          theme: pw.ThemeData.withFont(
-            base: font,
-          ),
+          theme:
+              pw.ThemeData.withFont(base: font, fontFallback: [fullBackFont]),
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           textDirection: pw.TextDirection.rtl,
           maxPages: 1000000,

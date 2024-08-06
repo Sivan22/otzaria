@@ -25,6 +25,47 @@ class _TocViewerState extends State<TocViewer>
   @override
   bool get wantKeepAlive => true;
 
+  TextEditingController searchController = TextEditingController();
+
+  List<Widget> _buildFilteredList(
+      List<TocEntry> entries, BuildContext context) {
+    List<TocEntry> allEntries = [];
+    void getAllEntries(List<TocEntry> entries) {
+      for (final TocEntry entry in entries) {
+        allEntries.add(entry);
+        getAllEntries(entry.children);
+      }
+    }
+
+    getAllEntries(entries);
+    allEntries = allEntries
+        .where((e) => e.text.contains(searchController.text))
+        .toList();
+
+    List<Widget> widgets = [];
+    for (final TocEntry entry in allEntries) {
+      widgets.add(
+        Padding(
+          padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+          child: ListTile(
+            title: Text(entry.text),
+            onTap: () {
+              widget.scrollController.scrollTo(
+                index: entry.index,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.ease,
+              );
+              if (Platform.isAndroid) {
+                widget.closeLeftPaneCallback();
+              }
+            },
+          ),
+        ),
+      );
+    }
+    return widgets;
+  }
+
   List<Widget> _buildTree(List<TocEntry> entries, BuildContext context) {
     List<Widget> widgets = [];
     for (final TocEntry entry in entries) {
@@ -104,9 +145,38 @@ class _TocViewerState extends State<TocViewer>
         future: widget.toc,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return ListView(
-              shrinkWrap: true,
-              children: _buildTree(snapshot.data!, context),
+            return Column(
+              children: [
+                TextField(
+                  controller: searchController,
+                  onChanged: (value) => setState(() {}),
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'איתור..',
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              searchController.clear();
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: searchController.text.isEmpty
+                        ? _buildTree(snapshot.data!, context)
+                        : _buildFilteredList(snapshot.data!, context),
+                  ),
+                ),
+              ],
             );
           }
           return const Center(child: CircularProgressIndicator());
