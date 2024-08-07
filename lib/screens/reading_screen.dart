@@ -17,7 +17,7 @@ class ReadingScreen extends StatefulWidget {
 
 class _ReadingScreenState extends State<ReadingScreen>
     with TickerProviderStateMixin {
-  TextEditingController _textFieldController = TextEditingController();
+  final TextEditingController _textFieldController = TextEditingController();
   Widget buildTabBarView(AppModel appModel, TabController? controller) {
     return TabBarView(
         controller: controller,
@@ -181,27 +181,28 @@ class _ReadingScreenState extends State<ReadingScreen>
                           .toList(),
                     ),
                     leading: IconButton(
-                        icon: const Icon(Icons.library_add),
+                        icon: const Icon(Icons.add_to_queue),
                         tooltip: 'שמור סביבת עבודה',
                         onPressed: () {
                           () async {
                             final result = await showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                      title: Text('הקלד את שם סביבת העבודה'),
+                                      title:
+                                          const Text('הקלד את שם סביבת העבודה'),
                                       content: TextField(
                                         controller: _textFieldController,
-                                        decoration: InputDecoration(),
+                                        decoration: const InputDecoration(),
                                       ),
                                       actions: <Widget>[
                                         TextButton(
-                                          child: Text('אישור'),
+                                          child: const Text('אישור'),
                                           onPressed: () {
                                             Navigator.pop(context, true);
                                           },
                                         ),
                                         TextButton(
-                                          child: Text('ביטול'),
+                                          child: const Text('ביטול'),
                                           onPressed: () {
                                             Navigator.pop(context, false);
                                           },

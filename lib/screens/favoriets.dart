@@ -22,15 +22,15 @@ class FavouritesScreen extends StatelessWidget {
               ),
             ),
             Tab(
-              text: 'היסטוריה',
-              icon: Icon(
-                Icons.history,
-              ),
-            ),
-            Tab(
               text: 'סביבות עבודה',
               icon: Icon(
                 Icons.workspaces_outline,
+              ),
+            ),
+            Tab(
+              text: 'היסטוריה',
+              icon: Icon(
+                Icons.history,
               ),
             ),
           ],
@@ -38,8 +38,8 @@ class FavouritesScreen extends StatelessWidget {
         body: TabBarView(
           children: [
             BookmarkView(),
-            HistoryView(),
             WorkspacesView(),
+            HistoryView(),
           ],
         ),
       ),

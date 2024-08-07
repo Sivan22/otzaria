@@ -53,6 +53,7 @@ class _WorkspacesViewState extends State<WorkspacesView> {
                                 SizedBox(
                                   width: 40,
                                   child: IconButton(
+                                      tooltip: 'עריכה',
                                       icon: const Icon(
                                         Icons.edit,
                                       ),
@@ -63,11 +64,12 @@ class _WorkspacesViewState extends State<WorkspacesView> {
                                       }),
                                 ),
                                 IconButton(
+                                  tooltip: 'מחק סביבת עבודה',
                                   icon: const Icon(
                                     Icons.delete_forever,
                                   ),
                                   onPressed: () {
-                                    appModel.removeBookmark(index);
+                                    appModel.removeWorkspace(index);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('סביבת העבודה נמחקה'),
