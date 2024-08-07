@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/screens/history_screen.dart';
 import 'package:otzaria/screens/bookmark_screen.dart';
+import 'package:otzaria/screens/workspaces_screen.dart';
 
 class FavouritesScreen extends StatelessWidget {
   const FavouritesScreen({Key? key}) : super(key: key);
@@ -10,7 +11,7 @@ class FavouritesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: TabBar(
           tabs: [
@@ -26,12 +27,19 @@ class FavouritesScreen extends StatelessWidget {
                 Icons.history,
               ),
             ),
+            Tab(
+              text: 'סביבות עבודה',
+              icon: Icon(
+                Icons.workspaces_outline,
+              ),
+            ),
           ],
         ),
         body: TabBarView(
           children: [
             BookmarkView(),
             HistoryView(),
+            WorkspacesView(),
           ],
         ),
       ),

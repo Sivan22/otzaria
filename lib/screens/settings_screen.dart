@@ -203,6 +203,9 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         leading: Icon(Icons.open_in_new),
                         defaultValue: false,
                         onChange: (value) {
+                          Provider.of<AppModel>(context, listen: false)
+                              .showExternalBooks
+                              .value = value;
                           if (!value) {
                             Provider.of<AppModel>(context, listen: false)
                                 .showHebrewBooks

@@ -104,32 +104,27 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     future: items,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}'));
-                      } else if (snapshot.hasData) {
-                        if (snapshot.data!.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'אין תוצאות עבור "${searchController.text}"',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                          );
-                        }
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          key: PageStorageKey(
-                            resolvedCurrentTopCategory.data!.title,
+                      } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'אין תוצאות עבור "${searchController.text}"',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
                           ),
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) =>
-                              snapshot.data![index],
                         );
-                      } else {
-                        return const Center(child: Text('No data available'));
                       }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        key: PageStorageKey(
+                          resolvedCurrentTopCategory.data!,
+                        ),
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) => snapshot.data![index],
+                      );
                     },
                   ),
                 ),
@@ -142,44 +137,53 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   Widget buildSearchBar(AsyncSnapshot resolvedCurrentTopCategory) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-                focusNode: Provider.of<AppModel>(context).bookLocatorFocusNode,
-                autofocus: true,
-                controller: searchController,
-                decoration: InputDecoration(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                      onPressed: () => searchController.clear(),
-                      icon: const Icon(Icons.cancel)),
-                  border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0))),
-                  hintText:
-                      'איתור ספר ב${resolvedCurrentTopCategory.data!.title}',
+      child: ValueListenableBuilder(
+          valueListenable:
+              Provider.of<AppModel>(context, listen: false).showExternalBooks,
+          builder: (context, value, child) {
+            return Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                      focusNode:
+                          Provider.of<AppModel>(context).bookLocatorFocusNode,
+                      autofocus: true,
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                            onPressed: () => searchController.clear(),
+                            icon: const Icon(Icons.cancel)),
+                        border: const OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(8.0))),
+                        hintText:
+                            'איתור ספר ב${resolvedCurrentTopCategory.data!.title}',
+                      ),
+                      onChanged: (value) {
+                        if (value.length < 3) {
+                          items = getGrids(currentTopCategory);
+                        } else {
+                          items = getFilteredBooks(
+                              Provider.of<AppModel>(context),
+                              resolvedCurrentTopCategory.data!);
+                          items = (() async => [
+                                Column(children: [MyGridView(items: items)])
+                              ])();
+                        }
+                        setState(() {});
+                      }),
                 ),
-                onChanged: (value) {
-                  if (value.length < 3) {
-                    items = getGrids(currentTopCategory);
-                  } else {
-                    items = getFilteredBooks();
-                    items = (() async => [
-                          Column(children: [MyGridView(items: items)])
-                        ])();
-                  }
-                  setState(() {});
-                }),
-          ),
-          Settings.getValue<bool>('key-show-external-books') ?? false
-              ? IconButton(
-                  icon: Icon(Icons.filter_list),
-                  onPressed: () => _showFilterDialog(),
-                )
-              : SizedBox.shrink(),
-        ],
-      ),
+                value
+                    ? IconButton(
+                        icon: Icon(Icons.filter_list),
+                        onPressed: () => _showFilterDialog(),
+                      )
+                    : SizedBox.shrink(),
+              ],
+            );
+          }),
     );
   }
 
@@ -226,87 +230,34 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     );
   }
 
-  Future<List<Widget>> getFilteredBooks() async {
-    final query = searchController.text.trim().toLowerCase();
-    final queryWords = query.split(RegExp(r'\s+'));
-
-    List<dynamic> localEntries =
-        (await currentTopCategory).getAllBooksAndCategories().where((element) {
-      final title = element.title.toLowerCase();
-      return queryWords.every((word) => title.contains(word));
-    }).toList();
-
-    List<ExternalBook> otzarEntries = [];
-    if (Provider.of<AppModel>(context, listen: false)
-        .showOtzarHachochma
-        .value) {
-      final otzarBooksfinal =
-          await Provider.of<AppModel>(context, listen: false).otzarBooks;
-      otzarEntries = otzarBooksfinal.where((book) {
-        final title = book.title.toLowerCase();
-        return queryWords.every((word) => title.contains(word));
-      }).toList();
-    }
-
-    List<ExternalBook> hebrewEntries = [];
-    if (Provider.of<AppModel>(context, listen: false).showHebrewBooks.value) {
-      final hebrewBooksfinal =
-          await Provider.of<AppModel>(context, listen: false).hebrewBooks;
-      hebrewEntries = hebrewBooksfinal.where((book) {
-        final title = book.title.toLowerCase();
-        return queryWords.every((word) => title.contains(word));
-      }).toList();
-    }
-
-    List<dynamic> allEntries = localEntries + otzarEntries + hebrewEntries;
-    allEntries = await sortEntries(allEntries, query);
-
+  Future<List<Widget>> getFilteredBooks(
+      AppModel appModel, Category? category) async {
+    final allEntries =
+        await appModel.findBooks(searchController.text, category);
     List<Widget> items = [];
 
-    for (final entry in allEntries.take(50)) {
-      if (entry is Category) {
+    for (final entry in allEntries.take(100)) {
+      if (entry is ExternalBook) {
         items.add(
-          CategoryGridItem(
-            category: entry,
-            onCategoryClickCallback: () => _openCategory(entry),
+          BookGridItem(
+            book: entry,
+            onBookClickCallback: () => _openOtzarBook(entry),
           ),
         );
-      } else if (entry is Book) {
-        if (entry is ExternalBook) {
-          items.add(
-            BookGridItem(
-              book: entry,
-              onBookClickCallback: () => _openOtzarBook(entry),
-            ),
-          );
-        } else {
-          items.add(
-            BookGridItem(
-              book: entry,
-              showTopics: true,
-              onBookClickCallback: () {
-                Provider.of<AppModel>(context, listen: false)
-                    .openBook(entry, 0, openLeftPane: true);
-              },
-            ),
-          );
-        }
+      } else {
+        items.add(
+          BookGridItem(
+            book: entry,
+            showTopics: true,
+            onBookClickCallback: () {
+              Provider.of<AppModel>(context, listen: false)
+                  .openBook(entry, 0, openLeftPane: true);
+            },
+          ),
+        );
       }
     }
     return items;
-  }
-
-  Future<List<dynamic>> sortEntries(List<dynamic> entries, String query) async {
-    return await Isolate.run(() {
-      entries.sort((a, b) {
-        final titleA = a is Book ? a.title : '';
-        final titleB = b is Book ? b.title : '';
-        final scoreA = ratio(query, titleA.toLowerCase());
-        final scoreB = ratio(query, titleB.toLowerCase());
-        return scoreB.compareTo(scoreA);
-      });
-      return entries;
-    });
   }
 
   void _openOtzarBook(ExternalBook book) {

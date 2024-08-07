@@ -8,13 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hive/hive.dart';
-import 'package:kosher_dart/kosher_dart.dart';
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/workspace.dart';
+import 'package:otzaria/utils/calendar.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// Represents the state of the application.
@@ -48,6 +49,8 @@ class AppModel with ChangeNotifier {
 
   late List<Bookmark> history;
 
+  late List<Workspace> workspaces;
+
   /// Flag indicating if the app is in dark mode.
   final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(
     Settings.getValue<bool>('key-dark-mode') ?? false,
@@ -71,6 +74,11 @@ class AppModel with ChangeNotifier {
   // if you should show hebrewbooks books
   final ValueNotifier<bool> showHebrewBooks = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-hebrew-books') ?? false,
+  );
+
+  // if you should show hebrewbooks books
+  final ValueNotifier<bool> showExternalBooks = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-show-external-books') ?? false,
   );
 
   /// a focus node for the search field in libraryBrowser
@@ -126,15 +134,21 @@ class AppModel with ChangeNotifier {
       Hive.box(name: 'history').put('key-history', []);
     }
 
+    //load workspaces
+    try {
+      final List<dynamic> rawWorkspaces =
+          Hive.box(name: 'workspaces').get('key-workspaces') ?? [];
+      workspaces = rawWorkspaces.map((e) => Workspace.fromJson(e)).toList();
+    } catch (e) {
+      workspaces = [];
+      print('error loading workspaces from disk: $e');
+      Hive.box(name: 'workspaces').put('key-workspaces', []);
+    }
+
     seedColor.addListener(() {
       notifyListeners();
     });
     isDarkMode.addListener(() {
-      notifyListeners();
-    });
-    showOtzarHachochma.addListener(() {
-      Settings.setValue(
-          'key-show-only-otzar-hachochma', showOtzarHachochma.value);
       notifyListeners();
     });
   }
@@ -313,6 +327,53 @@ class AppModel with ChangeNotifier {
   void clearHistory() {
     history.clear();
     Hive.box(name: 'history').clear();
+  }
+
+  void switchWorkspace(Workspace workspace) {
+    saveCurrentWorkspace(
+        '${getHebrewDateFormattedAsString(DateTime.now())} ${DateTime.now().hour}:${DateTime.now().minute}:${DateTime.now().second}');
+    tabs = workspace.bookmarks
+        .map((b) => b.book is PdfBook
+            ? PdfBookTab(b.book as PdfBook, b.index)
+            : TextBookTab(book: b.book as TextBook, index: b.index))
+        .toList();
+    currentTab = workspace.currentTab;
+    notifyListeners();
+    saveTabsToDisk();
+  }
+
+  void saveCurrentWorkspace(String name) {
+    Workspace workspace = Workspace(
+      name: name,
+      bookmarks: tabs
+          .where((t) => t is! SearchingTab)
+          .map((t) => Bookmark(
+                ref: '',
+                book: t is PdfBookTab
+                    ? (t as PdfBookTab).book
+                    : (t as TextBookTab).book,
+                index: t is PdfBookTab
+                    ? (t as PdfBookTab).pageNumber
+                    : (t as TextBookTab).index,
+              ))
+          .toList(),
+    );
+    workspaces.add(workspace);
+    saveWorkspacesToDisk();
+    notifyListeners();
+  }
+
+  void saveWorkspacesToDisk() {
+    Hive.box(name: 'workspaces').put('key-workspaces', workspaces);
+  }
+
+  void removeWorkspace(int index) {
+    workspaces.removeAt(index);
+  }
+
+  void clearWorkspaces() {
+    workspaces.clear(); // remove all workspaces
+    Hive.box(name: 'workspaces').clear();
   }
 
   // Asynchronously finds books based on a query and optional category. Returns a list of filtered books.
