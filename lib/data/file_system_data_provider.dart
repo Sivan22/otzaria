@@ -56,20 +56,22 @@ class FileSystemData extends Data {
           category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
               Directory(entity.path), category));
         } else {
+          var topics =
+              entity.path.split('אוצריא')[1].split('\\').skip(1).toList();
+          topics = topics.sublist(0, topics.length - 1);
           if (entity.path.toLowerCase().endsWith('.pdf')) {
             category.books.add(
               PdfBook(
                 title: getTitleFromPath(entity.path),
                 path: entity.path,
+                topics: topics.join(', '),
               ),
             );
           }
           if (entity.path.toLowerCase().endsWith('.txt') ||
               entity.path.toLowerCase().endsWith('.docx')) {
             final title = getTitleFromPath(entity.path);
-            var topics =
-                entity.path.split('אוצריא')[1].split('\\').skip(1).toList();
-            topics = topics.sublist(0, topics.length - 1);
+
             category.books.add(TextBook(
                 title: title,
                 author: metadata[title]?['author'],

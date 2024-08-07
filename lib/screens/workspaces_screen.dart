@@ -69,13 +69,14 @@ class _WorkspacesViewState extends State<WorkspacesView> {
                                     Icons.delete_forever,
                                   ),
                                   onPressed: () {
-                                    appModel.removeWorkspace(index);
+                                    setState(() {
+                                      appModel.removeWorkspace(index);
+                                    });
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('סביבת העבודה נמחקה'),
                                       ),
                                     );
-                                    setState(() {});
                                   },
                                 ),
                               ],

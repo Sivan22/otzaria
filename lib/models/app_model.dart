@@ -369,6 +369,7 @@ class AppModel with ChangeNotifier {
 
   void removeWorkspace(int index) {
     workspaces.removeAt(index);
+    saveWorkspacesToDisk();
   }
 
   void clearWorkspaces() {

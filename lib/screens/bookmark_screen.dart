@@ -23,6 +23,7 @@ class _BookmarkViewState extends State<BookmarkView> {
                   child: ListView.builder(
                     itemCount: appModel.bookmarks.length,
                     itemBuilder: (context, index) => ListTile(
+                        selected: false,
                         title: Text(appModel.bookmarks[index].ref),
                         onTap: () => appModel.openBook(
                               appModel.bookmarks[index].book,

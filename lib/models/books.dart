@@ -195,7 +195,8 @@ class ExternalBook extends Book {
 ///is required
 class PdfBook extends Book {
   final String path;
-  PdfBook({required String title, required this.path}) : super(title: title);
+  PdfBook({required String title, required this.path, super.topics})
+      : super(title: title);
 
   factory PdfBook.fromJson(Map<String, dynamic> json) {
     return PdfBook(
