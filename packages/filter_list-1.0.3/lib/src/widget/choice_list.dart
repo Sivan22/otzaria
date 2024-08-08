@@ -63,10 +63,10 @@ class ChoiceList<T> extends StatelessWidget {
                   return;
                 }
                 state.addSelectedItem(item);
-                final selectedItems = FilterState.of<T>(context).selectedItems;
-                if (onChoiseMade != null) {
-                  onChoiseMade!.call(selectedItems);
-                }
+              }
+              final selectedItems = FilterState.of<T>(context).selectedItems;
+              if (onChoiseMade != null) {
+                onChoiseMade!.call(selectedItems);
               }
             }
           },
