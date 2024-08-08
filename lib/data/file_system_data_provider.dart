@@ -7,6 +7,7 @@ import 'dart:isolate';
 import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
+import 'package:otzaria/data/cache_provider.dart';
 import 'package:otzaria/utils/docx_to_otzaria.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
@@ -24,13 +25,22 @@ import 'package:otzaria/models/links.dart';
 ///  which every book is stored in a file,  and every directory is represents a category.
 /// The metadata is stored in a JSON file.
 class FileSystemData extends Data {
+  late String libraryPath;
+  Map<String, String> titleToPath = {};
+
   FileSystemData() {
-    _updateTitleToPath();
+    _initialize();
   }
 
   static FileSystemData instance = FileSystemData();
-  String libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
-  Map<String, String> titleToPath = {};
+
+  Future<void> _initialize() async {
+    if (!Settings.isInitialized) {
+      await Settings.init(cacheProvider: HiveCache());
+    }
+    libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
+    _updateTitleToPath();
+  }
 
   @override
 
@@ -115,13 +125,25 @@ class FileSystemData extends Data {
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
 
       return Isolate.run(() {
-        List<List<dynamic>> csvTable =
-            const CsvToListConverter().convert(csvData);
+        // fix the line endings so that it works on all platforms
+        final normalizedCsvData =
+            csvData.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+
+        List<List<dynamic>> csvTable;
+        csvTable = const CsvToListConverter(
+          fieldDelimiter: ',',
+          textDelimiter: '"',
+          eol: '\n',
+          shouldParseNumbers: false,
+        ).convert(normalizedCsvData);
+
+        print('Loaded ${csvTable.length} rows');
+
         return csvTable.skip(1).map((row) {
           // Skip the header row
           return ExternalBook(
             title: row[1],
-            id: row[0],
+            id: int.tryParse(row[0]) ?? -1,
             author: row[2],
             pubPlace: row[3],
             pubDate: row[4],
@@ -142,8 +164,21 @@ class FileSystemData extends Data {
       final csvData = await rootBundle.loadString('assets/hebrew_books.csv');
 
       return Isolate.run(() {
-        List<List<dynamic>> csvTable =
-            const CsvToListConverter().convert(csvData);
+        // fix the line endings so that it works on all platforms
+        final normalizedCsvData =
+            csvData.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+
+        List<List<dynamic>> csvTable;
+        csvTable = const CsvToListConverter(
+          fieldDelimiter: ',',
+          textDelimiter: '"',
+          eol: '\n',
+          shouldParseNumbers: false,
+        ).convert(normalizedCsvData);
+
+        print('Loaded ${csvTable.length} rows');
+        // Skip the header row
+
         return csvTable.skip(1).map((row) {
           // Skip the header row
           try {
