@@ -171,75 +171,28 @@ class FilterListWidget<T extends Object> extends StatelessWidget {
   final List<ControlButtonType> controlButtons;
 
   Widget _body(BuildContext context) {
-    final theme = FilterListTheme.of(context);
-    return Container(
-      color: theme.backgroundColor,
-      child: Stack(
-        children: <Widget>[
-          Column(
-            children: <Widget>[
-              if (hideHeader!)
-                const SizedBox()
-              else
-                Header(
-                  headlineText: headlineText,
-                  hideSearchField: hideSearchField,
-                  hideCloseIcon: hideCloseIcon,
-                  headerCloseIcon: headerCloseIcon,
-                  onSearch: (String value) {
-                    final stateList = FilterState.of<T>(context).items;
-
-                    // Reset filter list if search box is empty
-                    if (value.isEmpty) {
-                      FilterState.of<T>(context).items = listData;
-                      return;
-                    }
-                    // Reassign items to filter list when it is empty but local list has data
-                    else if (stateList != null &&
-                        stateList.isEmpty &&
-                        listData != null &&
-                        listData!.isNotEmpty) {
-                      final isFoundInLocalState =
-                          listData!.any((item) => onItemSearch(item, value));
-
-                      if (isFoundInLocalState) {
-                        FilterState.of<T>(context).items = listData!
-                            .where((item) => onItemSearch(item, value))
-                            .toList();
-                        return;
-                      }
-                    }
-                    FilterState.of<T>(context)
-                        .filter((item) => onItemSearch(item, value));
-                  },
-                  onCloseWidgetPress: onCloseWidgetPress,
-                ),
-              if (!hideSelectedTextCount)
-                Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: ChangeNotifierProvider<FilterState<T>>(
-                    builder: (context, state, child) => Text(
-                      '${state.selectedItemsCount} $selectedItemsText',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: ChoiceList<T>(
-                  choiceChipBuilder: choiceChipBuilder,
-                  choiceChipLabel: choiceChipLabel,
-                  enableOnlySingleSelection: enableOnlySingleSelection,
-                  validateSelectedItem: validateSelectedItem,
-                  validateRemoveItem: validateRemoveItem,
-                  maximumSelectionLength: maximumSelectionLength,
-                  onChoiseMade: onApplyButtonClick,
-                ),
+    return Column(
+      children: [
+        LayoutBuilder(builder: (context, constraints) {
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: 250,
               ),
-            ],
-          ),
-          // /// Bottom section for control buttons
-        ],
-      ),
+              child: ChoiceList<T>(
+                choiceChipBuilder: choiceChipBuilder,
+                choiceChipLabel: choiceChipLabel,
+                enableOnlySingleSelection: enableOnlySingleSelection,
+                validateSelectedItem: validateSelectedItem,
+                validateRemoveItem: validateRemoveItem,
+                maximumSelectionLength: maximumSelectionLength,
+                onChoiseMade: onApplyButtonClick,
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -254,10 +207,7 @@ class FilterListWidget<T extends Object> extends StatelessWidget {
         theme: themeData ?? FilterListThemeData.light(context),
         child: Builder(
           builder: (BuildContext innerContext) {
-            return Scaffold(
-              backgroundColor: Colors.transparent,
-              body: _body(innerContext),
-            );
+            return _body(context);
           },
         ),
       ),

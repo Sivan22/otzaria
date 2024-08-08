@@ -152,46 +152,40 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 100),
-            child: FilterListWidget<String>(
-              hideSearchField: true,
-              controlButtons: const [],
-              onApplyButtonClick: (list) => setState(() {
-                selectedTopics = list ?? [];
-                items = getFilteredBooks(
-                    Provider.of<AppModel>(context, listen: false),
-                    resolvedCurrentTopCategory.data!,
-                    selectedTopics);
-                items = (() async => [
-                      Column(children: [MyGridView(items: items)])
-                    ])();
-              }),
-              applyButtonText: 'החל',
-              hideHeader: true,
-              selectedItemsText: ' נושאים נבחרו',
-              validateSelectedItem: (list, item) =>
-                  list != null && list.contains(item),
-              onItemSearch: (item, query) => item == query,
-              listData: getAllTopics(snapshot.data!),
-              selectedListData: selectedTopics,
-              choiceChipLabel: (p0) => p0,
-              hideSelectedTextCount: true,
-              choiceChipBuilder: (context, item, isSelected) => Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 3,
-                  vertical: 2,
-                ),
-                child: Chip(
-                  label: Text(item),
-                  backgroundColor: isSelected!
-                      ? Theme.of(context).colorScheme.secondary
+          return FilterListWidget<String>(
+            hideSearchField: true,
+            controlButtons: const [],
+            onApplyButtonClick: (list) => setState(() {
+              selectedTopics = list ?? [];
+              items = getFilteredBooks(
+                  Provider.of<AppModel>(context, listen: false),
+                  resolvedCurrentTopCategory.data!,
+                  selectedTopics);
+              items = (() async => [
+                    Column(children: [MyGridView(items: items)])
+                  ])();
+            }),
+            validateSelectedItem: (list, item) =>
+                list != null && list.contains(item),
+            onItemSearch: (item, query) => item == query,
+            listData: getAllTopics(snapshot.data!),
+            selectedListData: selectedTopics,
+            choiceChipLabel: (p0) => p0,
+            hideSelectedTextCount: true,
+            choiceChipBuilder: (context, item, isSelected) => Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 3,
+                vertical: 2,
+              ),
+              child: Chip(
+                label: Text(item),
+                backgroundColor: isSelected!
+                    ? Theme.of(context).colorScheme.secondary
+                    : null,
+                labelStyle: TextStyle(
+                  color: isSelected!
+                      ? Theme.of(context).colorScheme.onSecondary
                       : null,
-                  labelStyle: TextStyle(
-                    color: isSelected!
-                        ? Theme.of(context).colorScheme.onSecondary
-                        : null,
-                  ),
                 ),
               ),
             ),

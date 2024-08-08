@@ -24,7 +24,6 @@ class ChoiceList<T> extends StatelessWidget {
   final int? maximumSelectionLength;
 
   List<Widget> _buildChoiceList(BuildContext context) {
-    final theme = FilterListTheme.of(context).controlBarButtonTheme;
     final state = StateProvider.of<FilterState<T>>(context);
     final items = state.items;
     final selectedListData = state.selectedItems;
@@ -87,24 +86,22 @@ class ChoiceList<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = FilterListTheme.of(context);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        child: SingleChildScrollView(
-          child: ChangeNotifierProvider<FilterState<T>>(
-            builder: (
-              BuildContext context,
-              FilterState<T> state,
-              Widget? child,
-            ) {
-              return Wrap(
-                alignment: theme.wrapAlignment,
-                crossAxisAlignment: theme.wrapCrossAxisAlignment,
-                runSpacing: theme.wrapSpacing,
-                children: _buildChoiceList(context),
-              );
-            },
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: SingleChildScrollView(
+        child: ChangeNotifierProvider<FilterState<T>>(
+          builder: (
+            BuildContext context,
+            FilterState<T> state,
+            Widget? child,
+          ) {
+            return Wrap(
+              alignment: theme.wrapAlignment,
+              crossAxisAlignment: theme.wrapCrossAxisAlignment,
+              runSpacing: theme.wrapSpacing,
+              children: _buildChoiceList(context),
+            );
+          },
         ),
       ),
     );
