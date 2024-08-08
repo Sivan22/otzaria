@@ -13,7 +13,7 @@ class DafYomi extends StatelessWidget {
     return Consumer<AppModel>(
       builder: (context, appModel, child) {
         return Container(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
@@ -45,7 +45,7 @@ class DafYomi extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Icon(
                 Icons.calendar_month_outlined,
                 color: Theme.of(context).colorScheme.secondary,

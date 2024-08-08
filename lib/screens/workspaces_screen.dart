@@ -19,74 +19,82 @@ class _WorkspacesViewState extends State<WorkspacesView> {
           ? const Center(child: Text('אין סביבות עבודה'))
           : Column(
               children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: appModel.workspaces.length,
-                    itemBuilder: (context, index) {
-                      TextEditingController textFieldController =
-                          TextEditingController(
-                              text: appModel.workspaces[index].name);
-                      bool isEditing = false;
-                      return StatefulBuilder(builder: (context, setState) {
-                        return ListTile(
-                          title: !isEditing
-                              ? Text(appModel.workspaces[index].name)
-                              : TextField(
-                                  enabled: isEditing,
-                                  controller: textFieldController,
-                                  onEditingComplete: () {
-                                    appModel.workspaces[index].name =
-                                        textFieldController.text;
-                                    isEditing = false;
-                                    setState(() {});
-                                    appModel.saveWorkspacesToDisk();
-                                  }),
-                          onTap: () {
-                            appModel
-                                .switchWorkspace(appModel.workspaces[index]);
-                            appModel.currentView.value = Screens.reading;
-                          },
-                          trailing: SizedBox.fromSize(
-                            size: Size.fromWidth(120),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 40,
-                                  child: IconButton(
-                                      tooltip: 'עריכה',
-                                      icon: const Icon(
-                                        Icons.edit,
+                ListenableBuilder(
+                    listenable: appModel,
+                    builder: (context, _) {
+                      return Expanded(
+                        child: ListView.builder(
+                          itemCount: appModel.workspaces.length,
+                          itemBuilder: (context, index) {
+                            TextEditingController textFieldController =
+                                TextEditingController(
+                                    text: appModel.workspaces[index].name);
+                            bool isEditing = false;
+                            return StatefulBuilder(
+                                builder: (context, setState) {
+                              return ListTile(
+                                selected: false,
+                                title: !isEditing
+                                    ? Text(appModel.workspaces[index].name)
+                                    : TextField(
+                                        enabled: isEditing,
+                                        controller: textFieldController,
+                                        onEditingComplete: () {
+                                          appModel.workspaces[index].name =
+                                              textFieldController.text;
+                                          isEditing = false;
+                                          setState(() {});
+                                          appModel.saveWorkspacesToDisk();
+                                        }),
+                                onTap: () {
+                                  appModel.switchWorkspace(
+                                      appModel.workspaces[index]);
+                                  appModel.currentView.value = Screens.reading;
+                                },
+                                trailing: SizedBox.fromSize(
+                                  size: Size.fromWidth(120),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 40,
+                                        child: IconButton(
+                                            tooltip: 'עריכה',
+                                            icon: const Icon(
+                                              Icons.edit,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                isEditing = true;
+                                              });
+                                            }),
                                       ),
-                                      onPressed: () {
-                                        setState(() {
-                                          isEditing = true;
-                                        });
-                                      }),
-                                ),
-                                IconButton(
-                                  tooltip: 'מחק סביבת עבודה',
-                                  icon: const Icon(
-                                    Icons.delete_forever,
+                                      IconButton(
+                                        tooltip: 'מחק סביבת עבודה',
+                                        icon: const Icon(
+                                          Icons.delete_forever,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            appModel.removeWorkspace(index);
+                                          });
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content:
+                                                  Text('סביבת העבודה נמחקה'),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      appModel.removeWorkspace(index);
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('סביבת העבודה נמחקה'),
-                                      ),
-                                    );
-                                  },
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      });
-                    },
-                  ),
-                ),
+                              );
+                            });
+                          },
+                        ),
+                      );
+                    }),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(

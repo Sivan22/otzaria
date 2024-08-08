@@ -5,6 +5,7 @@ import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/screens/full_text_search_screen.dart';
 import 'package:otzaria/screens/pdf_book_screen.dart';
 import 'package:otzaria/screens/text_book_screen.dart';
+import 'package:otzaria/utils/calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 
@@ -185,6 +186,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                         tooltip: 'שמור סביבת עבודה',
                         onPressed: () {
                           () async {
+                            _textFieldController.text = getHebrewTimeStamp();
                             final result = await showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(

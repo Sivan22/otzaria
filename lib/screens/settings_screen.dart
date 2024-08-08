@@ -175,7 +175,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                 SettingsGroup(
                     title: 'הגדרות ממשק',
                     titleAlignment: Alignment.centerRight,
-                    titleTextStyle: TextStyle(fontSize: 25),
+                    titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
                       //       Platform.isAndroid
                       //           ? const SizedBox.shrink()
@@ -187,7 +187,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                       //               disabledLabel: 'תפריט הצד לא ייסגר אוטומטית',
                       //               leading: Icon(Icons.arrow_back),
                       //             ),
-                      SwitchSettingsTile(
+                      const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',
                         enabledLabel: 'המפרשים יוצגו לצד הטקסט',
@@ -200,7 +200,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         title: 'איתור ספרים באתרים חיצוניים',
                         enabledLabel: 'יוצגו גם ספרים מאתרים חיצוניים',
                         disabledLabel: 'יוצגו רק ספרים מספריית אוצריא',
-                        leading: Icon(Icons.open_in_new),
+                        leading: const Icon(Icons.open_in_new),
                         defaultValue: false,
                         onChange: (value) {
                           Provider.of<AppModel>(context, listen: false)

@@ -36,6 +36,9 @@ class Bookmark {
       ref: json['ref'] as String,
       index: json['index'] as int,
       book: Book.fromJson(json['book'] as Map<String, dynamic>),
+      commentatorsToShow: (json['commentatorsToShow'] as List<dynamic>)
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 
@@ -47,6 +50,7 @@ class Bookmark {
       'ref': ref,
       'book': book.toJson(),
       'index': index,
+      'commentatorsToShow': commentatorsToShow
     };
   }
 }

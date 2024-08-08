@@ -71,7 +71,7 @@ class OtzarUtils {
     }
 
     // Check for older versions
-    final String oldPath = 'C:\\OTZAR\\otzar.exe';
+    const String oldPath = 'C:\\OTZAR\\otzar.exe';
     if (await File(oldPath).exists()) {
       return (oldPath, false); // false indicates version < 18
     }
@@ -93,7 +93,7 @@ class OtzarUtils {
 
     final tabId = Random().nextInt(1000000); // Random tab ID
     final String bookLink =
-        'OtzarBook://book/$bookId/p/1/t/${tabId}/fs/0/start/0/end/0 /c';
+        'OtzarBook://book/$bookId/p/1/t/$tabId/fs/0/start/0/end/0 /c';
     List<String> arguments = isVersion18OrAbove ? ['BOOK=$bookLink'] : [];
 
     final workingDir = path.dirname(exePath);

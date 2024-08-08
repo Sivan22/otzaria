@@ -45,10 +45,13 @@ class AppModel with ChangeNotifier {
   /// The index of the current view.
   ValueNotifier<Screens> currentView = ValueNotifier(Screens.library);
 
+  ///the list of bookmarks
   late List<Bookmark> bookmarks;
 
+  /// the history of opened books
   late List<Bookmark> history;
 
+  ///the list of worspaces
   late List<Workspace> workspaces;
 
   /// Flag indicating if the app is in dark mode.
@@ -330,12 +333,14 @@ class AppModel with ChangeNotifier {
   }
 
   void switchWorkspace(Workspace workspace) {
-    saveCurrentWorkspace(
-        '${getHebrewDateFormattedAsString(DateTime.now())} ${DateTime.now().hour}:${DateTime.now().minute}:${DateTime.now().second}');
+    saveCurrentWorkspace(getHebrewTimeStamp());
     tabs = workspace.bookmarks
         .map((b) => b.book is PdfBook
             ? PdfBookTab(b.book as PdfBook, b.index)
-            : TextBookTab(book: b.book as TextBook, index: b.index))
+            : TextBookTab(
+                book: b.book as TextBook,
+                index: b.index,
+                commentators: b.commentatorsToShow))
         .toList();
     currentTab = workspace.currentTab;
     notifyListeners();
@@ -345,16 +350,16 @@ class AppModel with ChangeNotifier {
   void saveCurrentWorkspace(String name) {
     Workspace workspace = Workspace(
       name: name,
+      currentTab: currentTab,
       bookmarks: tabs
           .where((t) => t is! SearchingTab)
           .map((t) => Bookmark(
                 ref: '',
-                book: t is PdfBookTab
-                    ? (t as PdfBookTab).book
-                    : (t as TextBookTab).book,
-                index: t is PdfBookTab
-                    ? (t as PdfBookTab).pageNumber
-                    : (t as TextBookTab).index,
+                book: t is PdfBookTab ? (t).book : (t as TextBookTab).book,
+                index:
+                    t is PdfBookTab ? (t).pageNumber : (t as TextBookTab).index,
+                commentatorsToShow:
+                    t is TextBookTab ? t.commentatorsToShow.value : [],
               ))
           .toList(),
     );
@@ -370,6 +375,7 @@ class AppModel with ChangeNotifier {
   void removeWorkspace(int index) {
     workspaces.removeAt(index);
     saveWorkspacesToDisk();
+    notifyListeners();
   }
 
   void clearWorkspaces() {
@@ -378,7 +384,8 @@ class AppModel with ChangeNotifier {
   }
 
   // Asynchronously finds books based on a query and optional category. Returns a list of filtered books.
-  Future<List<Book>> findBooks(String query, Category? category) async {
+  Future<List<Book>> findBooks(String query, Category? category,
+      {List<String>? topics}) async {
     final queryWords = query.split(RegExp(r'\s+'));
     var books = category?.getAllBooks() ?? (await library).getAllBooks();
     if (showOtzarHachochma.value) {
@@ -387,10 +394,17 @@ class AppModel with ChangeNotifier {
     if (showHebrewBooks.value) {
       books += await hebrewBooks;
     }
-    final filteredBooks = books.where((book) {
+    var filteredBooks = books.where((book) {
       final title = book.title.toLowerCase();
       return queryWords.every((word) => title.contains(word));
     }).toList();
+
+    if (topics != null && topics.isNotEmpty) {
+      filteredBooks = filteredBooks
+          .where((book) =>
+              topics.every((t) => book.topics.split(', ').contains(t)))
+          .toList();
+    }
 
     return Isolate.run(() {
       filteredBooks.sort((a, b) {

@@ -1,6 +1,5 @@
 import 'package:otzaria/data/data.dart';
 import 'package:otzaria/data/file_system_data_provider.dart';
-import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
 //import 'package:pdfrx/pdfrx.dart';
@@ -32,7 +31,7 @@ abstract class Book {
   /// The order of the book in the list of books. If not available, defaults to 999.
   int order;
 
-  String? topics;
+  String topics;
 
   Map<String, dynamic> toJson();
 
@@ -59,7 +58,7 @@ abstract class Book {
     this.pubDate,
     this.pubPlace,
     this.order = 999,
-    this.topics,
+    this.topics = '',
   });
 }
 

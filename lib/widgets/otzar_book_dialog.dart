@@ -11,9 +11,9 @@ class OtzarBookDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 400),
+        constraints: const BoxConstraints(maxWidth: 400),
         child: FutureBuilder<(bool, bool)>(
           future: Future.wait([
             OtzarUtils.canLaunchLocally(),
@@ -21,18 +21,18 @@ class OtzarBookDialog extends StatelessWidget {
           ]).then((results) => (results[0], results[1])),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
 
             final (canLaunchLocally, bookExists) =
                 snapshot.data ?? (false, false);
 
             return Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Theme.of(context).dialogBackgroundColor,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 10.0,
@@ -52,7 +52,7 @@ class OtzarBookDialog extends StatelessWidget {
                           ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     _buildInfoRow(context, Icons.description, 'תיאור',
                         book.heShortDesc ?? 'לא קיים'),
                     _buildInfoRow(context, Icons.person, 'מחבר',
@@ -61,9 +61,9 @@ class OtzarBookDialog extends StatelessWidget {
                         book.pubPlace ?? 'לא ידוע'),
                     _buildInfoRow(context, Icons.calendar_today, 'שנת הדפסה',
                         book.pubDate ?? 'לא ידוע'),
-                    _buildInfoRow(context, Icons.category, 'נושאים',
-                        book.topics ?? 'לא ידוע'),
-                    SizedBox(height: 24),
+                    _buildInfoRow(
+                        context, Icons.category, 'נושאים', book.topics),
+                    const SizedBox(height: 24),
                     _buildButtons(context, canLaunchLocally, bookExists),
                   ],
                 ),
@@ -83,7 +83,7 @@ class OtzarBookDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.secondary),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: RichText(
               text: TextSpan(
@@ -91,7 +91,7 @@ class OtzarBookDialog extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: '$label: ',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextSpan(text: value),
                 ],
@@ -112,8 +112,8 @@ class OtzarBookDialog extends StatelessWidget {
       children: <Widget>[
         if (canLaunchLocally && bookExists)
           ElevatedButton.icon(
-            icon: Icon(Icons.computer),
-            label: Text('פתח מקומית'),
+            icon: const Icon(Icons.computer),
+            label: const Text('פתח מקומית'),
             onPressed: () {
               Navigator.of(context).pop();
               OtzarUtils.launchOtzarLocal(book.id);
@@ -124,8 +124,8 @@ class OtzarBookDialog extends StatelessWidget {
             ),
           ),
         ElevatedButton.icon(
-          icon: Icon(Icons.open_in_new),
-          label: Text('פתח באתר'),
+          icon: const Icon(Icons.open_in_new),
+          label: const Text('פתח באתר'),
           onPressed: () async {
             Navigator.of(context).pop();
             if (await OtzarUtils.launchOtzarWeb(book.link)) {
@@ -133,7 +133,7 @@ class OtzarBookDialog extends StatelessWidget {
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('לא ניתן לפתוח את הקישור בדפדפן'),
+                  content: const Text('לא ניתן לפתוח את הקישור בדפדפן'),
                   backgroundColor: Theme.of(context).colorScheme.error,
                 ),
               );
@@ -145,11 +145,11 @@ class OtzarBookDialog extends StatelessWidget {
           ),
         ),
         TextButton(
-          child: Text('סגור'),
           onPressed: () => Navigator.of(context).pop(),
           style: TextButton.styleFrom(
             foregroundColor: Theme.of(context).colorScheme.secondary,
           ),
+          child: const Text('סגור'),
         ),
       ],
     );

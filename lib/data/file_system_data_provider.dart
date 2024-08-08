@@ -115,7 +115,8 @@ class FileSystemData extends Data {
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
 
       return Isolate.run(() {
-        List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
+        List<List<dynamic>> csvTable =
+            const CsvToListConverter().convert(csvData);
         return csvTable.skip(1).map((row) {
           // Skip the header row
           return ExternalBook(
@@ -141,7 +142,8 @@ class FileSystemData extends Data {
       final csvData = await rootBundle.loadString('assets/hebrew_books.csv');
 
       return Isolate.run(() {
-        List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
+        List<List<dynamic>> csvTable =
+            const CsvToListConverter().convert(csvData);
         return csvTable.skip(1).map((row) {
           // Skip the header row
           try {
@@ -253,7 +255,7 @@ class FileSystemData extends Data {
   void _fetchMetadata() {
     String metadataString = '';
     try {
-      File file = File('${libraryPath}${Platform.pathSeparator}metadata.json');
+      File file = File('$libraryPath${Platform.pathSeparator}metadata.json');
       metadataString = file.readAsStringSync();
     } catch (e) {
       return;

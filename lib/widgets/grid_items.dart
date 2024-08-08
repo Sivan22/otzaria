@@ -157,7 +157,7 @@ class BookGridItem extends StatelessWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '${book.title}',
+                            text: book.title,
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -173,7 +173,7 @@ class BookGridItem extends StatelessWidget {
                                           .primary
                                           .withOpacity(0.9)),
                                 )
-                              : TextSpan()
+                              : const TextSpan()
                         ],
                       ),
                     ),
@@ -240,7 +240,7 @@ class MyGridView extends StatelessWidget {
                         //max number of items per row is 5 and min is 1
                         crossAxisCount:
                             max(1, min(constraints.maxWidth ~/ 250, 5)),
-                        childAspectRatio: 2.5,
+                        childAspectRatio: 2,
                         crossAxisSpacing: 4,
                         mainAxisSpacing: 4),
                     itemCount: snapshot.data!.length,

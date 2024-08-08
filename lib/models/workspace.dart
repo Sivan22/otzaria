@@ -9,16 +9,18 @@ class Workspace {
 
   factory Workspace.fromJson(Map<String, dynamic> json) {
     return Workspace(
-      name: json['name'],
-      bookmarks: List<Bookmark>.from(
-          json['bookmarks'].map((bookmark) => Bookmark.fromJson(bookmark))),
-    );
+        name: json['name'],
+        bookmarks: List<Bookmark>.from(
+          json['bookmarks'].map((bookmark) => Bookmark.fromJson(bookmark)),
+        ),
+        currentTab: json['currentTab']);
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'bookmarks': bookmarks.map((bookmark) => bookmark.toJson()).toList(),
+      'currentTab': currentTab
     };
   }
 }

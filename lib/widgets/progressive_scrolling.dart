@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:otzaria/models/app_model.dart';
-import 'package:provider/provider.dart';
 import 'dart:math';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -13,7 +11,7 @@ class ProgressiveScroll extends StatefulWidget {
   final double accelerationFactor;
   final double curve;
 
-  ProgressiveScroll({
+  const ProgressiveScroll({
     Key? key,
     required this.child,
     required this.scrollController,
@@ -39,7 +37,7 @@ class _ProgressiveScrollState extends State<ProgressiveScroll> {
   }
 
   void _startScrolling() {
-    Future.delayed(Duration(milliseconds: 16), () {
+    Future.delayed(const Duration(milliseconds: 16), () {
       if (_isKeyPressed) {
         _timePressedInSeconds += 0.016; // 16 milliseconds in seconds
         double t = _timePressedInSeconds;

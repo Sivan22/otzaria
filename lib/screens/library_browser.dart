@@ -1,15 +1,16 @@
-import 'dart:isolate';
 import 'dart:math';
+
+import 'package:filter_list/filter_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
+import 'package:otzaria/utils/extraction.dart';
 import 'package:otzaria/widgets/daf_yomi.dart';
 import 'package:otzaria/widgets/grid_items.dart';
-import 'package:provider/provider.dart';
 import 'package:otzaria/widgets/otzar_book_dialog.dart';
+import 'package:provider/provider.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({Key? key}) : super(key: key);
@@ -27,13 +28,14 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   TextEditingController searchController = TextEditingController();
   late Future<List<Widget>> items;
   int depth = 0;
+  List<String> topics = [];
+  List<String> selectedTopics = [];
 
   @override
   void initState() {
     super.initState();
     WidgetsFlutterBinding.ensureInitialized();
     currentTopCategory = Provider.of<AppModel>(context, listen: false).library;
-
     items = getGrids(currentTopCategory);
   }
 
@@ -81,7 +83,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                               fontWeight: FontWeight.bold,
                             ))),
                   ),
-                  DafYomi()
+                  const DafYomi()
                 ],
               ),
               leading: IconButton(
@@ -99,6 +101,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             body: Column(
               children: [
                 buildSearchBar(resolvedCurrentTopCategory),
+                searchController.text.length > 2
+                    ? showTopicsSelection(context,
+                        resolvedCurrentTopCategory: resolvedCurrentTopCategory)
+                    : Container(),
                 Expanded(
                   child: FutureBuilder<List<Widget>>(
                     future: items,
@@ -111,7 +117,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                         return Center(
                           child: Text(
                             'אין תוצאות עבור "${searchController.text}"',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
@@ -134,6 +140,65 @@ class _LibraryBrowserState extends State<LibraryBrowser>
         });
   }
 
+  Widget showTopicsSelection(BuildContext context,
+      {required AsyncSnapshot resolvedCurrentTopCategory}) {
+    return FutureBuilder(
+        future: Provider.of<AppModel>(context)
+            .findBooks(searchController.text, resolvedCurrentTopCategory.data!),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 100),
+            child: FilterListWidget<String>(
+              hideSearchField: true,
+              controlButtons: const [],
+              onApplyButtonClick: (list) => setState(() {
+                selectedTopics = list ?? [];
+                items = getFilteredBooks(
+                    Provider.of<AppModel>(context, listen: false),
+                    resolvedCurrentTopCategory.data!,
+                    selectedTopics);
+                items = (() async => [
+                      Column(children: [MyGridView(items: items)])
+                    ])();
+              }),
+              applyButtonText: 'החל',
+              hideHeader: true,
+              selectedItemsText: ' נושאים נבחרו',
+              validateSelectedItem: (list, item) =>
+                  list != null && list.contains(item),
+              onItemSearch: (item, query) => item == query,
+              listData: getAllTopics(snapshot.data!),
+              selectedListData: selectedTopics,
+              choiceChipLabel: (p0) => p0,
+              hideSelectedTextCount: true,
+              choiceChipBuilder: (context, item, isSelected) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 3,
+                  vertical: 2,
+                ),
+                child: Chip(
+                  label: Text(item),
+                  backgroundColor: isSelected!
+                      ? Theme.of(context).colorScheme.secondary
+                      : null,
+                  labelStyle: TextStyle(
+                    color: isSelected!
+                        ? Theme.of(context).colorScheme.onSecondary
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
   Widget buildSearchBar(AsyncSnapshot resolvedCurrentTopCategory) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -145,8 +210,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
               children: [
                 Expanded(
                   child: TextField(
-                      focusNode:
-                          Provider.of<AppModel>(context).bookLocatorFocusNode,
+                      focusNode: Provider.of<AppModel>(context, listen: false)
+                          .bookLocatorFocusNode,
                       autofocus: true,
                       controller: searchController,
                       decoration: InputDecoration(
@@ -162,12 +227,14 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             'איתור ספר ב${resolvedCurrentTopCategory.data!.title}',
                       ),
                       onChanged: (value) {
+                        selectedTopics = [];
                         if (value.length < 3) {
                           items = getGrids(currentTopCategory);
                         } else {
                           items = getFilteredBooks(
-                              Provider.of<AppModel>(context),
-                              resolvedCurrentTopCategory.data!);
+                              Provider.of<AppModel>(context, listen: false),
+                              resolvedCurrentTopCategory.data!,
+                              selectedTopics);
                           items = (() async => [
                                 Column(children: [MyGridView(items: items)])
                               ])();
@@ -177,10 +244,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                 ),
                 value
                     ? IconButton(
-                        icon: Icon(Icons.filter_list),
+                        icon: const Icon(Icons.filter_list),
                         onPressed: () => _showFilterDialog(),
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
               ],
             );
           }),
@@ -197,7 +264,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
               mainAxisSize: MainAxisSize.min,
               children: [
                 CheckboxListTile(
-                  title: Text('הצג ספרים מאוצר החכמה'),
+                  title: const Text('הצג ספרים מאוצר החכמה'),
                   value:
                       Provider.of<AppModel>(context).showOtzarHachochma.value,
                   onChanged: (bool? value) {
@@ -211,7 +278,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   },
                 ),
                 CheckboxListTile(
-                  title: Text('הצג ספרים מהיברובוקס'),
+                  title: const Text('הצג ספרים מהיברובוקס'),
                   value: Provider.of<AppModel>(context).showHebrewBooks.value,
                   onChanged: (bool? value) {
                     setState(() {
@@ -230,10 +297,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     );
   }
 
-  Future<List<Widget>> getFilteredBooks(
-      AppModel appModel, Category? category) async {
-    final allEntries =
-        await appModel.findBooks(searchController.text, category);
+  Future<List<Widget>> getFilteredBooks(AppModel appModel, Category? category,
+      List<String>? selectedTopics) async {
+    final allEntries = await appModel.findBooks(searchController.text, category,
+        topics: selectedTopics);
     List<Widget> items = [];
 
     for (final entry in allEntries.take(100)) {
@@ -242,6 +309,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           BookGridItem(
             book: entry,
             onBookClickCallback: () => _openOtzarBook(entry),
+            showTopics: true,
           ),
         );
       } else {

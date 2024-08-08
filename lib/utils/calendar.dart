@@ -15,3 +15,7 @@ String getHebrewDateFormattedAsString(DateTime dateTime) {
     ..hebrewFormat = true;
   return hebrewDateFormatter.format(hebrewCalendar);
 }
+
+String getHebrewTimeStamp() {
+  return '${getHebrewDateFormattedAsString(DateTime.now())} ${DateTime.now().hour}:${DateTime.now().minute}:${DateTime.now().second}';
+}
