@@ -51,9 +51,8 @@ String docxToText(Uint8List bytes, String title) {
           if (level != null) {
             // indent the text with the correct amount of spaces (0 for first level)
             int levelInt = int.parse(level);
-            text = '• $text';
-            for (int i = 0; i < levelInt; i++) {
-              text = '\t$text';
+            for (int i = 0; i <= levelInt; i++) {
+              text = '<ul><li>$text</li></ul>';
             }
           }
         }

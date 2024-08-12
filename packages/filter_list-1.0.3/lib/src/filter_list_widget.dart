@@ -178,7 +178,7 @@ class FilterListWidget<T extends Object> extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: 250,
+                maxHeight: MediaQuery.of(context).size.height * 0.3,
               ),
               child: ChoiceList<T>(
                 choiceChipBuilder: choiceChipBuilder,

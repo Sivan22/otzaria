@@ -1,5 +1,10 @@
 import 'package:otzaria/models/bookmark.dart';
 
+/// Represents a workspace in the application.
+///
+/// A `Workspace` object has a [name] which is the name of the workspace,
+/// a [bookmarks] list which is a list of bookmarks in the workspace,
+/// and a [currentTab] which is the index of the current tab.
 class Workspace {
   String name;
   final List<Bookmark> bookmarks;

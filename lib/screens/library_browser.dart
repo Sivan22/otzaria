@@ -155,6 +155,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           return FilterListWidget<String>(
             hideSearchField: true,
             controlButtons: const [],
+            themeData: FilterListThemeData(
+              context,
+              wrapAlignment: WrapAlignment.center,
+            ),
             onApplyButtonClick: (list) => setState(() {
               selectedTopics = list ?? [];
               items = getFilteredBooks(
@@ -186,7 +190,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   color: isSelected!
                       ? Theme.of(context).colorScheme.onSecondary
                       : null,
+                  fontSize: 11,
                 ),
+                labelPadding: EdgeInsets.all(0),
               ),
             ),
           );

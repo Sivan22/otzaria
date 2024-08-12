@@ -206,17 +206,14 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                           Provider.of<AppModel>(context, listen: false)
                               .showExternalBooks
                               .value = value;
-                          if (!value) {
-                            Provider.of<AppModel>(context, listen: false)
-                                .showHebrewBooks
-                                .value = value;
-                            Provider.of<AppModel>(context, listen: false)
-                                .showOtzarHachochma
-                                .value = value;
-                            Settings.setValue('key-show-hebrew-books', value);
-                            Settings.setValue(
-                                'key-show-otzar-hachochma', value);
-                          }
+                          Provider.of<AppModel>(context, listen: false)
+                              .showHebrewBooks
+                              .value = value;
+                          Provider.of<AppModel>(context, listen: false)
+                              .showOtzarHachochma
+                              .value = value;
+                          Settings.setValue('key-show-hebrew-books', value);
+                          Settings.setValue('key-show-otzar-hachochma', value);
                         },
                       ),
                     ]),

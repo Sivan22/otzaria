@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:otzaria/data/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 
 String stripHtmlIfNeeded(String text) {
@@ -50,4 +51,8 @@ Future<String> refFromIndex(
 
   texts = texts.map((e) => e.trim()).toList();
   return texts.join(', ');
+}
+
+bool hasTopic(String title, String topic) {
+  return FileSystemData.instance.titleToPath[title]?.contains(topic) ?? false;
 }

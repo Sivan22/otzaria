@@ -45,7 +45,7 @@ class MyUpdatWidget extends StatelessWidget {
           ));
           return jsonDecode(data.body)["body"];
         },
-        currentVersion: '0.1.8-dev.4',
+        currentVersion: '0.1.8-dev.5',
         updateChipBuilder: flatChip,
 
         callback: (status) {},

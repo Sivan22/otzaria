@@ -91,7 +91,11 @@ Future<List<Link>> getLinksforIndexs(
     allLinks.sort(
         //sort by the order of the commentators to show and then by the heRef
         (a, b) {
-      return a.heRef.compareTo(b.heRef);
+      return a.heRef
+          .replaceAll(' טו,', ' ,יה')
+          .replaceAll(' טז,', ' יו,')
+          .compareTo(
+              b.heRef.replaceAll(' טו,', ' ,יה').replaceAll(' טז,', ' יו,'));
     });
 
     allLinks.sort(

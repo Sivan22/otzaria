@@ -66,14 +66,22 @@ class FileSystemData extends Data {
           category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
               Directory(entity.path), category));
         } else {
-          var topics =
-              entity.path.split('אוצריא')[1].split('\\').skip(1).toList();
+          var topics = entity.path.split('אוצריא\\').last.split('\\').toList();
           topics = topics.sublist(0, topics.length - 1);
+          if (getTitleFromPath(entity.path).contains(' על ')) {
+            topics.add(getTitleFromPath(entity.path).split(' על ')[1]);
+          }
           if (entity.path.toLowerCase().endsWith('.pdf')) {
+            final title = getTitleFromPath(entity.path);
             category.books.add(
               PdfBook(
-                title: getTitleFromPath(entity.path),
+                title: title,
                 path: entity.path,
+                author: metadata[title]?['author'],
+                heShortDesc: metadata[title]?['heShortDesc'],
+                pubDate: metadata[title]?['pubDate'],
+                pubPlace: metadata[title]?['pubPlace'],
+                order: metadata[title]?['order'] ?? 999,
                 topics: topics.join(', '),
               ),
             );
@@ -280,7 +288,7 @@ class FileSystemData extends Data {
 
   /// Updates the title to path mapping using the provided library path.
   void _updateTitleToPath() {
-    List<String> paths = getAllBooksPathsFromDirecctory(libraryPath);
+    List<String> paths = getAllBooksPathsFromDirecctory('$libraryPath/אוצריא');
     for (var path in paths) {
       titleToPath[getTitleFromPath(path)] = path;
     }
@@ -370,5 +378,9 @@ class FileSystemData extends Data {
   ///gets the path of the link file asocciated with the book title.
   String _getLinksPath(String title) {
     return '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}links${Platform.pathSeparator}${title}_links.json';
+  }
+
+  bool bookExists(String title) {
+    return titleToPath.keys.contains(title);
   }
 }

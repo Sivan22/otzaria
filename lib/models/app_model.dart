@@ -69,17 +69,17 @@ class AppModel with ChangeNotifier {
   final ValueNotifier<double> paddingSize = ValueNotifier<double>(
       Settings.getValue<double>('key-padding-size') ?? 10);
 
-  // if you should show otzar hachochma books
+  /// if you should show otzar hachochma books
   final ValueNotifier<bool> showOtzarHachochma = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-otzar-hachochma') ?? false,
   );
 
-  // if you should show hebrewbooks books
+  /// if you should show hebrewbooks books
   final ValueNotifier<bool> showHebrewBooks = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-hebrew-books') ?? false,
   );
 
-  // if you should show hebrewbooks books
+  /// if you should show hebrewbooks books
   final ValueNotifier<bool> showExternalBooks = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-external-books') ?? false,
   );
@@ -412,6 +412,7 @@ class AppModel with ChangeNotifier {
         final scoreB = ratio(query, b.title);
         return scoreB.compareTo(scoreA);
       });
+
       return filteredBooks;
     });
   }

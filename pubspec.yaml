@@ -8,7 +8,7 @@ msix_config:
   display_name: אוצריא
   publisher_display_name: sivan22
   identity_name: sivan22.Otzaria
-  msix_version: 0.1.8.4
+  msix_version: 0.1.8.5
   logo_path: assets/icon/icon.png
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: C:\dev\sivan22.pfx
@@ -33,7 +33,7 @@ msix_config:
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.8-dev.4
+version: 0.1.8-dev.5
 
 environment:
   sdk: ">=3.2.6 <4.0.0"

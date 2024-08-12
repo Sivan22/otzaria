@@ -196,17 +196,17 @@ class _ReadingScreenState extends State<ReadingScreen>
                                         controller: _textFieldController,
                                         decoration: const InputDecoration(),
                                       ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          child: const Text('אישור'),
-                                          onPressed: () {
-                                            Navigator.pop(context, true);
-                                          },
-                                        ),
+                                      actions: <Widget>[                                      
                                         TextButton(
                                           child: const Text('ביטול'),
                                           onPressed: () {
                                             Navigator.pop(context, false);
+                                          },
+                                        ),
+                                          TextButton(
+                                          child: const Text('אישור'),
+                                          onPressed: () {
+                                            Navigator.pop(context, true);
                                           },
                                         ),
                                       ],
