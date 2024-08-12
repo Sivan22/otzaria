@@ -171,6 +171,21 @@ class AppModel with ChangeNotifier {
     currentView.value = Screens.reading;
   }
 
+  Future<TextBook?> findBookByTitle(String title) async {
+    final books = await findBooks(title, null);
+
+    if (books.isEmpty) {
+      return null;
+    }
+
+    final exactMatch = books.firstWhere(
+      (book) => book.title.toLowerCase() == title.toLowerCase(),
+      orElse: () => books.first,
+    );
+
+    return exactMatch is TextBook ? exactMatch : null;
+  }
+
   /// Opens a new search tab.
   ///
   /// This function creates a new `SearchingTab` instance with the title "חיפוש"
