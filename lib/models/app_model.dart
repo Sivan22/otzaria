@@ -171,7 +171,7 @@ class AppModel with ChangeNotifier {
     currentView.value = Screens.reading;
   }
 
-  Future<TextBook?> findBookByTitle(String title) async {
+  Future<Book?> findBookByTitle(String title) async {
     final books = await findBooks(title, null);
 
     if (books.isEmpty) {
@@ -179,11 +179,11 @@ class AppModel with ChangeNotifier {
     }
 
     final exactMatch = books.firstWhere(
-      (book) => book.title.toLowerCase() == title.toLowerCase(),
+      (book) => book.title == title,
       orElse: () => books.first,
     );
 
-    return exactMatch is TextBook ? exactMatch : null;
+    return exactMatch;
   }
 
   /// Opens a new search tab.

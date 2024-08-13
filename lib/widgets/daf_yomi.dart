@@ -20,7 +20,7 @@ class DafYomi extends StatelessWidget {
 
         final tractate = dafYomi.getMasechta();
         final dafAmud = dafYomi.getDaf();
-        return GestureDetector(
+        return InkWell(
           onTap: () => onDafYomiTap(
             tractate,
             formatAmud(dafAmud),

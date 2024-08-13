@@ -17,5 +17,8 @@ String getHebrewTimeStamp() {
 }
 
 String formatAmud(int amud) {
-  return HebrewDateFormatter().formatHebrewNumber(amud).replaceAll('״', '');
+  return HebrewDateFormatter()
+      .formatHebrewNumber(amud)
+      .replaceAll('״', '')
+      .replaceAll('׳', '');
 }
