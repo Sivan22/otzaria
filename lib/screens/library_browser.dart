@@ -83,7 +83,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                               fontWeight: FontWeight.bold,
                             ))),
                   ),
-                  const DafYomi()
+                  DafYomi(
+                    onDafYomiTap: (tractate, daf) {
+                      _openDafYomiBook(tractate, daf);
+                    },
+                  )
                 ],
               ),
               leading: IconButton(
@@ -252,6 +256,50 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             );
           }),
     );
+  }
+
+  void _openDafYomiBook(String tractate, String daf) async {
+    final appModel = Provider.of<AppModel>(context, listen: false);
+    final book = await appModel.findBookByTitle(tractate);
+    if (book != null) {
+      final tocEntry = await _findDafInToc(book, daf);
+      if (tocEntry != null) {
+        appModel.openBook(book, tocEntry.index, openLeftPane: true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('לא נמצא דף $daf בספר $tractate'),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('לא נמצא הספר $tractate'),
+        ),
+      );
+    }
+  }
+
+  Future<TocEntry?> _findDafInToc(TextBook book, String daf) async {
+    final toc = await book.tableOfContents;
+
+    TocEntry? findDafInEntries(List<TocEntry> entries) {
+      for (var entry in entries) {
+        String ref = entry.text;
+        if (ref.contains('דף $daf')) {
+          return entry;
+        }
+        // Recursively search in children
+        TocEntry? result = findDafInEntries(entry.children);
+        if (result != null) {
+          return result;
+        }
+      }
+      return null;
+    }
+
+    return findDafInEntries(toc);
   }
 
   void _showFilterDialog() {
