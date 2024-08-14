@@ -81,105 +81,108 @@ class _ReadingScreenState extends State<ReadingScreen>
             try {
               return Scaffold(
                 appBar: AppBar(
-                    title: TabBar(
-                      controller: controller,
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.center,
-                      tabs: appModel.tabs
-                          .map((tab) => Listener(
-                                // close tab on middle mouse button click
-                                onPointerDown: (PointerDownEvent event) {
-                                  if (event.buttons == 4) {
-                                    appModel.closeTab(tab);
-                                  }
-                                },
-                                child: ContextMenuRegion(
-                                  contextMenu: ContextMenu(
-                                    entries: [
-                                      MenuItem(
-                                        label: 'סגור',
-                                        onSelected: () =>
-                                            appModel.closeTab(tab),
-                                      ),
-                                      MenuItem(
-                                        label: 'סגור הכל',
-                                        onSelected: () =>
-                                            appModel.closeAllTabs(),
-                                      ),
-                                      MenuItem(
-                                        label: 'סגור את האחרים',
-                                        onSelected: () =>
-                                            appModel.closeOthers(tab),
-                                      ),
-                                      MenuItem(
-                                        label: 'שיכפול',
-                                        onSelected: () =>
-                                            appModel.cloneTab(tab),
-                                      ),
-                                      MenuItem.submenu(
-                                        label: 'רשימת הכרטיסיות ',
-                                        items: getMenuItems(
-                                            appModel.tabs, appModel),
-                                      )
-                                    ],
-                                  ),
-                                  child: Draggable<OpenedTab>(
-                                    axis: Axis.horizontal,
-                                    data: tab,
-                                    childWhenDragging: SizedBox.fromSize(
-                                        size: const Size.fromWidth(2)),
-                                    feedback: Container(
-                                      decoration: const BoxDecoration(
-                                          borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(10),
-                                              topRight: Radius.circular(10)),
-                                          color: Colors.white),
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            20, 10, 20, 15),
-                                        child: Text(
-                                          tab is SearchingTab
-                                              ? '${tab.title}:  ${tab.searcher.queryController.text}'
-                                              : tab.title,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            decoration: TextDecoration.none,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
+                    title: Container(
+                      constraints: BoxConstraints(maxHeight: 50),
+                      child: TabBar(
+                        controller: controller,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.center,
+                        tabs: appModel.tabs
+                            .map((tab) => Listener(
+                                  // close tab on middle mouse button click
+                                  onPointerDown: (PointerDownEvent event) {
+                                    if (event.buttons == 4) {
+                                      appModel.closeTab(tab);
+                                    }
+                                  },
+                                  child: ContextMenuRegion(
+                                    contextMenu: ContextMenu(
+                                      entries: [
+                                        MenuItem(
+                                          label: 'סגור',
+                                          onSelected: () =>
+                                              appModel.closeTab(tab),
                                         ),
-                                      ),
+                                        MenuItem(
+                                          label: 'סגור הכל',
+                                          onSelected: () =>
+                                              appModel.closeAllTabs(),
+                                        ),
+                                        MenuItem(
+                                          label: 'סגור את האחרים',
+                                          onSelected: () =>
+                                              appModel.closeOthers(tab),
+                                        ),
+                                        MenuItem(
+                                          label: 'שיכפול',
+                                          onSelected: () =>
+                                              appModel.cloneTab(tab),
+                                        ),
+                                        MenuItem.submenu(
+                                          label: 'רשימת הכרטיסיות ',
+                                          items: getMenuItems(
+                                              appModel.tabs, appModel),
+                                        )
+                                      ],
                                     ),
-                                    child: DragTarget<OpenedTab>(
-                                      onAcceptWithDetails: (draggedTab) {
-                                        if (draggedTab.data == tab) return;
-                                        appModel.moveTab(draggedTab.data,
-                                            appModel.tabs.indexOf(tab));
-                                        setState(() {});
-                                      },
-                                      builder: (context, candidateData,
-                                              rejectedData) =>
-                                          Tab(
-                                        child: Row(children: [
-                                          Text(
+                                    child: Draggable<OpenedTab>(
+                                      axis: Axis.horizontal,
+                                      data: tab,
+                                      childWhenDragging: SizedBox.fromSize(
+                                          size: const Size(0, 0)),
+                                      feedback: Container(
+                                        decoration: const BoxDecoration(
+                                            borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(10),
+                                                topRight: Radius.circular(10)),
+                                            color: Colors.white),
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              20, 10, 20, 15),
+                                          child: Text(
                                             tab is SearchingTab
                                                 ? '${tab.title}:  ${tab.searcher.queryController.text}'
                                                 : tab.title,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              decoration: TextDecoration.none,
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                            ),
                                           ),
-                                          IconButton(
-                                              onPressed: () {
-                                                appModel.closeTab(tab);
-                                              },
-                                              icon: const Icon(Icons.close,
-                                                  size: 10))
-                                        ]),
+                                        ),
+                                      ),
+                                      child: DragTarget<OpenedTab>(
+                                        onAcceptWithDetails: (draggedTab) {
+                                          if (draggedTab.data == tab) return;
+                                          appModel.moveTab(draggedTab.data,
+                                              appModel.tabs.indexOf(tab));
+                                          setState(() {});
+                                        },
+                                        builder: (context, candidateData,
+                                                rejectedData) =>
+                                            Tab(
+                                          child: Row(children: [
+                                            Text(
+                                              tab is SearchingTab
+                                                  ? '${tab.title}:  ${tab.searcher.queryController.text}'
+                                                  : tab.title,
+                                            ),
+                                            IconButton(
+                                                onPressed: () {
+                                                  appModel.closeTab(tab);
+                                                },
+                                                icon: const Icon(Icons.close,
+                                                    size: 10))
+                                          ]),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ))
-                          .toList(),
+                                ))
+                            .toList(),
+                      ),
                     ),
                     leading: IconButton(
                         icon: const Icon(Icons.add_to_queue),
@@ -196,14 +199,14 @@ class _ReadingScreenState extends State<ReadingScreen>
                                         controller: _textFieldController,
                                         decoration: const InputDecoration(),
                                       ),
-                                      actions: <Widget>[                                      
+                                      actions: <Widget>[
                                         TextButton(
                                           child: const Text('ביטול'),
                                           onPressed: () {
                                             Navigator.pop(context, false);
                                           },
                                         ),
-                                          TextButton(
+                                        TextButton(
                                           child: const Text('אישור'),
                                           onPressed: () {
                                             Navigator.pop(context, true);

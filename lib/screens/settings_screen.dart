@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({
@@ -245,7 +247,26 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                           'קבלת עדכונים על גרסאות בדיקה, ייתכנו באגים וחוסר יציבות',
                       disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
                       leading: Icon(Icons.bug_report),
-                    )
+                    ),
+                    FutureBuilder(
+                        future: PackageInfo.fromPlatform(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return SimpleSettingsTile(
+                              title: 'גרסה נוכחית',
+                              subtitle: 'המתן..',
+                              leading: Icon(Icons.info_rounded),
+                            );
+                          }
+                          return Align(
+                            alignment: Alignment.centerRight,
+                            child: SimpleSettingsTile(
+                              title: 'גרסה נוכחית',
+                              subtitle: snapshot.data!.version,
+                              leading: Icon(Icons.info_rounded),
+                            ),
+                          );
+                        })
                   ],
                 )
               ],

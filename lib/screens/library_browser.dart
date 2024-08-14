@@ -86,7 +86,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   ),
                   DafYomi(
                     onDafYomiTap: (tractate, daf) {
-                      openDafYomiBook(context, tractate, daf);
+                      openDafYomiBook(context, tractate, ' $daf.');
                     },
                   )
                 ],

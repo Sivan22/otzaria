@@ -25,7 +25,7 @@ Future<TocEntry?> _findDafInToc(TextBook book, String daf) async {
   TocEntry? findDafInEntries(List<TocEntry> entries) {
     for (var entry in entries) {
       String ref = entry.text;
-      if (ref.contains('דף $daf.')) {
+      if (ref.contains('דף $daf')) {
         return entry;
       }
       // Recursively search in children
@@ -41,12 +41,13 @@ Future<TocEntry?> _findDafInToc(TextBook book, String daf) async {
 }
 
 Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
+  daf = daf.replaceAll('.', ', א').replaceAll(':', ', ב').replaceAll('דף ', '');
   final outlines = await PdfDocument.openFile(book.path)
       .then((value) => value.loadOutline());
   PdfOutlineNode? findDafInEntries(List<PdfOutlineNode> entries) {
     for (var entry in entries) {
       String ref = entry.title;
-      if (ref.contains(' $daf, א')) {
+      if (ref == '${book.title}$daf') {
         return entry;
       }
       // Recursively search in children
@@ -59,4 +60,20 @@ Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
   }
 
   return findDafInEntries(outlines);
+}
+
+openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
+  final appModel = Provider.of<AppModel>(context, listen: false);
+  final book = await appModel.findBookByTitle(bookname);
+
+  if (book != null && book is PdfBook) {
+    final outline = await getDafYomiOutline(book, ref);
+    appModel.openBook(book, outline?.dest?.pageNumber ?? 0, openLeftPane: true);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('הספר אינו קיים'),
+      ),
+    );
+  }
 }

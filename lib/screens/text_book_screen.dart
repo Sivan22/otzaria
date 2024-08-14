@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/combined_book_screen.dart';
 import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/splited_view_screen.dart';
+import 'package:otzaria/utils/daf_yomi_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/screens/text_book_search_screen.dart';
 import 'dart:io';
@@ -53,7 +55,6 @@ class TextBookViewer extends StatefulWidget {
 class _TextBookViewerState extends State<TextBookViewer>
     with TickerProviderStateMixin {
   final FocusNode textSearchFocusNode = FocusNode();
-
   late TabController tabController;
 
   @override
@@ -80,8 +81,20 @@ class _TextBookViewerState extends State<TextBookViewer>
                   builder: (context, snapshot) => snapshot.hasData
                       ? Center(
                           child: SelectionArea(
-                            child: Text(snapshot.data!,
-                                style: const TextStyle(fontSize: 17)),
+                            child: ContextMenuRegion(
+                              contextMenu: ContextMenu(entries: [
+                                MenuItem(
+                                    label: 'פתח קובץ PDF מקביל',
+                                    onSelected: () {
+                                      openPdfBookFromRef(
+                                          snapshot.data!.split(',').first,
+                                          snapshot.data!.split(',')[1],
+                                          context);
+                                    }),
+                              ]),
+                              child: Text(snapshot.data!,
+                                  style: const TextStyle(fontSize: 17)),
+                            ),
                           ),
                         )
                       : const SizedBox.shrink(),
@@ -307,6 +320,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                                       LogicalKeyboardKey.keyF): () {
                                     widget.tab.showLeftPane.value = true;
                                     tabController.index = 1;
+                                    textSearchFocusNode.requestFocus();
                                   },
                                 },
                                 child: Focus(
@@ -421,7 +435,14 @@ class _TextBookViewerState extends State<TextBookViewer>
                 controller: tabController,
                 children: [
                   buildTocViewer(),
-                  buildSearchView(),
+                  CallbackShortcuts(bindings: <ShortcutActivator, VoidCallback>{
+                    LogicalKeySet(LogicalKeyboardKey.control,
+                        LogicalKeyboardKey.keyF): () {
+                      widget.tab.showLeftPane.value = true;
+                      tabController.index = 1;
+                      textSearchFocusNode.requestFocus();
+                    },
+                  }, child: buildSearchView()),
                   buildCommentaryView(),
                   buildLinkView(),
                 ],

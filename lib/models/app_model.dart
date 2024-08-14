@@ -371,8 +371,11 @@ class AppModel with ChangeNotifier {
           .map((t) => Bookmark(
                 ref: '',
                 book: t is PdfBookTab ? (t).book : (t as TextBookTab).book,
-                index:
-                    t is PdfBookTab ? (t).pageNumber : (t as TextBookTab).index,
+                index: t is PdfBookTab
+                    ? (t).pdfViewerController.isReady
+                        ? (t).pdfViewerController.pageNumber!
+                        : 1
+                    : (t as TextBookTab).index,
                 commentatorsToShow:
                     t is TextBookTab ? t.commentatorsToShow.value : [],
               ))
