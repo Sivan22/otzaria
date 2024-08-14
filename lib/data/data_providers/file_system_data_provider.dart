@@ -12,7 +12,6 @@ import 'package:otzaria/utils/docx_to_otzaria.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/data/repository/data.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/links.dart';
 
@@ -24,9 +23,10 @@ import 'package:otzaria/models/links.dart';
 /// The inner representation of the library is a tree of directories and files,
 ///  which every book is stored in a file,  and every directory is represents a category.
 /// The metadata is stored in a JSON file.
-class FileSystemData extends Data {
+class FileSystemData {
   late String libraryPath;
   Map<String, String> titleToPath = {};
+  Map<String, dynamic> metadata = {};
 
   FileSystemData() {
     _initialize();

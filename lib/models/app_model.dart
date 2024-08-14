@@ -8,8 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hive/hive.dart';
-import 'package:otzaria/data/repository/data.dart';
-import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
@@ -25,7 +24,7 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 /// the seed color.
 class AppModel with ChangeNotifier {
   /// The data provider for the application.
-  Data data = FileSystemData.instance;
+  DataRepository data = DataRepository.instance;
 
   /// The library of books.
   late Future<Library> library;
@@ -437,4 +436,4 @@ class AppModel with ChangeNotifier {
 }
 
 /// An enum that represents the different screens in the application.
-enum Screens { library, reading, search, favorites, settings }
+enum Screens { library, reading, find, search, favorites, settings }

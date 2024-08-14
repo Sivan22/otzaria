@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/screens/favoriets.dart';
+import 'package:otzaria/screens/find_ref_screen.dart';
 import 'package:otzaria/screens/reading_screen.dart';
 
 //imports from otzaria
@@ -93,6 +94,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               label: Text('עיון'),
                             ),
                             const NavigationRailDestination(
+                              icon: Icon(Icons.auto_stories_rounded),
+                              label: Text('איתור'),
+                            ),
+                            const NavigationRailDestination(
                               icon: Icon(Icons.search),
                               label: Text('חיפוש'),
                             ),
@@ -104,7 +109,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               icon: const Icon(Icons.settings),
                               label: const Text('הגדרות'),
                               padding: EdgeInsets.only(
-                                  top: constraints.maxHeight - 340),
+                                  top: constraints.maxHeight - 410),
                             ),
                           ],
                           selectedIndex: appModel.currentView.value.index,
@@ -113,7 +118,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                             pageController = PageController(
                                 initialPage: index, keepPage: true);
                             switch (index) {
-                              case 2:
+                              case 3:
                                 appModel.openNewSearchTab();
                               case 0:
                                 appModel.bookLocatorFocusNode.requestFocus();
@@ -134,6 +139,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                         children: const <Widget>[
                           LibraryBrowser(),
                           ReadingScreen(),
+                          FindRefScreen(),
                           SizedBox.shrink(),
                           FavouritesScreen(),
                           MySettingsScreen(),
