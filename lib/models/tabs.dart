@@ -4,7 +4,7 @@ a tab is either a pdf book or a text book, or a full text search window*/
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:pdfrx/pdfrx.dart';

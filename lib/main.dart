@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:isar/isar.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/isar_collections/ref.dart';
+import 'package:otzaria/utils/ref_helper.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/data/cache_provider.dart';
-import 'package:otzaria/data/hive_data_provider.dart';
+import 'package:otzaria/data/data_providers/cache_provider.dart';
+import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -49,6 +54,8 @@ void main() async {
       Settings.setValue('key-library-path', libraryPath);
     }
   }();
+  final isar = Isar.open(directory: './', schemas: [RefSchema]);
+  await createRefsFromLibrary(await FileSystemData.instance.getLibrary(), isar);
   runApp(const OtzariaApp());
 }
 

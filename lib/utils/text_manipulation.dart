@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 
 String stripHtmlIfNeeded(String text) {
