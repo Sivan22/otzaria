@@ -56,3 +56,26 @@ Future<String> refFromIndex(
 bool hasTopic(String title, String topic) {
   return FileSystemData.instance.titleToPath[title]?.contains(topic) ?? false;
 }
+
+String paraphrase(String text) {
+  Map<String, String> paraphrases = {
+    '־': ' ',
+    'שוע': 'שולחן ערוך',
+    'שך': 'שפתי כהן',
+    'טז': 'טורי זהב',
+    'חומ': 'חושן משפט',
+    'יוד': 'יורה דעה',
+    'אהעז': 'אבן העזר',
+    'אוח': 'אורח חיים',
+    'בק': 'בבא קמא',
+    'במ': 'בבא מציעא',
+    'בב': 'בבא בתרא',
+    'ראבד': 'ראב"ד',
+    'בח': 'ב"ח'
+  };
+  for (var key in paraphrases.keys) {
+    text = text.replaceAll(key, paraphrases[key] ?? key);
+  }
+
+  return text;
+}

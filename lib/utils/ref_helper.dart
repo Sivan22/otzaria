@@ -4,11 +4,11 @@ import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
 
-Future<void> createRefsFromLibrary(Library library, Isar isar) async {
+Future<void> createRefsFromLibrary(
+    Library library, Isar isar, int startIndex) async {
   int i = 0;
-  final allBooks = library.getAllBooks().whereType<TextBook>();
+  final allBooks = library.getAllBooks().whereType<TextBook>().skip(startIndex);
   for (TextBook book in allBooks) {
-    i = 1;
     print('Creating refs for ${book.title} (${i++}/${allBooks.length})');
     final List<TocEntry> toc = await book.tableOfContents;
     //get all TocEntries recursively
@@ -28,11 +28,10 @@ Future<void> createRefsFromLibrary(Library library, Isar isar) async {
     for (final TocEntry entry in alltocs) {
       final ref = Ref(
         id: isar.refs.autoIncrement(),
-        ref: entry.text.replaceAll('\n', ''),
+        ref: entry.text,
         bookTitle: book.title,
         index: entry.index,
       );
-
       isar.write((isar) => isar.refs.put(ref));
     }
   }

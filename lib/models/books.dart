@@ -1,3 +1,4 @@
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
@@ -13,7 +14,7 @@ abstract class Book {
   final String title;
 
   /// an access to the data layer
-  final DataRepository data = DataRepository.instance;
+  final FileSystemData data = FileSystemData.instance;
 
   /// The author of the book, if available.
   String? author;

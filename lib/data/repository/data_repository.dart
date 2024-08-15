@@ -45,7 +45,7 @@ class DataRepository {
     return _isarDataProvider.getRefsForBook(book);
   }
 
-  List<Ref> findRefsByRelevance(String ref, {int limit = 50}) {
+  Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 50}) {
     return _isarDataProvider.findRefsByRelevance(ref, limit: limit);
   }
 }

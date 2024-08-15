@@ -1,12 +1,15 @@
+import 'dart:isolate';
+
 import 'package:isar/isar.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
 class IsarDataProvider {
-  IsarDataProvider._();
-  static final IsarDataProvider _singleton = IsarDataProvider._();
+  static final IsarDataProvider _singleton = IsarDataProvider();
   static IsarDataProvider get instance => _singleton;
+
+  IsarDataProvider();
 
   final isar = Isar.open(
     directory: '.',
@@ -21,7 +24,7 @@ class IsarDataProvider {
     return isar.refs.where().findAll();
   }
 
-  List<Ref> findRefs(String ref) {
+  Future<List<Ref>> findRefs(String ref) {
     final parts = ref.split(' ');
     return isar.refs
         .where()
@@ -29,11 +32,12 @@ class IsarDataProvider {
           parts,
           (q, element) => q.refContains(element),
         )
-        .findAll();
+        .findAllAsync();
   }
 
-  List<Ref> findRefsByRelevance(String ref, {int limit = 50}) {
-    var refs = findRefs(ref).take(limit).toList();
+  Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 50}) async {
+    //final results = Isolate.run(() async {
+    var refs = (await findRefs(ref)).take(limit).toList();
     // sort by ratio
 
     refs.sort((a, b) {
@@ -42,5 +46,7 @@ class IsarDataProvider {
       return scoreB.compareTo(scoreA);
     });
     return refs;
+    // });
+    // return results;
   }
 }

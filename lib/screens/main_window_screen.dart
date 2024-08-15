@@ -90,12 +90,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               label: Text('ספרייה'),
                             ),
                             const NavigationRailDestination(
-                              icon: Icon(Icons.menu_book),
-                              label: Text('עיון'),
-                            ),
-                            const NavigationRailDestination(
                               icon: Icon(Icons.auto_stories_rounded),
                               label: Text('איתור'),
+                            ),
+                            const NavigationRailDestination(
+                              icon: Icon(Icons.menu_book),
+                              label: Text('עיון'),
                             ),
                             const NavigationRailDestination(
                               icon: Icon(Icons.search),
@@ -138,8 +138,8 @@ class MainWindowScreenState extends State<MainWindowScreen>
                         controller: pageController,
                         children: const <Widget>[
                           LibraryBrowser(),
-                          ReadingScreen(),
                           FindRefScreen(),
+                          ReadingScreen(),
                           SizedBox.shrink(),
                           FavouritesScreen(),
                           MySettingsScreen(),

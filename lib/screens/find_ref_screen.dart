@@ -3,6 +3,7 @@ import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:provider/provider.dart';
 
 class FindRefScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _FindRefScreenState extends State<FindRefScreen> {
     if (ref.isEmpty) {
       return [];
     }
+    ref = paraphrase(ref);
     return DataRepository.instance.findRefsByRelevance(ref);
   }
 
@@ -33,13 +35,16 @@ class _FindRefScreenState extends State<FindRefScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('איתור מקור מדוייק'),
+        title: const Center(child: Text('איתור מקור מדוייק')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
             TextField(
+              decoration: const InputDecoration(
+                  hintText:
+                      'הקלד מקור מדוייק, לדוגמה: בראשית פרק א או שוע אוח יב   '),
               controller: _searchController,
               onChanged: (ref) {
                 setState(() {

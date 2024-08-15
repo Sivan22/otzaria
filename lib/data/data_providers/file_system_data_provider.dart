@@ -244,8 +244,6 @@ class FileSystemData {
     });
   }
 
-  @override
-
   /// an file system approach to get the content of a link.
   /// we read the file line by line and return the content of the line with the given index.
   Future<String> getLinkContent(Link link) async {
@@ -266,7 +264,7 @@ class FileSystemData {
   /// Returns the title of the book with the given path.
 
 // Retrieves the table of contents for a book with the given title.
-  @override
+
   Future<List<TocEntry>> getBookToc(String title) async {
     return _parseToc(getBookText(title));
   }
