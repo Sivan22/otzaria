@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:isar/isar.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/mimir_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
+import 'package:otzaria/utils/mimir_helper.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -59,6 +61,10 @@ void main() async {
   //     schemas: [RefSchema]);
   // await createRefsFromLibrary(
   //     await FileSystemData.instance.getLibrary(), isar, 0);
+  await addTextsToMimir(await FileSystemData.instance.getLibrary(),
+      await MimirDataProvider.instance.textsIndex,
+      end: 1);
+  print(await MimirDataProvider.instance.searchTexts('שלום'));
   runApp(const OtzariaApp());
 }
 

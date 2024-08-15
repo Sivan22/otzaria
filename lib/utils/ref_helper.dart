@@ -10,6 +10,7 @@ Future<void> createRefsFromLibrary(
   final allBooks = library.getAllBooks().whereType<TextBook>().skip(startIndex);
   for (TextBook book in allBooks) {
     print('Creating refs for ${book.title} (${i++}/${allBooks.length})');
+    List<Ref> refs = [];
     final List<TocEntry> toc = await book.tableOfContents;
     //get all TocEntries recursively
     List<TocEntry> alltocs = [];
@@ -28,12 +29,17 @@ Future<void> createRefsFromLibrary(
     for (final TocEntry entry in alltocs) {
       final ref = Ref(
         id: isar.refs.autoIncrement(),
-        ref: entry.text,
+        ref: entry.text
+            .replaceAll('"', '')
+            .replaceAll("'", '')
+            .replaceAll('״', ''),
         bookTitle: book.title,
         index: entry.index,
       );
-      isar.write((isar) => isar.refs.put(ref));
+      refs.add(ref);
     }
+    isar.write((isar) => isar.refs.putAll(refs));
+    print('Done creating refs for ${book.title} ');
   }
 
   for (PdfBook book in library.getAllBooks().whereType<PdfBook>()) {

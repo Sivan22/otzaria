@@ -4,6 +4,7 @@ import 'package:isar/isar.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'package:path_provider/path_provider.dart';
 
 class IsarDataProvider {
   static final IsarDataProvider _singleton = IsarDataProvider();
@@ -12,7 +13,7 @@ class IsarDataProvider {
   IsarDataProvider();
 
   final isar = Isar.open(
-    directory: '.',
+    directory: "C:\\Users\\Goldman\\AppData\\Roaming\\com.example\\otzaria",
     schemas: [RefSchema],
   );
 

@@ -436,4 +436,4 @@ class AppModel with ChangeNotifier {
 }
 
 /// An enum that represents the different screens in the application.
-enum Screens { library, reading, find, search, favorites, settings }
+enum Screens { library, find, reading, search, favorites, settings }

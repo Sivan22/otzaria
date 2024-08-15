@@ -33,24 +33,7 @@ const RefSchema = IsarGeneratedSchema(
         type: IsarType.long,
       ),
     ],
-    indexes: [
-      IsarIndexSchema(
-        name: 'ref',
-        properties: [
-          "ref",
-        ],
-        unique: false,
-        hash: false,
-      ),
-      IsarIndexSchema(
-        name: 'bookTitle',
-        properties: [
-          "bookTitle",
-        ],
-        unique: false,
-        hash: false,
-      ),
-    ],
+    indexes: [],
   ),
   converter: IsarObjectConverter<int, Ref>(
     serialize: serializeRef,

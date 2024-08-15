@@ -6,9 +6,7 @@ part 'ref.g.dart';
 class Ref {
   @Id()
   final int id;
-  @Index(hash: false)
   final String ref;
-  @Index()
   final String bookTitle;
   final int index;
   Ref(

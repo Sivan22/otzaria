@@ -76,6 +76,8 @@ dependencies:
   kosher_dart: ^2.0.16
   gematria: ^1.0.0
   csv: ^6.0.0
+  mimir: ^0.1.0
+  flutter_mimir: ^0.1.0
   filter_list:
     path: packages/filter_list-1.0.3
   package_info_plus: ^8.0.2
