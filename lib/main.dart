@@ -54,11 +54,11 @@ void main() async {
       Settings.setValue('key-library-path', libraryPath);
     }
   }();
-  final isar = Isar.open(
-      directory: (await getApplicationSupportDirectory()).path,
-      schemas: [RefSchema]);
-  await createRefsFromLibrary(
-      await FileSystemData.instance.getLibrary(), isar, 0);
+  // final isar = Isar.open(
+  //     directory: (await getApplicationSupportDirectory()).path,
+  //     schemas: [RefSchema]);
+  // await createRefsFromLibrary(
+  //     await FileSystemData.instance.getLibrary(), isar, 0);
   runApp(const OtzariaApp());
 }
 
