@@ -3,6 +3,7 @@ import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
+import 'package:otzaria/screens/ref_indexing_screen.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:provider/provider.dart';
 
@@ -24,27 +25,44 @@ class _FindRefScreenState extends State<FindRefScreen> {
   }
 
   Future<List<Ref>> findRefs(String ref) async {
-    if (ref.isEmpty) {
+    if (ref.length < 3) {
       return [];
     }
-    ref = paraphrase(ref);
-    return DataRepository.instance.findRefsByRelevance(ref);
+    //ref = paraphrase(ref);
+    return DataRepository.instance.findRefsByRelevance(
+      ref,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(child: RefIndexingScreen()),
       appBar: AppBar(
-        title: const Center(child: Text('איתור מקור מדוייק')),
+        title: const Center(child: Text('איתור מקורות')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
             TextField(
-              decoration: const InputDecoration(
-                  hintText:
-                      'הקלד מקור מדוייק, לדוגמה: בראשית פרק א או שוע אוח יב   '),
+              decoration: InputDecoration(
+                hintText:
+                    'הקלד מקור מדוייק, לדוגמה: בראשית פרק א או שוע אוח יב   ',
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
               controller: _searchController,
               onChanged: (ref) {
                 setState(() {

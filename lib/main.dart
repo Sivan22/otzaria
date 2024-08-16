@@ -58,13 +58,14 @@ void main() async {
   }();
   // final isar = Isar.open(
   //     directory: (await getApplicationSupportDirectory()).path,
-  //     schemas: [RefSchema]);
+  //     schemas: [RefSchema],
+  //     maxSizeMiB: 10000);
   // await createRefsFromLibrary(
-  //     await FileSystemData.instance.getLibrary(), isar, 0);
-  await addTextsToMimir(await FileSystemData.instance.getLibrary(),
-      await MimirDataProvider.instance.textsIndex,
-      end: 1);
-  print(await MimirDataProvider.instance.searchTexts('שלום'));
+  //     await FileSystemData.instance.getLibrary(), isar, 4899);
+  // await addTextsToMimir(await FileSystemData.instance.getLibrary(),
+  //     await MimirDataProvider.instance.textsIndex,
+  //     end: 1);
+  // print(await MimirDataProvider.instance.searchTexts('שלום'));
   runApp(const OtzariaApp());
 }
 

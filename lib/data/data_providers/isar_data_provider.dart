@@ -36,18 +36,32 @@ class IsarDataProvider {
         .findAllAsync();
   }
 
-  Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 50}) async {
-    //final results = Isolate.run(() async {
-    var refs = (await findRefs(ref)).take(limit).toList();
+  Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 10}) async {
+    var refs = await findRefs(ref);
+    // reduce the number of refs by taking the top N of each book
+    refs = await Isolate.run(() {
+      List<Ref> takenRefs = [];
+      final gruops = refs.groupBy((ref) => ref.bookTitle);
+      for (final gruop in gruops.keys) {
+        takenRefs += (gruops[gruop]!.take(limit)).toList();
+      }
+      takenRefs.sort((a, b) {
+        final scoreA = ratio(ref, a.ref);
+        final scoreB = ratio(ref, b.ref);
+        return scoreB.compareTo(scoreA);
+      });
+      return takenRefs;
+    });
+
     // sort by ratio
 
-    refs.sort((a, b) {
-      final scoreA = ratio(ref, a.ref);
-      final scoreB = ratio(ref, b.ref);
-      return scoreB.compareTo(scoreA);
-    });
     return refs;
-    // });
-    // return results;
   }
+}
+
+extension Iterables<E> on Iterable<E> {
+  Map<K, List<E>> groupBy<K>(K Function(E) keyFunction) => fold(
+      <K, List<E>>{},
+      (Map<K, List<E>> map, E element) =>
+          map..putIfAbsent(keyFunction(element), () => <E>[]).add(element));
 }
