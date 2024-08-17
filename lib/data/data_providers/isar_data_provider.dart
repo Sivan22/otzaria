@@ -1,10 +1,13 @@
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:isar/isar.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:otzaria/models/library.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class IsarDataProvider {
   static final IsarDataProvider _singleton = IsarDataProvider();
@@ -13,9 +16,90 @@ class IsarDataProvider {
   IsarDataProvider();
 
   final isar = Isar.open(
-    directory: "C:\\Users\\Goldman\\AppData\\Roaming\\com.example\\otzaria",
+    directory: Settings.getValue<String>('key-library-path') ?? 'C:\\אוצריא',
+    maxSizeMiB: 100000,
     schemas: [RefSchema],
   );
+  ValueNotifier<int?> refsNumOfbooksDone = ValueNotifier(null);
+  ValueNotifier<int?> refsNumOfbooksTotal = ValueNotifier(null);
+
+  Future<void> createRefsFromLibrary(Library library, int startIndex) async {
+    isar.write((isar) => isar.refs.clear());
+    int i = 0;
+    final allBooks =
+        library.getAllBooks().whereType<TextBook>().skip(startIndex);
+    refsNumOfbooksTotal.value = allBooks.length;
+    for (TextBook book in allBooks) {
+      print('Creating refs for ${book.title} (${i++}/${allBooks.length})');
+      refsNumOfbooksDone.value = i - 1;
+      List<Ref> refs = [];
+      final List<TocEntry> toc = await book.tableOfContents;
+      //get all TocEntries recursively
+      List<TocEntry> alltocs = [];
+
+      void searchToc(List<TocEntry> entries) {
+        for (final TocEntry entry in entries) {
+          alltocs.add(entry);
+          for (final child in entry.children) {
+            child.text = '${entry.text},${child.text}';
+          }
+          searchToc(entry.children);
+        }
+      }
+
+      searchToc(toc);
+      for (final TocEntry entry in alltocs) {
+        final ref = Ref(
+            id: isar.refs.autoIncrement(),
+            ref: entry.text
+                .replaceAll('"', '')
+                .replaceAll("'", '')
+                .replaceAll('״', ''),
+            bookTitle: book.title,
+            index: entry.index,
+            pdfBook: false);
+        refs.add(ref);
+      }
+      isar.write((isar) => isar.refs.putAll(refs));
+      print('Done creating refs for ${book.title} ');
+    }
+    final pdfBooks =
+        library.getAllBooks().whereType<PdfBook>().skip(startIndex).toList();
+    refsNumOfbooksTotal.value = pdfBooks.length;
+    for (int i = 0; i < pdfBooks.length; i++) {
+      refsNumOfbooksDone.value = i;
+      final List<PdfOutlineNode> outlines =
+          await PdfDocument.openFile(pdfBooks[i].path)
+              .then((value) => value.loadOutline());
+
+      //get all TocEntries recursively
+      List<PdfOutlineNode> alloutlines = [];
+
+      void searchOutline(List<PdfOutlineNode> entries) {
+        for (final PdfOutlineNode entry in entries) {
+          alloutlines.add(entry);
+          searchOutline(entry.children);
+        }
+      }
+
+      searchOutline(outlines);
+
+      for (final PdfOutlineNode entry in alloutlines) {
+        final ref = Ref(
+          id: isar.refs.autoIncrement(),
+          ref: "${pdfBooks[i].title} ${entry.title}",
+          bookTitle: pdfBooks[i].title,
+          index: entry.dest?.pageNumber ?? 0,
+          pdfBook: true,
+          pdfPath: pdfBooks[i].path,
+        );
+        print('Adding Pdf ref: ${ref.ref}');
+        isar.write((isar) => isar.refs.put(ref));
+      }
+    }
+    refsNumOfbooksDone.value = null;
+    refsNumOfbooksTotal.value = null;
+  }
 
   List<Ref> getRefsForBook(TextBook book) {
     return isar.refs.where().bookTitleEqualTo(book.title).findAll();
@@ -56,6 +140,12 @@ class IsarDataProvider {
     // sort by ratio
 
     return refs;
+  }
+
+  Future<int> getNumberOfBooksWithRefs() async {
+    final allRefs = isar.refs.where().findAll();
+    final books = allRefs.groupBy((ref) => ref.bookTitle);
+    return books.length;
   }
 }
 

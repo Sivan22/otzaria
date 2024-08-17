@@ -9,9 +9,13 @@ class Ref {
   final String ref;
   final String bookTitle;
   final int index;
+  final bool pdfBook;
+  final String? pdfPath;
   Ref(
       {required this.id,
       required this.ref,
       required this.bookTitle,
-      required this.index});
+      required this.index,
+      required this.pdfBook,
+      this.pdfPath});
 }

@@ -28,14 +28,14 @@ Future<void> createRefsFromLibrary(
     searchToc(toc);
     for (final TocEntry entry in alltocs) {
       final ref = Ref(
-        id: isar.refs.autoIncrement(),
-        ref: entry.text
-            .replaceAll('"', '')
-            .replaceAll("'", '')
-            .replaceAll('״', ''),
-        bookTitle: book.title,
-        index: entry.index,
-      );
+          id: isar.refs.autoIncrement(),
+          ref: entry.text
+              .replaceAll('"', '')
+              .replaceAll("'", '')
+              .replaceAll('״', ''),
+          bookTitle: book.title,
+          index: entry.index,
+          pdfBook: false);
       refs.add(ref);
     }
     isar.write((isar) => isar.refs.putAll(refs));
@@ -60,11 +60,11 @@ Future<void> createRefsFromLibrary(
 
     for (final PdfOutlineNode entry in alloutlines) {
       final ref = Ref(
-        id: isar.refs.autoIncrement(),
-        ref: entry.title.replaceAll('\n', ''),
-        bookTitle: book.title,
-        index: entry.dest?.pageNumber ?? 0,
-      );
+          id: isar.refs.autoIncrement(),
+          ref: entry.title.replaceAll('\n', ''),
+          bookTitle: book.title,
+          index: entry.dest?.pageNumber ?? 0,
+          pdfBook: true);
       print('Adding Pdf ref: ${ref.ref}');
       isar.write((isar) => isar.refs.put(ref));
     }

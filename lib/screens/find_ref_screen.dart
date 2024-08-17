@@ -37,7 +37,11 @@ class _FindRefScreenState extends State<FindRefScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(child: RefIndexingScreen()),
+      drawer: const Drawer(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.zero)),
+          semanticLabel: 'הגדרות אינדקס',
+          child: RefIndexingScreen()),
       appBar: AppBar(
         title: const Center(child: Text('איתור מקורות')),
       ),
@@ -83,16 +87,24 @@ class _FindRefScreenState extends State<FindRefScreen> {
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                          title: Text(snapshot.data![index].ref),
-                          onTap: () {
-                            Provider.of<AppModel>(context, listen: false)
-                                .openBook(
+                            title: Text(snapshot.data![index].ref),
+                            onTap: () {
+                              final appModel =
+                                  Provider.of<AppModel>(context, listen: false);
+                              if (snapshot.data![index].pdfBook) {
+                                appModel.openBook(
+                                    PdfBook(
+                                        title: snapshot.data![index].bookTitle,
+                                        path: snapshot.data![index].pdfPath!),
+                                    snapshot.data![index].index);
+                              } else {
+                                appModel.openBook(
                                     TextBook(
                                       title: snapshot.data![index].bookTitle,
                                     ),
                                     snapshot.data![index].index);
-                          },
-                        );
+                              }
+                            });
                       },
                     );
                   }

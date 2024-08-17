@@ -32,6 +32,14 @@ const RefSchema = IsarGeneratedSchema(
         name: 'index',
         type: IsarType.long,
       ),
+      IsarPropertySchema(
+        name: 'pdfBook',
+        type: IsarType.bool,
+      ),
+      IsarPropertySchema(
+        name: 'pdfPath',
+        type: IsarType.string,
+      ),
     ],
     indexes: [],
   ),
@@ -48,6 +56,15 @@ int serializeRef(IsarWriter writer, Ref object) {
   IsarCore.writeString(writer, 1, object.ref);
   IsarCore.writeString(writer, 2, object.bookTitle);
   IsarCore.writeLong(writer, 3, object.index);
+  IsarCore.writeBool(writer, 4, object.pdfBook);
+  {
+    final value = object.pdfPath;
+    if (value == null) {
+      IsarCore.writeNull(writer, 5);
+    } else {
+      IsarCore.writeString(writer, 5, value);
+    }
+  }
   return object.id;
 }
 
@@ -61,11 +78,17 @@ Ref deserializeRef(IsarReader reader) {
   _bookTitle = IsarCore.readString(reader, 2) ?? '';
   final int _index;
   _index = IsarCore.readLong(reader, 3);
+  final bool _pdfBook;
+  _pdfBook = IsarCore.readBool(reader, 4);
+  final String? _pdfPath;
+  _pdfPath = IsarCore.readString(reader, 5);
   final object = Ref(
     id: _id,
     ref: _ref,
     bookTitle: _bookTitle,
     index: _index,
+    pdfBook: _pdfBook,
+    pdfPath: _pdfPath,
   );
   return object;
 }
@@ -81,6 +104,10 @@ dynamic deserializeRefProp(IsarReader reader, int property) {
       return IsarCore.readString(reader, 2) ?? '';
     case 3:
       return IsarCore.readLong(reader, 3);
+    case 4:
+      return IsarCore.readBool(reader, 4);
+    case 5:
+      return IsarCore.readString(reader, 5);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -92,6 +119,8 @@ sealed class _RefUpdate {
     String? ref,
     String? bookTitle,
     int? index,
+    bool? pdfBook,
+    String? pdfPath,
   });
 }
 
@@ -106,6 +135,8 @@ class _RefUpdateImpl implements _RefUpdate {
     Object? ref = ignore,
     Object? bookTitle = ignore,
     Object? index = ignore,
+    Object? pdfBook = ignore,
+    Object? pdfPath = ignore,
   }) {
     return collection.updateProperties([
           id
@@ -113,6 +144,8 @@ class _RefUpdateImpl implements _RefUpdate {
           if (ref != ignore) 1: ref as String?,
           if (bookTitle != ignore) 2: bookTitle as String?,
           if (index != ignore) 3: index as int?,
+          if (pdfBook != ignore) 4: pdfBook as bool?,
+          if (pdfPath != ignore) 5: pdfPath as String?,
         }) >
         0;
   }
@@ -124,6 +157,8 @@ sealed class _RefUpdateAll {
     String? ref,
     String? bookTitle,
     int? index,
+    bool? pdfBook,
+    String? pdfPath,
   });
 }
 
@@ -138,11 +173,15 @@ class _RefUpdateAllImpl implements _RefUpdateAll {
     Object? ref = ignore,
     Object? bookTitle = ignore,
     Object? index = ignore,
+    Object? pdfBook = ignore,
+    Object? pdfPath = ignore,
   }) {
     return collection.updateProperties(id, {
       if (ref != ignore) 1: ref as String?,
       if (bookTitle != ignore) 2: bookTitle as String?,
       if (index != ignore) 3: index as int?,
+      if (pdfBook != ignore) 4: pdfBook as bool?,
+      if (pdfPath != ignore) 5: pdfPath as String?,
     });
   }
 }
@@ -158,6 +197,8 @@ sealed class _RefQueryUpdate {
     String? ref,
     String? bookTitle,
     int? index,
+    bool? pdfBook,
+    String? pdfPath,
   });
 }
 
@@ -172,11 +213,15 @@ class _RefQueryUpdateImpl implements _RefQueryUpdate {
     Object? ref = ignore,
     Object? bookTitle = ignore,
     Object? index = ignore,
+    Object? pdfBook = ignore,
+    Object? pdfPath = ignore,
   }) {
     return query.updateProperties(limit: limit, {
       if (ref != ignore) 1: ref as String?,
       if (bookTitle != ignore) 2: bookTitle as String?,
       if (index != ignore) 3: index as int?,
+      if (pdfBook != ignore) 4: pdfBook as bool?,
+      if (pdfPath != ignore) 5: pdfPath as String?,
     });
   }
 }
@@ -198,6 +243,8 @@ class _RefQueryBuilderUpdateImpl implements _RefQueryUpdate {
     Object? ref = ignore,
     Object? bookTitle = ignore,
     Object? index = ignore,
+    Object? pdfBook = ignore,
+    Object? pdfPath = ignore,
   }) {
     final q = query.build();
     try {
@@ -205,6 +252,8 @@ class _RefQueryBuilderUpdateImpl implements _RefQueryUpdate {
         if (ref != ignore) 1: ref as String?,
         if (bookTitle != ignore) 2: bookTitle as String?,
         if (index != ignore) 3: index as int?,
+        if (pdfBook != ignore) 4: pdfBook as bool?,
+        if (pdfPath != ignore) 5: pdfPath as String?,
       });
     } finally {
       q.close();
@@ -718,6 +767,201 @@ extension RefQueryFilter on QueryBuilder<Ref, Ref, QFilterCondition> {
       );
     });
   }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfBookEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 4,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathGreaterThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathGreaterThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathLessThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathLessThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathBetween(
+    String? lower,
+    String? upper, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 5,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        StartsWithCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EndsWithCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathContains(String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        ContainsCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathMatches(String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        MatchesCondition(
+          property: 5,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const EqualCondition(
+          property: 5,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterFilterCondition> pdfPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const GreaterCondition(
+          property: 5,
+          value: '',
+        ),
+      );
+    });
+  }
 }
 
 extension RefQueryObject on QueryBuilder<Ref, Ref, QFilterCondition> {}
@@ -787,6 +1031,39 @@ extension RefQuerySortBy on QueryBuilder<Ref, Ref, QSortBy> {
       return query.addSortBy(3, sort: Sort.desc);
     });
   }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> sortByPdfBook() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> sortByPdfBookDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> sortByPdfPath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        5,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> sortByPdfPathDesc(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        5,
+        sort: Sort.desc,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
 }
 
 extension RefQuerySortThenBy on QueryBuilder<Ref, Ref, QSortThenBy> {
@@ -840,6 +1117,32 @@ extension RefQuerySortThenBy on QueryBuilder<Ref, Ref, QSortThenBy> {
       return query.addSortBy(3, sort: Sort.desc);
     });
   }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> thenByPdfBook() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> thenByPdfBookDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> thenByPdfPath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterSortBy> thenByPdfPathDesc(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension RefQueryWhereDistinct on QueryBuilder<Ref, Ref, QDistinct> {
@@ -860,6 +1163,19 @@ extension RefQueryWhereDistinct on QueryBuilder<Ref, Ref, QDistinct> {
   QueryBuilder<Ref, Ref, QAfterDistinct> distinctByIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(3);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterDistinct> distinctByPdfBook() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(4);
+    });
+  }
+
+  QueryBuilder<Ref, Ref, QAfterDistinct> distinctByPdfPath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(5, caseSensitive: caseSensitive);
     });
   }
 }
@@ -888,6 +1204,18 @@ extension RefQueryProperty1 on QueryBuilder<Ref, Ref, QProperty> {
       return query.addProperty(3);
     });
   }
+
+  QueryBuilder<Ref, bool, QAfterProperty> pdfBookProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<Ref, String?, QAfterProperty> pdfPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
+    });
+  }
 }
 
 extension RefQueryProperty2<R> on QueryBuilder<Ref, R, QAfterProperty> {
@@ -912,6 +1240,18 @@ extension RefQueryProperty2<R> on QueryBuilder<Ref, R, QAfterProperty> {
   QueryBuilder<Ref, (R, int), QAfterProperty> indexProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
+    });
+  }
+
+  QueryBuilder<Ref, (R, bool), QAfterProperty> pdfBookProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<Ref, (R, String?), QAfterProperty> pdfPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
     });
   }
 }
@@ -939,6 +1279,18 @@ extension RefQueryProperty3<R1, R2>
   QueryBuilder<Ref, (R1, R2, int), QOperations> indexProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
+    });
+  }
+
+  QueryBuilder<Ref, (R1, R2, bool), QOperations> pdfBookProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<Ref, (R1, R2, String?), QOperations> pdfPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
     });
   }
 }

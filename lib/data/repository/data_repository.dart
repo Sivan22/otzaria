@@ -41,6 +41,10 @@ class DataRepository {
     return _fileSystemData.getLinkContent(link);
   }
 
+  Future<void> createRefsFromLibrary(Library library, int startIndex) async {
+    _isarDataProvider.createRefsFromLibrary(library, startIndex);
+  }
+
   List<Ref> getRefsForBook(TextBook book) {
     return _isarDataProvider.getRefsForBook(book);
   }

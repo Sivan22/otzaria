@@ -433,6 +433,10 @@ class AppModel with ChangeNotifier {
       return filteredBooks;
     });
   }
+
+  Future<void> createRefsFromLibrary(int startIndex) async {
+    data.createRefsFromLibrary(await library, startIndex);
+  }
 }
 
 /// An enum that represents the different screens in the application.
