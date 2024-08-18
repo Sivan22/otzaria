@@ -50,6 +50,8 @@ class _FindRefScreenState extends State<FindRefScreen> {
         child: Column(
           children: [
             TextField(
+              autofocus: true,
+              focusNode: context.read<AppModel>().findReferenceFocusNode,
               decoration: InputDecoration(
                 hintText:
                     'הקלד מקור מדוייק, לדוגמה: בראשית פרק א או שוע אוח יב   ',

@@ -122,6 +122,8 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                 appModel.openNewSearchTab();
                               case 0:
                                 appModel.bookLocatorFocusNode.requestFocus();
+                              case 1:
+                                appModel.findReferenceFocusNode.requestFocus();
                             }
                             setState(() {});
                           }),

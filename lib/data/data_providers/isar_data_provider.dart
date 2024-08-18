@@ -30,38 +30,42 @@ class IsarDataProvider {
         library.getAllBooks().whereType<TextBook>().skip(startIndex);
     refsNumOfbooksTotal.value = allBooks.length;
     for (TextBook book in allBooks) {
-      print('Creating refs for ${book.title} (${i++}/${allBooks.length})');
-      refsNumOfbooksDone.value = i - 1;
-      List<Ref> refs = [];
-      final List<TocEntry> toc = await book.tableOfContents;
-      //get all TocEntries recursively
-      List<TocEntry> alltocs = [];
+      try {
+        print('Creating refs for ${book.title} (${i++}/${allBooks.length})');
+        refsNumOfbooksDone.value = i - 1;
+        List<Ref> refs = [];
+        final List<TocEntry> toc = await book.tableOfContents;
+        //get all TocEntries recursively
+        List<TocEntry> alltocs = [];
 
-      void searchToc(List<TocEntry> entries) {
-        for (final TocEntry entry in entries) {
-          alltocs.add(entry);
-          for (final child in entry.children) {
-            child.text = '${entry.text},${child.text}';
+        void searchToc(List<TocEntry> entries) {
+          for (final TocEntry entry in entries) {
+            alltocs.add(entry);
+            for (final child in entry.children) {
+              child.text = '${entry.text},${child.text}';
+            }
+            searchToc(entry.children);
           }
-          searchToc(entry.children);
         }
-      }
 
-      searchToc(toc);
-      for (final TocEntry entry in alltocs) {
-        final ref = Ref(
-            id: isar.refs.autoIncrement(),
-            ref: entry.text
-                .replaceAll('"', '')
-                .replaceAll("'", '')
-                .replaceAll('״', ''),
-            bookTitle: book.title,
-            index: entry.index,
-            pdfBook: false);
-        refs.add(ref);
+        searchToc(toc);
+        for (final TocEntry entry in alltocs) {
+          final ref = Ref(
+              id: isar.refs.autoIncrement(),
+              ref: entry.text
+                  .replaceAll('"', '')
+                  .replaceAll("'", '')
+                  .replaceAll('״', ''),
+              bookTitle: book.title,
+              index: entry.index,
+              pdfBook: false);
+          refs.add(ref);
+        }
+        isar.write((isar) => isar.refs.putAll(refs));
+        print('Done creating refs for ${book.title} ');
+      } catch (e) {
+        print(' Failed creating refs for ${book.title} $e');
       }
-      isar.write((isar) => isar.refs.putAll(refs));
-      print('Done creating refs for ${book.title} ');
     }
     final pdfBooks =
         library.getAllBooks().whereType<PdfBook>().skip(startIndex).toList();

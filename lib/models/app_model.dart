@@ -85,6 +85,7 @@ class AppModel with ChangeNotifier {
 
   /// a focus node for the search field in libraryBrowser
   FocusNode bookLocatorFocusNode = FocusNode();
+  FocusNode findReferenceFocusNode = FocusNode();
 
   /// Constructs a new AppModel instance.
   ///

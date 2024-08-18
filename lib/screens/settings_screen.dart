@@ -139,11 +139,18 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         titleTextStyle: TextStyle(fontSize: 25),
                         children: [
                             DropDownSettingsTile<String>(
-                              selected: 'ctrl+o',
+                              selected: 'ctrl+l',
                               settingKey: 'key-shortcut-open-library-browser',
                               title: 'ספרייה',
                               values: shortcuctsList,
                               leading: Icon(Icons.library_books),
+                            ),
+                            DropDownSettingsTile<String>(
+                              selected: 'ctrl+o',
+                              settingKey: 'key-shortcut-open-library-browser',
+                              title: 'איתור',
+                              values: shortcuctsList,
+                              leading: Icon(Icons.auto_stories_rounded),
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+r',
