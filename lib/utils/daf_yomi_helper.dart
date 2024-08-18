@@ -25,7 +25,7 @@ Future<TocEntry?> _findDafInToc(TextBook book, String daf) async {
   TocEntry? findDafInEntries(List<TocEntry> entries) {
     for (var entry in entries) {
       String ref = entry.text;
-      if (ref.contains('דף $daf')) {
+      if (ref.contains('דף ${daf.trim()}')) {
         return entry;
       }
       // Recursively search in children
