@@ -1,4 +1,4 @@
-import 'package:filter_list/src/theme/filter_list_theme.dart';
+import '../theme/filter_list_theme.dart';
 import 'package:flutter/material.dart';
 
 class SearchFieldWidget<T> extends StatelessWidget {

@@ -1,8 +1,11 @@
-import 'package:filter_list/filter_list.dart';
-import 'package:filter_list/src/state/filter_state.dart';
-import 'package:filter_list/src/state/provider.dart';
+import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
+import 'package:otzaria/widgets/filter_list/src/theme/control_button_bar_theme.dart';
+import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 
-import 'package:filter_list/src/widget/control_button.dart';
+import '../state/filter_state.dart';
+import '../state/provider.dart';
+
+import 'control_button.dart';
 import 'package:flutter/material.dart';
 
 /// {@template control_buttons}

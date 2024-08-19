@@ -1,11 +1,11 @@
 library filter_list;
 
-import 'package:filter_list/src/state/filter_state.dart';
-import 'package:filter_list/src/state/provider.dart';
-import 'package:filter_list/src/theme/theme.dart';
-import 'package:filter_list/src/widget/choice_list.dart';
-import 'package:filter_list/src/widget/control_button_bar.dart';
-import 'package:filter_list/src/widget/header.dart';
+import 'state/filter_state.dart';
+import 'state/provider.dart';
+import 'theme/theme.dart';
+import 'widget/choice_list.dart';
+import 'widget/control_button_bar.dart';
+import 'widget/header.dart';
 import 'package:flutter/material.dart';
 
 part 'filter_list_widget.dart';

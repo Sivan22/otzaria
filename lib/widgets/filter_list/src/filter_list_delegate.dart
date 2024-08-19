@@ -1,7 +1,7 @@
-import 'package:filter_list/src/filter_list_dialog.dart';
-import 'package:filter_list/src/state/filter_state.dart';
-import 'package:filter_list/src/state/provider.dart';
-import 'package:filter_list/src/theme/filter_list_delegate_theme.dart';
+import 'filter_list_dialog.dart';
+import 'state/filter_state.dart';
+import 'state/provider.dart';
+import 'theme/filter_list_delegate_theme.dart';
 import 'package:flutter/material.dart';
 
 typedef SuggestionBuilder<T> = Widget Function(

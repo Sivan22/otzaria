@@ -1,6 +1,6 @@
-import 'package:filter_list/src/theme/choice_chip_theme.dart';
-import 'package:filter_list/src/theme/control_button_bar_theme.dart';
-import 'package:filter_list/src/theme/header_theme.dart';
+import 'choice_chip_theme.dart';
+import 'control_button_bar_theme.dart';
+import 'header_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

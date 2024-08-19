@@ -3,7 +3,6 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/screens/full_text_search/full_text_book_list.dart';
-import 'package:otzaria/screens/full_text_search/full_text_filter_books.dart';
 import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
 import 'package:provider/provider.dart';
 

@@ -1,7 +1,9 @@
-import 'package:filter_list/filter_list.dart';
-import 'package:filter_list/src/state/filter_state.dart';
-import 'package:filter_list/src/state/provider.dart';
-import 'package:filter_list/src/widget/choice_chip_widget.dart';
+import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
+import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
+
+import '../state/filter_state.dart';
+import '../state/provider.dart';
+import 'choice_chip_widget.dart';
 import 'package:flutter/material.dart';
 
 class ChoiceList<T> extends StatelessWidget {

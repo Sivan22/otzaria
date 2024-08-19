@@ -38,7 +38,14 @@ class MimirDataProvider {
       sortableFields: <String>[],
       // The ranking rules of this index, see:
       // https://docs.meilisearch.com/reference/api/settings.html#ranking-rules
-      rankingRules: <String>[],
+      rankingRules: <String>[
+        "words",
+        "typo",
+        "attribute",
+        "sort",
+        "exactness",
+            "proximity",
+      ],
       // The stop words of this index, see:
       // https://docs.meilisearch.com/reference/api/settings.html#stop-words
       stopWords: <String>[],

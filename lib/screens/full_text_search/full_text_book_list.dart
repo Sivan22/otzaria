@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/models/app_model.dart';
+import 'package:filter_list/filter_list.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:provider/provider.dart';
 
 class FullTextBookList extends StatefulWidget {
   final SearchingTab tab;
@@ -15,13 +14,17 @@ class FullTextBookList extends StatefulWidget {
 
 class _FullTextBookListState extends State<FullTextBookList> {
   List<Book> books = [];
-  Set<String> allTopics = {};
-  Set<String> selectedTopics = {};
+  List<String> allTopics = [];
+  List<String> selectedTopics = [];
   String _filterQuery = '';
 
   void update() {
-    final filteredList = widget.books.where((book) =>
+    var filteredList = widget.books.where((book) =>
         book.title.toLowerCase().contains(_filterQuery.toLowerCase()));
+    if (selectedTopics.isNotEmpty) {
+      filteredList = filteredList.where((book) =>
+          book.topics.split(' ,').any((t) => selectedTopics.contains(t)));
+    }
 
     setState(() {
       books = filteredList.toList();
@@ -32,9 +35,11 @@ class _FullTextBookListState extends State<FullTextBookList> {
   void initState() {
     books = widget.books;
     super.initState();
+    Set<String> allTopicsSet = {};
     for (Book book in widget.books) {
-      allTopics.addAll(book.topics.split(', '));
+      allTopicsSet.addAll(book.topics.split(', '));
     }
+    allTopics = allTopicsSet.toList();
   }
 
   @override
@@ -42,6 +47,10 @@ class _FullTextBookListState extends State<FullTextBookList> {
     return Scaffold(
       body: Column(
         children: [
+          ElevatedButton(
+            child: Text('בחר קטגוריות'),
+            onPressed: openFilterDialog,
+          ),
           TextField(
             decoration: const InputDecoration(
               hintText: "סינון",
@@ -90,6 +99,31 @@ class _FullTextBookListState extends State<FullTextBookList> {
           ),
         ],
       ),
+    );
+  }
+
+  void openFilterDialog() async {
+    await FilterListDialog.display<String>(
+      context,
+      listData: allTopics,
+      selectedListData: selectedTopics,
+      allButtonText: 'הכל',
+      applyButtonText: 'סיום',
+      headlineText: 'בחר קטגוריות',
+      resetButtonText: 'איפוס',
+      selectedItemsText: 'קטגוריות נבחרו',
+      choiceChipLabel: (topic) => topic,
+      validateSelectedItem: (list, val) => list!.contains(val),
+      onItemSearch: (topic, query) {
+        return topic.contains(query);
+      },
+      onApplyButtonClick: (list) {
+        setState(() {
+          selectedTopics = List.from(list!);
+        });
+
+        Navigator.pop(context);
+      },
     );
   }
 }

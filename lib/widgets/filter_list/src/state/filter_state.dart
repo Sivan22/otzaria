@@ -1,4 +1,4 @@
-import 'package:filter_list/src/state/provider.dart';
+import 'provider.dart';
 import 'package:flutter/material.dart';
 
 class FilterState<K> extends ListenableState {
