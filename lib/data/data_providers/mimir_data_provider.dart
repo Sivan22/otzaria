@@ -44,7 +44,7 @@ class MimirDataProvider {
         "attribute",
         "sort",
         "exactness",
-            "proximity",
+        "proximity",
       ],
       // The stop words of this index, see:
       // https://docs.meilisearch.com/reference/api/settings.html#stop-words

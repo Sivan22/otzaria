@@ -80,34 +80,35 @@ class TextBookSearchViewState extends State<TextBookSearchView>
           ),
         ),
       ),
-      SizedBox.fromSize(
-          size: const Size.fromHeight(400),
-          child: ListView.builder(
-              itemCount: searchResults.length,
-              itemBuilder: (context, index) {
-                if (searchResults.isNotEmpty) {
-                  final result = searchResults[index];
-                  return ListTile(
-                      title: Text(
-                        result.address,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: SearchHighlightText(result.snippet,
-                          searchText: result.query),
-                      onTap: () {
-                        widget.scrollControler.scrollTo(
-                          index: result.index,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.ease,
-                        );
-                        if (Platform.isAndroid) {
-                          widget.closeLeftPaneCallback();
-                        }
-                      });
-                } else {
-                  return const SizedBox.shrink();
-                }
-              }))
+      Expanded(
+        child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: searchResults.length,
+            itemBuilder: (context, index) {
+              if (searchResults.isNotEmpty) {
+                final result = searchResults[index];
+                return ListTile(
+                    title: Text(
+                      result.address,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: SearchHighlightText(result.snippet,
+                        searchText: result.query),
+                    onTap: () {
+                      widget.scrollControler.scrollTo(
+                        index: result.index,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.ease,
+                      );
+                      if (Platform.isAndroid) {
+                        widget.closeLeftPaneCallback();
+                      }
+                    });
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
+      )
     ]);
   }
 

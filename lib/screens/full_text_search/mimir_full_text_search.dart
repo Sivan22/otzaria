@@ -18,7 +18,6 @@ class MimirFullTextSearch extends StatefulWidget {
 
 class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
   Stream<List<MimirDocument>> results = Stream.value([]);
-  List<String> booksToSearch = [];
   late TextEditingController queryController;
   ValueNotifier isLeftPaneOpen = ValueNotifier(false);
 
@@ -34,6 +33,8 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
       if (queryController.text.isEmpty) {
         results = Stream.value([]);
       } else {
+        final booksToSearch =
+            widget.tab.booksToSearch.value.map<String>((e) => e.title).toList();
         if (!widget.tab.aproximateSearch.value) {
           results = MimirDataProvider.instance
               .searchTextsStream('"${queryController.text}"', booksToSearch);
@@ -48,100 +49,123 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            isLeftPaneOpen.value = !isLeftPaneOpen.value;
-          },
-        ),
-      ),
-      body: Row(
-        children: [
-          ValueListenableBuilder(
-              valueListenable: isLeftPaneOpen,
-              builder: (context, value, child) {
-                return AnimatedSize(
+      body: ValueListenableBuilder(
+          valueListenable: isLeftPaneOpen,
+          builder: (context, value, child) {
+            return Row(
+              children: [
+                !isLeftPaneOpen.value
+                    ? SizedBox.shrink()
+                    : Column(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.menu),
+                            onPressed: () {
+                              isLeftPaneOpen.value = !isLeftPaneOpen.value;
+                            },
+                          ),
+                          Expanded(child: SizedBox.shrink()),
+                        ],
+                      ),
+                AnimatedSize(
                     duration: const Duration(milliseconds: 300),
                     child: SizedBox(
                       width: isLeftPaneOpen.value ? 350 : 0,
                       child: FullTextLeftPane(tab: widget.tab),
-                    ));
-              }),
-          Expanded(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(60, 30, 60, 10),
-                  child: TextField(
-                    autofocus: true,
-                    controller: queryController,
-                    onChanged: (e) => updateResults(),
-                    decoration: InputDecoration(
-                      hintText: "חפש כאן..",
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          queryController.clear();
-                          updateResults();
-                        },
+                    )),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          isLeftPaneOpen.value
+                              ? SizedBox.shrink()
+                              : IconButton(
+                                  icon: const Icon(Icons.menu),
+                                  onPressed: () {
+                                    isLeftPaneOpen.value =
+                                        !isLeftPaneOpen.value;
+                                  },
+                                ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(60, 5, 60, 10),
+                              child: TextField(
+                                autofocus: true,
+                                controller: queryController,
+                                onChanged: (e) => updateResults(),
+                                decoration: InputDecoration(
+                                  hintText: "חפש כאן..",
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      queryController.clear();
+                                      updateResults();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      Expanded(
+                        child: StreamBuilder(
+                            stream: results,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              }
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: snapshot.data!.length,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    onTap: () {
+                                      context.read<AppModel>().openTab(
+                                            TextBookTab(
+                                                book: TextBook(
+                                                  title: snapshot.data![index]
+                                                      ['title'],
+                                                ),
+                                                index: snapshot.data![index]
+                                                    ['index'],
+                                                searchText:
+                                                    queryController.text),
+                                          );
+                                    },
+                                    title: FutureBuilder(
+                                        future: refFromIndex(
+                                            snapshot.data![index]['index'],
+                                            TextBook(
+                                                    title: snapshot.data![index]
+                                                        ['title'])
+                                                .tableOfContents),
+                                        builder: (context, ref) {
+                                          if (!ref.hasData) {
+                                            return Text(
+                                                '${snapshot.data![index]['title']} ...');
+                                          }
+                                          return Text(
+                                            ref.data!,
+                                          );
+                                        }),
+                                    subtitle: Html(
+                                        data: highLight(
+                                            snapshot.data![index]['text'],
+                                            queryController.text)),
+                                  );
+                                },
+                              );
+                            }),
+                      )
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: StreamBuilder(
-                      stream: results,
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              onTap: () {
-                                context.read<AppModel>().openTab(
-                                      TextBookTab(
-                                          book: TextBook(
-                                            title: snapshot.data![index]
-                                                ['title'],
-                                          ),
-                                          index: snapshot.data![index]['index'],
-                                          searchText: queryController.text),
-                                    );
-                              },
-                              title: FutureBuilder(
-                                  future: refFromIndex(
-                                      snapshot.data![index]['index'],
-                                      TextBook(
-                                              title: snapshot.data![index]
-                                                  ['title'])
-                                          .tableOfContents),
-                                  builder: (context, ref) {
-                                    if (!ref.hasData) {
-                                      return Text(
-                                          '${snapshot.data![index]['title']} ...');
-                                    }
-                                    return Text(
-                                      ref.data!,
-                                    );
-                                  }),
-                              subtitle: Html(
-                                  data: highLight(snapshot.data![index]['text'],
-                                      queryController.text)),
-                            );
-                          },
-                        );
-                      }),
-                )
               ],
-            ),
-          ),
-        ],
-      ),
+            );
+          }),
     );
   }
 }

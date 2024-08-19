@@ -19,13 +19,12 @@ class _FullTextBookListState extends State<FullTextBookList> {
   String _filterQuery = '';
 
   void update() {
-    var filteredList = widget.books.where((book) =>
-        book.title.toLowerCase().contains(_filterQuery.toLowerCase()));
+    var filteredList =
+        widget.books.where((book) => book.title.contains(_filterQuery));
     if (selectedTopics.isNotEmpty) {
       filteredList = filteredList.where((book) =>
-          book.topics.split(' ,').any((t) => selectedTopics.contains(t)));
+          book.topics.split(', ').any((t) => selectedTopics.contains(t)));
     }
-
     setState(() {
       books = filteredList.toList();
     });
@@ -47,10 +46,22 @@ class _FullTextBookListState extends State<FullTextBookList> {
     return Scaffold(
       body: Column(
         children: [
-          ElevatedButton(
-            child: Text('בחר קטגוריות'),
-            onPressed: openFilterDialog,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(5, 20, 5, 5.0),
+            child: ElevatedButton(
+              child: const Text('בחר קטגוריות'),
+              onPressed: () async {
+                await openFilterDialog();
+                update();
+              }, //openFilterDialog,
+            ),
           ),
+          selectedTopics.isEmpty
+              ? const SizedBox.shrink()
+              : Text(
+                  '${selectedTopics.length} קטגוריות נבחרו: (${selectedTopics.join(', ')})',
+                  style: const TextStyle(fontSize: 13),
+                ),
           TextField(
             decoration: const InputDecoration(
               hintText: "סינון",
@@ -102,16 +113,39 @@ class _FullTextBookListState extends State<FullTextBookList> {
     );
   }
 
-  void openFilterDialog() async {
+  Future<void> openFilterDialog() async {
     await FilterListDialog.display<String>(
       context,
       listData: allTopics,
+      hideCloseIcon: true,
+      controlButtons: [ControlButtonType.Reset],
       selectedListData: selectedTopics,
       allButtonText: 'הכל',
       applyButtonText: 'סיום',
       headlineText: 'בחר קטגוריות',
       resetButtonText: 'איפוס',
       selectedItemsText: 'קטגוריות נבחרו',
+      themeData: FilterListThemeData(
+        context,
+        wrapAlignment: WrapAlignment.center,
+      ),
+      choiceChipBuilder: (context, item, isSelected) => Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 3,
+          vertical: 2,
+        ),
+        child: Chip(
+          label: Text(item),
+          backgroundColor:
+              isSelected! ? Theme.of(context).colorScheme.secondary : null,
+          labelStyle: TextStyle(
+            color:
+                isSelected! ? Theme.of(context).colorScheme.onSecondary : null,
+            fontSize: 11,
+          ),
+          labelPadding: const EdgeInsets.all(0),
+        ),
+      ),
       choiceChipLabel: (topic) => topic,
       validateSelectedItem: (list, val) => list!.contains(val),
       onItemSearch: (topic, query) {
@@ -120,6 +154,7 @@ class _FullTextBookListState extends State<FullTextBookList> {
       onApplyButtonClick: (list) {
         setState(() {
           selectedTopics = List.from(list!);
+          update();
         });
 
         Navigator.pop(context);

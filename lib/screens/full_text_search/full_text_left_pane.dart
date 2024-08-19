@@ -62,7 +62,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
     final books = (await Provider.of<AppModel>(context, listen: false).library)
         .getAllBooks();
     books.sort(
-      (a, b) => a.title.compareTo(b.title),
+      (a, b) => a.title.trim().compareTo(b.title.trim()),
     );
     return books;
   }
