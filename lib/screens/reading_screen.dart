@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/screens/full_text_search_screen.dart';
+import 'package:otzaria/screens/full_text_search/mimir_full_text_search.dart';
 import 'package:otzaria/screens/pdf_book_screen.dart';
 import 'package:otzaria/screens/text_book_screen.dart';
 import 'package:otzaria/utils/calendar.dart';
@@ -35,9 +36,10 @@ class _ReadingScreenState extends State<ReadingScreen>
               data: tab.text,
             );
           } else if (tab is SearchingTab) {
-            return TextFileSearchScreen(
-              openBookCallback: appModel.openTab,
-              searcher: tab.searcher,
+            return MimirFullTextSearch(
+              tab: tab,
+              // openBookCallback: appModel.openTab,
+              // searcher: tab.searcher,
             );
           }
           return const SizedBox.shrink();
@@ -141,7 +143,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                                               20, 10, 20, 15),
                                           child: Text(
                                             tab is SearchingTab
-                                                ? '${tab.title}:  ${tab.searcher.queryController.text}'
+                                                ? '${tab.title}:  ${tab.queryController.text}'
                                                 : tab.title,
                                             style: TextStyle(
                                               fontSize: 14,
@@ -243,9 +245,10 @@ class _ReadingScreenState extends State<ReadingScreen>
                               data: tab.text,
                             );
                           } else if (tab is SearchingTab) {
-                            return TextFileSearchScreen(
-                              openBookCallback: appModel.openTab,
-                              searcher: tab.searcher,
+                            return MimirFullTextSearch(
+                              tab: tab,
+                              // openBookCallback: appModel.openTab,
+                              // searcher: tab.searcher,
                             );
                           }
                           return const SizedBox.shrink();

@@ -147,7 +147,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+o',
-                              settingKey: 'key-shortcut-open-library-browser',
+                              settingKey: 'key-shortcut-open-find-ref',
                               title: 'איתור',
                               values: shortcuctsList,
                               leading: Icon(Icons.auto_stories_rounded),

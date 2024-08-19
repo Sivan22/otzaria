@@ -1,5 +1,6 @@
 /* represents links between two books in the library*/
 
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
 import 'dart:isolate';
@@ -35,7 +36,7 @@ class Link {
   });
 
   /// Returns the content of the link as a [Future] of [String].
-  Future<String> get content => data.getLinkContent(this);
+  Future<String> get content => FileSystemData.instance.getLinkContent(this);
 
   /// Constructs a [Link] object from a JSON object.
   ///

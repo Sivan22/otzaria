@@ -99,10 +99,10 @@ class KeyboardShortcuts extends StatelessWidget {
             appModel.currentView.value = Screens.library;
             appModel.bookLocatorFocusNode.requestFocus();
           },
-          shortcuts[Settings.getValue<String>('key-shortcut-find-ref') ??
+          shortcuts[Settings.getValue<String>('key-shortcut-open-find-ref') ??
               'ctrl+o']!: () {
             appModel.currentView.value = Screens.find;
-            appModel.bookLocatorFocusNode.requestFocus();
+            appModel.findReferenceFocusNode.requestFocus();
           },
           shortcuts[Settings.getValue<String>('key-shortcut-close-tab') ??
               'ctrl+w']!: () {

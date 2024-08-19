@@ -1,5 +1,7 @@
+import 'package:flutter_mimir/flutter_mimir.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
+import 'package:otzaria/data/data_providers/mimir_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/models/library.dart';
@@ -8,6 +10,7 @@ import 'package:otzaria/models/links.dart';
 class DataRepository {
   final FileSystemData _fileSystemData = FileSystemData.instance;
   final IsarDataProvider _isarDataProvider = IsarDataProvider.instance;
+  final MimirDataProvider _mimirDataProvider = MimirDataProvider.instance;
 
   static final DataRepository _singleton = DataRepository();
   static DataRepository get instance => _singleton;
@@ -33,14 +36,6 @@ class DataRepository {
     return _fileSystemData.getBookToc(title);
   }
 
-  Future<List<Link>> getAllLinksForBook(String title) async {
-    return _fileSystemData.getAllLinksForBook(title);
-  }
-
-  Future<String> getLinkContent(Link link) async {
-    return _fileSystemData.getLinkContent(link);
-  }
-
   Future<void> createRefsFromLibrary(Library library, int startIndex) async {
     _isarDataProvider.createRefsFromLibrary(library, startIndex);
   }
@@ -51,5 +46,9 @@ class DataRepository {
 
   Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 10}) {
     return _isarDataProvider.findRefsByRelevance(ref, limit: limit);
+  }
+
+  addAllTextsToMimir(Library library, {int start = 0, int end = 100000}) async {
+    _mimirDataProvider.addAllTextsToMimir(library, start: start, end: end);
   }
 }

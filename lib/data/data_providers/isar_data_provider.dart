@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:isar/isar.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/isar_collections/line.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/models/library.dart';
@@ -18,10 +19,15 @@ class IsarDataProvider {
   final isar = Isar.open(
     directory: Settings.getValue<String>('key-library-path') ?? 'C:\\אוצריא',
     maxSizeMiB: 100000,
-    schemas: [RefSchema],
+    schemas: [
+      RefSchema,
+      LineSchema,
+    ],
   );
   ValueNotifier<int?> refsNumOfbooksDone = ValueNotifier(null);
   ValueNotifier<int?> refsNumOfbooksTotal = ValueNotifier(null);
+  ValueNotifier<int?> linesNumOfbooksDone = ValueNotifier(null);
+  ValueNotifier<int?> linesNumOfbooksTotal = ValueNotifier(null);
 
   Future<void> createRefsFromLibrary(Library library, int startIndex) async {
     isar.write((isar) => isar.refs.clear());
@@ -150,6 +156,48 @@ class IsarDataProvider {
     final allRefs = isar.refs.where().findAll();
     final books = allRefs.groupBy((ref) => ref.bookTitle);
     return books.length;
+  }
+
+  Future<void> addAllLines(Library library) async {
+    final books = library.getAllBooks().whereType<TextBook>().toList();
+    linesNumOfbooksTotal.value = books.length;
+    linesNumOfbooksDone.value = 0;
+
+    for (TextBook book in books) {
+      await addLinesForBook(book);
+      linesNumOfbooksDone.value = books.indexOf(book) + 1;
+    }
+  }
+
+  Future<void> addLinesForBook(TextBook book) async {
+    final texts = (await book.text).split('\n');
+    final List<Line> lines = [];
+
+    for (int i = 0; i < texts.length; i++) {
+      final line = Line(
+        id: isar.lines.autoIncrement(),
+        text: texts[i],
+        bookTitle: book.title,
+        topics: book.topics,
+        index: i,
+      );
+
+      lines.add(line);
+    }
+
+    isar.write((isar) => isar.lines.putAll(lines));
+  }
+
+  Future<List<Line>> getLinesForBook(TextBook book) async {
+    return isar.lines.where().bookTitleEqualTo(book.title).findAll();
+  }
+
+  Future<List<Line>> getAllLines() async {
+    return isar.lines.where().findAll();
+  }
+
+  Future<List<Line>> findLines(String text) async {
+    return isar.lines.where().textContains(text).findAllAsync();
   }
 }
 
