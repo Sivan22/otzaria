@@ -205,6 +205,19 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         defaultValue: false,
                       ),
                       SwitchSettingsTile(
+                        settingKey: 'key-use-fast-search',
+                        title: 'חיפוש מהיר באמצעות אינדקס',
+                        enabledLabel:
+                            'החיפוש יהיה מהיר יותר, נדרש ליצור אינדקס',
+                        disabledLabel: 'החיפוש יהיה איטי יותר, לא נדרש אינדקס',
+                        leading: Icon(Icons.search),
+                        defaultValue: true,
+                        onChange: (value) => context
+                            .read<AppModel>()
+                            .useFastSearch
+                            .value = value,
+                      ),
+                      SwitchSettingsTile(
                         settingKey: 'key-show-external-books',
                         title: 'איתור ספרים באתרים חיצוניים',
                         enabledLabel: 'יוצגו גם ספרים מאתרים חיצוניים',

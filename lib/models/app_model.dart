@@ -84,6 +84,11 @@ class AppModel with ChangeNotifier {
     Settings.getValue<bool>('key-show-external-books') ?? false,
   );
 
+  /// if you should show hebrewbooks books
+  final ValueNotifier<bool> useFastSearch = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-use-fast-search') ?? true,
+  );
+
   /// a focus node for the search field in libraryBrowser
   FocusNode bookLocatorFocusNode = FocusNode();
   FocusNode findReferenceFocusNode = FocusNode();

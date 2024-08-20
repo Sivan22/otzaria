@@ -58,11 +58,14 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                     ? SizedBox.shrink()
                     : Column(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.menu),
-                            onPressed: () {
-                              isLeftPaneOpen.value = !isLeftPaneOpen.value;
-                            },
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
+                            child: IconButton(
+                              icon: const Icon(Icons.menu),
+                              onPressed: () {
+                                isLeftPaneOpen.value = !isLeftPaneOpen.value;
+                              },
+                            ),
                           ),
                           Expanded(child: SizedBox.shrink()),
                         ],
@@ -80,12 +83,16 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                         children: [
                           isLeftPaneOpen.value
                               ? SizedBox.shrink()
-                              : IconButton(
-                                  icon: const Icon(Icons.menu),
-                                  onPressed: () {
-                                    isLeftPaneOpen.value =
-                                        !isLeftPaneOpen.value;
-                                  },
+                              : Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(0, 0, 8, 0),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.menu),
+                                    onPressed: () {
+                                      isLeftPaneOpen.value =
+                                          !isLeftPaneOpen.value;
+                                    },
+                                  ),
                                 ),
                           Expanded(
                             child: Padding(
@@ -123,34 +130,50 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                                 itemBuilder: (context, index) {
                                   return ListTile(
                                     onTap: () {
-                                      context.read<AppModel>().openTab(
-                                            TextBookTab(
-                                                book: TextBook(
-                                                  title: snapshot.data![index]
-                                                      ['title'],
-                                                ),
-                                                index: snapshot.data![index]
-                                                    ['index'],
-                                                searchText:
-                                                    queryController.text),
-                                          );
-                                    },
-                                    title: FutureBuilder(
-                                        future: refFromIndex(
-                                            snapshot.data![index]['index'],
-                                            TextBook(
+                                      if (snapshot.data![index]['isPdf']) {
+                                        context.read<AppModel>().openTab(
+                                            PdfBookTab(
+                                                PdfBook(
                                                     title: snapshot.data![index]
-                                                        ['title'])
-                                                .tableOfContents),
-                                        builder: (context, ref) {
-                                          if (!ref.hasData) {
-                                            return Text(
-                                                '${snapshot.data![index]['title']} ...');
-                                          }
-                                          return Text(
-                                            ref.data!,
-                                          );
-                                        }),
+                                                        ['title'],
+                                                    path: snapshot.data![index]
+                                                        ['pdfPath']),
+                                                snapshot.data![index]
+                                                    ['index']));
+                                      } else {
+                                        context.read<AppModel>().openTab(
+                                              TextBookTab(
+                                                  book: TextBook(
+                                                    title: snapshot.data![index]
+                                                        ['title'],
+                                                  ),
+                                                  index: snapshot.data![index]
+                                                      ['index'],
+                                                  searchText:
+                                                      queryController.text),
+                                            );
+                                      }
+                                    },
+                                    title: snapshot.data![index]['isPdf']
+                                        ? Text(snapshot.data![index]['title'] +
+                                            ' עמוד ${snapshot.data![index]['index'] + 1}')
+                                        : FutureBuilder(
+                                            future: refFromIndex(
+                                                snapshot.data![index]['index'],
+                                                TextBook(
+                                                        title: snapshot
+                                                                .data![index]
+                                                            ['title'])
+                                                    .tableOfContents),
+                                            builder: (context, ref) {
+                                              if (!ref.hasData) {
+                                                return Text(
+                                                    '${snapshot.data![index]['title']} ...');
+                                              }
+                                              return Text(
+                                                ref.data!,
+                                              );
+                                            }),
                                     subtitle: Html(
                                         data: highLight(
                                             snapshot.data![index]['text'],

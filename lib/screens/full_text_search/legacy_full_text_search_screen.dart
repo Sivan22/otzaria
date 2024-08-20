@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
-import 'book_tree_checklist.dart';
-import '../models/full_text_search.dart';
-import '../models/tabs.dart';
-import '../models/search_results.dart';
+import '../book_tree_checklist.dart';
+import '../../models/full_text_search.dart';
+import '../../models/tabs.dart';
+import '../../models/search_results.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TextFileSearchScreen extends StatefulWidget {

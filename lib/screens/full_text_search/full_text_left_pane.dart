@@ -3,6 +3,7 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/screens/full_text_search/full_text_book_list.dart';
+import 'package:otzaria/screens/full_text_search/full_text_book_tree.dart';
 import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +19,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   late TabController tabController;
   @override
   void initState() {
-    tabController = TabController(length: 2, vsync: this);
+    tabController = TabController(length: 3, vsync: this);
     super.initState();
   }
 
@@ -32,7 +33,10 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
             text: "הגדרות",
           ),
           Tab(
-            text: "ספרים לחיפוש",
+            text: " סינון",
+          ),
+          Tab(
+            text: " עץ ספרים",
           ),
         ],
       ),
@@ -52,6 +56,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                     books: snapshot.data!,
                   );
                 }),
+            FullTextBookTree(tab: widget.tab),
           ],
         ),
       ),

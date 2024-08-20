@@ -44,12 +44,12 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
         child: Row(
           children: [
             Checkbox(
-                value: widget.tab.booksToSearch.value.contains(category.title),
+                value: isCategoryChecked(category),
                 onChanged: (value) {
                   if (value != null && value) {
-                    widget.tab.booksToSearch.value.addAll(category.books);
+                    addCategory(category);
                   } else {
-                    widget.tab.booksToSearch.value.removeAll(category.books);
+                    removeCategory(category);
                   }
                 }),
             const Icon(Icons.folder),
@@ -67,11 +67,14 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
                 entity.title,
               ),
             ]),
-            value: widget.tab.booksToSearch.value.contains(entity.title),
-            onChanged: (value) =>
-                widget.tab.booksToSearch.value.contains(entity.title)
-                    ? widget.tab.booksToSearch.value.remove(entity.title)
-                    : widget.tab.booksToSearch.value.add(entity), //TODO: fix
+            value: widget.tab.booksToSearch.value.contains(entity),
+            onChanged: (value) {
+              widget.tab.booksToSearch.value.contains(entity)
+                  ? widget.tab.booksToSearch.value.remove(entity)
+                  : widget.tab.booksToSearch.value.add(entity);
+              widget.tab.booksToSearch.value =
+                  Set.from(widget.tab.booksToSearch.value);
+            }, //TODO: fix
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),
           );
@@ -82,5 +85,32 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
         }
       }).toList(),
     );
+  }
+
+  void addCategory(Category category) {
+    for (Book book in category.books) {
+      widget.tab.booksToSearch.value.add(book);
+    }
+    for (Category subCategory in category.subCategories) {
+      addCategory(subCategory);
+    }
+    widget.tab.booksToSearch.value = Set.from(widget.tab.booksToSearch.value);
+  }
+
+  void removeCategory(Category category) {
+    for (Book book in category.books) {
+      widget.tab.booksToSearch.value.remove(book);
+    }
+    for (Category subCategory in category.subCategories) {
+      removeCategory(subCategory);
+    }
+
+    widget.tab.booksToSearch.value = Set.from(widget.tab.booksToSearch.value);
+  }
+
+  bool isCategoryChecked(Category category) {
+    return category.books
+            .every((test) => widget.tab.booksToSearch.value.contains(test)) &&
+        category.subCategories.every((test) => isCategoryChecked(test));
   }
 }

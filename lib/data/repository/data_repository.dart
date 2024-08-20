@@ -49,6 +49,6 @@ class DataRepository {
   }
 
   addAllTextsToMimir(Library library, {int start = 0, int end = 100000}) async {
-    _mimirDataProvider.addAllTextsToMimir(library, start: start, end: end);
+    _mimirDataProvider.addAllTBooksToMimir(library, start: start, end: end);
   }
 }

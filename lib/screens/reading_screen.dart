@@ -2,8 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:otzaria/screens/full_text_search_screen.dart';
-import 'package:otzaria/screens/full_text_search/mimir_full_text_search.dart';
+import 'package:otzaria/screens/full_text_search/full_text_search_screen.dart';
 import 'package:otzaria/screens/pdf_book_screen.dart';
 import 'package:otzaria/screens/text_book_screen.dart';
 import 'package:otzaria/utils/calendar.dart';
@@ -36,10 +35,9 @@ class _ReadingScreenState extends State<ReadingScreen>
               data: tab.text,
             );
           } else if (tab is SearchingTab) {
-            return MimirFullTextSearch(
+            return FullTextSearchScreen(
               tab: tab,
-              // openBookCallback: appModel.openTab,
-              // searcher: tab.searcher,
+              openBookCallback: appModel.openTab,
             );
           }
           return const SizedBox.shrink();
@@ -245,10 +243,9 @@ class _ReadingScreenState extends State<ReadingScreen>
                               data: tab.text,
                             );
                           } else if (tab is SearchingTab) {
-                            return MimirFullTextSearch(
+                            return FullTextSearchScreen(
                               tab: tab,
-                              // openBookCallback: appModel.openTab,
-                              // searcher: tab.searcher,
+                              openBookCallback: appModel.openTab,
                             );
                           }
                           return const SizedBox.shrink();

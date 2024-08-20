@@ -1,10 +1,10 @@
 import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_mimir/flutter_mimir.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class MimirDataProvider {
   static final MimirDataProvider _singleton = MimirDataProvider();
@@ -107,19 +107,32 @@ class MimirDataProvider {
     yield* index.searchStream(query: query, filter: Filter.or(filters));
   }
 
-  addAllTextsToMimir(Library library, {int start = 0, int end = 100000}) async {
-    var allBooks = library.getAllBooks().whereType<TextBook>().toList();
+  addAllTBooksToMimir(Library library,
+      {int start = 0, int end = 100000}) async {
+    final index = await textsIndex;
+    await index.deleteAllDocuments();
+
+    var allBooks = library.getAllBooks();
     allBooks = allBooks.getRange(start, min(end, allBooks.length)).toList();
     numOfbooksTotal.value = allBooks.length;
     numOfbooksDone.value = 0;
 
-    for (TextBook book in allBooks) {
+    for (Book book in allBooks) {
       print('Adding ${book.title} to Mimir');
-      await addTextsToMimir(
-        book,
-      );
-      numOfbooksDone.value = numOfbooksDone.value! + 1;
+      try {
+        if (book is TextBook) {
+          await addTextsToMimir(book);
+        } else if (book is PdfBook) {
+          addPdfTextsToMimir(book);
+        }
+        numOfbooksDone.value = numOfbooksDone.value! + 1;
+      } catch (e) {
+        print('Error adding ${book.title} to Mimir: $e');
+      }
     }
+
+    numOfbooksDone.value = null;
+    numOfbooksTotal.value = null;
   }
 
   addTextsToMimir(TextBook book) async {
@@ -139,7 +152,38 @@ class MimirDataProvider {
         'text': texts[i],
         'index': i,
         'id': DateTime.now().millisecondsSinceEpoch + Random().nextInt(1000000),
+        'isPdf': false,
+        'pdfPath': null,
       });
+    }
+    await index.addDocuments(documents);
+    print('Added ${book.title} to Mimir');
+  }
+
+  void addPdfTextsToMimir(PdfBook book) async {
+    final index = await textsIndex;
+    final pages =
+        await PdfDocument.openFile(book.path).then((value) => value.pages);
+    final title = book.title;
+    final author = book.author;
+    final topics = book.topics;
+
+    final List<Map<String, dynamic>> documents = [];
+    for (int i = 0; i < pages.length; i++) {
+      final texts = (await pages[i].loadText()).fullText.split('\n');
+      for (int j = 0; j < texts.length; j++) {
+        documents.add({
+          'title': title,
+          'author': author,
+          'topics': topics,
+          'text': texts[j],
+          'index': i,
+          'pdfPath': book.path,
+          'id':
+              DateTime.now().millisecondsSinceEpoch + Random().nextInt(1000000),
+          'isPdf': true,
+        });
+      }
     }
     await index.addDocuments(documents);
     print('Added ${book.title} to Mimir');
