@@ -16,8 +16,14 @@ class MimirDataProvider {
   ValueNotifier<int?> numOfbooksDone = ValueNotifier(null);
   ValueNotifier<int?> numOfbooksTotal = ValueNotifier(null);
   ValueNotifier<bool> isIndexing = ValueNotifier(false);
-  List<Map<String, dynamic>> booksDone =
-      Settings.getValue('key-books-done') ?? [];
+  late List booksDone;
+
+  MimirDataProvider() {
+    booksDone = Settings.getValue<List>(
+          'key-books-done',
+        ) ??
+        [];
+  }
 
   saveBooksDoneToDisk() {
     Settings.setValue('key-books-done', booksDone);
@@ -127,11 +133,10 @@ class MimirDataProvider {
     numOfbooksDone.value = 0;
 
     for (Book book in allBooks) {
-      print('Adding ${book.title} to Mimir');
-
       if (!isIndexing.value) {
         return;
       }
+      print('Adding ${book.title} to Mimir');
       try {
         if (book is TextBook) {
           await addTextsToMimir(book);
@@ -155,7 +160,7 @@ class MimirDataProvider {
     final topics = book.topics;
 
     final hash = sha1.convert(utf8.encode(text)).toString();
-    if (booksDone.any((test) => test['bookHash'] == hash)) {
+    if (booksDone.contains(hash)) {
       print('${book.title} already in Mimir');
       numOfbooksDone.value = numOfbooksDone.value! + 1;
       return;
@@ -179,13 +184,9 @@ class MimirDataProvider {
       });
     }
     await index.addDocuments(documents);
-    booksDone.add({
-      'bookHash': sha1.convert(utf8.encode(text)).toString(),
-      'title': title,
-    });
+    booksDone.add(hash);
     saveBooksDoneToDisk();
     print('Added ${book.title} to Mimir');
-
     numOfbooksDone.value = numOfbooksDone.value! + 1;
   }
 
@@ -193,7 +194,7 @@ class MimirDataProvider {
     final index = await textsIndex;
     final data = await File(book.path).readAsBytes();
     final hash = sha1.convert(data).toString();
-    if (booksDone.any((element) => element['bookHash'] == hash)) {
+    if (booksDone.contains(hash)) {
       print('${book.title} already in Mimir');
       numOfbooksDone.value = numOfbooksDone.value! + 1;
       return;
@@ -223,10 +224,7 @@ class MimirDataProvider {
       }
     }
     await index.addDocuments(documents);
-    booksDone.add({
-      'bookHash': hash.toString(),
-      'title': title,
-    });
+    booksDone.add(hash);
     saveBooksDoneToDisk();
     print('Added ${book.title} to Mimir');
     numOfbooksDone.value = numOfbooksDone.value! + 1;
