@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_mimir/flutter_mimir.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
@@ -12,6 +15,13 @@ class MimirDataProvider {
 
   ValueNotifier<int?> numOfbooksDone = ValueNotifier(null);
   ValueNotifier<int?> numOfbooksTotal = ValueNotifier(null);
+  ValueNotifier<bool> isIndexing = ValueNotifier(false);
+  List<Map<String, dynamic>> booksDone =
+      Settings.getValue('key-books-done') ?? [];
+
+  saveBooksDoneToDisk() {
+    Settings.setValue('key-books-done', booksDone);
+  }
 
   Future<MimirIndex> textsIndex = () async {
     final instance = await Mimir.getInstanceForPath(
@@ -43,8 +53,8 @@ class MimirDataProvider {
         "typo",
         "attribute",
         "sort",
-        "exactness",
         "proximity",
+        "exactness",
       ],
       // The stop words of this index, see:
       // https://docs.meilisearch.com/reference/api/settings.html#stop-words
@@ -62,15 +72,15 @@ class MimirDataProvider {
         ),
       ],
       // Whether to enable typo tolerance in searches.
-      typosEnabled: false,
+      typosEnabled: true,
       // The minimum size of a word that can have 1 typo.
       // See minWordSizeForTypos.oneTypo here:
       // https://docs.meilisearch.com/reference/api/settings.html#typo-tolerance-object
-      minWordSizeForOneTypo: 5,
+      minWordSizeForOneTypo: 4,
       // The minimum size of a word that can have 2 typos.
       // See minWordSizeForTypos.twoTypos here:
       // https://docs.meilisearch.com/reference/api/settings.html#typo-tolerance-object
-      minWordSizeForTwoTypos: 9,
+      minWordSizeForTwoTypos: 7,
       // Words that disallow typos. See disableOnWords here:
       // https://docs.meilisearch.com/reference/api/settings.html#typo-tolerance-object
       disallowTyposOnWords: <String>[],
@@ -109,23 +119,25 @@ class MimirDataProvider {
 
   addAllTBooksToMimir(Library library,
       {int start = 0, int end = 100000}) async {
-    final index = await textsIndex;
-    await index.deleteAllDocuments();
-
+    isIndexing.value = true;
     var allBooks = library.getAllBooks();
     allBooks = allBooks.getRange(start, min(end, allBooks.length)).toList();
+
     numOfbooksTotal.value = allBooks.length;
     numOfbooksDone.value = 0;
 
     for (Book book in allBooks) {
       print('Adding ${book.title} to Mimir');
+
+      if (!isIndexing.value) {
+        return;
+      }
       try {
         if (book is TextBook) {
           await addTextsToMimir(book);
         } else if (book is PdfBook) {
-          addPdfTextsToMimir(book);
+          await addPdfTextsToMimir(book);
         }
-        numOfbooksDone.value = numOfbooksDone.value! + 1;
       } catch (e) {
         print('Error adding ${book.title} to Mimir: $e');
       }
@@ -142,28 +154,51 @@ class MimirDataProvider {
     final author = book.author;
     final topics = book.topics;
 
+    final hash = sha1.convert(utf8.encode(text)).toString();
+    if (booksDone.any((test) => test['bookHash'] == hash)) {
+      print('${book.title} already in Mimir');
+      numOfbooksDone.value = numOfbooksDone.value! + 1;
+      return;
+    }
+
     final texts = text.split('\n');
     final List<Map<String, dynamic>> documents = [];
     for (int i = 0; i < texts.length; i++) {
+      if (!isIndexing.value) {
+        return;
+      }
       documents.add({
         'title': title,
         'author': author,
         'topics': topics,
         'text': texts[i],
         'index': i,
-        'id': DateTime.now().millisecondsSinceEpoch + Random().nextInt(1000000),
+        'id': hash + i.toString(),
         'isPdf': false,
         'pdfPath': null,
       });
     }
     await index.addDocuments(documents);
+    booksDone.add({
+      'bookHash': sha1.convert(utf8.encode(text)).toString(),
+      'title': title,
+    });
+    saveBooksDoneToDisk();
     print('Added ${book.title} to Mimir');
+
+    numOfbooksDone.value = numOfbooksDone.value! + 1;
   }
 
-  void addPdfTextsToMimir(PdfBook book) async {
+  addPdfTextsToMimir(PdfBook book) async {
     final index = await textsIndex;
-    final pages =
-        await PdfDocument.openFile(book.path).then((value) => value.pages);
+    final data = await File(book.path).readAsBytes();
+    final hash = sha1.convert(data).toString();
+    if (booksDone.any((element) => element['bookHash'] == hash)) {
+      print('${book.title} already in Mimir');
+      numOfbooksDone.value = numOfbooksDone.value! + 1;
+      return;
+    }
+    final pages = await PdfDocument.openData(data).then((value) => value.pages);
     final title = book.title;
     final author = book.author;
     final topics = book.topics;
@@ -172,6 +207,9 @@ class MimirDataProvider {
     for (int i = 0; i < pages.length; i++) {
       final texts = (await pages[i].loadText()).fullText.split('\n');
       for (int j = 0; j < texts.length; j++) {
+        if (!isIndexing.value) {
+          return;
+        }
         documents.add({
           'title': title,
           'author': author,
@@ -179,13 +217,18 @@ class MimirDataProvider {
           'text': texts[j],
           'index': i,
           'pdfPath': book.path,
-          'id':
-              DateTime.now().millisecondsSinceEpoch + Random().nextInt(1000000),
+          'id': hash + i.toString(),
           'isPdf': true,
         });
       }
     }
     await index.addDocuments(documents);
+    booksDone.add({
+      'bookHash': hash.toString(),
+      'title': title,
+    });
+    saveBooksDoneToDisk();
     print('Added ${book.title} to Mimir');
+    numOfbooksDone.value = numOfbooksDone.value! + 1;
   }
 }

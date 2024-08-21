@@ -26,6 +26,7 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
     super.initState();
     queryController = widget.tab.queryController;
     widget.tab.aproximateSearch.addListener(() => updateResults());
+    widget.tab.booksToSearch.addListener(() => updateResults());
   }
 
   void updateResults() {

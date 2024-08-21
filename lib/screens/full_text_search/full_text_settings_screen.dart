@@ -47,7 +47,7 @@ class FullTextSettingsScreen extends StatelessWidget {
                       context: context,
                       builder: (context) => AlertDialog(
                             content: const Text(
-                                'האם ברצונך ליצור אינדקס חיפוש? הדבר יאפס את האינדקס הקיים ועלול לקחת זמן ארוך מאד.'),
+                                'עדכון האינדקס עלול לקחת זמן ומשאבים רבים. להמשיך?'),
                             actions: <Widget>[
                               TextButton(
                                 child: const Text('ביטול'),
@@ -68,37 +68,54 @@ class FullTextSettingsScreen extends StatelessWidget {
                   }
                 },
                 child: const Text(
-                  'יצירת אינדקס',
+                  'עדכון אינדקס',
                 ),
               ),
             ),
           ),
           ValueListenableBuilder(
-              valueListenable: MimirDataProvider.instance.numOfbooksDone,
-              builder: (context, valueDone, child) {
-                if (valueDone == null) {
+              valueListenable: MimirDataProvider.instance.isIndexing,
+              builder: (context, isIndexing, child) {
+                if (!isIndexing) {
                   return const SizedBox.shrink();
                 }
                 return ValueListenableBuilder(
-                    valueListenable: MimirDataProvider.instance.numOfbooksTotal,
-                    builder: (context, valueTotal, child) {
-                      if (valueTotal == null) {
-                        return const SizedBox.shrink();
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 50),
-                        child: Column(
-                          children: [
-                            LinearProgressIndicator(
-                              borderRadius: BorderRadius.circular(20),
-                              value: valueDone / valueTotal,
-                            ),
-                            Text(' $valueTotal / $valueDone'),
-                          ],
-                        ),
-                      );
-                    });
+                  valueListenable: MimirDataProvider.instance.numOfbooksDone,
+                  builder: (context, numOfbooksDone, child) => Column(
+                    children: [
+                      ValueListenableBuilder(
+                          valueListenable:
+                              MimirDataProvider.instance.numOfbooksTotal,
+                          builder: (context, valueTotal, child) {
+                            if (valueTotal == null) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 50),
+                              child: Column(
+                                children: [
+                                  LinearProgressIndicator(
+                                    borderRadius: BorderRadius.circular(20),
+                                    value: numOfbooksDone! / valueTotal,
+                                  ),
+                                  Text(' $valueTotal / $numOfbooksDone'),
+                                ],
+                              ),
+                            );
+                          }),
+                      isIndexing
+                          ? Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ElevatedButton(
+                                  onPressed: () => MimirDataProvider
+                                      .instance.isIndexing.value = false,
+                                  child: Text('עצור')),
+                            )
+                          : SizedBox.shrink()
+                    ],
+                  ),
+                );
               }),
         ],
       ),
