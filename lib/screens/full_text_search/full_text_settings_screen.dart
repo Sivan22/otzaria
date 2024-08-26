@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/data/data_providers/mimir_data_provider.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:provider/provider.dart';
@@ -74,18 +74,18 @@ class FullTextSettingsScreen extends StatelessWidget {
             ),
           ),
           ValueListenableBuilder(
-              valueListenable: MimirDataProvider.instance.isIndexing,
+              valueListenable: TantivyDataProvider.instance.isIndexing,
               builder: (context, isIndexing, child) {
                 if (!isIndexing) {
                   return const SizedBox.shrink();
                 }
                 return ValueListenableBuilder(
-                  valueListenable: MimirDataProvider.instance.numOfbooksDone,
+                  valueListenable: TantivyDataProvider.instance.numOfbooksDone,
                   builder: (context, numOfbooksDone, child) => Column(
                     children: [
                       ValueListenableBuilder(
                           valueListenable:
-                              MimirDataProvider.instance.numOfbooksTotal,
+                              TantivyDataProvider.instance.numOfbooksTotal,
                           builder: (context, valueTotal, child) {
                             if (valueTotal == null) {
                               return const SizedBox.shrink();
@@ -108,7 +108,7 @@ class FullTextSettingsScreen extends StatelessWidget {
                           ? Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: ElevatedButton(
-                                  onPressed: () => MimirDataProvider
+                                  onPressed: () => TantivyDataProvider
                                       .instance.isIndexing.value = false,
                                   child: Text('עצור')),
                             )

@@ -1,7 +1,6 @@
-import 'package:flutter_mimir/flutter_mimir.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
-import 'package:otzaria/data/data_providers/mimir_data_provider.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/models/library.dart';
@@ -10,7 +9,7 @@ import 'package:otzaria/models/links.dart';
 class DataRepository {
   final FileSystemData _fileSystemData = FileSystemData.instance;
   final IsarDataProvider _isarDataProvider = IsarDataProvider.instance;
-  final MimirDataProvider _mimirDataProvider = MimirDataProvider.instance;
+  final TantivyDataProvider _mimirDataProvider = TantivyDataProvider.instance;
 
   static final DataRepository _singleton = DataRepository();
   static DataRepository get instance => _singleton;
@@ -49,6 +48,6 @@ class DataRepository {
   }
 
   addAllTextsToMimir(Library library, {int start = 0, int end = 100000}) async {
-    _mimirDataProvider.addAllTBooksToMimir(library, start: start, end: end);
+    _mimirDataProvider.addAllTBooksToTantivy(library, start: start, end: end);
   }
 }

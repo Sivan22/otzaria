@@ -164,6 +164,7 @@ class IsarDataProvider {
     linesNumOfbooksDone.value = 0;
 
     for (TextBook book in books) {
+      print('Adding lines for ${book.title}');
       await addLinesForBook(book);
       linesNumOfbooksDone.value = books.indexOf(book) + 1;
     }

@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:flutter_mimir/flutter_mimir.dart';
-import 'package:otzaria/data/data_providers/mimir_data_provider.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/screens/full_text_search/full_text_left_pane.dart';
 import 'package:provider/provider.dart';
+import 'package:search_engine/search_engine.dart';
 
 class MimirFullTextSearch extends StatefulWidget {
   final SearchingTab tab;
@@ -17,7 +19,7 @@ class MimirFullTextSearch extends StatefulWidget {
 }
 
 class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
-  Stream<List<MimirDocument>> results = Stream.value([]);
+  Future<List<SearchResult>> results = Future.value([]);
   late TextEditingController queryController;
   ValueNotifier isLeftPaneOpen = ValueNotifier(false);
 
@@ -32,16 +34,16 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
   void updateResults() {
     setState(() {
       if (queryController.text.isEmpty) {
-        results = Stream.value([]);
+        results = Future.value([]);
       } else {
         final booksToSearch =
             widget.tab.booksToSearch.value.map<String>((e) => e.title).toList();
         if (!widget.tab.aproximateSearch.value) {
-          results = MimirDataProvider.instance
-              .searchTextsStream('"${queryController.text}"', booksToSearch);
+          results = TantivyDataProvider.instance
+              .searchTexts('"${queryController.text}"', booksToSearch);
         } else {
-          results = MimirDataProvider.instance
-              .searchTextsStream(queryController.text, booksToSearch);
+          results = TantivyDataProvider.instance
+              .searchTexts(queryController.text, booksToSearch);
         }
       }
     });
@@ -118,8 +120,8 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                         ],
                       ),
                       Expanded(
-                        child: StreamBuilder(
-                            stream: results,
+                        child: FutureBuilder(
+                            future: results,
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
                                 return const Center(
@@ -131,45 +133,46 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                                 itemBuilder: (context, index) {
                                   return ListTile(
                                     onTap: () {
-                                      if (snapshot.data![index]['isPdf']) {
+                                      if (snapshot.data![index].isPdf) {
                                         context.read<AppModel>().openTab(
                                             PdfBookTab(
                                                 PdfBook(
-                                                    title: snapshot.data![index]
-                                                        ['title'],
+                                                    title: snapshot
+                                                        .data![index].title,
                                                     path: snapshot.data![index]
-                                                        ['pdfPath']),
-                                                snapshot.data![index]
-                                                    ['index']));
+                                                        .filePath),
+                                                snapshot.data![index].segment
+                                                    .toInt()));
                                       } else {
                                         context.read<AppModel>().openTab(
                                               TextBookTab(
                                                   book: TextBook(
-                                                    title: snapshot.data![index]
-                                                        ['title'],
+                                                    title: snapshot
+                                                        .data![index].title,
                                                   ),
-                                                  index: snapshot.data![index]
-                                                      ['index'],
+                                                  index: snapshot
+                                                      .data![index].segment
+                                                      .toInt(),
                                                   searchText:
                                                       queryController.text),
                                             );
                                       }
                                     },
-                                    title: snapshot.data![index]['isPdf']
-                                        ? Text(snapshot.data![index]['title'] +
-                                            ' עמוד ${snapshot.data![index]['index'] + 1}')
+                                    title: snapshot.data![index].isPdf
+                                        ? Text(snapshot.data![index].title +
+                                            ' עמוד ${snapshot.data![index].segment.toInt() + 1}')
                                         : FutureBuilder(
                                             future: refFromIndex(
-                                                snapshot.data![index]['index'],
+                                                snapshot.data![index].segment
+                                                    .toInt(),
                                                 TextBook(
                                                         title: snapshot
-                                                                .data![index]
-                                                            ['title'])
+                                                            .data![index].title)
                                                     .tableOfContents),
                                             builder: (context, ref) {
                                               if (!ref.hasData) {
                                                 return Text(
-                                                    '${snapshot.data![index]['title']} ...');
+                                                    '${snapshot.data![index].title} ...');
                                               }
                                               return Text(
                                                 ref.data!,
@@ -177,7 +180,7 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                                             }),
                                     subtitle: Html(
                                         data: highLight(
-                                            snapshot.data![index]['text'],
+                                            snapshot.data![index].text,
                                             queryController.text)),
                                   );
                                 },

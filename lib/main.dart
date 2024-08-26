@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:isar/isar.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
-import 'package:otzaria/data/data_providers/mimir_data_provider.dart';
+import 'package:otzaria/data/data_providers/isar_data_provider.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/isar_collections/line.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
-import 'package:otzaria/utils/mimir_helper.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:search_engine/search_engine.dart';
 import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
@@ -29,6 +31,10 @@ import 'dart:io';
 ///
 
 void main() async {
+  await RustLib.init();
+  final searchEngine =
+      await SearchEngine.newInstance(path: "C:\\dev\\otzaria_library\\index");
+  print(searchEngine.search(query: 'ברא', books: [], limit: 10));
   await Settings.init(cacheProvider: HiveCache());
   await initHiveBoxes();
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,10 +64,11 @@ void main() async {
   }();
   // final isar = Isar.open(
   //     directory: (await getApplicationSupportDirectory()).path,
-  //     schemas: [RefSchema],
+  //     schemas: [RefSchema, LineSchema],
   //     maxSizeMiB: 10000);
-  // await createRefsFromLibrary(
-  //     await FileSystemData.instance.getLibrary(), isar, 4899);
+  // await IsarDataProvider.instance
+  //     .addAllLines(await FileSystemData.instance.getLibrary());
+  // print(await IsarDataProvider.instance.findLines('שלום'));
   // await addTextsToMimir(await FileSystemData.instance.getLibrary(),
   //     await MimirDataProvider.instance.textsIndex,
   //     end: 1);
