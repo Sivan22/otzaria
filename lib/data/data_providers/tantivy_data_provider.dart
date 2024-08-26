@@ -40,7 +40,7 @@ class TantivyDataProvider {
     return await index.search(query: query, books: books, limit: 100);
   }
 
-   Future<List<SearchResult>> searchTextsStream(
+   Stream<List<SearchResult>> searchTextsStream(
       String query, List<String> books) async {
     final index = await engine;
     yield* index.searchStream(query: query, books: books, limit: 100);
