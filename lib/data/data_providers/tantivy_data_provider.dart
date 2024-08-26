@@ -40,12 +40,11 @@ class TantivyDataProvider {
     return await index.search(query: query, books: books, limit: 100);
   }
 
-   Stream<List<SearchResult>> searchTextsStream(
+  Stream<List<SearchResult>> searchTextsStream(
       String query, List<String> books) async* {
     final index = await engine;
     yield* index.searchStream(query: query, books: books, limit: 100);
   }
-
 
   addAllTBooksToTantivy(Library library,
       {int start = 0, int end = 100000}) async {

@@ -42,35 +42,41 @@ class FullTextSettingsScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 30),
               child: ElevatedButton(
-                onPressed: () async {
-                  final result = showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                            content: const Text(
-                                'עדכון האינדקס עלול לקחת זמן ומשאבים רבים. להמשיך?'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('ביטול'),
-                                onPressed: () {
-                                  Navigator.pop(context, false);
-                                },
-                              ),
-                              TextButton(
-                                child: const Text('אישור'),
-                                onPressed: () {
-                                  Navigator.pop(context, true);
-                                },
-                              ),
-                            ],
-                          ));
-                  if (await result == true) {
-                    context.read<AppModel>().addAllTextsToMimir();
-                  }
-                },
-                child: const Text(
-                  'עדכון אינדקס',
-                ),
-              ),
+                  onPressed: () async {
+                    final result = showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                              content: const Text(
+                                  'עדכון האינדקס עלול לקחת זמן ומשאבים רבים. להמשיך?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('ביטול'),
+                                  onPressed: () {
+                                    Navigator.pop(context, false);
+                                  },
+                                ),
+                                TextButton(
+                                  child: const Text('אישור'),
+                                  onPressed: () {
+                                    Navigator.pop(context, true);
+                                  },
+                                ),
+                              ],
+                            ));
+                    if (await result == true) {
+                      context.read<AppModel>().addAllTextsToMimir();
+                    }
+                  },
+                  child: ValueListenableBuilder(
+                      valueListenable: TantivyDataProvider.instance.isIndexing,
+                      builder: (context, isIndexing, child) {
+                        if (isIndexing) {
+                          return const SizedBox.shrink();
+                        }
+                        return const Text(
+                          'עדכון אינדקס',
+                        );
+                      })),
             ),
           ),
           ValueListenableBuilder(
