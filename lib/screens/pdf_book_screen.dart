@@ -60,7 +60,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
         ),
         actions: [
           IconButton(
-                        icon: const Icon(
+            icon: const Icon(
               Icons.bookmark_add,
             ),
             tooltip: 'הוספת סימניה',
@@ -68,10 +68,11 @@ class _PdfBookViewrState extends State<PdfBookViewr>
               int index = widget.tab.pdfViewerController.isReady
                   ? widget.tab.pdfViewerController.pageNumber!
                   : 1;
-              bool bookmarkAdded = Provider.of<AppModel>(context, listen: false).addBookmark(
-                  ref: '${widget.tab.title} עמוד $index',
-                  book: widget.tab.book,
-                  index: index);
+              bool bookmarkAdded = Provider.of<AppModel>(context, listen: false)
+                  .addBookmark(
+                      ref: '${widget.tab.title} עמוד $index',
+                      book: widget.tab.book,
+                      index: index);
               // notify user
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
