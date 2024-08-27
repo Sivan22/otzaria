@@ -16,7 +16,7 @@ class FullTextSearchScreen extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: context.read<AppModel>().useFastSearch,
       builder: (context, value, child) => value
-          ? MimirFullTextSearch(
+          ? TantivyFullTextSearch(
               tab: tab,
             )
           : TextFileSearchScreen(

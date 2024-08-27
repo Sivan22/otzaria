@@ -9,23 +9,36 @@ import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/screens/full_text_search/full_text_left_pane.dart';
 import 'package:provider/provider.dart';
 
-class MimirFullTextSearch extends StatefulWidget {
+class TantivyFullTextSearch extends StatefulWidget {
   final SearchingTab tab;
-  const MimirFullTextSearch({Key? key, required this.tab}) : super(key: key);
+  const TantivyFullTextSearch({Key? key, required this.tab}) : super(key: key);
   @override
-  State<MimirFullTextSearch> createState() => _MimirFullTextSearchState();
+  State<TantivyFullTextSearch> createState() => _TantivyFullTextSearchState();
 }
 
-class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
+class _TantivyFullTextSearchState extends State<TantivyFullTextSearch> {
   ValueNotifier isLeftPaneOpen = ValueNotifier(false);
 
   @override
   void initState() {
     super.initState();
+    () async {
+      widget.tab.booksToSearch.value =
+          (await context.read<AppModel>().library).getAllBooks().toSet();
+    }();
     widget.tab.aproximateSearch.addListener(() => updateResults());
     widget.tab.booksToSearch.addListener(() => updateResults());
     widget.tab.numResults.addListener(() => updateResults());
     widget.tab.queryController.addListener(() => updateResults());
+  }
+
+  @override
+  void dispose() {
+    widget.tab.aproximateSearch.removeListener(() => updateResults());
+    widget.tab.booksToSearch.removeListener(() => updateResults());
+    widget.tab.numResults.removeListener(() => updateResults());
+    widget.tab.queryController.removeListener(() => updateResults());
+    super.dispose();
   }
 
   void updateResults() {
@@ -37,7 +50,7 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
             widget.tab.booksToSearch.value.map<String>((e) => e.title).toList();
         if (!widget.tab.aproximateSearch.value) {
           widget.tab.results = TantivyDataProvider.instance.searchTexts(
-              '"${widget.tab.queryController.text}"',
+              '"${widget.tab.queryController.text.replaceAll('"', '\\"')}"',
               booksToSearch,
               widget.tab.numResults.value);
         } else {
@@ -132,7 +145,8 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                           child: FutureBuilder(
                               future: widget.tab.results,
                               builder: (context, snapshot) {
-                                if (!snapshot.hasData) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
                                   return const Center(
                                       child: CircularProgressIndicator());
                                 }

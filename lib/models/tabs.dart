@@ -276,7 +276,6 @@ class SearchingTab extends OpenedTab {
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
   Future<List<SearchResult>> results = Future.value([]);
   ValueNotifier<int> numResults = ValueNotifier(100);
-
   FullTextSearcher searcher = FullTextSearcher(
     [],
     TextEditingController(),
@@ -286,7 +285,9 @@ class SearchingTab extends OpenedTab {
 
   SearchingTab(
     super.title,
-  );
+  ) {
+    () async {}();
+  }
 
   @override
   factory SearchingTab.fromJson(Map<String, dynamic> json) {

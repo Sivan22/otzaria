@@ -33,7 +33,6 @@ class _FullTextBookListState extends State<FullTextBookList> {
   @override
   void initState() {
     books = widget.books;
-    widget.tab.booksToSearch.value = books.toSet();
     super.initState();
     Set<String> allTopicsSet = {};
     for (Book book in widget.books) {
