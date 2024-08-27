@@ -198,7 +198,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       : null,
                   fontSize: 11,
                 ),
-                labelPadding: EdgeInsets.all(0),
+                labelPadding: const EdgeInsets.all(0),
               ),
             ),
           );

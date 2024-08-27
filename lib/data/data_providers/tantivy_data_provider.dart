@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
@@ -70,14 +71,14 @@ class TantivyDataProvider {
         print('Error adding ${book.title} to index: $e');
       }
     }
-
     numOfbooksDone.value = null;
     numOfbooksTotal.value = null;
+    isIndexing.value = false;
   }
 
   addTextsToTantivy(TextBook book) async {
     final index = await engine;
-    final text = await book.text;
+    var text = await book.text;
     final title = book.title;
 
     final hash = sha1.convert(utf8.encode(text)).toString();
@@ -87,6 +88,8 @@ class TantivyDataProvider {
       return;
     }
 
+    text = stripHtmlIfNeeded(text);
+    text = removeVolwels(text);
     final texts = text.split('\n');
     for (int i = 0; i < texts.length; i++) {
       if (!isIndexing.value) {

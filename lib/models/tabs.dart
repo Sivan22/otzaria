@@ -12,6 +12,7 @@ import 'package:otzaria/models/links.dart';
 import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:search_engine/search_engine.dart';
 
 abstract class OpenedTab {
   String title;
@@ -272,8 +273,10 @@ class TextBookTab extends OpenedTab {
 class SearchingTab extends OpenedTab {
   ValueNotifier<bool> aproximateSearch = ValueNotifier<bool>(false);
   final queryController = TextEditingController();
-  ValueNotifier<int> numResults = ValueNotifier(100);
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
+  Future<List<SearchResult>> results = Future.value([]);
+  ValueNotifier<int> numResults = ValueNotifier(100);
+
   FullTextSearcher searcher = FullTextSearcher(
     [],
     TextEditingController(),

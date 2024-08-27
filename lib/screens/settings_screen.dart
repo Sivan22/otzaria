@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({

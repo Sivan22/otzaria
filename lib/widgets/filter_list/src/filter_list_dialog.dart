@@ -4,10 +4,7 @@ import 'state/filter_state.dart';
 import 'state/provider.dart';
 import 'theme/theme.dart';
 import 'widget/choice_list.dart';
-import 'widget/control_button_bar.dart';
-import 'widget/header.dart';
 import 'package:flutter/material.dart';
-
 part 'filter_list_widget.dart';
 
 /// The [FilterListDialog.display] is a [Dialog] with some filter utilities and callbacks which helps in single/multiple selection from list of data.

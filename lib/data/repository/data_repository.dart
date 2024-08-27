@@ -4,7 +4,6 @@ import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/models/library.dart';
-import 'package:otzaria/models/links.dart';
 
 class DataRepository {
   final FileSystemData _fileSystemData = FileSystemData.instance;

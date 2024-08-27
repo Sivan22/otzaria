@@ -70,10 +70,10 @@ class _CombinedViewState extends State<CombinedView> {
           builder: (context, removeNikud, child) => Html(
             //remove nikud if needed
             data: removeNikud
-                ? highLight(removeVolwels(widget.data[index]),
+                ? highLight(removeVolwels('${widget.data[index]}\n'),
                     widget.tab.searchTextController.text)
-                : highLight(
-                    widget.data[index], widget.tab.searchTextController.text),
+                : highLight('${widget.data[index]}\n',
+                    widget.tab.searchTextController.text),
             style: {
               'body': Style(
                   fontSize: FontSize(widget.textSize),

@@ -1,5 +1,4 @@
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
-import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
 //import 'package:pdfrx/pdfrx.dart';

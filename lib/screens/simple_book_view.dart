@@ -53,9 +53,9 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                   child: Html(
                       //remove nikud if needed
                       data: removeNikud
-                          ? highLight(removeVolwels(widget.data[index]),
+                          ? highLight(removeVolwels('${widget.data[index]}\n'),
                               widget.tab.searchTextController.text)
-                          : highLight(widget.data[index],
+                          : highLight('${widget.data[index]}\n',
                               widget.tab.searchTextController.text),
                       style: {
                         'body': Style(

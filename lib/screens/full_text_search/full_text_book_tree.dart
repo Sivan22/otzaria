@@ -72,8 +72,7 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
               widget.tab.booksToSearch.value.contains(entity)
                   ? widget.tab.booksToSearch.value.remove(entity)
                   : widget.tab.booksToSearch.value.add(entity);
-              widget.tab.booksToSearch.value =
-                  Set.from(widget.tab.booksToSearch.value);
+              widget.tab.booksToSearch.notifyListeners();
             }, //TODO: fix
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),
@@ -94,7 +93,7 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
     for (Category subCategory in category.subCategories) {
       addCategory(subCategory);
     }
-    widget.tab.booksToSearch.value = Set.from(widget.tab.booksToSearch.value);
+    widget.tab.booksToSearch.notifyListeners();
   }
 
   void removeCategory(Category category) {
@@ -105,7 +104,7 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
       removeCategory(subCategory);
     }
 
-    widget.tab.booksToSearch.value = Set.from(widget.tab.booksToSearch.value);
+    widget.tab.booksToSearch.notifyListeners();
   }
 
   bool isCategoryChecked(Category category) {

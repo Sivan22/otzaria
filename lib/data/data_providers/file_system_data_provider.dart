@@ -42,8 +42,6 @@ class FileSystemData {
     _updateTitleToPath();
   }
 
-  @override
-
   /// Returns the library
   Future<Library> getLibrary() async {
     return _getLibraryFromDirectory(
@@ -117,12 +115,10 @@ class FileSystemData {
     return library;
   }
 
-  @override
   Future<List<ExternalBook>> getOtzarBooks() {
     return _getOtzarBooks();
   }
 
-  @override
   Future<List<ExternalBook>> getHebrewBooks() {
     return _getHebrewBooks();
   }
@@ -214,7 +210,6 @@ class FileSystemData {
 
   ///the implementation of the links from app's model, based on the filesystem.
   ///the links are in the folder 'links' with the name '<book_title>_links.json'
-  @override
   Future<List<Link>> getAllLinksForBook(String title) async {
     try {
       File file = File(_getLinksPath(title));
@@ -226,8 +221,6 @@ class FileSystemData {
       return [];
     }
   }
-
-  @override
 
   /// Retrieves the text for a book with the given title asynchronously (using Isolate).
   /// supports docx files

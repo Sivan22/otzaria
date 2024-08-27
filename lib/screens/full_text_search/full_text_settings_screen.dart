@@ -14,137 +14,137 @@ class FullTextSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text('חיפוש מקורב')),
-                      ValueListenableBuilder(
-                          valueListenable: tab.aproximateSearch,
-                          builder: (context, aproximateSearch, child) {
-                            return Switch(
-                                value: aproximateSearch,
-                                onChanged: (value) =>
-                                    tab.aproximateSearch.value = value);
-                          }),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: const Text('מספר התוצאות לחיפוש'),
-                      ),
-                      ValueListenableBuilder(
-                          valueListenable: tab.numResults,
-                          builder: (context, numResults, child) {
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Slider(
-                                value: numResults.toDouble(),
-                                onChanged: (value) =>
-                                    tab.numResults.value = (value.toInt()),
-                                min: 10,
-                                max: 5000,
-                                divisions: 4990,
-                              ),
-                            );
-                          })
-                    ],
-                  ),
+        body: Column(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(child: Text('חיפוש מקורב')),
+                    ValueListenableBuilder(
+                        valueListenable: tab.aproximateSearch,
+                        builder: (context, aproximateSearch, child) {
+                          return Switch(
+                              value: aproximateSearch,
+                              onChanged: (value) =>
+                                  tab.aproximateSearch.value = value);
+                        }),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              child: ValueListenableBuilder(
-                  valueListenable: TantivyDataProvider.instance.isIndexing,
-                  builder: (context, isIndexing, child) {
-                    if (isIndexing) {
-                      return const SizedBox.shrink();
-                    }
-                    return ElevatedButton(
-                      onPressed: () async {
-                        final result = showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                                  content: const Text(
-                                      'עדכון האינדקס עלול לקחת זמן ומשאבים רבים. להמשיך?'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: const Text('ביטול'),
-                                      onPressed: () {
-                                        Navigator.pop(context, false);
-                                      },
-                                    ),
-                                    TextButton(
-                                      child: const Text('אישור'),
-                                      onPressed: () {
-                                        Navigator.pop(context, true);
-                                      },
-                                    ),
-                                  ],
-                                ));
-                        if (await result == true) {
-                          context.read<AppModel>().addAllTextsToMimir();
-                        }
-                      },
-                      child: const Text(
-                        'עדכון אינדקס',
+              ),
+              Center(
+                child: Text(' מספר תוצאות להצגה'),
+              ),
+              ValueListenableBuilder(
+                  valueListenable: tab.numResults,
+                  builder: (context, numResults, child) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Slider(
+                        value: numResults.toDouble(),
+                        onChanged: (value) =>
+                            tab.numResults.value = (value.toInt()),
+                        label: tab.numResults.value.toString(),
+                        min: 10,
+                        max: 10000,
+                        divisions: 9990,
                       ),
                     );
                   }),
-            ),
-          ),
-          ValueListenableBuilder(
-              valueListenable: TantivyDataProvider.instance.isIndexing,
-              builder: (context, isIndexing, child) {
-                if (!isIndexing) {
-                  return const SizedBox.shrink();
-                }
-                return ValueListenableBuilder(
-                  valueListenable: TantivyDataProvider.instance.numOfbooksDone,
-                  builder: (context, numOfbooksDone, child) => Column(
-                    children: [
-                      ValueListenableBuilder(
-                          valueListenable:
-                              TantivyDataProvider.instance.numOfbooksTotal,
-                          builder: (context, valueTotal, child) {
-                            if (valueTotal == null) {
-                              return const SizedBox.shrink();
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  child: ValueListenableBuilder(
+                      valueListenable: TantivyDataProvider.instance.isIndexing,
+                      builder: (context, isIndexing, child) {
+                        if (isIndexing) {
+                          return const SizedBox.shrink();
+                        }
+                        return ElevatedButton(
+                          onPressed: () async {
+                            final result = showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                      content: const Text(
+                                          'עדכון האינדקס עלול לקחת זמן ומשאבים רבים. להמשיך?'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: const Text('ביטול'),
+                                          onPressed: () {
+                                            Navigator.pop(context, false);
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: const Text('אישור'),
+                                          onPressed: () {
+                                            Navigator.pop(context, true);
+                                          },
+                                        ),
+                                      ],
+                                    ));
+                            if (await result == true) {
+                              context.read<AppModel>().addAllTextsToMimir();
                             }
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 50),
-                              child: Column(
-                                children: [
-                                  LinearProgressIndicator(
-                                    borderRadius: BorderRadius.circular(20),
-                                    value: numOfbooksDone! / valueTotal,
+                          },
+                          child: const Text(
+                            'עדכון אינדקס',
+                          ),
+                        );
+                      }),
+                ),
+              ),
+              ValueListenableBuilder(
+                  valueListenable: TantivyDataProvider.instance.isIndexing,
+                  builder: (context, isIndexing, child) {
+                    if (!isIndexing) {
+                      return const SizedBox.shrink();
+                    }
+                    return ValueListenableBuilder(
+                      valueListenable:
+                          TantivyDataProvider.instance.numOfbooksDone,
+                      builder: (context, numOfbooksDone, child) => Column(
+                        children: [
+                          ValueListenableBuilder(
+                              valueListenable:
+                                  TantivyDataProvider.instance.numOfbooksTotal,
+                              builder: (context, valueTotal, child) {
+                                if (valueTotal == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 50),
+                                  child: Column(
+                                    children: [
+                                      LinearProgressIndicator(
+                                        borderRadius: BorderRadius.circular(20),
+                                        value: numOfbooksDone! / valueTotal,
+                                      ),
+                                      Text(' $valueTotal / $numOfbooksDone'),
+                                    ],
                                   ),
-                                  Text(' $valueTotal / $numOfbooksDone'),
-                                ],
-                              ),
-                            );
-                          }),
-                      isIndexing
-                          ? Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ElevatedButton(
-                                  onPressed: () => TantivyDataProvider
-                                      .instance.isIndexing.value = false,
-                                  child: Text('עצור')),
-                            )
-                          : SizedBox.shrink()
-                    ],
-                  ),
-                );
-              }),
-        ],
-      ),
-    );
+                                );
+                              }),
+                          isIndexing
+                              ? Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton(
+                                      onPressed: () => TantivyDataProvider
+                                          .instance.isIndexing.value = false,
+                                      child: Text('עצור')),
+                                )
+                              : SizedBox.shrink()
+                        ],
+                      ),
+                    );
+                  }),
+            ],
+          ),
+        )
+      ],
+    ));
   }
 }
