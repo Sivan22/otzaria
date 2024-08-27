@@ -272,6 +272,7 @@ class TextBookTab extends OpenedTab {
 class SearchingTab extends OpenedTab {
   ValueNotifier<bool> aproximateSearch = ValueNotifier<bool>(false);
   final queryController = TextEditingController();
+  ValueNotifier<int> numResults = ValueNotifier(100);
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
   FullTextSearcher searcher = FullTextSearcher(
     [],

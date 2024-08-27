@@ -31,11 +31,21 @@ import 'dart:io';
 ///
 
 void main() async {
+  void createDirectoryIfNotExists(String path) {
+    Directory directory = Directory(path);
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+      print('Directory created: $path');
+    } else {
+      print('Directory already exists: $path');
+    }
+  }
+
   await RustLib.init();
-  final searchEngine =
-      await SearchEngine.newInstance(path: "C:\\dev\\otzaria_library\\index");
-  print(searchEngine.search(query: 'ברא', books: [], limit: 10));
   await Settings.init(cacheProvider: HiveCache());
+  createDirectoryIfNotExists(
+      '${Settings.getValue('key-library-path') ?? 'C:/אוצריא'}${Platform.pathSeparator}index');
+
   await initHiveBoxes();
   WidgetsFlutterBinding.ensureInitialized();
   // requesting external storage permission on android
@@ -115,5 +125,15 @@ class OtzariaApp extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+void createDirectoryIfNotExists(String path) {
+  Directory directory = Directory(path);
+  if (!directory.existsSync()) {
+    directory.createSync(recursive: true);
+    print('Directory created: $path');
+  } else {
+    print('Directory already exists: $path');
   }
 }

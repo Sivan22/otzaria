@@ -32,6 +32,25 @@ class FullTextSettingsScreen extends StatelessWidget {
                                 onChanged: (value) =>
                                     tab.aproximateSearch.value = value);
                           }),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: const Text('מספר התוצאות לחיפוש'),
+                      ),
+                      ValueListenableBuilder(
+                          valueListenable: tab.numResults,
+                          builder: (context, numResults, child) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Slider(
+                                value: numResults.toDouble(),
+                                onChanged: (value) =>
+                                    tab.numResults.value = (value.toInt()),
+                                min: 10,
+                                max: 5000,
+                                divisions: 4990,
+                              ),
+                            );
+                          })
                     ],
                   ),
                 ),

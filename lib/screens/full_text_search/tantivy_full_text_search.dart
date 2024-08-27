@@ -19,7 +19,7 @@ class MimirFullTextSearch extends StatefulWidget {
 }
 
 class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
-  Future<List<SearchResult>> results = Future.value([]);
+  Stream<List<SearchResult>> results = Stream.value([]);
   late TextEditingController queryController;
   ValueNotifier isLeftPaneOpen = ValueNotifier(false);
 
@@ -34,16 +34,18 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
   void updateResults() {
     setState(() {
       if (queryController.text.isEmpty) {
-        results = Future.value([]);
+        results = Stream.value([]);
       } else {
         final booksToSearch =
             widget.tab.booksToSearch.value.map<String>((e) => e.title).toList();
         if (!widget.tab.aproximateSearch.value) {
-          results = TantivyDataProvider.instance
-              .searchTexts('"${queryController.text}"', booksToSearch);
+          results = TantivyDataProvider.instance.searchTextsStream(
+              '"${queryController.text}"',
+              booksToSearch,
+              widget.tab.numResults.value);
         } else {
-          results = TantivyDataProvider.instance
-              .searchTexts(queryController.text, booksToSearch);
+          results = TantivyDataProvider.instance.searchTextsStream(
+              queryController.text, booksToSearch, widget.tab.numResults.value);
         }
       }
     });
@@ -120,8 +122,8 @@ class _MimirFullTextSearchState extends State<MimirFullTextSearch> {
                         ],
                       ),
                       Expanded(
-                        child: FutureBuilder(
-                            future: results,
+                        child: StreamBuilder(
+                            stream: results,
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
                                 return const Center(
