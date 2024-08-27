@@ -311,11 +311,21 @@ class AppModel with ChangeNotifier {
     Hive.box(name: 'tabs').put("key-current-tab", currentTab);
   }
 
-  void addBookmark(
+  bool addBookmark(
       {required String ref, required Book book, required int index}) {
-    bookmarks.add(Bookmark(ref: ref, book: book, index: index));
-    // write to disk
-    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
+    // Check if a bookmark with the same ref, book, and index already exists
+    bool bookmarkExists = bookmarks.any((bookmark) =>
+        bookmark.ref == ref &&
+        bookmark.book.title == book.title &&
+        bookmark.index == index);
+
+    if (!bookmarkExists) {
+      bookmarks.add(Bookmark(ref: ref, book: book, index: index));
+      // write to disk
+      Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
+      return true;
+    }
+    return false;
   }
 
   void removeBookmark(int index) {
