@@ -323,7 +323,6 @@ class AppModel with ChangeNotifier {
       bookmarks.add(Bookmark(ref: ref, book: book, index: index));
       // write to disk
       Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-      notifyListeners();
       return true;
     }
     return false;
@@ -332,13 +331,11 @@ class AppModel with ChangeNotifier {
   void removeBookmark(int index) {
     bookmarks.removeAt(index);
     Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-    notifyListeners();
   }
 
   void clearBookmarks() {
     bookmarks.clear();
     Hive.box(name: 'bookmarks').clear();
-    notifyListeners();
   }
 
   void addHistory(
