@@ -211,7 +211,9 @@ Project Link: [https://github.com/sivan22/otzaria](https://github.com/sivan22/ot
 ## Acknowledgments
 
 the project was avavilable because of Sefaria's amazing project. 
-Dicta association, by which many important books were added
+<br>
+and Dicta association, by which many important books were added.
+<br>
 <br>
 <img src="images/safria logo.png" alt="ספריא" width="100"/>
 <img src="images/dicta_logo.jpg" alt="דיקטה" width="100"/>
