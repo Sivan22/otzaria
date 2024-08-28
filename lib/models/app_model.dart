@@ -340,9 +340,7 @@ class AppModel with ChangeNotifier {
 
   void addHistory(
       {required String ref, required Book book, required int index}) {
-    if (book is TextBook) {
-      history.insert(0, Bookmark(ref: ref, book: book, index: index));
-    }
+    history.insert(0, Bookmark(ref: ref, book: book, index: index));
     // write to disk
     Hive.box(name: 'history').put('key-history', history);
   }
