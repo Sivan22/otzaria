@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/screens/text_book_screen.dart';
+import 'package:otzaria/screens/reading/text/text_book_screen.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
-import 'package:otzaria/screens/simple_book_view.dart';
+import 'package:otzaria/screens/reading/text/simple_book_view.dart';
 
 class SplitedViewScreen extends StatelessWidget {
   const SplitedViewScreen({

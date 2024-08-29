@@ -35,8 +35,6 @@ void main() async {
 
   await RustLib.init();
   await Settings.init(cacheProvider: HiveCache());
-  createDirectoryIfNotExists(
-      '${Settings.getValue('key-library-path') ?? 'C:/אוצריא'}${Platform.pathSeparator}index');
 
   await initHiveBoxes();
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +62,8 @@ void main() async {
       Settings.setValue('key-library-path', libraryPath);
     }
   }();
+  createDirectoryIfNotExists(
+      '${Settings.getValue('key-library-path')}${Platform.pathSeparator}index');
 
   runApp(const OtzariaApp());
 }

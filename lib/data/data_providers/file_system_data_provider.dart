@@ -99,6 +99,8 @@ class FileSystemData {
           }
         }
       }
+      category.subCategories.sort((a, b) => a.order.compareTo(b.order));
+      category.books.sort((a, b) => a.order.compareTo(b.order));
       return category;
     }
 
@@ -112,6 +114,7 @@ class FileSystemData {
             Directory(entity.path), library));
       }
     }
+    library.subCategories.sort((a, b) => a.order.compareTo(b.order));
     return library;
   }
 

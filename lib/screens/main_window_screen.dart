@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/screens/favoriets.dart';
+import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';
-import 'package:otzaria/screens/reading_screen.dart';
+import 'package:otzaria/screens/reading/reading_screen.dart';
 
 //imports from otzaria
 import 'package:otzaria/screens/library_browser.dart';
@@ -159,6 +159,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                       controller: pageController,
                       children: const <Widget>[
                         LibraryBrowser(),
+                        FindRefScreen(),
                         ReadingScreen(),
                         SizedBox.shrink(),
                         FavouritesScreen(),
@@ -172,6 +173,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                           NavigationDestination(
                             icon: Icon(Icons.library_books),
                             label: 'ספרייה',
+                          ),
+                          NavigationDestination(
+                            icon: Icon(Icons.auto_stories_rounded),
+                            label: 'איתור',
                           ),
                           NavigationDestination(
                             icon: Icon(Icons.menu_book),
@@ -197,7 +202,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                             pageController = PageController(
                                 initialPage: index, keepPage: true);
                             switch (index) {
-                              case 2:
+                              case 3:
                                 appModel.openNewSearchTab();
                             }
                           });

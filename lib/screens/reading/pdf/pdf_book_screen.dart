@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'pdf_search_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'pdf_outlines_screen.dart';
-import '../widgets/password_dialog.dart';
+import '../../../widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:printing/printing.dart';
