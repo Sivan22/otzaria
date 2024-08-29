@@ -87,6 +87,7 @@ Key features of the project:
 * The app is designed to be as user friendly as possible.
 * A thorough selection process has been undertaken to ensure that the books are suitable for the Torah community
 * the library is flexible, means that you can add or remove books from the library.
+* fast search engine, including the user-added books.
 * the app supports the following formats: TXT, Docx and PDF.
 
 I hope that my work will help the Torah community to learn easiely and effectively anytime and anywhere.
@@ -151,15 +152,12 @@ See the Wiki section for documentation.
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Add ViewModel layer
-- [ ] Transfer database to isar  
+- [ ] Add business logic layer by switching the state management library to Bloc.
+- [ ] Transfer books data from text files to SQLite database
+- [ ] add option for semantic search using an embedding ML model and vector database
 - [ ] language Support
     - [ ] English
     - [X] Hebrew
-- [ ] full-text search with index
-- [ ] add more features
-    - [ ] search for references 
-    - [ ] save history
 
 See the [open issues](https://github.com/sivan22/otzaria/issues) for a full list of proposed features (and known issues).
 
