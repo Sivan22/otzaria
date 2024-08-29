@@ -209,8 +209,12 @@ Project Link: [https://github.com/sivan22/otzaria](https://github.com/sivan22/ot
 ## Acknowledgments
 
 the project was avavilable because of Sefaria's amazing project. 
-
-<img src="https://camo.githubusercontent.com/e704c2ea3f05768971b48a30a7372daa4aaba4ea36327ae485ccd0ed76af3830/68747470733a2f2f7777772e736566617269612e6f72672f7374617469632f696d672f706f77657265642d62792d736566617269612d62616467652e706e673f6d" alt="drawing" width="100"/>
+<br>
+and Dicta association, by which many important books were added.
+<br>
+<br>
+<img src="images/safria logo.png" alt="ספריא" width="154" height="80"/>
+<img src="images/dicta_logo.jpg" alt="דיקטה" width="154" height="80"/>
 
 the PDF viewer is powered by [pdfrx](https://pub.dev/packages/pdfrx).
 
