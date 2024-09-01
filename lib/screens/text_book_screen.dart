@@ -270,7 +270,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                     ? Stack(children: [
                         buildHTMLViewer(),
                         Container(
-                            color: Theme.of(context).primaryColor,
+                            color: Theme.of(context).colorScheme.surface,
                             child: buildTabBar()),
                       ])
                     : Row(

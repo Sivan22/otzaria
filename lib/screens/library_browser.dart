@@ -223,7 +223,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                         constraints: const BoxConstraints(maxWidth: 400),
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: IconButton(
-                            onPressed: () => searchController.clear(),
+                            onPressed: () {
+                              searchController.clear();
+                              items = getGrids(currentTopCategory);
+                              setState(() {});
+                            },
                             icon: const Icon(Icons.cancel)),
                         border: const OutlineInputBorder(
                             borderRadius:
