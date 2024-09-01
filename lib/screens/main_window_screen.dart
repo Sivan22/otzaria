@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/screens/favoriets.dart';
-import 'package:otzaria/screens/reading_screen.dart';
+import 'package:otzaria/screens/favorites/favoriets.dart';
+import 'package:otzaria/screens/find_ref_screen.dart';
+import 'package:otzaria/screens/reading/reading_screen.dart';
 
 //imports from otzaria
 import 'package:otzaria/screens/library_browser.dart';
@@ -89,6 +90,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               label: Text('ספרייה'),
                             ),
                             const NavigationRailDestination(
+                              icon: Icon(Icons.auto_stories_rounded),
+                              label: Text('איתור'),
+                            ),
+                            const NavigationRailDestination(
                               icon: Icon(Icons.menu_book),
                               label: Text('עיון'),
                             ),
@@ -104,7 +109,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               icon: const Icon(Icons.settings),
                               label: const Text('הגדרות'),
                               padding: EdgeInsets.only(
-                                  top: constraints.maxHeight - 340),
+                                  top: constraints.maxHeight - 410),
                             ),
                           ],
                           selectedIndex: appModel.currentView.value.index,
@@ -113,10 +118,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
                             pageController = PageController(
                                 initialPage: index, keepPage: true);
                             switch (index) {
-                              case 2:
+                              case 3:
                                 appModel.openNewSearchTab();
                               case 0:
                                 appModel.bookLocatorFocusNode.requestFocus();
+                              case 1:
+                                appModel.findReferenceFocusNode.requestFocus();
                             }
                             setState(() {});
                           }),
@@ -133,6 +140,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                         controller: pageController,
                         children: const <Widget>[
                           LibraryBrowser(),
+                          FindRefScreen(),
                           ReadingScreen(),
                           SizedBox.shrink(),
                           FavouritesScreen(),
@@ -151,6 +159,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                       controller: pageController,
                       children: const <Widget>[
                         LibraryBrowser(),
+                        FindRefScreen(),
                         ReadingScreen(),
                         SizedBox.shrink(),
                         FavouritesScreen(),
@@ -164,6 +173,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                           NavigationDestination(
                             icon: Icon(Icons.library_books),
                             label: 'ספרייה',
+                          ),
+                          NavigationDestination(
+                            icon: Icon(Icons.auto_stories_rounded),
+                            label: 'איתור',
                           ),
                           NavigationDestination(
                             icon: Icon(Icons.menu_book),
@@ -189,7 +202,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                             pageController = PageController(
                                 initialPage: index, keepPage: true);
                             switch (index) {
-                              case 2:
+                              case 3:
                                 appModel.openNewSearchTab();
                             }
                           });

@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:filter_list/filter_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
@@ -9,6 +8,8 @@ import 'package:otzaria/models/library.dart';
 import 'package:otzaria/utils/daf_yomi_helper.dart';
 import 'package:otzaria/utils/extraction.dart';
 import 'package:otzaria/widgets/daf_yomi.dart';
+import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
+import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 import 'package:otzaria/widgets/grid_items.dart';
 import 'package:otzaria/widgets/otzar_book_dialog.dart';
 import 'package:provider/provider.dart';
@@ -197,7 +198,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       : null,
                   fontSize: 11,
                 ),
-                labelPadding: EdgeInsets.all(0),
+                labelPadding: const EdgeInsets.all(0),
               ),
             ),
           );

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
+import 'package:search_engine/search_engine.dart';
 import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/data/cache_provider.dart';
-import 'package:otzaria/data/hive_data_provider.dart';
+import 'package:otzaria/data/data_providers/cache_provider.dart';
+import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -22,7 +23,19 @@ import 'dart:io';
 ///
 
 void main() async {
+  void createDirectoryIfNotExists(String path) {
+    Directory directory = Directory(path);
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+      print('Directory created: $path');
+    } else {
+      print('Directory already exists: $path');
+    }
+  }
+
+  await RustLib.init();
   await Settings.init(cacheProvider: HiveCache());
+
   await initHiveBoxes();
   WidgetsFlutterBinding.ensureInitialized();
   // requesting external storage permission on android
@@ -49,6 +62,9 @@ void main() async {
       Settings.setValue('key-library-path', libraryPath);
     }
   }();
+  createDirectoryIfNotExists(
+      '${Settings.getValue('key-library-path')}${Platform.pathSeparator}index');
+
   runApp(const OtzariaApp());
 }
 
@@ -91,5 +107,15 @@ class OtzariaApp extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+void createDirectoryIfNotExists(String path) {
+  Directory directory = Directory(path);
+  if (!directory.existsSync()) {
+    directory.createSync(recursive: true);
+    print('Directory created: $path');
+  } else {
+    print('Directory already exists: $path');
   }
 }

@@ -1,5 +1,4 @@
-import 'package:otzaria/data/data.dart';
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/links.dart';
 import 'dart:isolate';
 //import 'package:pdfrx/pdfrx.dart';
@@ -14,7 +13,7 @@ abstract class Book {
   final String title;
 
   /// an access to the data layer
-  final Data data = FileSystemData.instance;
+  final FileSystemData data = FileSystemData.instance;
 
   /// The author of the book, if available.
   String? author;
@@ -115,7 +114,7 @@ class TextBook extends Book {
 ///represents an entry in table of content , which is a node in a hirarchial tree of topics.
 ///every entry has its 'level' in the tree, and an index of the line in the book that it is refers to
 class TocEntry {
-  final String text;
+  String text;
   final int index;
   final int level;
   List<TocEntry> children = [];

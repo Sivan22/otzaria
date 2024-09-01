@@ -1,15 +1,15 @@
 /* represents links between two books in the library*/
 
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
 import 'dart:isolate';
-import 'package:otzaria/data/data.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// Represents a link between two books in the library.
 class Link {
   /// The [Data] object used for file system operations.
-  final Data data = FileSystemData.instance;
+  final DataRepository data = DataRepository.instance;
 
   /// The Hebrew reference of the link.
   final String heRef;
@@ -36,7 +36,7 @@ class Link {
   });
 
   /// Returns the content of the link as a [Future] of [String].
-  Future<String> get content => data.getLinkContent(this);
+  Future<String> get content => FileSystemData.instance.getLinkContent(this);
 
   /// Constructs a [Link] object from a JSON object.
   ///

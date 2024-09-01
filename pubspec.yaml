@@ -8,7 +8,7 @@ msix_config:
   display_name: אוצריא
   publisher_display_name: sivan22
   identity_name: sivan22.Otzaria
-  msix_version: 0.1.8.10
+  msix_version: 0.2.1.1
   logo_path: assets/icon/icon.png
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: C:\dev\sivan22.pfx
@@ -33,7 +33,7 @@ msix_config:
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.8
+version: 0.2.1-alpha.1
 
 environment:
   sdk: ">=3.2.6 <4.0.0"
@@ -51,7 +51,8 @@ dependencies:
     sdk: flutter
   flutter_settings_screens: ^0.3.4
   hive: ^4.0.0-dev.2
-  isar_flutter_libs: ^4.0.0-dev.13
+  isar_flutter_libs: ^4.0.0-dev.14
+  isar: ^4.0.0-dev.14
   msix: ^3.16.7
   path_provider: ^2.0.15
   html: ^0.15.1
@@ -75,9 +76,13 @@ dependencies:
   kosher_dart: ^2.0.16
   gematria: ^1.0.0
   csv: ^6.0.0
-  filter_list:
-    path: packages/filter_list-1.0.3
+
+  filter_list: 1.0.3
   package_info_plus: ^8.0.2
+  crypto: ^3.0.5
+  http: ^1.2.2
+  search_engine:
+    path: ../search_engine
 dependency_overrides:
   #  it forces the version of the intl package to be 0.19.0 across all dependencies, even if some packages specify a different compatible version.
   intl: ^0.19.0
@@ -103,6 +108,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
   test: ^1.25.2
+  build_runner: ^2.4.11
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

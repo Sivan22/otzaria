@@ -4,7 +4,7 @@ a tab is either a pdf book or a text book, or a full text search window*/
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -12,6 +12,7 @@ import 'package:otzaria/models/links.dart';
 import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:search_engine/search_engine.dart';
 
 abstract class OpenedTab {
   String title;
@@ -270,6 +271,11 @@ class TextBookTab extends OpenedTab {
 }
 
 class SearchingTab extends OpenedTab {
+  ValueNotifier<bool> aproximateSearch = ValueNotifier<bool>(false);
+  final queryController = TextEditingController();
+  ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
+  Future<List<SearchResult>> results = Future.value([]);
+  ValueNotifier<int> numResults = ValueNotifier(100);
   FullTextSearcher searcher = FullTextSearcher(
     [],
     TextEditingController(),
@@ -279,7 +285,9 @@ class SearchingTab extends OpenedTab {
 
   SearchingTab(
     super.title,
-  );
+  ) {
+    () async {}();
+  }
 
   @override
   factory SearchingTab.fromJson(Map<String, dynamic> json) {

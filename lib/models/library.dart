@@ -2,7 +2,7 @@
 contain other categories and books */
 
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/data/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 /// Represents a category in the library.
 ///

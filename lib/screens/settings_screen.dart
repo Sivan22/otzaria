@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({
@@ -139,11 +138,18 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         titleTextStyle: TextStyle(fontSize: 25),
                         children: [
                             DropDownSettingsTile<String>(
-                              selected: 'ctrl+o',
+                              selected: 'ctrl+l',
                               settingKey: 'key-shortcut-open-library-browser',
                               title: 'ספרייה',
                               values: shortcuctsList,
                               leading: Icon(Icons.library_books),
+                            ),
+                            DropDownSettingsTile<String>(
+                              selected: 'ctrl+o',
+                              settingKey: 'key-shortcut-open-find-ref',
+                              title: 'איתור',
+                              values: shortcuctsList,
+                              leading: Icon(Icons.auto_stories_rounded),
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+r',
@@ -196,6 +202,19 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                         disabledLabel: 'המפרשים יוצגו מתחת הטקסט',
                         leading: Icon(Icons.vertical_split),
                         defaultValue: false,
+                      ),
+                      SwitchSettingsTile(
+                        settingKey: 'key-use-fast-search',
+                        title: 'חיפוש מהיר באמצעות אינדקס',
+                        enabledLabel:
+                            'החיפוש יהיה מהיר יותר, נדרש ליצור אינדקס',
+                        disabledLabel: 'החיפוש יהיה איטי יותר, לא נדרש אינדקס',
+                        leading: Icon(Icons.search),
+                        defaultValue: true,
+                        onChange: (value) => context
+                            .read<AppModel>()
+                            .useFastSearch
+                            .value = value,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-external-books',
