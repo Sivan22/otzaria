@@ -134,21 +134,23 @@ class _TextBookViewerState extends State<TextBookViewer>
             ),
             //button to add a bookmark
             IconButton(
-              onPressed: () {
-                () async {
-                  int index = widget
-                      .tab.positionsListener.itemPositions.value.first.index;
-                  Provider.of<AppModel>(context, listen: false).addBookmark(
-                      ref: await utils.refFromIndex(
-                          index, widget.tab.tableOfContents),
-                      book: widget.tab.book,
-                      index: index);
-                }();
+              onPressed: () async {
+                int index = widget
+                    .tab.positionsListener.itemPositions.value.first.index;
+                String ref = await utils.refFromIndex(
+                    index, widget.tab.tableOfContents);
+                bool bookmarkAdded = Provider.of<AppModel>(context, listen: false)
+                    .addBookmark(
+                        ref: ref,
+                        book: widget.tab.book,
+                        index: index);
                 // notify user
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('הסימניה נוספה בהצלחה'),
+                    SnackBar(
+                      content: Text(bookmarkAdded
+                          ? 'הסימניה נוספה בהצלחה'
+                          : 'הסימניה כבר קיימת'),
                     ),
                   );
                 }
@@ -270,7 +272,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                     ? Stack(children: [
                         buildHTMLViewer(),
                         Container(
-                            color: Theme.of(context).primaryColor,
+                            color: Theme.of(context).colorScheme.surface,
                             child: buildTabBar()),
                       ])
                     : Row(
