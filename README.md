@@ -87,6 +87,7 @@ Key features of the project:
 * The app is designed to be as user friendly as possible.
 * A thorough selection process has been undertaken to ensure that the books are suitable for the Torah community
 * the library is flexible, means that you can add or remove books from the library.
+* fast search engine, including the user-added books.
 * the app supports the following formats: TXT, Docx and PDF.
 
 I hope that my work will help the Torah community to learn easiely and effectively anytime and anywhere.
@@ -151,15 +152,12 @@ See the Wiki section for documentation.
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Add ViewModel layer
-- [ ] Transfer database to isar  
+- [ ] Add business logic layer by switching the state management library to Bloc.
+- [ ] Transfer books data from text files to SQLite database
+- [ ] add option for semantic search using an embedding ML model and vector database
 - [ ] language Support
     - [ ] English
     - [X] Hebrew
-- [ ] full-text search with index
-- [ ] add more features
-    - [ ] search for references 
-    - [ ] save history
 
 See the [open issues](https://github.com/sivan22/otzaria/issues) for a full list of proposed features (and known issues).
 
@@ -211,8 +209,12 @@ Project Link: [https://github.com/sivan22/otzaria](https://github.com/sivan22/ot
 ## Acknowledgments
 
 the project was avavilable because of Sefaria's amazing project. 
-
-<img src="https://camo.githubusercontent.com/e704c2ea3f05768971b48a30a7372daa4aaba4ea36327ae485ccd0ed76af3830/68747470733a2f2f7777772e736566617269612e6f72672f7374617469632f696d672f706f77657265642d62792d736566617269612d62616467652e706e673f6d" alt="drawing" width="100"/>
+<br>
+and Dicta association, by which many important books were added.
+<br>
+<br>
+<img src="images/safria logo.png" alt="ספריא" width="154" height="80"/>
+<img src="images/dicta_logo.jpg" alt="דיקטה" width="154" height="80"/>
 
 the PDF viewer is powered by [pdfrx](https://pub.dev/packages/pdfrx).
 

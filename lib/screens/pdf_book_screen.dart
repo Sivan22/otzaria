@@ -60,31 +60,37 @@ class _PdfBookViewrState extends State<PdfBookViewr>
         ),
         actions: [
           IconButton(
-              icon: const Icon(Icons.bookmark_add),
-              tooltip: 'הוספת סימניה',
-              onPressed: () {
-                int index = widget.tab.pdfViewerController.isReady
-                    ? widget.tab.pdfViewerController.pageNumber!
-                    : 1;
-                Provider.of<AppModel>(context, listen: false).addBookmark(
-                    ref: '${widget.tab.title} עמוד $index',
-                    book: widget.tab.book,
-                    index: index);
-                // notify user
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('הסימניה נוספה בהצלחה'),
-                    ),
-                  );
-                }
-              }),
+            icon: const Icon(
+              Icons.bookmark_add,
+            ),
+            tooltip: 'הוספת סימניה',
+            onPressed: () {
+              int index = widget.tab.pdfViewerController.isReady
+                  ? widget.tab.pdfViewerController.pageNumber!
+                  : 1;
+              bool bookmarkAdded = Provider.of<AppModel>(context, listen: false)
+                  .addBookmark(
+                      ref: '${widget.tab.title} עמוד $index',
+                      book: widget.tab.book,
+                      index: index);
+              // notify user
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(bookmarkAdded
+                        ? 'הסימניה נוספה בהצלחה'
+                        : 'הסימניה כבר קיימת'),
+                  ),
+                );
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(
               Icons.zoom_in,
             ),
             tooltip: 'הגדל',
-            onPressed: () => widget..tab.pdfViewerController.zoomUp(),
+            onPressed: () => widget.tab.pdfViewerController.zoomUp(),
           ),
           IconButton(
             icon: const Icon(Icons.zoom_out),
