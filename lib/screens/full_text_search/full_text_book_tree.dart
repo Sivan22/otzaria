@@ -51,6 +51,7 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
                   } else {
                     removeCategory(category);
                   }
+                  widget.tab.booksToSearch.notifyListeners();
                 }),
             const Icon(Icons.folder),
           ], // Icon(Icons.folder,
@@ -93,7 +94,6 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
     for (Category subCategory in category.subCategories) {
       addCategory(subCategory);
     }
-    widget.tab.booksToSearch.notifyListeners();
   }
 
   void removeCategory(Category category) {
@@ -103,8 +103,6 @@ class _FullTextBookTreeState extends State<FullTextBookTree> {
     for (Category subCategory in category.subCategories) {
       removeCategory(subCategory);
     }
-
-    widget.tab.booksToSearch.notifyListeners();
   }
 
   bool isCategoryChecked(Category category) {
