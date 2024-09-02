@@ -52,12 +52,14 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch> {
           widget.tab.results = TantivyDataProvider.instance.searchTexts(
               '"${widget.tab.queryController.text.replaceAll('"', '\\"')}"',
               booksToSearch,
-              widget.tab.numResults.value);
+              widget.tab.numResults.value,
+              false);
         } else {
           widget.tab.results = TantivyDataProvider.instance.searchTexts(
               widget.tab.queryController.text,
               booksToSearch,
-              widget.tab.numResults.value);
+              widget.tab.numResults.value,
+              true);
         }
       }
     });
@@ -239,17 +241,15 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch> {
                                                     builder: (context, ref) {
                                                       if (!ref.hasData) {
                                                         return Text(
-                                                            '${snapshot.data![index].title} ...');
+                                                            '[תוצאה ${index + 1}] ${snapshot.data![index].title} ...');
                                                       }
                                                       return Text(
-                                                        ref.data!,
+                                                        '[תוצאה ${index + 1}] ${ref.data!}',
                                                       );
                                                     }),
                                             subtitle: Html(
-                                                data: highLight(
-                                                    snapshot.data![index].text,
-                                                    widget.tab.queryController
-                                                        .text)),
+                                              data: snapshot.data![index].text,
+                                            ),
                                           );
                                         },
                                       ),

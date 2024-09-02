@@ -36,15 +36,17 @@ class TantivyDataProvider {
           'index');
 
   Future<List<SearchResult>> searchTexts(
-      String query, List<String> books, int limit) async {
+      String query, List<String> books, int limit, bool fuzzy) async {
     final index = await engine;
-    return await index.search(query: query, books: books, limit: limit);
+    return await index.search(
+        query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
 
   Stream<List<SearchResult>> searchTextsStream(
-      String query, List<String> books, int limit) async* {
+      String query, List<String> books, int limit, bool fuzzy) async* {
     final index = await engine;
-    yield* index.searchStream(query: query, books: books, limit: limit);
+    yield* index.searchStream(
+        query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
 
   addAllTBooksToTantivy(Library library,
