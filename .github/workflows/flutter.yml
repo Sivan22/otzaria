@@ -15,6 +15,12 @@ jobs:
         with:
           channel: stable
       - run: flutter build windows
+      - run: dart run msix:create
+      - name: Upload windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria.msix
+          path: build/windows/x64/runner/release/otzaria.msix
 
   build_linux:
     runs-on: ubuntu-latest
