@@ -37,7 +37,7 @@ jobs:
           sudo apt-get install -y ninja-build  libgtk-3-0 libblkid1 liblzma5
       - run: flutter build linux
       - name: zip the bundle
-      - run: zip -r otzaria-linux.zip build/linux/release/bundle 
+        run: zip -r otzaria-linux.zip build/linux/release/bundle 
       - name: Upload linux build
         uses: actions/upload-artifact@v4
         with:
