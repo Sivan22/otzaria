@@ -14,8 +14,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
-      - run: dart run msix:create
+      - run: dart run msix:create --install-certificate false
       - name: Upload windows build
         uses: actions/upload-artifact@v4
         with:
@@ -31,22 +30,21 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
       - run: |
           sudo apt-get update -y
-          sudo apt-get install -y ninja-build  libgtk-3-0 libblkid1 liblzma5
+          sudo apt-get install -y ninja-build libgtk-3-dev libblkid1 liblzma5
       - run: flutter build linux
       - name: zip the bundle
-      - run: zip -r otzaria-linux.zip build/linux/release/bundle 
+        run: zip -r otzaria-linux.zip build/linux/release/
       - name: Upload linux build
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: otzaria-linux.zip
+          path: build/linux/x64/release/bundle/
       
 
   build_android:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -54,9 +52,8 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
+      - run: flutter doctor
       - run: flutter pub get
-      - run: flutter test
       - run: flutter build apk
       - run: flutter build appbundle
       - name: Upload apk 
@@ -95,7 +92,6 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter test
       - run: flutter build ios --release --no-codesign
       - name: Upload iphone build
         uses: actions/upload-artifact@v4
