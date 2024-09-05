@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: otzaria-linux.zip
+          path: build/linux/x64/release/bundle/
       
 
   build_android:
