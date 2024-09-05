@@ -55,6 +55,9 @@ jobs:
         with:
           channel: stable
           cache: true
+      - run: sudo apt update &&  apt install snapd
+      - run: sudo apt install openjdk-18-jdk      
+      - run: sudo snap install android-studio --classic
       - run: flutter doctor -v
       - run: flutter pub get
       - run: flutter build apk
