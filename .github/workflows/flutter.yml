@@ -1,0 +1,113 @@
+name: 'Build for all platforms'
+
+on:
+  workflow_dispatch
+  
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: dart run msix:create
+      - name: Upload windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria.msix
+          path: build/windows/x64/runner/release/otzaria.msix
+
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build  libgtk-3-0 libblkid1 liblzma5
+      - run: flutter build linux
+      - name: zip the bundle
+      - run: zip -r otzaria-linux.zip build/linux/release/bundle 
+      - name: Upload linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-linux.zip
+          path: otzaria-linux.zip
+      
+
+  build_android:
+    runs-on: windows-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build apk
+      - run: flutter build appbundle
+      - name: Upload apk 
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-android.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build_macos:
+    runs-on: macos-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build macos
+      - name: Upload macos build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-macos.app
+          path: build/macos/Build/Products/Release/otzaria.app
+
+      
+      
+  build_ios:
+    runs-on: macos-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build ios --release --no-codesign
+      - name: Upload iphone build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-iphone.app
+          path: build/ios/iphoneos/Runner.app
+
+
+
+
+  
+            
+
+
+ 
