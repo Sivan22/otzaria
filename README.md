@@ -213,8 +213,9 @@ the project was avavilable because of Sefaria's amazing project.
 and Dicta association, by which many important books were added.
 <br>
 <br>
-<img src="images/safria logo.png" alt="ספריא" width="154" height="80"/>
-<img src="images/dicta_logo.jpg" alt="דיקטה" width="154" height="80"/>
+<a href="https://www.sefaria.org/texts" title="ספריא" target="_blank"><img src="images/safria logo.png" alt="ספריא" width="154" height="80"/></a>
+<a href="https://github.com/Dicta-Israel-Center-for-Text-Analysis/Dicta-Library-Download" title="דיקטה" target="_blank"><img src="images/dicta_logo.jpg" alt="דיקטה" width="154" height="80"/></a>
+
 
 the PDF viewer is powered by [pdfrx](https://pub.dev/packages/pdfrx).
 
