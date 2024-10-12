@@ -41,13 +41,12 @@ Future<TocEntry?> _findDafInToc(TextBook book, String daf) async {
 }
 
 Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
-  daf = daf.replaceAll('.', ', א').replaceAll(':', ', ב').replaceAll('דף ', '');
   final outlines = await PdfDocument.openFile(book.path)
       .then((value) => value.loadOutline());
   PdfOutlineNode? findDafInEntries(List<PdfOutlineNode> entries) {
     for (var entry in entries) {
       String ref = entry.title;
-      if (ref == '${book.title}$daf') {
+      if (ref.contains('דף ${daf.trim()}')) {
         return entry;
       }
       // Recursively search in children

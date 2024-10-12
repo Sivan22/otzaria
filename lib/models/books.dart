@@ -12,6 +12,9 @@ abstract class Book {
   /// The title of the book.
   final String title;
 
+  /// Additional titles of the book, if available.
+  final List<String>? extraTitles;
+
   /// an access to the data layer
   final FileSystemData data = FileSystemData.instance;
 
@@ -50,30 +53,31 @@ abstract class Book {
   /// Creates a new `Book` instance.
   ///
   /// The [title] parameter is required and cannot be null.
-  Book({
-    required this.title,
-    this.author,
-    this.heShortDesc,
-    this.pubDate,
-    this.pubPlace,
-    this.order = 999,
-    this.topics = '',
-  });
+  Book(
+      {required this.title,
+      this.author,
+      this.heShortDesc,
+      this.pubDate,
+      this.pubPlace,
+      this.order = 999,
+      this.topics = '',
+      this.extraTitles});
 }
 
 ///a representation of a text book (opposite PDF book).
 ///a text book has a getter 'text' which returns a [Future] that resolvs to a [String].
 ///it has also a 'tableOfContents' field that returns a [Future] that resolvs to a list of [TocEntry]s
 class TextBook extends Book {
-  TextBook({
-    required String title,
-    super.author,
-    super.heShortDesc,
-    super.pubDate,
-    super.pubPlace,
-    super.order = 999,
-    super.topics,
-  }) : super(title: title);
+  TextBook(
+      {required String title,
+      super.author,
+      super.heShortDesc,
+      super.pubDate,
+      super.pubPlace,
+      super.order = 999,
+      super.topics,
+      super.extraTitles})
+      : super(title: title);
 
   /// Retrieves the table of contents of the book.
   ///

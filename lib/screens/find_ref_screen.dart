@@ -4,7 +4,6 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/screens/ref_indexing_screen.dart';
-import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:provider/provider.dart';
 
 class FindRefScreen extends StatefulWidget {
@@ -14,7 +13,10 @@ class FindRefScreen extends StatefulWidget {
   State<FindRefScreen> createState() => _FindRefScreenState();
 }
 
-class _FindRefScreenState extends State<FindRefScreen> {
+class _FindRefScreenState extends State<FindRefScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final TextEditingController _searchController = TextEditingController();
   late Future<List<Ref>> _refs;
 
@@ -63,6 +65,7 @@ class _FindRefScreenState extends State<FindRefScreen> {
                       onPressed: () {
                         setState(() {
                           _searchController.clear();
+                          _refs = findRefs(_searchController.text);
                         });
                       },
                     ),

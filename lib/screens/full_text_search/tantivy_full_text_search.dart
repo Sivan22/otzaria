@@ -16,7 +16,11 @@ class TantivyFullTextSearch extends StatefulWidget {
   State<TantivyFullTextSearch> createState() => _TantivyFullTextSearchState();
 }
 
-class _TantivyFullTextSearchState extends State<TantivyFullTextSearch> {
+class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   ValueNotifier isLeftPaneOpen = ValueNotifier(false);
 
   @override
