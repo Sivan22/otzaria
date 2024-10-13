@@ -5,6 +5,178 @@ import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+class SettingsScreen extends StatefulWidget {
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final storage = const FlutterSecureStorage();
+  String? lockCode;
+  bool isLocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    loadLockCode();
+  }
+
+  Future<void> loadLockCode() async {
+    lockCode = await storage.read(key: 'settings_lock_code');
+    if (lockCode != null) {
+      setState(() {
+        isLocked = true;
+      });
+    }
+  }
+
+  Future<void> saveLockCode(String code) async {
+    await storage.write(key: 'settings_lock_code', value: code);
+    setState(() {
+      lockCode = code;
+      isLocked = true;
+    });
+  }
+
+  Future<void> _showUnlockDialog() async {
+    String inputCode = '';
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('הזן קוד נעילה'),
+          content: TextField(
+            onChanged: (value) {
+              inputCode = value;
+            },
+            decoration: InputDecoration(hintText: "הכנס קוד"),
+            obscureText: true,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('ביטול'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('אישור'),
+              onPressed: () {
+                if (inputCode == lockCode) {
+                  setState(() {
+                    isLocked = false;
+                  });
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('קוד לא נכון')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showSetLockDialog() async {
+    String newCode = '';
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('הגדר קוד נעילה'),
+          content: TextField(
+            onChanged: (value) {
+              newCode = value;
+            },
+            decoration: InputDecoration(hintText: "הכנס קוד חדש"),
+            obscureText: true,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('ביטול'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('שמור'),
+              onPressed: () {
+                if (newCode.isNotEmpty) {
+                  saveLockCode(newCode);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _clearLockCode() async {
+    await storage.delete(key: 'settings_lock_code');
+    setState(() {
+      lockCode = null;
+      isLocked = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('הגדרות'),
+      ),
+      body: isLocked
+          ? Center(
+              child: ElevatedButton(
+                onPressed: _showUnlockDialog,
+                child: Text('הזן קוד נעילה כדי לפתוח'),
+              ),
+            )
+          : ListView(
+              padding: EdgeInsets.all(16),
+              children: <Widget>[
+                ListTile(
+                  title: Text('אפשרות א'),
+                  subtitle: Text('הגדרה ראשונה'),
+                  trailing: Switch(
+                    value: true,
+                    onChanged: (bool value) {
+                      // שינוי ההגדרות
+                    },
+                  ),
+                ),
+                ListTile(
+                  title: Text('אפשרות ב'),
+                  subtitle: Text('הגדרה שנייה'),
+                  trailing: Switch(
+                    value: false,
+                    onChanged: (bool value) {
+                      // שינוי ההגדרות
+                    },
+                  ),
+                ),
+                Divider(),
+                ListTile(
+                  title: Text('הגדר קוד נעילה'),
+                  onTap: _showSetLockDialog,
+                ),
+                ListTile(
+                  title: Text('מחק קוד נעילה'),
+                  onTap: _clearLockCode,
+                ),
+              ],
+            ),
+    );
+  }
+}
 
 class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({
@@ -58,66 +230,66 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
     };
 
     return Scaffold(
-      body: Consumer<AppModel>(
-        builder: (context, appModel, child) {
-          return Center(
-            child: SettingsScreen(
-              title: 'הגדרות',
-              children: [
-                SettingsGroup(
-                  titleAlignment: Alignment.centerRight,
-                  title: 'הגדרות עיצוב',
-                  titleTextStyle: const TextStyle(fontSize: 25),
-                  children: <Widget>[
-                    SwitchSettingsTile(
-                      settingKey: 'key-dark-mode',
-                      title: 'מצב כהה',
-                      enabledLabel: 'מופעל',
-                      disabledLabel: 'לא מופעל',
-                      leading: const Icon(Icons.nightlight_round_outlined),
-                      onChange: (value) {
-                        appModel.isDarkMode.value = value;
-                      },
-                    ),
-                    ColorPickerSettingsTile(
-                        title: 'צבע בסיס',
-                        leading: const Icon(Icons.color_lens),
-                        settingKey: 'key-swatch-color',
-                        onChange: (p0) {
-                          appModel.seedColor.value = p0;
-                        }),
-                    const SliderSettingsTile(
-                      title: 'גודל גופן התחלתי בספרים',
-                      settingKey: 'key-font-size',
-                      defaultValue: 30,
-                      min: 15,
-                      max: 60,
-                      step: 1,
-                      leading: Icon(Icons.format_size),
-                      decimalPrecision: 0,
-                    ),
-                    DropDownSettingsTile<String>(
-                      title: 'גופן',
-                      settingKey: 'key-font-family',
-                      values: const <String, String>{
-                        'TaameyDavidCLM': 'דוד',
-                        'FrankRuhlCLM': 'פרנק-רוהל',
-                        'TaameyAshkenaz': 'טעמי אשכנז',
-                        'KeterYG': 'כתר',
-                        'Shofar': 'שופר',
-                        'NotoSerifHebrew': 'נוטו',
-                        'Tinos': 'טינוס',
-                        'NotoRashiHebrew': 'רש"י',
-                        'Candara': 'קנדרה',
-                        'roboto': 'רובוטו',
-                        'Calibri': 'קליברי',
-                        'Arial': 'אריאל',
-                      },
-                      selected: 'FrankRuhlCLM',
-                      leading: const Icon(Icons.font_download_outlined),
-                      onChange: (value) {},
-                    ),
-                    SliderSettingsTile(
+      body: Consumer<AppModel>(builder: (context, appModel, child) {
+        return Center(
+          child: SettingsScreen(
+            title: 'הגדרות',
+            children: [
+              SettingsGroup(
+                titleAlignment: Alignment.centerRight,
+                title: 'הגדרות עיצוב',
+                titleTextStyle: const TextStyle(fontSize: 25),
+                children: <Widget>[
+                  SwitchSettingsTile(
+                    settingKey: 'key-dark-mode',
+                    title: 'מצב כהה',
+                    enabledLabel: 'מופעל',
+                    disabledLabel: 'לא מופעל',
+                    leading: const Icon(Icons.nightlight_round_outlined),
+                    onChange: (value) {
+                      appModel.isDarkMode.value = value;
+                    },
+                  ),
+                  ColorPickerSettingsTile(
+                    title: 'צבע בסיס',
+                    leading: const Icon(Icons.color_lens),
+                    settingKey: 'key-swatch-color',
+                    onChange: (p0) {
+                      appModel.seedColor.value = p0;
+                    },
+                  ),
+                  const SliderSettingsTile(
+                    title: 'גודל גופן התחלתי בספרים',
+                    settingKey: 'key-font-size',
+                    defaultValue: 30,
+                    min: 15,
+                    max: 60,
+                    step: 1,
+                    leading: Icon(Icons.format_size),
+                    decimalPrecision: 0,
+                  ),
+                  DropDownSettingsTile<String>(
+                    title: 'גופן',
+                    settingKey: 'key-font-family',
+                    values: const <String, String>{
+                      'TaameyDavidCLM': 'דוד',
+                      'FrankRuhlCLM': 'פרנק-רוהל',
+                      'TaameyAshkenaz': 'טעמי אשכנז',
+                      'KeterYG': 'כתר',
+                      'Shofar': 'שופר',
+                      'NotoSerifHebrew': 'נוטו',
+                      'Tinos': 'טינוס',
+                      'NotoRashiHebrew': 'רש"י',
+                      'Candara': 'קנדרה',
+                      'roboto': 'רובוטו',
+                      'Calibri': 'קליברי',
+                      'Arial': 'אריאל',
+                    },
+                    selected: 'FrankRuhlCLM',
+                    leading: const Icon(Icons.font_download_outlined),
+                    onChange: (value) {},
+                  ),
+                  SliderSettingsTile(
                       title: 'רוחב השוליים בצידי הטקסט',
                       settingKey: 'key-padding-size',
                       defaultValue: 10,
@@ -135,7 +307,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                     : const SettingsGroup(
                         titleAlignment: Alignment.centerRight,
                         title: "קיצורי מקשים",
-                        titleTextStyle: TextStyle(fontSize: 25),
+                        titleTextStyle: const TextStyle(fontSize: 25),
                         children: [
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+l',
