@@ -175,8 +175,11 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                             ValueListenableBuilder(
                               valueListenable: widget.tab.documentRef,
                               builder: (context, documentRef, child) => child!,
-                              child:
-                                  PdfBookSearchView(textSearcher: textSearcher),
+                              child: PdfBookSearchView(
+                                textSearcher: textSearcher,
+                                searchTextController:
+                                    widget.tab.searchController,
+                              ),
                             ),
                             ValueListenableBuilder(
                               valueListenable: widget.tab.documentRef,

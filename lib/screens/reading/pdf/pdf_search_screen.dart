@@ -10,7 +10,9 @@ class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     super.key,
     required this.textSearcher,
+    required this.searchTextController,
   });
+  final TextEditingController searchTextController;
 
   final PdfTextSearcher textSearcher;
 
@@ -20,13 +22,14 @@ class PdfBookSearchView extends StatefulWidget {
 
 class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   final focusNode = FocusNode();
-  final searchTextController = TextEditingController();
+  late TextEditingController searchTextController;
   late final pageTextStore =
       PdfPageTextCache(textSearcher: widget.textSearcher);
   final scrollController = ScrollController();
 
   @override
   void initState() {
+    searchTextController = widget.searchTextController;
     widget.textSearcher.addListener(_searchResultUpdated);
     searchTextController.addListener(_searchTextUpdated);
     super.initState();

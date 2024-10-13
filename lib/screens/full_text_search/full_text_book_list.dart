@@ -39,6 +39,7 @@ class _FullTextBookListState extends State<FullTextBookList> {
       allTopicsSet.addAll(book.topics.split(', '));
     }
     allTopics = allTopicsSet.toList();
+    allTopics.sort();
   }
 
   @override

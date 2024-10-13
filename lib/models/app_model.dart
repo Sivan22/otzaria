@@ -198,7 +198,7 @@ class AppModel with ChangeNotifier {
   ///
   /// Does not return anything.
   void openNewSearchTab() {
-    _addTab(SearchingTab('חיפוש'));
+    _addTab(SearchingTab('חיפוש', ''));
   }
 
   /// Adds a new tab to the list of opened tabs.

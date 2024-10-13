@@ -186,6 +186,10 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                                                     .read<AppModel>()
                                                     .openTab(
                                                         PdfBookTab(
+                                                            searchText: widget
+                                                                .tab
+                                                                .queryController
+                                                                .text,
                                                             PdfBook(
                                                                 title: snapshot
                                                                     .data![
