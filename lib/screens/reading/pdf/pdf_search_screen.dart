@@ -29,7 +29,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
 
   @override
   void initState() {
-    searchTextController = widget.searchTextController;
+    searchTextController = TextEditingController();
     widget.textSearcher.addListener(_searchResultUpdated);
     searchTextController.addListener(_searchTextUpdated);
     super.initState();

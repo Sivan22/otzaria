@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 void openDafYomiBook(BuildContext context, String tractate, String daf) async {
   final appModel = Provider.of<AppModel>(context, listen: false);
-  final book = await appModel.findBookByTitle(tractate);
+  final book = await appModel.findBookByTitle(tractate, pdf: true);
   var index = 0;
   if (book != null) {
     if (book is TextBook) {
@@ -62,12 +62,29 @@ Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
 }
 
 openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
+  ref = ref.trim();
   final appModel = Provider.of<AppModel>(context, listen: false);
-  final book = await appModel.findBookByTitle(bookname);
+  final book = await appModel.findBookByTitle(bookname, pdf: true);
 
   if (book != null && book is PdfBook) {
     final outline = await getDafYomiOutline(book, ref);
     appModel.openBook(book, outline?.dest?.pageNumber ?? 0, openLeftPane: true);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('הספר אינו קיים'),
+      ),
+    );
+  }
+}
+
+openTextBookFromRef(String bookname, String ref, BuildContext context) async {
+  final appModel = Provider.of<AppModel>(context, listen: false);
+  final book = await appModel.findBookByTitle(bookname);
+
+  if (book != null && book is TextBook && book.title == bookname) {
+    final tocEntry = await _findDafInToc(book, ref);
+    appModel.openBook(book, tocEntry?.index ?? 0, openLeftPane: true);
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

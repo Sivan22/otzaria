@@ -52,7 +52,7 @@ class _WorkspacesViewState extends State<WorkspacesView> {
                                   appModel.currentView.value = Screens.reading;
                                 },
                                 trailing: SizedBox.fromSize(
-                                  size: Size.fromWidth(120),
+                                  size: const Size.fromWidth(120),
                                   child: Row(
                                     children: [
                                       SizedBox(

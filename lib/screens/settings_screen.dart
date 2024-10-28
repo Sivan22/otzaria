@@ -237,6 +237,57 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                           Settings.setValue('key-show-otzar-hachochma', value);
                         },
                       ),
+                      DropDownSettingsTile(
+                          leading: Icon(Icons.generating_tokens),
+                          title: 'מנוע בינה מלאכותית',
+                          settingKey: 'key-ai-engine',
+                          selected: 'openai',
+                          values: aiEngines),
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                            child: Icon(
+                              Icons.key,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextInputSettingsTile(
+                                title: 'OpenAI API Key',
+                                settingKey: 'key-openai-api-key'),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                            child: Icon(
+                              Icons.key,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextInputSettingsTile(
+                                title: 'Anthropic API Key',
+                                settingKey: 'key-anthropic-api-key'),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                            child: Icon(
+                              Icons.key,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextInputSettingsTile(
+                                title: 'Gemini API Key',
+                                settingKey: 'key-gemini-api-key'),
+                          ),
+                        ],
+                      ),
                     ]),
                 SettingsGroup(
                   title: 'כללי',
@@ -296,3 +347,10 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
     );
   }
 }
+
+Map<String, String> aiEngines = {
+  'openai': 'GPT-4o',
+  'anthropic': 'Claude',
+  'ollama': 'DictaLM',
+  'gemini': 'Gemini',
+};

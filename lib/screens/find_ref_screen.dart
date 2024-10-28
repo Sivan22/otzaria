@@ -38,6 +38,7 @@ class _FindRefScreenState extends State<FindRefScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       drawer: const Drawer(
           shape: RoundedRectangleBorder(

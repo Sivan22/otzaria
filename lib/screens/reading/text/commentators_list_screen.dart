@@ -77,7 +77,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                     : null,
                 fontSize: 11,
               ),
-              labelPadding: EdgeInsets.all(0),
+              labelPadding: const EdgeInsets.all(0),
             ),
           ),
         ),

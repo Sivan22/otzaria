@@ -23,7 +23,7 @@ class FullTextSettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    Expanded(child: Text('חיפוש מקורב')),
+                    const Expanded(child: Text('חיפוש מקורב')),
                     ValueListenableBuilder(
                         valueListenable: tab.aproximateSearch,
                         builder: (context, aproximateSearch, child) {
@@ -35,7 +35,7 @@ class FullTextSettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Center(
+              const Center(
                 child: Text(' מספר תוצאות להצגה'),
               ),
               ValueListenableBuilder(
@@ -134,9 +134,9 @@ class FullTextSettingsScreen extends StatelessWidget {
                                   child: ElevatedButton(
                                       onPressed: () => TantivyDataProvider
                                           .instance.isIndexing.value = false,
-                                      child: Text('עצור')),
+                                      child: const Text('עצור')),
                                 )
-                              : SizedBox.shrink()
+                              : const SizedBox.shrink()
                         ],
                       ),
                     );

@@ -176,17 +176,25 @@ class AppModel with ChangeNotifier {
     currentView.value = Screens.reading;
   }
 
-  Future<Book?> findBookByTitle(String title) async {
+  Future<Book?> findBookByTitle(String title, {bool pdf = false}) async {
     final books = await findBooks(title, null);
 
     if (books.isEmpty) {
       return null;
     }
+    Book exactMatch;
 
-    final exactMatch = books.firstWhere(
-      (book) => book.title == title,
-      orElse: () => books.first,
-    );
+    if (pdf) {
+      exactMatch = books.firstWhere(
+        (book) => book.title == title && book is PdfBook,
+        orElse: () => books.first,
+      );
+    } else {
+      exactMatch = books.firstWhere(
+        (book) => book.title == title && book is TextBook,
+        orElse: () => books.first,
+      );
+    }
 
     return exactMatch;
   }

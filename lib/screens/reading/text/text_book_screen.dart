@@ -5,6 +5,7 @@ import 'package:otzaria/screens/reading/text/combined_book_screen.dart';
 import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/reading/text/splited_view_screen.dart';
 import 'package:otzaria/utils/daf_yomi_helper.dart';
+import 'package:otzaria/screens/reading/text/generative_ui/generative_ai_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/screens/reading/text/text_book_search_screen.dart';
 import 'dart:io';
@@ -60,7 +61,7 @@ class _TextBookViewerState extends State<TextBookViewer>
   @override
   initState() {
     super.initState();
-    tabController = TabController(length: 4, vsync: this);
+    tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -88,7 +89,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     onSelected: () {
                                       openPdfBookFromRef(
                                           snapshot.data!.split(',').first,
-                                          snapshot.data!.split(',')[1],
+                                          snapshot.data!.split(',')[1].trim(),
                                           context);
                                     }),
                               ]),
@@ -137,13 +138,11 @@ class _TextBookViewerState extends State<TextBookViewer>
               onPressed: () async {
                 int index = widget
                     .tab.positionsListener.itemPositions.value.first.index;
-                String ref = await utils.refFromIndex(
-                    index, widget.tab.tableOfContents);
-                bool bookmarkAdded = Provider.of<AppModel>(context, listen: false)
-                    .addBookmark(
-                        ref: ref,
-                        book: widget.tab.book,
-                        index: index);
+                String ref =
+                    await utils.refFromIndex(index, widget.tab.tableOfContents);
+                bool bookmarkAdded =
+                    Provider.of<AppModel>(context, listen: false).addBookmark(
+                        ref: ref, book: widget.tab.book, index: index);
                 // notify user
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -404,8 +403,10 @@ class _TextBookViewerState extends State<TextBookViewer>
                       Tab(text: 'ניווט'),
                       Tab(text: 'חיפוש'),
                       Tab(text: 'פרשנות'),
-                      Tab(text: 'קישורים')
+                      Tab(text: 'קישורים'),
+                      Tab(text: 'AI')
                     ],
+                    isScrollable: true,
                     controller: tabController,
                     onTap: (value) {
                       if (value == 1 && !Platform.isAndroid) {
@@ -447,6 +448,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                   }, child: buildSearchView()),
                   buildCommentaryView(),
                   buildLinkView(),
+                  ChatbotInterface(tab: widget.tab),
                 ],
               ),
             ),
@@ -479,14 +481,12 @@ class _TextBookViewerState extends State<TextBookViewer>
     );
   }
 
-  LinksViewer buildLinkView() {
-    return LinksViewer(
-      links: widget.tab.links,
-      openTabcallback: widget.openBookCallback,
-      itemPositionsListener: widget.tab.positionsListener,
-      closeLeftPanelCallback: closeLeftPane,
-    );
-  }
+  Widget buildLinkView() => LinksViewer(
+        links: widget.tab.links,
+        openTabcallback: widget.openBookCallback,
+        itemPositionsListener: widget.tab.positionsListener,
+        closeLeftPanelCallback: closeLeftPane,
+      );
 
   CommentatorsListView buildCommentaryView() {
     return CommentatorsListView(

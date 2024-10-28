@@ -71,6 +71,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: ValueListenableBuilder(
           valueListenable: isLeftPaneOpen,
@@ -78,7 +79,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
             return Row(
               children: [
                 !isLeftPaneOpen.value
-                    ? SizedBox.shrink()
+                    ? const SizedBox.shrink()
                     : Column(
                         children: [
                           Padding(
@@ -90,7 +91,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                               },
                             ),
                           ),
-                          Expanded(child: SizedBox.shrink()),
+                          const Expanded(child: SizedBox.shrink()),
                         ],
                       ),
                 AnimatedSize(
@@ -112,7 +113,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                         Row(
                           children: [
                             isLeftPaneOpen.value
-                                ? SizedBox.shrink()
+                                ? const SizedBox.shrink()
                                 : Padding(
                                     padding:
                                         const EdgeInsets.fromLTRB(0, 0, 8, 0),
@@ -232,9 +233,8 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                                               }
                                             },
                                             title: snapshot.data![index].isPdf
-                                                ? Text(snapshot
-                                                        .data![index].title +
-                                                    ' עמוד ${snapshot.data![index].segment.toInt() + 1}')
+                                                ? Text(
+                                                    '${snapshot.data![index].title} עמוד ${snapshot.data![index].segment.toInt() + 1}')
                                                 : FutureBuilder(
                                                     future: refFromIndex(
                                                         snapshot.data![index]

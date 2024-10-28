@@ -82,7 +82,7 @@ class _ReadingScreenState extends State<ReadingScreen>
               return Scaffold(
                 appBar: AppBar(
                     title: Container(
-                      constraints: BoxConstraints(maxHeight: 50),
+                      constraints: const BoxConstraints(maxHeight: 50),
                       child: TabBar(
                         controller: controller,
                         isScrollable: true,
