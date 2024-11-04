@@ -55,17 +55,20 @@ class IsarDataProvider {
         }
 
         searchToc(toc);
-        for (final TocEntry entry in alltocs) {
-          final ref = Ref(
-              id: isar.refs.autoIncrement(),
-              ref: entry.text
-                  .replaceAll('"', '')
-                  .replaceAll("'", '')
-                  .replaceAll('״', ''),
-              bookTitle: book.title,
-              index: entry.index,
-              pdfBook: false);
-          refs.add(ref);
+        for (String title in book.extraTitles ?? [book.title]) {
+          for (final TocEntry entry in alltocs) {
+            final ref = Ref(
+                id: isar.refs.autoIncrement(),
+                ref: entry.text
+                    .replaceAll(book.title, title)
+                    .replaceAll('"', '')
+                    .replaceAll("'", '')
+                    .replaceAll('״', ''),
+                bookTitle: book.title,
+                index: entry.index,
+                pdfBook: false);
+            refs.add(ref);
+          }
         }
         isar.write((isar) => isar.refs.putAll(refs));
         print('Done creating refs for ${book.title} ');

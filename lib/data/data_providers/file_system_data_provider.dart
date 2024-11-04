@@ -95,7 +95,8 @@ class FileSystemData {
                 pubDate: metadata[title]?['pubDate'],
                 pubPlace: metadata[title]?['pubPlace'],
                 order: metadata[title]?['order'] ?? 999,
-                topics: topics.join(', ')));
+                topics: topics.join(', '),
+                extraTitles: metadata[title]?['extraTitles']));
           }
         }
       }
@@ -306,12 +307,17 @@ class FileSystemData {
         'heShortDesc': row['heShortDesc'] ?? '',
         'pubDate': row['pubDate'] ?? '',
         'pubPlace': row['pubPlace'] ?? '',
+        'extraTitles': row['extraTitles'] == null
+            ? [row['title'].toString()]
+            : row['extraTitles'].map<String>((e) => e.toString()).toList()
+                as List<String>,
+
         // get order in int even if the value is null or double
         'order': row['order'] == null || row['order'] == ''
             ? 999
             : row['order'].runtimeType == double
                 ? row['order'].toInt()
-                : row['order'] as int
+                : row['order'] as int,
       };
     }
   }

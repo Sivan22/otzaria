@@ -4,7 +4,7 @@ import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 
 String stripHtmlIfNeeded(String text) {
-  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
+  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
 }
 
 String removeVolwels(String s) {

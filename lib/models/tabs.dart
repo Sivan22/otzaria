@@ -65,6 +65,10 @@ class PdfBookTab extends OpenedTab {
 
   final documentRef = ValueNotifier<PdfDocumentRef?>(null);
 
+  final TextEditingController searchController = TextEditingController();
+
+  final String searchText;
+
   ///a flag that tells if the left pane should be shown
   late final ValueNotifier<bool> showLeftPane;
 
@@ -75,9 +79,11 @@ class PdfBookTab extends OpenedTab {
   ///
   /// The [book] parameter represents the PDF book, and the [pageNumber]
   /// parameter represents the current page number.
-  PdfBookTab(this.book, this.pageNumber, {bool openLeftPane = false})
+  PdfBookTab(this.book, this.pageNumber,
+      {bool openLeftPane = false, this.searchText = ''})
       : super(book.title) {
     showLeftPane = ValueNotifier<bool>(openLeftPane);
+    searchController.text = searchText;
   }
 
   /// Creates a new instance of [PdfBookTab] from a JSON map.
@@ -285,17 +291,23 @@ class SearchingTab extends OpenedTab {
 
   SearchingTab(
     super.title,
+    String? searchText,
   ) {
-    () async {}();
+    if (searchText != null) {
+      queryController.text = searchText;
+    }
   }
-
   @override
   factory SearchingTab.fromJson(Map<String, dynamic> json) {
-    return SearchingTab(json['title']);
+    return SearchingTab(json['title'], json['searchText']);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {'title': title, 'type': 'SearchingTabWindow'};
+    return {
+      'title': title,
+      'searchText': queryController.text,
+      'type': 'SearchingTabWindow'
+    };
   }
 }

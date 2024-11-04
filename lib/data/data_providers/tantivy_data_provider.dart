@@ -9,6 +9,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:hive/hive.dart';
 
 class TantivyDataProvider {
   static final TantivyDataProvider _singleton = TantivyDataProvider();
@@ -20,14 +21,21 @@ class TantivyDataProvider {
   late List booksDone;
 
   TantivyDataProvider() {
-    booksDone = Settings.getValue<List>(
-          'key-books-done',
-        ) ??
-        [];
+    booksDone = Hive.box(
+            name: 'books_indexed',
+            directory: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+                Platform.pathSeparator +
+                'index')
+        .get('key-books-done', defaultValue: []);
   }
 
   saveBooksDoneToDisk() {
-    Settings.setValue('key-books-done', booksDone);
+    Hive.box(
+            name: 'books_indexed',
+            directory: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+                Platform.pathSeparator +
+                'index')
+        .put('key-books-done', booksDone);
   }
 
   final engine = SearchEngine.newInstance(

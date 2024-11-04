@@ -164,11 +164,15 @@ class _ReadingScreenState extends State<ReadingScreen>
                                                 rejectedData) =>
                                             Tab(
                                           child: Row(children: [
-                                            Text(
-                                              tab is SearchingTab
-                                                  ? '${tab.title}:  ${tab.searcher.queryController.text}'
-                                                  : tab.title,
-                                            ),
+                                            tab is SearchingTab
+                                                ? ValueListenableBuilder(
+                                                    valueListenable:
+                                                        tab.queryController,
+                                                    builder: (context, value,
+                                                            child) =>
+                                                        Text(
+                                                            '${tab.title}:  ${tab.queryController.text}'))
+                                                : Text(tab.title),
                                             IconButton(
                                                 onPressed: () {
                                                   appModel.closeTab(tab);
