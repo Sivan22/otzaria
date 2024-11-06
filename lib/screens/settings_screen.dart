@@ -243,6 +243,14 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                   titleAlignment: Alignment.centerRight,
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
+                    SwitchSettingsTile(
+                      title: 'סינכרון אוטומטי',
+                      leading: Icon(Icons.sync),
+                      settingKey: 'key-auto-sync',
+                      defaultValue: true,
+                      enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
+                      disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
+                    ),
                     SimpleSettingsTile(
                       title: 'מיקום הספרייה',
                       subtitle: Settings.getValue<String>('key-library-path') ??

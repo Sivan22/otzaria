@@ -7,7 +7,9 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/utils/daf_yomi_helper.dart';
 import 'package:otzaria/utils/extraction.dart';
+import 'package:otzaria/utils/file_sync_service.dart';
 import 'package:otzaria/widgets/daf_yomi.dart';
+import 'package:otzaria/widgets/file_sync_widget.dart';
 import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
 import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 import 'package:otzaria/widgets/grid_items.dart';
@@ -63,17 +65,26 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                 children: [
                   Align(
                     alignment: Alignment.centerRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.home),
-                      tooltip: 'חזרה לתיקיה הראשית',
-                      onPressed: () => setState(() {
-                        searchController.clear();
-                        depth = 0;
-                        currentTopCategory =
-                            Provider.of<AppModel>(context, listen: false)
-                                .library;
-                        items = getGrids(currentTopCategory);
-                      }),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.home),
+                          tooltip: 'חזרה לתיקיה הראשית',
+                          onPressed: () => setState(() {
+                            searchController.clear();
+                            depth = 0;
+                            currentTopCategory =
+                                Provider.of<AppModel>(context, listen: false)
+                                    .library;
+                            items = getGrids(currentTopCategory);
+                          }),
+                        ),
+                        SyncIconButton(
+                            fileSync: FileSyncService(
+                                githubOwner: "Sivan22",
+                                repositoryName: "otzaria-library",
+                                branch: "main")),
+                      ],
                     ),
                   ),
                   Expanded(

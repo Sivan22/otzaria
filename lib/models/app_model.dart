@@ -26,6 +26,9 @@ class AppModel with ChangeNotifier {
   /// The data provider for the application.
   DataRepository data = DataRepository.instance;
 
+  /// The path of the library.
+  String libraryPath;
+
   /// The library of books.
   late Future<Library> library;
 
@@ -96,7 +99,7 @@ class AppModel with ChangeNotifier {
   ///
   /// This constructor initializes the library and tabs list, and loads the
   /// tabs list and history from disk.
-  AppModel() {
+  AppModel({required this.libraryPath}) {
     library = data.getLibrary();
     otzarBooks = data.getOtzarBooks();
     hebrewBooks = data.getHebrewBooks();
