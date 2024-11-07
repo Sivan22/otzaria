@@ -71,6 +71,44 @@ class FileSyncService {
     }
   }
 
+  Future<void> _updateLocalManifestForFile(
+      String filePath, Map<String, dynamic> fileInfo) async {
+    try {
+      final manifestFile = File(await _localManifestPath);
+      Map<String, dynamic> localManifest = await _getLocalManifest();
+
+      // Update the manifest for this specific file
+      localManifest[filePath] = fileInfo;
+
+      // Write the updated manifest back to disk
+      await manifestFile.writeAsString(json.encode(localManifest));
+    } catch (e) {
+      print('Error updating local manifest for file $filePath: $e');
+    }
+  }
+
+  Future<void> _removeFromLocalManifest(String filePath) async {
+    try {
+      final manifestFile = File(await _localManifestPath);
+      Map<String, dynamic> localManifest = await _getLocalManifest();
+
+      // Remove the file from the manifest
+      localManifest.remove(filePath);
+
+      // Write the updated manifest back to disk
+      await manifestFile.writeAsString(json.encode(localManifest));
+
+      // Also remove the actual file if it exists
+      final directory = await _localDirectory;
+      final file = File('$directory/$filePath');
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      print('Error removing file $filePath from local manifest: $e');
+    }
+  }
+
   Future<List<String>> checkForUpdates() async {
     final localManifest = await _getLocalManifest();
     final remoteManifest = await _getRemoteManifest();
@@ -94,20 +132,28 @@ class FileSyncService {
     isSyncing = true;
     int count = 0;
     try {
+      final remoteManifest = await _getRemoteManifest();
+      final localManifest = await _getLocalManifest();
+
+      // Find files to update or add
       final filesToUpdate = await checkForUpdates();
 
+      // Download and update manifest for each file individually
       for (final filePath in filesToUpdate) {
         if (isSyncing == false) {
           return count;
         }
         await downloadFile(filePath);
+        await _updateLocalManifestForFile(filePath, remoteManifest[filePath]);
         count++;
       }
 
-      // Update local manifest
-      final remoteManifest = await _getRemoteManifest();
-      final manifestFile = File(await _localManifestPath);
-      await manifestFile.writeAsString(json.encode(remoteManifest));
+      // Remove files that exist locally but not in remote
+      for (final localFilePath in localManifest.keys.toList()) {
+        if (!remoteManifest.containsKey(localFilePath)) {
+          await _removeFromLocalManifest(localFilePath);
+        }
+      }
     } catch (e) {
       print('Error during sync: $e');
       isSyncing = false;
