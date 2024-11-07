@@ -46,7 +46,7 @@ Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
   PdfOutlineNode? findDafInEntries(List<PdfOutlineNode> entries) {
     for (var entry in entries) {
       String ref = entry.title;
-      if (ref.contains(daf)) {
+      if (daf.contains(ref)) {
         return entry;
       }
       // Recursively search in children
@@ -63,9 +63,10 @@ Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
 
 openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
   final appModel = Provider.of<AppModel>(context, listen: false);
-  final book = await appModel.findBookByTitle(bookname);
+  final book =
+      (await appModel.library).findBookByTitle(bookname, PdfBook) as PdfBook?;
 
-  if (book != null && book is PdfBook) {
+  if (book != null) {
     final outline = await getDafYomiOutline(book, ref);
     appModel.openBook(book, outline?.dest?.pageNumber ?? 0, openLeftPane: true);
   } else {

@@ -150,8 +150,12 @@ class FileSyncService {
 
       // Remove files that exist locally but not in remote
       for (final localFilePath in localManifest.keys.toList()) {
+        if (isSyncing == false) {
+          return count;
+        }
         if (!remoteManifest.containsKey(localFilePath)) {
           await _removeFromLocalManifest(localFilePath);
+          count++;
         }
       }
     } catch (e) {

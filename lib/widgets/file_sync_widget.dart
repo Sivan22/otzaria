@@ -57,17 +57,19 @@ class _SyncIconButtonState extends State<SyncIconButton>
 
   // טיפול בלחיצה על הכפתור
   void _handlePress() {
-    // אם יש שגיאה או סנכרון מוצלח, רק מנקים את המצב
-    if (_hasError || _hasNewSync) {
-      _clearState();
+    // אם כבר מסנכרן, מפסיקים את הסנכרון
+    if (widget.fileSync.isSyncing) {
+      widget.fileSync.stopSyncing();
+      setState(() {
+        _status = 'לחץ לסנכרון קבצים';
+      });
+      _rotationController.reset();
       return;
     }
 
-    // אם כבר מסנכרן,
-    if (widget.fileSync.isSyncing) {
-      widget.fileSync.stopSyncing();
-      _status = 'לחץ לסנכרון קבצים';
-      _rotationController.reset();
+    // אם יש שגיאה או סנכרון מוצלח, מנקים את המצב
+    if (_hasError || _hasNewSync) {
+      _clearState();
       return;
     }
 
