@@ -22,8 +22,9 @@ class OtzariaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) =>
-          AppModel(libraryPath: Settings.getValue('key-library-path') ?? '.'),
+      create: (context) => AppModel(
+        Settings.getValue('key-library-path') ?? 'c:\\אוצריא',
+      ),
       builder: (context, child) {
         return Consumer<AppModel>(
           builder: (context, appModel, child) => MaterialApp(

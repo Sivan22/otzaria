@@ -1,7 +1,9 @@
 // a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
+import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/tabs.dart';
@@ -60,8 +62,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                       style: {
                         'body': Style(
                             fontSize: FontSize(widget.textSize),
-                            fontFamily: Settings.getValue('key-font-family') ??
-                                'candara',
+                            fontFamily:
+                                context.read<AppModel>().fontFamily.value,
                             textAlign: TextAlign.justify),
                       }),
                 ),

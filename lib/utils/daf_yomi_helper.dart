@@ -76,3 +76,20 @@ openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
     );
   }
 }
+
+openTextBookFromRef(String bookname, String ref, BuildContext context) async {
+  final appModel = Provider.of<AppModel>(context, listen: false);
+  final book =
+      (await appModel.library).findBookByTitle(bookname, TextBook) as TextBook?;
+
+  if (book != null) {
+    final tocEntry = await _findDafInToc(book, ref);
+    appModel.openBook(book, tocEntry?.index ?? 0, openLeftPane: true);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('הספר אינו קיים'),
+      ),
+    );
+  }
+}

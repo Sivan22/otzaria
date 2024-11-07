@@ -27,7 +27,16 @@ class AppModel with ChangeNotifier {
   DataRepository data = DataRepository.instance;
 
   /// The path of the library.
-  String libraryPath;
+  late String _libraryPath;
+
+  String get libraryPath => _libraryPath;
+
+  set libraryPath(String path) {
+    _libraryPath = path;
+    Settings.setValue('key-library-path', path);
+    library = data.getLibrary();
+    notifyListeners();
+  }
 
   /// The library of books.
   late Future<Library> library;
@@ -71,6 +80,12 @@ class AppModel with ChangeNotifier {
   final ValueNotifier<double> paddingSize = ValueNotifier<double>(
       Settings.getValue<double>('key-padding-size') ?? 10);
 
+  final ValueNotifier<double> fontSize =
+      ValueNotifier<double>(Settings.getValue<double>('key-font-size') ?? 16);
+
+  final ValueNotifier<String> fontFamily = ValueNotifier<String>(
+      Settings.getValue<String>('key-font-family') ?? 'FrankRuhlCLM');
+
   /// if you should show otzar hachochma books
   final ValueNotifier<bool> showOtzarHachochma = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-otzar-hachochma') ?? false,
@@ -99,10 +114,13 @@ class AppModel with ChangeNotifier {
   ///
   /// This constructor initializes the library and tabs list, and loads the
   /// tabs list and history from disk.
-  AppModel({required this.libraryPath}) {
+  AppModel(String libraryPath) {
+    _libraryPath = libraryPath;
     library = data.getLibrary();
     otzarBooks = data.getOtzarBooks();
     hebrewBooks = data.getHebrewBooks();
+
+    fontFamily.addListener(() => notifyListeners());
 
 //load tabs from disk. if fails, delete the tabs from disk
     try {
@@ -457,6 +475,14 @@ class AppModel with ChangeNotifier {
 
   addAllTextsToMimir({int start = 0, int end = 100000}) async {
     data.addAllTextsToMimir(await library, start: start, end: end);
+  }
+
+  Future<void> refreshLibrary() async {
+    if (Settings.getValue('key-library-path') != null) {
+      _libraryPath = Settings.getValue('key-library-path');
+    }
+    library = data.getLibrary();
+    notifyListeners();
   }
 }
 

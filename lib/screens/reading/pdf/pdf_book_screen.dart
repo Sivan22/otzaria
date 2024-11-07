@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/utils/daf_yomi_helper.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:provider/provider.dart';
 import 'pdf_search_screen.dart';
@@ -59,6 +61,37 @@ class _PdfBookViewrState extends State<PdfBookViewr>
           },
         ),
         actions: [
+          FutureBuilder(
+              future: (context.read<AppModel>().library.then((library) =>
+                  library.findBookByTitle(widget.tab.title, TextBook))),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return SizedBox.shrink();
+                }
+                return IconButton(
+                    onPressed: () async {
+                      //find the latest outline
+                      final outlines = await widget
+                          .tab.pdfViewerController.document
+                          .loadOutline();
+                      final outline = outlines[0].children.firstWhere(
+                            (element) =>
+                                element.dest?.pageNumber ==
+                                (widget.tab.pdfViewerController.pageNumber ??
+                                    0),
+                          );
+
+                      openTextBookFromRef(
+                        widget.tab.title,
+                        outline.title,
+                        context,
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.text_snippet,
+                    ),
+                    tooltip: 'פתח ספר טקסט');
+              }),
           IconButton(
             icon: const Icon(
               Icons.bookmark_add,

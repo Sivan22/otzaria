@@ -115,7 +115,9 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                       },
                       selected: 'FrankRuhlCLM',
                       leading: const Icon(Icons.font_download_outlined),
-                      onChange: (value) {},
+                      onChange: (value) {
+                        appModel.fontFamily.value = value;
+                      },
                     ),
                     SliderSettingsTile(
                       title: 'רוחב השוליים בצידי הטקסט',
@@ -261,9 +263,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                             await FilePicker.platform.getDirectoryPath();
                         if (path != null) {
                           Settings.setValue<String>('key-library-path', path);
-                          setState(
-                            () {},
-                          );
+                          context.read<AppModel>().refreshLibrary();
                         }
                       },
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/books.dart';
 import 'package:otzaria/screens/reading/text/combined_book_screen.dart';
 import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/reading/text/splited_view_screen.dart';
@@ -81,20 +82,8 @@ class _TextBookViewerState extends State<TextBookViewer>
                   builder: (context, snapshot) => snapshot.hasData
                       ? Center(
                           child: SelectionArea(
-                            child: ContextMenuRegion(
-                              contextMenu: ContextMenu(entries: [
-                                MenuItem(
-                                    label: 'פתח קובץ PDF מקביל',
-                                    onSelected: () {
-                                      openPdfBookFromRef(
-                                          snapshot.data!.split(',').first,
-                                          snapshot.data!.split(',')[1],
-                                          context);
-                                    }),
-                              ]),
-                              child: Text(snapshot.data!,
-                                  style: const TextStyle(fontSize: 17)),
-                            ),
+                            child: Text(snapshot.data!,
+                                style: const TextStyle(fontSize: 17)),
                           ),
                         )
                       : const SizedBox.shrink(),
@@ -107,6 +96,27 @@ class _TextBookViewerState extends State<TextBookViewer>
                 widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
               }),
           actions: [
+            FutureBuilder(
+                future: context.read<AppModel>().library.then((library) =>
+                    library.findBookByTitle(widget.tab.book.title, PdfBook)),
+                builder: (context, snapshot) => snapshot.hasData
+                    ? IconButton(
+                        icon: const Icon(Icons.picture_as_pdf),
+                        tooltip: 'פתח ספר במהדורה מודפסת ',
+                        onPressed: () async {
+                          openPdfBookFromRef(
+                              widget.tab.book.title,
+                              await utils.refFromIndex(
+                                  widget.tab.positionsListener.itemPositions
+                                          .value.isNotEmpty
+                                      ? widget.tab.positionsListener
+                                          .itemPositions.value.first.index
+                                      : 0,
+                                  widget.tab.book.tableOfContents),
+                              context);
+                        })
+                    : SizedBox.shrink()),
+
             // button to switch between splitted view and combined view
             ValueListenableBuilder(
               valueListenable: widget.tab.showSplitedView,
@@ -137,13 +147,11 @@ class _TextBookViewerState extends State<TextBookViewer>
               onPressed: () async {
                 int index = widget
                     .tab.positionsListener.itemPositions.value.first.index;
-                String ref = await utils.refFromIndex(
-                    index, widget.tab.tableOfContents);
-                bool bookmarkAdded = Provider.of<AppModel>(context, listen: false)
-                    .addBookmark(
-                        ref: ref,
-                        book: widget.tab.book,
-                        index: index);
+                String ref =
+                    await utils.refFromIndex(index, widget.tab.tableOfContents);
+                bool bookmarkAdded =
+                    Provider.of<AppModel>(context, listen: false).addBookmark(
+                        ref: ref, book: widget.tab.book, index: index);
                 // notify user
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

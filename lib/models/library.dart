@@ -96,4 +96,23 @@ class Library extends Category {
             parent: null) {
     parent = this;
   }
+
+  /// Finds a book by its title in the library.
+  ///
+  /// Searches through all books in the library and its subcategories
+  /// for a book with the specified title.
+  ///
+  /// Returns the first matching [Book] or null if no book is found.
+  Book? findBookByTitle(String title, Type? type) {
+    List<Book> allBooks = getAllBooks();
+    try {
+      if (type == null) {
+        return allBooks.firstWhere((book) => book.title == title);
+      }
+      return allBooks.firstWhere(
+          (book) => book.title == title && book.runtimeType == type);
+    } catch (e) {
+      return null;
+    }
+  }
 }
