@@ -24,7 +24,6 @@ import 'package:otzaria/models/links.dart';
 ///  which every book is stored in a file,  and every directory is represents a category.
 /// The metadata is stored in a JSON file.
 class FileSystemData {
-  late String libraryPath;
   Map<String, String> titleToPath = {};
   Map<String, dynamic> metadata = {};
 
@@ -38,14 +37,14 @@ class FileSystemData {
     if (!Settings.isInitialized) {
       await Settings.init(cacheProvider: HiveCache());
     }
-    libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
+
     _updateTitleToPath();
   }
 
   /// Returns the library
   Future<Library> getLibrary() async {
     return _getLibraryFromDirectory(
-        '$libraryPath${Platform.pathSeparator}אוצריא');
+        '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}אוצריא');
   }
 
   Future<Library> _getLibraryFromDirectory(String path) async {
@@ -283,7 +282,8 @@ class FileSystemData {
 
   /// Updates the title to path mapping using the provided library path.
   void _updateTitleToPath() {
-    List<String> paths = getAllBooksPathsFromDirecctory('$libraryPath/אוצריא');
+    List<String> paths =
+        getAllBooksPathsFromDirecctory(Settings.getValue('key-library-path'));
     for (var path in paths) {
       titleToPath[getTitleFromPath(path)] = path;
     }
@@ -293,7 +293,8 @@ class FileSystemData {
   void _fetchMetadata() {
     String metadataString = '';
     try {
-      File file = File('$libraryPath${Platform.pathSeparator}metadata.json');
+      File file = File(
+          '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}metadata.json');
       metadataString = file.readAsStringSync();
     } catch (e) {
       return;

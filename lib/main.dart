@@ -8,7 +8,6 @@ import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 void main() async {
@@ -86,14 +85,6 @@ Future<void> initLibraryPath() async {
   //on windows, if the path is not set, defaults to C:/אוצריא
   if (Platform.isWindows && libraryPath == null) {
     libraryPath = 'C:/אוצריא';
-    Settings.setValue('key-library-path', libraryPath);
-  }
-  //if faild, ask the user to choose the path
-  if (libraryPath == null ||
-      (!Directory('$libraryPath${Platform.pathSeparator}אוצריא')
-          .existsSync())) {
-    libraryPath = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: "הגדר את מיקום הספרייה");
     Settings.setValue('key-library-path', libraryPath);
   }
 }

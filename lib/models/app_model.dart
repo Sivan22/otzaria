@@ -478,9 +478,7 @@ class AppModel with ChangeNotifier {
   }
 
   Future<void> refreshLibrary() async {
-    if (Settings.getValue('key-library-path') != null) {
-      _libraryPath = Settings.getValue('key-library-path');
-    }
+    libraryPath = Settings.getValue<String>('key-library-path') ?? libraryPath;
     library = data.getLibrary();
     notifyListeners();
   }

@@ -76,7 +76,7 @@ dependencies:
   kosher_dart: ^2.0.16
   gematria: ^1.0.0
   csv: ^6.0.0
-
+  archive: ^3.4.10
   filter_list: 1.0.3
   package_info_plus: ^8.0.2
   crypto: ^3.0.5
