@@ -8,12 +8,17 @@ class FileSyncService {
   final String repositoryName;
   final String branch;
   bool isSyncing = false;
+  int _currentProgress = 0;
+  int _totalFiles = 0;
 
   FileSyncService({
     required this.githubOwner,
     required this.repositoryName,
     this.branch = 'main',
   });
+
+  int get currentProgress => _currentProgress;
+  int get totalFiles => _totalFiles;
 
   Future<String> get _localManifestPath async {
     final directory = _localDirectory;
@@ -30,7 +35,7 @@ class FileSyncService {
       if (!await file.exists()) {
         return {};
       }
-      final content = await file.readAsString();
+      final content = await file.readAsString(encoding: utf8);
       return json.decode(content);
     } catch (e) {
       print('Error reading local manifest: $e');
@@ -42,9 +47,16 @@ class FileSyncService {
     final url =
         'https://raw.githubusercontent.com/$githubOwner/$repositoryName/$branch/files_manifest.json';
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Charset': 'utf-8',
+        },
+      );
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        // Explicitly decode as UTF-8
+        return json.decode(utf8.decode(response.bodyBytes));
       }
       throw Exception('Failed to fetch remote manifest');
     } catch (e) {
@@ -57,14 +69,29 @@ class FileSyncService {
     final url =
         'https://raw.githubusercontent.com/$githubOwner/$repositoryName/$branch/$filePath';
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Accept-Charset': 'utf-8',
+        },
+      );
       if (response.statusCode == 200) {
         final directory = await _localDirectory;
         final file = File('$directory/$filePath');
 
         // Create directories if they don't exist
         await file.parent.create(recursive: true);
-        await file.writeAsBytes(response.bodyBytes);
+
+        // For text files, handle UTF-8 encoding explicitly
+        if (filePath.endsWith('.txt') ||
+            filePath.endsWith('.json') ||
+            filePath.endsWith('.csv')) {
+          await file.writeAsString(utf8.decode(response.bodyBytes),
+              encoding: utf8);
+        } else {
+          // For binary files, write bytes directly
+          await file.writeAsBytes(response.bodyBytes);
+        }
       }
     } catch (e) {
       print('Error downloading file $filePath: $e');
@@ -80,8 +107,11 @@ class FileSyncService {
       // Update the manifest for this specific file
       localManifest[filePath] = fileInfo;
 
-      // Write the updated manifest back to disk
-      await manifestFile.writeAsString(json.encode(localManifest));
+      // Write the updated manifest back to disk with UTF-8 encoding
+      await manifestFile.writeAsString(
+        json.encode(localManifest),
+        encoding: utf8,
+      );
     } catch (e) {
       print('Error updating local manifest for file $filePath: $e');
     }
@@ -89,21 +119,24 @@ class FileSyncService {
 
   Future<void> _removeFromLocalManifest(String filePath) async {
     try {
+      // Try to remove the actual file if it exists
+      final directory = await _localDirectory;
+      final file = File('$directory/$filePath');
+      if (await file.exists()) {
+        await file.delete();
+      }
+      //if successful, remove from manifest
       final manifestFile = File(await _localManifestPath);
       Map<String, dynamic> localManifest = await _getLocalManifest();
 
       // Remove the file from the manifest
       localManifest.remove(filePath);
 
-      // Write the updated manifest back to disk
-      await manifestFile.writeAsString(json.encode(localManifest));
-
-      // Also remove the actual file if it exists
-      final directory = await _localDirectory;
-      final file = File('$directory/$filePath');
-      if (await file.exists()) {
-        await file.delete();
-      }
+      // Write the updated manifest back to disk with UTF-8 encoding
+      await manifestFile.writeAsString(
+        json.encode(localManifest),
+        encoding: utf8,
+      );
     } catch (e) {
       print('Error removing file $filePath from local manifest: $e');
     }
@@ -117,7 +150,7 @@ class FileSyncService {
 
     remoteManifest.forEach((filePath, remoteInfo) {
       if (!localManifest.containsKey(filePath) ||
-          localManifest[filePath]['modified'] != remoteInfo['modified']) {
+          localManifest[filePath]['hash'] != remoteInfo['hash']) {
         filesToUpdate.add(filePath);
       }
     });
@@ -131,12 +164,15 @@ class FileSyncService {
     }
     isSyncing = true;
     int count = 0;
+    _currentProgress = 0;
+
     try {
       final remoteManifest = await _getRemoteManifest();
       final localManifest = await _getLocalManifest();
 
       // Find files to update or add
       final filesToUpdate = await checkForUpdates();
+      _totalFiles = filesToUpdate.length;
 
       // Download and update manifest for each file individually
       for (final filePath in filesToUpdate) {
@@ -146,6 +182,7 @@ class FileSyncService {
         await downloadFile(filePath);
         await _updateLocalManifestForFile(filePath, remoteManifest[filePath]);
         count++;
+        _currentProgress = count;
       }
 
       // Remove files that exist locally but not in remote
@@ -156,6 +193,7 @@ class FileSyncService {
         if (!remoteManifest.containsKey(localFilePath)) {
           await _removeFromLocalManifest(localFilePath);
           count++;
+          _currentProgress = count;
         }
       }
     } catch (e) {

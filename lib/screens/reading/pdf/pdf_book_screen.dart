@@ -13,6 +13,7 @@ import '../../../widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:printing/printing.dart';
+import 'package:otzaria/utils/page_converter.dart';
 
 class PdfBookViewr extends StatefulWidget {
   final PdfBookTab tab;
@@ -70,22 +71,20 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 }
                 return IconButton(
                     onPressed: () async {
-                      //find the latest outline
-                      final outlines = await widget
-                          .tab.pdfViewerController.document
-                          .loadOutline();
-                      final outline = outlines[0].children.firstWhere(
-                            (element) =>
-                                element.dest?.pageNumber ==
-                                (widget.tab.pdfViewerController.pageNumber ??
-                                    0),
-                          );
+                      final appModel = context.read<AppModel>();
+                      final textBook = await appModel.library.then((library) =>
+                          library.findBookByTitle(widget.tab.title, TextBook));
 
-                      openTextBookFromRef(
-                        widget.tab.title,
-                        outline.title,
-                        context,
-                      );
+                      if (textBook != null) {
+                        final currentPage =
+                            widget.tab.pdfViewerController.pageNumber ?? 0;
+                        final textIndex = await pdfToTextPage(
+                            widget.tab.title, currentPage, context);
+
+                        if (textIndex != null) {
+                          appModel.openBook(textBook, textIndex);
+                        }
+                      }
                     },
                     icon: const Icon(
                       Icons.text_snippet,

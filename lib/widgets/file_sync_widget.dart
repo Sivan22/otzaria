@@ -77,6 +77,15 @@ class _SyncIconButtonState extends State<SyncIconButton>
     _startSync();
   }
 
+  void _updateStatus() {
+    if (widget.fileSync.isSyncing && widget.fileSync.totalFiles > 0) {
+      setState(() {
+        _status =
+            'מסנכרן קבצים... ${widget.fileSync.currentProgress}/${widget.fileSync.totalFiles}';
+      });
+    }
+  }
+
   // פונקציה שמבצעת את הסנכרון בפועל
   Future<void> _startSync() async {
     setState(() {
@@ -85,7 +94,15 @@ class _SyncIconButtonState extends State<SyncIconButton>
     _rotationController.repeat();
 
     try {
+      // Set up a timer to update the status periodically
+      final statusTimer =
+          Stream.periodic(const Duration(milliseconds: 100)).listen((_) {
+        _updateStatus();
+      });
+
       final results = await widget.fileSync.syncFiles();
+      statusTimer.cancel();
+
       int successCount = results;
 
       setState(() {

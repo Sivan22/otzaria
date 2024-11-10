@@ -6,6 +6,7 @@ import 'package:otzaria/screens/reading/text/combined_book_screen.dart';
 import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/reading/text/splited_view_screen.dart';
 import 'package:otzaria/utils/daf_yomi_helper.dart';
+import 'package:otzaria/utils/page_converter.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/screens/reading/text/text_book_search_screen.dart';
 import 'dart:io';
@@ -104,16 +105,19 @@ class _TextBookViewerState extends State<TextBookViewer>
                         icon: const Icon(Icons.picture_as_pdf),
                         tooltip: 'פתח ספר במהדורה מודפסת ',
                         onPressed: () async {
-                          openPdfBookFromRef(
-                              widget.tab.book.title,
-                              await utils.refFromIndex(
-                                  widget.tab.positionsListener.itemPositions
-                                          .value.isNotEmpty
-                                      ? widget.tab.positionsListener
-                                          .itemPositions.value.first.index
-                                      : 0,
-                                  widget.tab.book.tableOfContents),
+                          final appModel = context.read<AppModel>();
+                          final book = await appModel.library.then((library) =>
+                              library.findBookByTitle(
+                                  widget.tab.title, PdfBook));
+                          final index = await textToPdfPage(
+                              widget.tab.title,
+                              widget.tab.positionsListener.itemPositions.value
+                                      .isNotEmpty
+                                  ? widget.tab.positionsListener.itemPositions
+                                      .value.first.index
+                                  : 0,
                               context);
+                          appModel.openBook(book!, index ?? 0);
                         })
                     : SizedBox.shrink()),
 
