@@ -6,6 +6,14 @@ import 'package:otzaria/models/books.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:provider/provider.dart';
 
+/// Represents a node in the hierarchy with its full path
+class HierarchyNode<T> {
+  final T node;
+  final List<String> path;
+
+  HierarchyNode(this.node, this.path);
+}
+
 /// Converts a text book page index to the corresponding PDF page number
 ///
 /// [bookTitle] is the title of the book
@@ -25,17 +33,18 @@ Future<int?> textToPdfPage(
     return null;
   }
 
-  // Get the TOC entry for the text index
+  // Find the closest TOC entry with its full hierarchy
   final toc = await textBook.tableOfContents;
-  final tocEntry = _findLastEntryBeforeIndex(toc, textIndex);
-  if (tocEntry == null) {
+  final hierarchyNode = _findClosestEntryWithHierarchy(toc, textIndex);
+  if (hierarchyNode == null) {
     return null;
   }
 
-  // Find matching outline entry in PDF
+  // Find matching outline entry in PDF using the hierarchy
   final outlines =
       await PdfDocument.openFile(pdfBook.path).then((doc) => doc.loadOutline());
-  final outlineEntry = _findMatchingOutline(outlines, tocEntry);
+  final outlineEntry =
+      _findMatchingOutlineByHierarchy(outlines, hierarchyNode.path);
 
   return outlineEntry?.dest?.pageNumber;
 }
@@ -59,127 +68,62 @@ Future<int?> pdfToTextPage(
     return null;
   }
 
-  // Get the outline entry for the PDF page
+  // Find the outline entry with its full hierarchy
   final outlines =
       await PdfDocument.openFile(pdfBook.path).then((doc) => doc.loadOutline());
-  final outlineEntry = _findOutlineByPage(outlines, pdfPage);
-  if (outlineEntry == null) {
+  final hierarchyNode = _findOutlineByPageWithHierarchy(outlines, pdfPage);
+  if (hierarchyNode == null) {
     return null;
   }
 
-  // Find matching TOC entry in text book
+  // Find matching TOC entry using the hierarchy
   final toc = await textBook.tableOfContents;
-  final tocEntry = _findMatchingTocEntry(toc, outlineEntry);
+  final tocEntry = _findMatchingTocByHierarchy(toc, hierarchyNode.path);
 
   return tocEntry?.index;
 }
 
-TocEntry? _findLastEntryBeforeIndex(List<TocEntry> entries, int targetIndex) {
-  TocEntry? lastBefore;
+/// Finds the closest TOC entry before the target index and builds its hierarchy
+HierarchyNode<TocEntry>? _findClosestEntryWithHierarchy(
+    List<TocEntry> entries, int targetIndex,
+    [List<String> currentPath = const []]) {
+  HierarchyNode<TocEntry>? closest;
 
   for (var entry in entries) {
-    // Check if this entry is before target and later than current lastBefore
+    final path = [...currentPath, entry.text.trim()];
+
+    // Check if this entry is before target and later than current closest
     if (entry.index <= targetIndex &&
-        (lastBefore == null || entry.index > lastBefore.index)) {
-      lastBefore = entry;
+        (closest == null || entry.index > closest.node.index)) {
+      closest = HierarchyNode(entry, path);
     }
 
-    // Recursively search children
-    final childResult = _findLastEntryBeforeIndex(entry.children, targetIndex);
+    // Recursively search children with updated path
+    final childResult =
+        _findClosestEntryWithHierarchy(entry.children, targetIndex, path);
     if (childResult != null &&
-        (lastBefore == null || childResult.index > lastBefore.index)) {
-      lastBefore = childResult;
+        (closest == null || childResult.node.index > closest.node.index)) {
+      closest = childResult;
     }
   }
 
-  return lastBefore;
+  return closest;
 }
 
-List<String> _getHierarchy(PdfOutlineNode node, List<PdfOutlineNode> outlines) {
-  List<String> hierarchy = [node.title];
-  PdfOutlineNode? current = node;
-
-  while (current != null) {
-    PdfOutlineNode? parent = _findParentNode(current, outlines);
-    if (parent != null) {
-      hierarchy.insert(0, parent.title);
-    }
-    current = parent;
-  }
-
-  return hierarchy;
-}
-
-List<String> _getTocHierarchy(TocEntry entry, List<TocEntry> entries) {
-  List<String> hierarchy = [entry.text];
-  TocEntry? current = entry;
-
-  while (current != null) {
-    TocEntry? parent = _findTocParent(current, entries);
-    if (parent != null) {
-      hierarchy.insert(0, parent.text);
-    }
-    current = parent;
-  }
-
-  return hierarchy;
-}
-
-PdfOutlineNode? _findParentNode(
-    PdfOutlineNode child, List<PdfOutlineNode> nodes) {
-  for (var node in nodes) {
-    if (node.children.contains(child)) {
-      return node;
-    }
-    final result = _findParentNode(child, node.children);
-    if (result != null) {
-      return result;
-    }
-  }
-  return null;
-}
-
-TocEntry? _findTocParent(TocEntry child, List<TocEntry> entries) {
-  for (var entry in entries) {
-    if (entry.children.contains(child)) {
-      return entry;
-    }
-    final result = _findTocParent(child, entry.children);
-    if (result != null) {
-      return result;
-    }
-  }
-  return null;
-}
-
-PdfOutlineNode? _findMatchingOutline(
-    List<PdfOutlineNode> outlines, TocEntry tocEntry) {
-  final tocHierarchy = _getTocHierarchy(tocEntry, []);
-
+/// Finds an outline entry by page number and builds its hierarchy
+HierarchyNode<PdfOutlineNode>? _findOutlineByPageWithHierarchy(
+    List<PdfOutlineNode> outlines, int targetPage,
+    [List<String> currentPath = const []]) {
   for (var outline in outlines) {
-    final outlineHierarchy = _getHierarchy(outline, outlines);
+    final path = [...currentPath, outline.title.trim()];
 
-    if (_compareHierarchies(tocHierarchy, outlineHierarchy)) {
-      return outline;
-    }
-
-    // Recursively search children
-    final result = _findMatchingOutline(outline.children, tocEntry);
-    if (result != null) {
-      return result;
-    }
-  }
-  return null;
-}
-
-PdfOutlineNode? _findOutlineByPage(
-    List<PdfOutlineNode> outlines, int targetPage) {
-  for (var outline in outlines) {
     if (outline.dest?.pageNumber == targetPage) {
-      return outline;
+      return HierarchyNode(outline, path);
     }
-    // Recursively search children
-    final result = _findOutlineByPage(outline.children, targetPage);
+
+    // Recursively search children with updated path
+    final result =
+        _findOutlineByPageWithHierarchy(outline.children, targetPage, path);
     if (result != null) {
       return result;
     }
@@ -187,41 +131,60 @@ PdfOutlineNode? _findOutlineByPage(
   return null;
 }
 
-TocEntry? _findMatchingTocEntry(
-    List<TocEntry> entries, PdfOutlineNode outlineNode) {
-  final outlineHierarchy = _getHierarchy(outlineNode, []);
+/// Finds a matching outline entry using a hierarchy path
+PdfOutlineNode? _findMatchingOutlineByHierarchy(
+    List<PdfOutlineNode> outlines, List<String> targetPath,
+    [int level = 0]) {
+  if (level >= targetPath.length) {
+    return null;
+  }
+
+  final targetTitle = targetPath[level];
+
+  for (var outline in outlines) {
+    if (outline.title.trim() == targetTitle) {
+      // If we've reached the last level, this is our match
+      if (level == targetPath.length - 1) {
+        return outline;
+      }
+
+      // Otherwise, search the next level in the children
+      final result = _findMatchingOutlineByHierarchy(
+          outline.children, targetPath, level + 1);
+      if (result != null) {
+        return result;
+      }
+    }
+  }
+
+  return null;
+}
+
+/// Finds a matching TOC entry using a hierarchy path
+TocEntry? _findMatchingTocByHierarchy(
+    List<TocEntry> entries, List<String> targetPath,
+    [int level = 0]) {
+  if (level >= targetPath.length) {
+    return null;
+  }
+
+  final targetText = targetPath[level];
 
   for (var entry in entries) {
-    final tocHierarchy = _getTocHierarchy(entry, entries);
+    if (entry.text.trim() == targetText) {
+      // If we've reached the last level, this is our match
+      if (level == targetPath.length - 1) {
+        return entry;
+      }
 
-    if (_compareHierarchies(tocHierarchy, outlineHierarchy)) {
-      return entry;
-    }
-
-    // Recursively search children
-    final result = _findMatchingTocEntry(entry.children, outlineNode);
-    if (result != null) {
-      return result;
+      // Otherwise, search the next level in the children
+      final result =
+          _findMatchingTocByHierarchy(entry.children, targetPath, level + 1);
+      if (result != null) {
+        return result;
+      }
     }
   }
+
   return null;
-}
-
-bool _compareHierarchies(List<String> hierarchy1, List<String> hierarchy2) {
-  if (hierarchy1.length != hierarchy2.length) {
-    return false;
-  }
-
-  for (int i = 0; i < hierarchy1.length; i++) {
-    // Normalize strings by trimming whitespace and control characters
-    final str1 = hierarchy1[i].trim();
-    final str2 = hierarchy2[i].trim();
-
-    // Compare normalized strings
-    if (str1 != str2) {
-      return false;
-    }
-  }
-
-  return true;
 }
