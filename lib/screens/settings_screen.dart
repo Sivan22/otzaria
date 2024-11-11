@@ -253,6 +253,7 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
+                    if (! (Platform.isAndroid || Platform.isIOS))
                     SimpleSettingsTile(
                       title: 'מיקום הספרייה',
                       subtitle: Settings.getValue<String>('key-library-path') ??

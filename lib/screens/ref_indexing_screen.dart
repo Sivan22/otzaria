@@ -31,7 +31,7 @@ class _RefIndexingScreenState extends State<RefIndexingScreen> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 30),
-                child: TextButton(
+                child: ElevatedButton(
                   onPressed: () async {
                     final result = showDialog(
                         context: context,
@@ -45,7 +45,7 @@ class _RefIndexingScreenState extends State<RefIndexingScreen> {
                                     Navigator.pop(context, false);
                                   },
                                 ),
-                                TextButton(
+                                ElevatedButton(
                                   child: const Text('אישור'),
                                   onPressed: () {
                                     Navigator.pop(context, true);

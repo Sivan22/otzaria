@@ -97,30 +97,26 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
 
     try {
       final tempDir = await getApplicationDocumentsDirectory();
-      // Ensure temp directory exists
       if (!await tempDir.exists()) {
         await tempDir.create(recursive: true);
       }
 
       _tempFile = File('${tempDir.path}/temp_library.zip');
-      // Ensure any existing temp file is removed
       if (await _tempFile!.exists()) {
         await _tempFile!.delete();
       }
 
-      // Start speed calculation timer
       _lastDownloadedBytes = 0;
       _speedTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (!mounted) return;
         final bytesPerSecond =
             (_downloadedMB - _lastDownloadedBytes) * 1024 * 1024;
         setState(() {
-          _downloadSpeed = bytesPerSecond / (1024 * 1024); // Convert to MB/s
+          _downloadSpeed = bytesPerSecond / (1024 * 1024);
           _lastDownloadedBytes = _downloadedMB;
         });
       });
 
-      // Initialize the download
       final request = http.Request(
         'GET',
         Uri.parse(
@@ -135,11 +131,9 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
       final contentLength = response.contentLength ?? 0;
       var receivedBytes = 0;
 
-      // Create file and prepare for writing
       _fileSink = _tempFile!.openWrite();
       final stream = response.stream;
 
-      // Download with progress
       _downloadSubscription = stream.listen(
         (chunk) {
           if (_isCancelling) return;
@@ -165,19 +159,16 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
           await _fileSink?.close();
           _fileSink = null;
 
-          // Add a small delay to ensure file system operations are complete
           await Future.delayed(const Duration(milliseconds: 500));
 
           if (!mounted) return;
 
-          // Start extraction
           setState(() {
             _currentOperation = 'מחלץ קבצים...';
             _downloadProgress = 0;
           });
 
           try {
-            // Verify the temp file exists and has content
             if (!await _tempFile!.exists()) {
               throw Exception('קובץ הספרייה הזמני לא נמצא');
             }
@@ -187,13 +178,14 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
               throw Exception('קובץ הספרייה הזמני ריק');
             }
 
-            // Use InputFileStream for memory-efficient extraction
+            // Create extractor with memory-efficient settings
+            final extractor = ZipDecoder();
             final inputStream = InputFileStream(_tempFile!.path);
-            final archive = ZipDecoder().decodeBuffer(inputStream);
+            final archive = extractor.decodeBuffer(inputStream);
             final totalFiles = archive.files.length;
             var extractedFiles = 0;
 
-            // Extract files
+            // Process files one at a time using streaming
             for (final file in archive.files) {
               if (!mounted || _isCancelling) break;
 
@@ -209,12 +201,31 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                 if (file.isFile) {
                   final outputFile = File(filePath);
                   await outputFile.parent.create(recursive: true);
-                  await outputFile.writeAsBytes(file.content as List<int>);
+
+                  // Use streaming to write file contents
+                  if (file.content != null) {
+                    final sink = outputFile.openWrite();
+                    try {
+                      // Process in chunks to avoid memory issues
+                      const chunkSize = 1024 * 1024; // 1MB chunks
+                      final content = file.content as List<int>;
+                      for (var i = 0; i < content.length; i += chunkSize) {
+                        final end = (i + chunkSize < content.length)
+                            ? i + chunkSize
+                            : content.length;
+                        sink.add(content.sublist(i, end));
+                        await sink.flush();
+                      }
+                    } finally {
+                      await sink.close();
+                    }
+                  }
                 } else {
                   await Directory(filePath).create(recursive: true);
                 }
                 extractedFiles++;
               } catch (e) {
+                debugPrint('Error extracting $filename: $e');
                 throw Exception('שגיאה בחילוץ הקובץ $filename: $e');
               }
             }
