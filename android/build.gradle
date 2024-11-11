@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version =  "2.1.0-RC"
+    ext.kotlin_version = '1.9.22'
     repositories {
         google()
         mavenCentral()
@@ -19,7 +19,7 @@ allprojects {
 
 rootProject.buildDir = '../build'
 subprojects {
-     //  fix for verifyReleaseResources
+    //  fix for verifyReleaseResources
   // ============
   afterEvaluate { project ->
     if (project.plugins.hasPlugin("com.android.application") ||
