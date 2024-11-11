@@ -1,8 +1,6 @@
-name: 'Build for all platforms'
+name: "Build for all platforms"
 
-on:
-  workflow_dispatch
-  
+on: workflow_dispatch
 
 jobs:
   build_windows:
@@ -43,7 +41,6 @@ jobs:
         with:
           name: otzaria-linux.zip
           path: otzaria-linux.zip
-      
 
   build_android:
     runs-on: ubuntu-latest
@@ -55,7 +52,7 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: sudo apt install openjdk-18-jdk      
+      - run: sudo apt install openjdk-18-jdk
       - run: wget https://dl.google.com/dl/android/studio/ide-zips/2024.1.2.12/android-studio-2024.1.2.12-linux.tar.gz
       - run: tar -zxvf android-studio-2024.1.2.12-linux.tar.gz
       - run: sudo mv android-studio /opt/
@@ -63,7 +60,7 @@ jobs:
       - run: flutter doctor -v
       - run: flutter pub get
       - run: flutter build apk
-      - name: Upload apk 
+      - name: Upload apk
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-android.apk
@@ -80,14 +77,14 @@ jobs:
           channel: stable
           cache: true
       - run: flutter build macos
+      - name: Zip the app bundle
+        run: cd build/macos/Build/Products/Release && zip -r otzaria-macos.zip otzaria.app/
       - name: Upload macos build
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria-macos.app
-          path: build/macos/Build/Products/Release/otzaria.app
+          name: otzaria-macos.zip
+          path: build/macos/Build/Products/Release/otzaria-macos.zip
 
-      
-      
   build_ios:
     runs-on: macos-latest
     steps:
@@ -105,14 +102,3 @@ jobs:
         with:
           name: otzaria-iphone.app
           path: build/ios/iphoneos/Runner.app
-
-
-
-
-  
-            
-
-
- 
-
-
