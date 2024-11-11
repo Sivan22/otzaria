@@ -7,6 +7,9 @@
 // The application's name. By default this is also the title of the Flutter window.
 PRODUCT_NAME = otzaria
 
+MACOSX_DEPLOYMENT_TARGET = 10.15
+
+
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.example.otzaria
 

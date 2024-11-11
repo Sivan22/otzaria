@@ -11,6 +11,7 @@ import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'dart:io';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await initialize();
   runApp(const OtzariaApp());
 }
@@ -75,7 +76,7 @@ Future<void> createDirs() async {
 }
 
 Future<void> initLibraryPath() async {
-  if (Platform.isAndroid) {
+  if (Platform.isAndroid || Platform.isIOS) {
     await Settings.setValue(
         'key-library-path', (await getApplicationDocumentsDirectory()).path);
     return;
