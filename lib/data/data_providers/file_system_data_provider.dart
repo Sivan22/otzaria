@@ -37,19 +37,18 @@ class FileSystemData {
     if (!Settings.isInitialized) {
       await Settings.init(cacheProvider: HiveCache());
     }
-
     _updateTitleToPath();
   }
 
   /// Returns the library
   Future<Library> getLibrary() async {
+    _updateTitleToPath();
+    _fetchMetadata();
     return _getLibraryFromDirectory(
         '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}אוצריא');
   }
 
   Future<Library> _getLibraryFromDirectory(String path) async {
-    /// a helper recursive function to get all the categories and books from a directory and its subdirectories
-    _fetchMetadata();
     Category getAllCategoriesAndBooksFromDirectory(
         Directory dir, Category? parent) {
       Category category = Category(
@@ -282,6 +281,7 @@ class FileSystemData {
 
   /// Updates the title to path mapping using the provided library path.
   void _updateTitleToPath() {
+    titleToPath = {};
     List<String> paths =
         getAllBooksPathsFromDirecctory(Settings.getValue('key-library-path'));
     for (var path in paths) {

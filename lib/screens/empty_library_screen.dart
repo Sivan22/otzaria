@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:archive/archive.dart';
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -27,11 +26,53 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
   String _currentOperation = '';
   Timer? _speedTimer;
   double _lastDownloadedBytes = 0;
+  bool _isCancelling = false;
+  StreamSubscription? _downloadSubscription;
+  IOSink? _fileSink;
+  File? _tempFile;
 
   @override
   void dispose() {
     _speedTimer?.cancel();
+    _downloadSubscription?.cancel();
+    _fileSink?.close();
+    _cleanupTempFile();
     super.dispose();
+  }
+
+  Future<void> _cleanupTempFile() async {
+    if (_tempFile != null && await _tempFile!.exists()) {
+      try {
+        await _tempFile!.delete();
+      } catch (e) {
+        debugPrint('Error cleaning up temp file: $e');
+      }
+    }
+  }
+
+  Future<void> _cancelDownload() async {
+    setState(() => _isCancelling = true);
+
+    await _downloadSubscription?.cancel();
+    await _fileSink?.close();
+    _speedTimer?.cancel();
+
+    await _cleanupTempFile();
+
+    if (mounted) {
+      setState(() {
+        _isDownloading = false;
+        _isCancelling = false;
+        _currentOperation = '';
+        _downloadProgress = 0;
+        _downloadedMB = 0;
+        _downloadSpeed = 0;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ההורדה בוטלה')),
+      );
+    }
   }
 
   Future<void> _downloadAndExtractLibrary() async {
@@ -54,10 +95,19 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
       return;
     }
 
-    final tempDir = await getTemporaryDirectory();
-    final tempFile = File('${tempDir.path}/temp_library.zip');
-
     try {
+      final tempDir = await getApplicationDocumentsDirectory();
+      // Ensure temp directory exists
+      if (!await tempDir.exists()) {
+        await tempDir.create(recursive: true);
+      }
+
+      _tempFile = File('${tempDir.path}/temp_library.zip');
+      // Ensure any existing temp file is removed
+      if (await _tempFile!.exists()) {
+        await _tempFile!.delete();
+      }
+
       // Start speed calculation timer
       _lastDownloadedBytes = 0;
       _speedTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -86,71 +136,124 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
       var receivedBytes = 0;
 
       // Create file and prepare for writing
-      final sink = tempFile.openWrite();
+      _fileSink = _tempFile!.openWrite();
       final stream = response.stream;
 
       // Download with progress
-      await for (final chunk in stream) {
-        if (!mounted) break;
+      _downloadSubscription = stream.listen(
+        (chunk) {
+          if (_isCancelling) return;
 
-        sink.add(chunk);
-        receivedBytes += chunk.length;
-        final downloadedMB = receivedBytes / (1024 * 1024);
+          _fileSink?.add(chunk);
+          receivedBytes += chunk.length;
+          final downloadedMB = receivedBytes / (1024 * 1024);
 
-        setState(() {
-          _downloadedMB = downloadedMB;
-          _downloadProgress =
-              contentLength > 0 ? receivedBytes / contentLength : 0;
-          _currentOperation = 'מוריד: ${downloadedMB.toStringAsFixed(2)} MB';
-        });
-      }
+          if (mounted) {
+            setState(() {
+              _downloadedMB = downloadedMB;
+              _downloadProgress =
+                  contentLength > 0 ? receivedBytes / contentLength : 0;
+              _currentOperation =
+                  'מוריד: ${downloadedMB.toStringAsFixed(2)} MB מתוך ${(contentLength / (1024 * 1024)).toStringAsFixed(2)} MB';
+            });
+          }
+        },
+        onDone: () async {
+          if (_isCancelling) return;
 
-      await sink.flush();
-      await sink.close();
+          await _fileSink?.flush();
+          await _fileSink?.close();
+          _fileSink = null;
 
-      // Start extraction
-      setState(() {
-        _currentOperation = 'מחלץ קבצים...';
-        _downloadProgress = 0;
-      });
+          // Add a small delay to ensure file system operations are complete
+          await Future.delayed(const Duration(milliseconds: 500));
 
-      // Read the zip file
-      final bytes = await tempFile.readAsBytes();
-      final archive = ZipDecoder().decodeBytes(bytes);
-      final totalFiles = archive.files.length;
+          if (!mounted) return;
 
-      // Extract files
-      for (var i = 0; i < archive.files.length; i++) {
-        if (!mounted) break;
+          // Start extraction
+          setState(() {
+            _currentOperation = 'מחלץ קבצים...';
+            _downloadProgress = 0;
+          });
 
-        final file = archive.files[i];
-        final filename = file.name;
-        final filePath = '$libraryPath/$filename';
+          try {
+            // Verify the temp file exists and has content
+            if (!await _tempFile!.exists()) {
+              throw Exception('קובץ הספרייה הזמני לא נמצא');
+            }
 
-        setState(() {
-          _downloadProgress = i / totalFiles;
-          _currentOperation = 'מחלץ: $filename';
-        });
+            final fileSize = await _tempFile!.length();
+            if (fileSize == 0) {
+              throw Exception('קובץ הספרייה הזמני ריק');
+            }
 
-        if (file.isFile) {
-          final outputFile = File(filePath);
-          await outputFile.parent.create(recursive: true);
-          await outputFile.writeAsBytes(file.content as List<int>);
-        } else {
-          await Directory(filePath).create(recursive: true);
-        }
-      }
+            // Use InputFileStream for memory-efficient extraction
+            final inputStream = InputFileStream(_tempFile!.path);
+            final archive = ZipDecoder().decodeBuffer(inputStream);
+            final totalFiles = archive.files.length;
+            var extractedFiles = 0;
 
-      // Cleanup
-      await tempFile.delete();
+            // Extract files
+            for (final file in archive.files) {
+              if (!mounted || _isCancelling) break;
 
-      if (mounted) {
-        widget.onLibraryLoaded();
-        setState(() {
-          _isDownloading = false;
-          _currentOperation = '';
-        });
-      }
+              final filename = file.name;
+              final filePath = '$libraryPath/$filename';
+
+              setState(() {
+                _downloadProgress = extractedFiles / totalFiles;
+                _currentOperation = 'מחלץ: $filename';
+              });
+
+              try {
+                if (file.isFile) {
+                  final outputFile = File(filePath);
+                  await outputFile.parent.create(recursive: true);
+                  await outputFile.writeAsBytes(file.content as List<int>);
+                } else {
+                  await Directory(filePath).create(recursive: true);
+                }
+                extractedFiles++;
+              } catch (e) {
+                throw Exception('שגיאה בחילוץ הקובץ $filename: $e');
+              }
+            }
+
+            inputStream.close();
+            await _cleanupTempFile();
+
+            if (mounted && !_isCancelling) {
+              widget.onLibraryLoaded();
+              setState(() {
+                _isDownloading = false;
+                _currentOperation = '';
+              });
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('שגיאה בחילוץ: $e')),
+              );
+              setState(() {
+                _isDownloading = false;
+                _currentOperation = '';
+              });
+            }
+          }
+        },
+        onError: (error) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('שגיאה בהורדה: $error')),
+            );
+            setState(() {
+              _isDownloading = false;
+              _currentOperation = '';
+            });
+          }
+        },
+        cancelOnError: true,
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -160,11 +263,6 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
           _isDownloading = false;
           _currentOperation = '';
         });
-      }
-    } finally {
-      _speedTimer?.cancel();
-      if (tempFile.existsSync()) {
-        await tempFile.delete();
       }
     }
   }
@@ -179,17 +277,6 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
     setState(() {
       _selectedPath = selectedDirectory;
     });
-
-    final directory = Directory(selectedDirectory);
-    if (!directory.existsSync()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('נתיב לא חוקי')),
-        );
-      }
-      return;
-    }
-
     Settings.setValue('key-library-path', selectedDirectory);
     widget.onLibraryLoaded();
   }
@@ -204,12 +291,17 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'לא נמצאה ספרייה בנתיב המצוין',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
+              if (Platform.isAndroid || Platform.isIOS)
+                const Text(
+                    'לא נמצאה ספרייה, יש להוריד את הספרייה - נדרש חיבור אינטרנט')
+              else
+                const Text(
+                  'לא נמצאה ספרייה בנתיב המצוין',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              if (!Platform.isAndroid && !Platform.isIOS)
+                const SizedBox(height: 32),
               if (_selectedPath != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -220,17 +312,19 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-              ElevatedButton(
-                onPressed: _isDownloading ? null : _pickDirectory,
-                child: const Text('בחר תיקייה'),
-              ),
+              if (!Platform.isAndroid && !Platform.isIOS)
+                ElevatedButton(
+                  onPressed: _isDownloading ? null : _pickDirectory,
+                  child: const Text('בחר תיקייה'),
+                ),
               const SizedBox(height: 32),
-              const Text(
-                'או',
-                style: TextStyle(fontSize: 18),
-              ),
+              if (!Platform.isAndroid || Platform.isIOS)
+                const Text(
+                  'או',
+                  style: TextStyle(fontSize: 18),
+                ),
               const SizedBox(height: 32),
-              if (_isDownloading)
+              if (_isDownloading) ...[
                 Column(
                   children: [
                     LinearProgressIndicator(value: _downloadProgress),
@@ -239,9 +333,19 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                     if (_downloadSpeed > 0)
                       Text(
                           'מהירות הורדה: ${_downloadSpeed.toStringAsFixed(2)} MB/s'),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _isCancelling ? null : _cancelDownload,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.stop),
+                      label: Text(_isCancelling ? 'מבטל...' : 'בטל הורדה'),
+                    ),
                   ],
-                )
-              else
+                ),
+              ] else
                 ElevatedButton(
                   onPressed: _downloadAndExtractLibrary,
                   child: const Text('הורד את הספרייה מהאינטרנט'),
