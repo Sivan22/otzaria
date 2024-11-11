@@ -96,9 +96,22 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
-      - name: Upload iphone build
+      - name: Build iOS
+        run: |
+          flutter build ios --release
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload
+          zip -r otzaria-ios.ipa Payload
+      - name: Upload iOS build
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria-iphone.app
-          path: build/ios/iphoneos/Runner.app
+          name: otzaria-ios.ipa
+          path: build/ios/iphoneos/otzaria-ios.ipa
+      - name: Upload iOS archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: |
+            build/ios/archive/Runner.xcarchive
+            build/ios/iphoneos/

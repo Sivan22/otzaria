@@ -201,25 +201,9 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                 if (file.isFile) {
                   final outputFile = File(filePath);
                   await outputFile.parent.create(recursive: true);
-
-                  // Use streaming to write file contents
-                  if (file.content != null) {
-                    final sink = outputFile.openWrite();
-                    try {
-                      // Process in chunks to avoid memory issues
-                      const chunkSize = 1024 * 1024; // 1MB chunks
-                      final content = file.content as List<int>;
-                      for (var i = 0; i < content.length; i += chunkSize) {
-                        final end = (i + chunkSize < content.length)
-                            ? i + chunkSize
-                            : content.length;
-                        sink.add(content.sublist(i, end));
-                        await sink.flush();
-                      }
-                    } finally {
-                      await sink.close();
-                    }
-                  }
+                  final outputStream = OutputFileStream(outputFile.path);
+                  file.writeContent(outputStream);
+                  outputStream.close();
                 } else {
                   await Directory(filePath).create(recursive: true);
                 }
