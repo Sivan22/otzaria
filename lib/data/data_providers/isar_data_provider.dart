@@ -18,7 +18,7 @@ class IsarDataProvider {
 
   final isar = Isar.open(
     directory: Settings.getValue<String>('key-library-path') ?? 'C:\\אוצריא',
-    maxSizeMiB: 100000,
+    maxSizeMiB: null,
     schemas: [
       RefSchema,
       LineSchema,
