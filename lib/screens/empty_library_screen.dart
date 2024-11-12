@@ -5,6 +5,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:archive/archive_io.dart';
+import 'package:flutter_archive/flutter_archive.dart' as flutter_archive;
 import 'package:file_picker/file_picker.dart';
 
 class EmptyLibraryScreen extends StatefulWidget {
@@ -178,43 +179,69 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
               throw Exception('קובץ הספרייה הזמני ריק');
             }
 
-            // Create extractor with memory-efficient settings
-            final extractor = ZipDecoder();
-            final inputStream = InputFileStream(_tempFile!.path);
-            final archive = extractor.decodeBuffer(inputStream);
-            final totalFiles = archive.files.length;
-            var extractedFiles = 0;
+            Future<void> _extractWithArchive() async {
+              // Create extractor with memory-efficient settings
+              final extractor = ZipDecoder();
+              final inputStream = InputFileStream(_tempFile!.path);
+              final archive = extractor.decodeBuffer(inputStream);
+              final totalFiles = archive.files.length;
+              var extractedFiles = 0;
 
-            // Process files one at a time using streaming
-            for (final file in archive.files) {
-              if (!mounted || _isCancelling) break;
+              // Process files one at a time using streaming
+              for (final file in archive.files) {
+                if (!mounted || _isCancelling) break;
 
-              final filename = file.name;
-              final filePath = '$libraryPath/$filename';
+                final filename = file.name;
+                final filePath = '$libraryPath/$filename';
 
-              setState(() {
-                _downloadProgress = extractedFiles / totalFiles;
-                _currentOperation = 'מחלץ: $filename';
-              });
+                setState(() {
+                  _downloadProgress = extractedFiles / totalFiles;
+                  _currentOperation = 'מחלץ: $filename';
+                });
 
-              try {
-                if (file.isFile) {
-                  final outputFile = File(filePath);
-                  await outputFile.parent.create(recursive: true);
-                  final outputStream = OutputFileStream(outputFile.path);
-                  file.writeContent(outputStream);
-                  outputStream.close();
-                } else {
-                  await Directory(filePath).create(recursive: true);
+                try {
+                  if (file.isFile) {
+                    final outputFile = File(filePath);
+                    await outputFile.parent.create(recursive: true);
+                    final outputStream = OutputFileStream(outputFile.path);
+                    file.writeContent(outputStream);
+                    outputStream.close();
+                  } else {
+                    await Directory(filePath).create(recursive: true);
+                  }
+                  extractedFiles++;
+                } catch (e) {
+                  debugPrint('Error extracting $filename: $e');
+                  throw Exception('שגיאה בחילוץ הקובץ $filename: $e');
                 }
-                extractedFiles++;
+              }
+
+              inputStream.close();
+            }
+
+            Future<void> _extractWithFlutterArchive() async {
+              try {
+                await flutter_archive.ZipFile.extractToDirectory(
+                    zipFile: _tempFile!,
+                    destinationDir: Directory(libraryPath),
+                    onExtracting: (zipEntry, progress) {
+                      setState(() {
+                        _downloadProgress = progress;
+                        _currentOperation = 'מחלץ: ${zipEntry.name}';
+                      });
+                      return flutter_archive.ZipFileOperation.includeItem;
+                    });
               } catch (e) {
-                debugPrint('Error extracting $filename: $e');
-                throw Exception('שגיאה בחילוץ הקובץ $filename: $e');
+                print(e);
+                throw Exception('שגיאה בחילוץ הקובץ: $e');
               }
             }
 
-            inputStream.close();
+            if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+              await _extractWithFlutterArchive();
+            } else {
+              await _extractWithArchive();
+            }
             await _cleanupTempFile();
 
             if (mounted && !_isCancelling) {
