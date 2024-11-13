@@ -315,7 +315,7 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
             children: [
               if (Platform.isAndroid || Platform.isIOS)
                 const Text(
-                    'לא נמצאה ספרייה, יש להוריד את הספרייה - נדרש חיבור אינטרנט')
+                    'לא נמצאה ספרייה, יש להוריד את הספרייה - נדרש חיבור אינטרנט.\n גודל הורדה: 1200MB')
               else
                 const Text(
                   'לא נמצאה ספרייה בנתיב המצוין',
@@ -370,7 +370,7 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
               ] else
                 ElevatedButton(
                   onPressed: _downloadAndExtractLibrary,
-                  child: const Text('הורד את הספרייה מהאינטרנט'),
+                  child: const Text(' הורד את הספרייה מהאינטרנט'),
                 ),
             ],
           ),
