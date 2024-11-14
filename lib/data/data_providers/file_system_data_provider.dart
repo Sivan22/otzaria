@@ -62,7 +62,7 @@ class FileSystemData {
           category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
               Directory(entity.path), category));
         } else {
-          var topics = entity.path.split('אוצריא\\').last.split('\\').toList();
+          var topics = entity.path.split('אוצריא${Platform.pathSeparator}').last.split(Platform.pathSeparator).toList();
           topics = topics.sublist(0, topics.length - 1);
           if (getTitleFromPath(entity.path).contains(' על ')) {
             topics.add(getTitleFromPath(entity.path).split(' על ')[1]);
