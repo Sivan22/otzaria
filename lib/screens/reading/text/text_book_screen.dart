@@ -67,131 +67,132 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: ListenableBuilder(
-              listenable: widget.tab.positionsListener.itemPositions,
-              builder: (context, _) {
-                return FutureBuilder(
-                  future: utils.refFromIndex(
-                      widget.tab.positionsListener.itemPositions.value
-                              .isNotEmpty
-                          ? widget.tab.positionsListener.itemPositions.value
-                              .first.index
-                          : 0,
-                      widget.tab.tableOfContents),
-                  builder: (context, snapshot) => snapshot.hasData
-                      ? Center(
-                          child: SelectionArea(
-                            child: Text(snapshot.data!,
-                                style: const TextStyle(fontSize: 17)),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                );
-              }),
-          leading: IconButton(
-              icon: const Icon(Icons.menu),
-              tooltip: "ניווט וחיפוש",
-              onPressed: () {
-                widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
-              }),
-          actions: [
-            FutureBuilder(
-                future: context.read<AppModel>().library.then((library) =>
-                    library.findBookByTitle(widget.tab.book.title, PdfBook)),
-                builder: (context, snapshot) => snapshot.hasData
-                    ? IconButton(
-                        icon: const Icon(Icons.picture_as_pdf),
-                        tooltip: 'פתח ספר במהדורה מודפסת ',
-                        onPressed: () async {
-                          final appModel = context.read<AppModel>();
-                          final book = await appModel.library.then((library) =>
-                              library.findBookByTitle(
-                                  widget.tab.title, PdfBook));
-                          final index = await textToPdfPage(
-                              widget.tab.title,
-                              widget.tab.positionsListener.itemPositions.value
-                                      .isNotEmpty
-                                  ? widget.tab.positionsListener.itemPositions
-                                      .value.first.index
-                                  : 0,
-                              context);
-                          appModel.openBook(book!, index ?? 0);
-                        })
-                    : SizedBox.shrink()),
-
-            // button to switch between splitted view and combined view
-            ValueListenableBuilder(
-              valueListenable: widget.tab.showSplitedView,
-              builder: (context, showSplitedViewValue, child) => IconButton(
-                onPressed: () {
-                  widget.tab.showSplitedView.value =
-                      !widget.tab.showSplitedView.value;
-                },
-                icon: Icon(!widget.tab.showSplitedView.value
-                    ? Icons.vertical_split_outlined
-                    : Icons.horizontal_split_outlined),
-                tooltip: !widget.tab.showSplitedView.value
-                    ? ' הצגת מפרשים בצד הטקסט'
-                    : 'הצגת מפרשים מתחת הטקסט',
-              ),
-            ),
-
-            // button to toggle remove nikud
-            IconButton(
-              onPressed: () {
-                widget.tab.removeNikud.value = !widget.tab.removeNikud.value;
-              },
-              icon: const Icon(Icons.format_overline),
-              tooltip: 'הצג או הסתר ניקוד',
-            ),
-            //button to add a bookmark
-            IconButton(
-              onPressed: () async {
-                int index = widget
-                    .tab.positionsListener.itemPositions.value.first.index;
-                String ref =
-                    await utils.refFromIndex(index, widget.tab.tableOfContents);
-                bool bookmarkAdded =
-                    Provider.of<AppModel>(context, listen: false).addBookmark(
-                        ref: ref, book: widget.tab.book, index: index);
-                // notify user
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(bookmarkAdded
-                          ? 'הסימניה נוספה בהצלחה'
-                          : 'הסימניה כבר קיימת'),
-                    ),
+    return LayoutBuilder(builder: (context, constrains) {
+      final wideScreen = (MediaQuery.of(context).size.width >= 600);
+      return Scaffold(
+          appBar: AppBar(
+            title: ListenableBuilder(
+                listenable: widget.tab.positionsListener.itemPositions,
+                builder: (context, _) {
+                  return FutureBuilder(
+                    future: utils.refFromIndex(
+                        widget.tab.positionsListener.itemPositions.value
+                                .isNotEmpty
+                            ? widget.tab.positionsListener.itemPositions.value
+                                .first.index
+                            : 0,
+                        widget.tab.tableOfContents),
+                    builder: (context, snapshot) => snapshot.hasData
+                        ? Center(
+                            child: SelectionArea(
+                              child: Text(snapshot.data!,
+                                  style: const TextStyle(fontSize: 17)),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   );
-                }
-              },
-              icon: const Icon(
-                Icons.bookmark_add,
+                }),
+            leading: IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: "ניווט וחיפוש",
+                onPressed: () {
+                  widget.tab.showLeftPane.value =
+                      !widget.tab.showLeftPane.value;
+                }),
+            actions: [
+              FutureBuilder(
+                  future: context.read<AppModel>().library.then((library) =>
+                      library.findBookByTitle(widget.tab.book.title, PdfBook)),
+                  builder: (context, snapshot) => snapshot.hasData
+                      ? IconButton(
+                          icon: const Icon(Icons.picture_as_pdf),
+                          tooltip: 'פתח ספר במהדורה מודפסת ',
+                          onPressed: () async {
+                            final appModel = context.read<AppModel>();
+                            final book = await appModel.library.then(
+                                (library) => library.findBookByTitle(
+                                    widget.tab.title, PdfBook));
+                            final index = await textToPdfPage(
+                                widget.tab.title,
+                                widget.tab.positionsListener.itemPositions.value
+                                        .isNotEmpty
+                                    ? widget.tab.positionsListener.itemPositions
+                                        .value.first.index
+                                    : 0,
+                                context);
+                            appModel.openBook(book!, index ?? 0);
+                          })
+                      : SizedBox.shrink()),
+
+              // button to switch between splitted view and combined view
+              ValueListenableBuilder(
+                valueListenable: widget.tab.showSplitedView,
+                builder: (context, showSplitedViewValue, child) => IconButton(
+                  onPressed: () {
+                    widget.tab.showSplitedView.value =
+                        !widget.tab.showSplitedView.value;
+                  },
+                  icon: Icon(!widget.tab.showSplitedView.value
+                      ? Icons.vertical_split_outlined
+                      : Icons.horizontal_split_outlined),
+                  tooltip: !widget.tab.showSplitedView.value
+                      ? ' הצגת מפרשים בצד הטקסט'
+                      : 'הצגת מפרשים מתחת הטקסט',
+                ),
               ),
-              tooltip: 'הוספת סימניה',
-            ),
 
-            // button to search
-            MediaQuery.of(context).size.width < 600
-                ? const SizedBox.shrink()
-                : IconButton(
-                    onPressed: () {
-                      widget.tab.showLeftPane.value = true;
-                      tabController.index = 1;
-                      textSearchFocusNode.requestFocus();
-                    },
-                    icon: const Icon(
-                      Icons.search,
-                    ),
-                    tooltip: 'חיפוש',
+              // button to toggle remove nikud
+              IconButton(
+                onPressed: () {
+                  widget.tab.removeNikud.value = !widget.tab.removeNikud.value;
+                },
+                icon: const Icon(Icons.format_overline),
+                tooltip: 'הצג או הסתר ניקוד',
+              ),
+              //button to add a bookmark
+              IconButton(
+                onPressed: () async {
+                  int index = widget
+                      .tab.positionsListener.itemPositions.value.first.index;
+                  String ref = await utils.refFromIndex(
+                      index, widget.tab.tableOfContents);
+                  bool bookmarkAdded =
+                      Provider.of<AppModel>(context, listen: false).addBookmark(
+                          ref: ref, book: widget.tab.book, index: index);
+                  // notify user
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(bookmarkAdded
+                            ? 'הסימניה נוספה בהצלחה'
+                            : 'הסימניה כבר קיימת'),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(
+                  Icons.bookmark_add,
+                ),
+                tooltip: 'הוספת סימניה',
+              ),
+
+              // button to search
+              if (wideScreen)
+                IconButton(
+                  onPressed: () {
+                    widget.tab.showLeftPane.value = true;
+                    tabController.index = 1;
+                    textSearchFocusNode.requestFocus();
+                  },
+                  icon: const Icon(
+                    Icons.search,
                   ),
+                  tooltip: 'חיפוש',
+                ),
 
-            // button to zoom in
-            MediaQuery.of(context).size.width < 600
-                ? const SizedBox.shrink()
-                : IconButton(
+              // button to zoom in
+              if (wideScreen)
+                IconButton(
                     icon: const Icon(
                       Icons.zoom_in,
                     ),
@@ -200,99 +201,107 @@ class _TextBookViewerState extends State<TextBookViewer>
                           widget.tab.textFontSize =
                               min(50.0, widget.tab.textFontSize + 3);
                         })),
-            MediaQuery.of(context).size.width < 600
-                ? const SizedBox.shrink()
-                : IconButton(
-                    icon: const Icon(
-                      Icons.zoom_out,
-                    ),
-                    tooltip: 'הקטנת טקסט',
-                    onPressed: () => setState(() {
-                      widget.tab.textFontSize =
-                          max(15.0, widget.tab.textFontSize - 3);
-                    }),
+              if (wideScreen)
+                IconButton(
+                  icon: const Icon(
+                    Icons.zoom_out,
                   ),
-            // button to scroll all the way up
-            IconButton(
-                icon: const Icon(Icons.first_page),
-                tooltip: 'תחילת הספר',
-                onPressed: () {
-                  widget.tab.scrollController.scrollTo(
-                      index: 0, duration: const Duration(milliseconds: 300));
-                }),
-            //button to scroll to previous section
-            IconButton(
-                icon: const Icon(Icons.navigate_before),
-                tooltip: 'הקטע הקודם',
-                onPressed: () {
-                  widget.tab.scrollController.scrollTo(
-                      duration: const Duration(milliseconds: 300),
-                      index: max(
-                        0,
-                        widget.tab.positionsListener.itemPositions.value.first
-                                .index -
-                            1,
-                      ));
-                }),
-            //button to scroll to next section
-            IconButton(
-                icon: const Icon(Icons.navigate_next),
-                tooltip: 'הקטע הבא',
-                onPressed: () {
-                  widget.tab.scrollController.scrollTo(
-                      index: max(
-                          widget.tab.positionsListener.itemPositions.value.first
-                                  .index +
-                              1,
-                          widget.tab.positionsListener.itemPositions.value
-                                  .length -
-                              1),
-                      duration: const Duration(milliseconds: 300));
-                }),
+                  tooltip: 'הקטנת טקסט',
+                  onPressed: () => setState(() {
+                    widget.tab.textFontSize =
+                        max(15.0, widget.tab.textFontSize - 3);
+                  }),
+                ),
+              // button to scroll all the way up
+              if (wideScreen)
+                IconButton(
+                    icon: const Icon(Icons.first_page),
+                    tooltip: 'תחילת הספר',
+                    onPressed: () {
+                      widget.tab.scrollController.scrollTo(
+                          index: 0,
+                          duration: const Duration(milliseconds: 300));
+                    }),
+              //button to scroll to previous section
+              if (wideScreen)
+                IconButton(
+                    icon: const Icon(Icons.navigate_before),
+                    tooltip: 'הקטע הקודם',
+                    onPressed: () {
+                      widget.tab.scrollController.scrollTo(
+                          duration: const Duration(milliseconds: 300),
+                          index: max(
+                            0,
+                            widget.tab.positionsListener.itemPositions.value
+                                    .first.index -
+                                1,
+                          ));
+                    }),
 
-            // button to scroll all the way down
-            IconButton(
-                icon: const Icon(Icons.last_page),
-                tooltip: 'סוף הספר',
-                onPressed: () async {
-                  widget.tab.scrollController.scrollTo(
-                      index: await widget.data.then((value) => value.length),
-                      duration: const Duration(milliseconds: 300));
-                }),
-            //button to print
-            IconButton(
-              icon: const Icon(Icons.print),
-              tooltip: 'הדפסה',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => PrintingScreen(
-                    data: widget.tab.removeNikud.value
-                        ? widget.data
-                        : widget.data,
-                    startLine: widget.tab.index,
-                    removeNikud: widget.tab.removeNikud.value,
+              //button to scroll to next section
+              if (wideScreen)
+                IconButton(
+                    icon: const Icon(Icons.navigate_next),
+                    tooltip: 'הקטע הבא',
+                    onPressed: () {
+                      widget.tab.scrollController.scrollTo(
+                          index: max(
+                              widget.tab.positionsListener.itemPositions.value
+                                      .first.index +
+                                  1,
+                              widget.tab.positionsListener.itemPositions.value
+                                      .length -
+                                  1),
+                          duration: const Duration(milliseconds: 300));
+                    }),
+
+              // button to scroll all the way down
+
+              if (wideScreen)
+                IconButton(
+                    icon: const Icon(Icons.last_page),
+                    tooltip: 'סוף הספר',
+                    onPressed: () async {
+                      widget.tab.scrollController.scrollTo(
+                          index:
+                              await widget.data.then((value) => value.length),
+                          duration: const Duration(milliseconds: 300));
+                    }),
+              //button to print
+              IconButton(
+                icon: const Icon(Icons.print),
+                tooltip: 'הדפסה',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PrintingScreen(
+                      data: widget.tab.removeNikud.value
+                          ? widget.data
+                          : widget.data,
+                      startLine: widget.tab.index,
+                      removeNikud: widget.tab.removeNikud.value,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-        body: LayoutBuilder(
-            builder: (context, constraints) =>
-                //if the screen is small, display the tab bar ontop of the viewer
-                MediaQuery.of(context).size.width < 600
-                    ? Stack(children: [
-                        buildHTMLViewer(),
-                        Container(
-                            color: Theme.of(context).colorScheme.surface,
-                            child: buildTabBar()),
-                      ])
-                    : Row(
-                        children: [
-                          buildTabBar(),
-                          Expanded(child: buildHTMLViewer()),
-                        ],
-                      )));
+            ],
+          ),
+          body: LayoutBuilder(
+              builder: (context, constraints) =>
+                  //if the screen is small, display the tab bar ontop of the viewer
+                  MediaQuery.of(context).size.width < 600
+                      ? Stack(children: [
+                          buildHTMLViewer(),
+                          Container(
+                              color: Theme.of(context).colorScheme.surface,
+                              child: buildTabBar()),
+                        ])
+                      : Row(
+                          children: [
+                            buildTabBar(),
+                            Expanded(child: buildHTMLViewer()),
+                          ],
+                        )));
+    });
   }
 
   Widget buildHTMLViewer() {

@@ -23,7 +23,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
   ValueNotifier selectedIndex = ValueNotifier(0);
   final bookSearchfocusNode = FocusNode();
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
-  PageController? pageController;
+  late final PageController pageController;
   bool _isLibraryEmpty = false;
 
   @override
@@ -41,16 +41,23 @@ class MainWindowScreenState extends State<MainWindowScreen>
 
     final currentView =
         Provider.of<AppModel>(context, listen: false).currentView;
-    pageController =
-        PageController(initialPage: currentView.value.index, keepPage: true);
+    pageController = PageController(
+      initialPage: currentView.value.index,
+      keepPage: true,
+    );
 
     currentView.addListener(() {
-      pageController!.animateToPage(
-          currentView.value == Screens.search
-              ? Screens.reading.index
-              : currentView.value.index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.linear);
+      if (!mounted) return;
+      pageController.animateToPage(
+        currentView.value == Screens.search
+            ? Screens.reading.index
+            : currentView.value.index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.linear,
+      );
+      pageController.addListener(() =>
+          Provider.of<AppModel>(context, listen: false).currentView.value =
+              Screens.values[pageController.page!.toInt()]);
       setState(() {});
     });
 
@@ -75,6 +82,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
 
   @override
   void dispose() {
+    pageController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -110,6 +118,21 @@ class MainWindowScreenState extends State<MainWindowScreen>
               builder: (context, appModel, child) => MyUpdatWidget(
                 child: Scaffold(
                   body: OrientationBuilder(builder: (context, orientation) {
+                    final pageView = PageView(
+                      scrollDirection: orientation == Orientation.landscape
+                          ? Axis.vertical
+                          : Axis.horizontal,
+                      physics: const NeverScrollableScrollPhysics(),
+                      controller: pageController,
+                      children: const <Widget>[
+                        LibraryBrowser(),
+                        FindRefScreen(),
+                        ReadingScreen(),
+                        SizedBox.shrink(),
+                        FavouritesScreen(),
+                        MySettingsScreen(),
+                      ],
+                    );
                     if (orientation == Orientation.landscape) {
                       return Row(children: [
                         SizedBox.fromSize(
@@ -149,61 +172,27 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                 onDestinationSelected: (int index) {
                                   appModel.currentView.value =
                                       Screens.values[index];
-                                  pageController = PageController(
-                                      initialPage: index, keepPage: true);
                                   switch (index) {
                                     case 3:
                                       appModel.openNewSearchTab();
                                     case 0:
-                                      appModel.bookLocatorFocusNode
-                                          .requestFocus();
+                                      if (!(Platform.isAndroid ||
+                                          Platform.isIOS)) {
+                                        appModel.bookLocatorFocusNode
+                                            .requestFocus();
+                                      }
                                     case 1:
                                       appModel.findReferenceFocusNode
                                           .requestFocus();
                                   }
-                                  setState(() {});
                                 }),
                           ),
                         ),
-                        Expanded(
-                          child: OrientationBuilder(
-                              builder: (context, orientation) {
-                            return PageView(
-                              scrollDirection:
-                                  orientation == Orientation.landscape
-                                      ? Axis.vertical
-                                      : Axis.horizontal,
-                              physics: const NeverScrollableScrollPhysics(),
-                              controller: pageController,
-                              children: const <Widget>[
-                                LibraryBrowser(),
-                                FindRefScreen(),
-                                ReadingScreen(),
-                                SizedBox.shrink(),
-                                FavouritesScreen(),
-                                MySettingsScreen(),
-                              ],
-                            );
-                          }),
-                        ),
+                        Expanded(child: pageView),
                       ]);
                     } else {
                       return Column(children: [
-                        Expanded(
-                          child: PageView(
-                            scrollDirection: Axis.vertical,
-                            physics: const NeverScrollableScrollPhysics(),
-                            controller: pageController,
-                            children: const <Widget>[
-                              LibraryBrowser(),
-                              FindRefScreen(),
-                              ReadingScreen(),
-                              SizedBox.shrink(),
-                              FavouritesScreen(),
-                              MySettingsScreen(),
-                            ],
-                          ),
-                        ),
+                        Expanded(child: pageView),
                         Consumer<AppModel>(
                           builder: (context, appModel, child) => NavigationBar(
                               destinations: const [
@@ -234,16 +223,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               ],
                               selectedIndex: appModel.currentView.value.index,
                               onDestinationSelected: (int index) {
-                                setState(() {
-                                  appModel.currentView.value =
-                                      Screens.values[index];
-                                  pageController = PageController(
-                                      initialPage: index, keepPage: true);
-                                  switch (index) {
-                                    case 3:
-                                      appModel.openNewSearchTab();
-                                  }
-                                });
+                                appModel.currentView.value =
+                                    Screens.values[index];
+                                switch (index) {
+                                  case 3:
+                                    appModel.openNewSearchTab();
+                                }
                               }),
                         ),
                       ]);

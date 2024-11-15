@@ -62,7 +62,11 @@ class FileSystemData {
           category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
               Directory(entity.path), category));
         } else {
-          var topics = entity.path.split('אוצריא${Platform.pathSeparator}').last.split(Platform.pathSeparator).toList();
+          var topics = entity.path
+              .split('אוצריא${Platform.pathSeparator}')
+              .last
+              .split(Platform.pathSeparator)
+              .toList();
           topics = topics.sublist(0, topics.length - 1);
           if (getTitleFromPath(entity.path).contains(' על ')) {
             topics.add(getTitleFromPath(entity.path).split(' על ')[1]);
@@ -285,6 +289,7 @@ class FileSystemData {
     List<String> paths =
         getAllBooksPathsFromDirecctory(Settings.getValue('key-library-path'));
     for (var path in paths) {
+      if (path.toLowerCase().endsWith('.pdf')) continue;
       titleToPath[getTitleFromPath(path)] = path;
     }
   }
