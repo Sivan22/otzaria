@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -229,7 +230,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   child: TextField(
                       focusNode: Provider.of<AppModel>(context, listen: false)
                           .bookLocatorFocusNode,
-                      autofocus: true,
+                      autofocus: !(Platform.isAndroid || Platform.isIOS),
                       controller: searchController,
                       decoration: InputDecoration(
                         constraints: const BoxConstraints(maxWidth: 400),

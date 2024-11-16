@@ -25,6 +25,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
   final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
   late final PageController pageController;
   bool _isLibraryEmpty = false;
+  Orientation? _previousOrientation;
+
+  // Store the page views as state to preserve them across rebuilds
+  late final List<Widget> _pages;
 
   @override
   void initState() {
@@ -39,25 +43,36 @@ class MainWindowScreenState extends State<MainWindowScreen>
 
     _checkLibrary();
 
+    // Initialize the pages with KeepAlive widgets
+    _pages = [
+      const KeepAlivePage(child: LibraryBrowser()),
+      const KeepAlivePage(child: FindRefScreen()),
+      const KeepAlivePage(child: ReadingScreen()),
+      const KeepAlivePage(child: SizedBox.shrink()),
+      const KeepAlivePage(child: FavouritesScreen()),
+      const KeepAlivePage(child: MySettingsScreen()),
+    ];
+
     final currentView =
         Provider.of<AppModel>(context, listen: false).currentView;
     pageController = PageController(
       initialPage: currentView.value.index,
-      keepPage: true,
     );
 
     currentView.addListener(() {
       if (!mounted) return;
-      pageController.animateToPage(
-        currentView.value == Screens.search
-            ? Screens.reading.index
-            : currentView.value.index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.linear,
-      );
-      pageController.addListener(() =>
-          Provider.of<AppModel>(context, listen: false).currentView.value =
-              Screens.values[pageController.page!.toInt()]);
+      final targetPage = currentView.value == Screens.search
+          ? Screens.reading.index
+          : currentView.value.index;
+
+      if (pageController.hasClients &&
+          pageController.page?.round() != targetPage) {
+        pageController.animateToPage(
+          targetPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.linear,
+        );
+      }
       setState(() {});
     });
 
@@ -96,6 +111,26 @@ class MainWindowScreenState extends State<MainWindowScreen>
     }
   }
 
+  void _handleOrientationChange(BuildContext context, Orientation orientation) {
+    if (_previousOrientation != orientation) {
+      _previousOrientation = orientation;
+
+      // Ensure we maintain the correct page after orientation change
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && pageController.hasClients) {
+          final appModel = Provider.of<AppModel>(context, listen: false);
+          final targetPage = appModel.currentView.value == Screens.search
+              ? Screens.reading.index
+              : appModel.currentView.value.index;
+
+          if (pageController.page?.round() != targetPage) {
+            pageController.jumpToPage(targetPage);
+          }
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -118,20 +153,16 @@ class MainWindowScreenState extends State<MainWindowScreen>
               builder: (context, appModel, child) => MyUpdatWidget(
                 child: Scaffold(
                   body: OrientationBuilder(builder: (context, orientation) {
+                    _handleOrientationChange(context, orientation);
+
                     final pageView = PageView(
+                      key: const PageStorageKey('pageView'),
                       scrollDirection: orientation == Orientation.landscape
                           ? Axis.vertical
                           : Axis.horizontal,
                       physics: const NeverScrollableScrollPhysics(),
                       controller: pageController,
-                      children: const <Widget>[
-                        LibraryBrowser(),
-                        FindRefScreen(),
-                        ReadingScreen(),
-                        SizedBox.shrink(),
-                        FavouritesScreen(),
-                        MySettingsScreen(),
-                      ],
+                      children: _pages,
                     );
                     if (orientation == Orientation.landscape) {
                       return Row(children: [
@@ -239,5 +270,30 @@ class MainWindowScreenState extends State<MainWindowScreen>
             ),
           ));
         });
+  }
+}
+
+// Widget to keep pages alive when switching orientations
+class KeepAlivePage extends StatefulWidget {
+  final Widget child;
+
+  const KeepAlivePage({
+    Key? key,
+    required this.child,
+  }) : super(key: key);
+
+  @override
+  State<KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
