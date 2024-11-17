@@ -5,6 +5,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/screens/ref_indexing_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 
 class FindRefScreen extends StatefulWidget {
   const FindRefScreen({super.key});
@@ -47,6 +48,46 @@ class _FindRefScreenState extends State<FindRefScreen>
     );
   }
 
+  Widget _buildIndexingWarning() {
+    return ValueListenableBuilder(
+      valueListenable: IsarDataProvider.instance.refsNumOfbooksDone,
+      builder: (context, valueDone, child) {
+        if (valueDone == null) return const SizedBox.shrink();
+
+        return ValueListenableBuilder(
+          valueListenable: IsarDataProvider.instance.refsNumOfbooksTotal,
+          builder: (context, valueTotal, child) {
+            if (valueTotal == null || valueDone >= valueTotal) {
+              return const SizedBox.shrink();
+            }
+
+            return Container(
+              padding: const EdgeInsets.all(8.0),
+              margin: const EdgeInsets.only(bottom: 8.0),
+              decoration: BoxDecoration(
+                color: Colors.yellow.shade100,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Colors.orange[700]),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'אינדקס המקורות בתהליך בנייה. תוצאות החיפוש עלולות להיות חלקיות.',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -63,6 +104,7 @@ class _FindRefScreenState extends State<FindRefScreen>
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
+            _buildIndexingWarning(),
             TextField(
               autofocus: true,
               focusNode: context.read<AppModel>().findReferenceFocusNode,

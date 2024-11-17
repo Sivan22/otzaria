@@ -78,6 +78,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: ValueListenableBuilder(
           valueListenable: isLeftPaneOpen,
@@ -86,13 +87,24 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
               children: [
                 if (_showIndexWarning)
                   Container(
-                    width: double.infinity,
-                    color: Colors.orange[100],
                     padding: const EdgeInsets.all(8.0),
-                    child: const Text(
-                      'אינדקס החיפוש אינו מעודכן. חלק מהספרים עלולים להיות חסרים בתוצאות החיפוש. ניתן לעדכן אותו בתפריט הצד',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black87),
+                    margin: const EdgeInsets.only(bottom: 8.0),
+                    decoration: BoxDecoration(
+                      color: Colors.yellow.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber, color: Colors.orange[700]),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'אינדקס החיפוש אינו מעודכן. חלק מהספרים עלולים להיות חסרים בתוצאות החיפוש. ניתן לעדכן אותו בתפריט הצד',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(color: Colors.black87),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 Expanded(

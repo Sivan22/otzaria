@@ -284,7 +284,7 @@ class FileSystemData {
   }
 
   /// Updates the title to path mapping using the provided library path.
-  void _updateTitleToPath() {
+  Future<void> _updateTitleToPath() async {
     titleToPath = {};
     List<String> paths =
         getAllBooksPathsFromDirecctory(Settings.getValue('key-library-path'));
