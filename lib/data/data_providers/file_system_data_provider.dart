@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart' as f;
 import 'package:flutter/services.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/utils/docx_to_otzaria.dart';
@@ -37,30 +38,31 @@ class FileSystemData {
     if (!Settings.isInitialized) {
       await Settings.init(cacheProvider: HiveCache());
     }
-    _updateTitleToPath();
+    await _updateTitleToPath();
   }
 
   /// Returns the library
   Future<Library> getLibrary() async {
-    _updateTitleToPath();
-    _fetchMetadata();
+    await _updateTitleToPath();
+    await _fetchMetadata();
     return _getLibraryFromDirectory(
         '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}אוצריא');
   }
 
   Future<Library> _getLibraryFromDirectory(String path) async {
-    Category getAllCategoriesAndBooksFromDirectory(
-        Directory dir, Category? parent) {
+    Future<Category> getAllCategoriesAndBooksFromDirectory(
+        Directory dir, Category? parent) async {
       Category category = Category(
           title: getTitleFromPath(dir.path),
           subCategories: [],
           books: [],
           parent: parent);
       // get the books and categories from the directory
-      for (FileSystemEntity entity in dir.listSync()) {
+      await for (FileSystemEntity entity in dir.list()) {
         if (entity is Directory) {
-          category.subCategories.add(getAllCategoriesAndBooksFromDirectory(
-              Directory(entity.path), category));
+          category.subCategories.add(
+              await getAllCategoriesAndBooksFromDirectory(
+                  Directory(entity.path), category));
         } else {
           var topics = entity.path
               .split('אוצריא${Platform.pathSeparator}')
@@ -111,9 +113,9 @@ class FileSystemData {
     Library library = Library(categories: []);
 
     //then get all the categories and books from the top directory recursively
-    for (FileSystemEntity entity in Directory(path).listSync()) {
+    await for (FileSystemEntity entity in Directory(path).list()) {
       if (entity is Directory) {
-        library.subCategories.add(getAllCategoriesAndBooksFromDirectory(
+        library.subCategories.add(await getAllCategoriesAndBooksFromDirectory(
             Directory(entity.path), library));
       }
     }
@@ -230,9 +232,9 @@ class FileSystemData {
 
   /// Retrieves the text for a book with the given title asynchronously (using Isolate).
   /// supports docx files
-  Future<String> getBookText(String title) {
+  Future<String> getBookText(String title) async {
     return Isolate.run(() async {
-      String path = _getBookPath(title);
+      String path = await _getBookPath(title);
       File file = File(path);
       if (path.endsWith('.docx')) {
         final bytes = await file.readAsBytes();
@@ -246,7 +248,7 @@ class FileSystemData {
   /// an file system approach to get the content of a link.
   /// we read the file line by line and return the content of the line with the given index.
   Future<String> getLinkContent(Link link) async {
-    String path = _getBookPath(getTitleFromPath(link.path2));
+    String path = await _getBookPath(getTitleFromPath(link.path2));
     return Isolate.run(() async => await getLineFromFile(path, link.index2));
   }
 
@@ -286,8 +288,13 @@ class FileSystemData {
   /// Updates the title to path mapping using the provided library path.
   Future<void> _updateTitleToPath() async {
     titleToPath = {};
-    List<String> paths =
-        getAllBooksPathsFromDirecctory(Settings.getValue('key-library-path'));
+    if (!Settings.isInitialized) {
+      await Settings.init(cacheProvider: HiveCache());
+    }
+    final libraryPath = Settings.getValue('key-library-path');
+    List<String> paths = await Isolate.run(
+      () => getAllBooksPathsFromDirecctory(libraryPath),
+    );
     for (var path in paths) {
       if (path.toLowerCase().endsWith('.pdf')) continue;
       titleToPath[getTitleFromPath(path)] = path;
@@ -295,16 +302,17 @@ class FileSystemData {
   }
 
   ///fetches the metadata for the books in the library from a json file using the provided library path.
-  void _fetchMetadata() {
+  Future<void> _fetchMetadata() async {
     String metadataString = '';
     try {
       File file = File(
           '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}metadata.json');
-      metadataString = file.readAsStringSync();
+      metadataString = await file.readAsString();
     } catch (e) {
       return;
     }
-    final tempMetadata = jsonDecode(metadataString) as List<dynamic>;
+    final tempMetadata =
+        await Isolate.run(() => jsonDecode(metadataString) as List);
     for (int i = 0; i < tempMetadata.length; i++) {
       final row = tempMetadata[i] as Map<String, dynamic>;
       metadata[row['title'].replaceAll('"', '')] = {
@@ -329,10 +337,10 @@ class FileSystemData {
   }
 
   /// Returns the path of the book with the given title.
-  String _getBookPath(String title) {
+  Future<String> _getBookPath(String title) async {
     //make sure the map is not empty
     if (titleToPath.isEmpty) {
-      _updateTitleToPath();
+      await _updateTitleToPath();
     }
     //return the path of the book with the given title
     return titleToPath[title] ?? 'error: book path not found: $title';
