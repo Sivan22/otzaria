@@ -33,13 +33,8 @@ class _FindRefScreenState extends State<FindRefScreen>
   Future<void> _checkIndexStatus() async {
     final booksWithRefs =
         await DataRepository.instance.getNumberOfBooksWithRefs();
-    final totalBooks = (await appModel.library).getAllBooks().length;
-
-    // If there's a difference of more than 5 books or if there are no refs at all
-    if (booksWithRefs == 0 || (totalBooks - booksWithRefs) > 5) {
-      setState(() {
-        _needsIndexing = true;
-      });
+    if (booksWithRefs == 0) {
+      appModel.createRefsFromLibrary(0);
     }
   }
 
@@ -49,55 +44,6 @@ class _FindRefScreenState extends State<FindRefScreen>
     }
     return DataRepository.instance.findRefsByRelevance(
       ref,
-    );
-  }
-
-  Widget _buildIndexingMessage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'האינדקס ריק או לא מעודכן. יש לעדכן את האינדקס כדי לחפש מקורות.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () async {
-              final result = await showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  content: const Text(
-                    'האם ברצונך ליצור אינדקס מקורות? הדבר יאפס את האינדקס הקיים ועלול לקחת זמן ארוך מאד.',
-                  ),
-                  actions: <Widget>[
-                    ElevatedButton(
-                      child: const Text('ביטול'),
-                      onPressed: () {
-                        Navigator.pop(context, false);
-                      },
-                    ),
-                    ElevatedButton(
-                      child: const Text('אישור'),
-                      onPressed: () {
-                        Navigator.pop(context, true);
-                      },
-                    ),
-                  ],
-                ),
-              );
-              if (result == true) {
-                appModel.createRefsFromLibrary(0);
-                setState(() {
-                  _needsIndexing = false;
-                });
-              }
-            },
-            child: const Text('יצירת אינדקס מקורות'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -146,57 +92,49 @@ class _FindRefScreenState extends State<FindRefScreen>
               },
             ),
             Expanded(
-              child: _needsIndexing
-                  ? _buildIndexingMessage()
-                  : FutureBuilder<List<Ref>>(
-                      future: _refs,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else if (snapshot.data!.isEmpty &&
-                            _searchController.text.length >= 3) {
-                          return const Center(
-                            child: Text(
-                              'אין תוצאות',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          );
-                        } else {
-                          return ListView.builder(
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(
-                                  title: Text(snapshot.data![index].ref),
-                                  onTap: () {
-                                    final appModel = Provider.of<AppModel>(
-                                        context,
-                                        listen: false);
-                                    if (snapshot.data![index].pdfBook) {
-                                      appModel.openBook(
-                                          PdfBook(
-                                              title: snapshot
-                                                  .data![index].bookTitle,
-                                              path: snapshot
-                                                  .data![index].pdfPath!),
-                                          snapshot.data![index].index);
-                                    } else {
-                                      appModel.openBook(
-                                          TextBook(
-                                            title:
-                                                snapshot.data![index].bookTitle,
-                                          ),
-                                          snapshot.data![index].index);
-                                    }
-                                  });
-                            },
-                          );
-                        }
+              child: FutureBuilder<List<Ref>>(
+                future: _refs,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else if (snapshot.data!.isEmpty &&
+                      _searchController.text.length >= 3) {
+                    return const Center(
+                      child: Text(
+                        'אין תוצאות',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    );
+                  } else {
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                            title: Text(snapshot.data![index].ref),
+                            onTap: () {
+                              final appModel =
+                                  Provider.of<AppModel>(context, listen: false);
+                              if (snapshot.data![index].pdfBook) {
+                                appModel.openBook(
+                                    PdfBook(
+                                        title: snapshot.data![index].bookTitle,
+                                        path: snapshot.data![index].pdfPath!),
+                                    snapshot.data![index].index);
+                              } else {
+                                appModel.openBook(
+                                    TextBook(
+                                      title: snapshot.data![index].bookTitle,
+                                    ),
+                                    snapshot.data![index].index);
+                              }
+                            });
                       },
-                    ),
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),

@@ -156,8 +156,10 @@ class IsarDataProvider {
   }
 
   Future<int> getNumberOfBooksWithRefs() async {
-    final allRefs = isar.refs.where().findAll();
-    final books = allRefs.groupBy((ref) => ref.bookTitle);
+    final allRefs = await isar.refs.where().findAllAsync();
+    final books = await Isolate.run(() {
+      return allRefs.groupBy((ref) => ref.bookTitle);
+    });
     return books.length;
   }
 
