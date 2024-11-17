@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: otzaria-linux.zip
+          path: build/linux/x64/release/bundle/otzaria-linux.zip
 
   build_android:
     runs-on: ubuntu-latest
@@ -51,13 +51,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
-      - run: sudo apt install openjdk-18-jdk
-      - run: wget https://dl.google.com/dl/android/studio/ide-zips/2024.1.2.12/android-studio-2024.1.2.12-linux.tar.gz
-      - run: tar -zxvf android-studio-2024.1.2.12-linux.tar.gz
-      - run: sudo mv android-studio /opt/
-      - run: sudo ln -sf /opt/android-studio/bin/studio.sh /bin/android-studio
-      - run: flutter doctor -v
+          cache: true     
       - run: flutter pub get
       - run: flutter build apk
       - name: Upload apk
