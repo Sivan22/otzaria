@@ -156,7 +156,6 @@ class MainWindowScreenState extends State<MainWindowScreen>
                     _handleOrientationChange(context, orientation);
 
                     final pageView = PageView(
-                      key: const PageStorageKey('pageView'),
                       scrollDirection: orientation == Orientation.landscape
                           ? Axis.vertical
                           : Axis.horizontal,

@@ -19,8 +19,8 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   late TabController tabController;
   @override
   void initState() {
-    tabController = TabController(length: 3, vsync: this);
     super.initState();
+    tabController = TabController(length: 3, vsync: this, initialIndex: 0);
   }
 
   @override
