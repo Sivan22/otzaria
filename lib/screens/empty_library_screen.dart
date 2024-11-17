@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:archive/archive_io.dart';
 import 'package:flutter_archive/flutter_archive.dart' as flutter_archive;
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_document_picker/flutter_document_picker.dart';
 
 class EmptyLibraryScreen extends StatefulWidget {
   final VoidCallback onLibraryLoaded;
@@ -73,6 +74,83 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ההורדה בוטלה')),
       );
+    }
+  }
+
+  Future<void> _pickAndExtractZipFile() async {
+    final libraryPath = Settings.getValue<String>('key-library-path') ?? '';
+    if (libraryPath.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('נא לבחור תיקייה תחילה')),
+      );
+      return;
+    }
+
+    try {
+      setState(() {
+        _isDownloading = true;
+        _currentOperation = 'פותח קובץ...';
+        _downloadProgress = 0;
+      });
+
+      final path = await FlutterDocumentPicker.openDocument(
+        params: FlutterDocumentPickerParams(
+          allowedFileExtensions: ['zip'],
+          invalidFileNameSymbols: ['/'],
+        ),
+      );
+
+      if (path == null) {
+        setState(() {
+          _isDownloading = false;
+          _currentOperation = '';
+        });
+        return;
+      }
+
+      final zipFile = File(path);
+
+      try {
+        await flutter_archive.ZipFile.extractToDirectory(
+          zipFile: zipFile,
+          destinationDir: Directory(libraryPath),
+          onExtracting: (zipEntry, progress) {
+            setState(() {
+              _downloadProgress = progress;
+              _currentOperation = 'מחלץ: ${zipEntry.name}';
+            });
+            return flutter_archive.ZipFileOperation.includeItem;
+          },
+        );
+
+        if (mounted) {
+          widget.onLibraryLoaded();
+          setState(() {
+            _isDownloading = false;
+            _currentOperation = '';
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('שגיאה בחילוץ: $e')),
+          );
+          setState(() {
+            _isDownloading = false;
+            _currentOperation = '';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('שגיאה בבחירת הקובץ: $e')),
+        );
+        setState(() {
+          _isDownloading = false;
+          _currentOperation = '';
+        });
+      }
     }
   }
 
@@ -340,7 +418,12 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                   child: const Text('בחר תיקייה'),
                 ),
               const SizedBox(height: 32),
-              if (!Platform.isAndroid || Platform.isIOS)
+              if (Platform.isAndroid)
+                ElevatedButton(
+                  onPressed: _isDownloading ? null : _pickAndExtractZipFile,
+                  child: const Text('בחר קובץ ZIP מהמכשיר'),
+                ),
+              if (!Platform.isAndroid && !Platform.isIOS)
                 const Text(
                   'או',
                   style: TextStyle(fontSize: 18),

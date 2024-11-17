@@ -46,6 +46,10 @@ class DataRepository {
     return _isarDataProvider.findRefsByRelevance(ref, limit: limit);
   }
 
+  Future<int> getNumberOfBooksWithRefs() {
+    return _isarDataProvider.getNumberOfBooksWithRefs();
+  }
+
   addAllTextsToMimir(Library library, {int start = 0, int end = 100000}) async {
     _mimirDataProvider.addAllTBooksToTantivy(library, start: start, end: end);
   }
