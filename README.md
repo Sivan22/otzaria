@@ -34,6 +34,8 @@
     <a href="https://github.com/sivan22/otzaria/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
     <a href="https://github.com/sivan22/otzaria/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    ·
+    <a href="https://github.com/sivan22/otzaria/wiki">user's manual</a>
   </p>
 </div>
 
@@ -114,25 +116,38 @@ Also, it is a multiplatform framework.
 <!-- GETTING STARTED -->
 ## Getting Started
 
-the app is still in development. so there is no installation package yet. you can download the zip from the GitHub repo, unzip it, and run the app.
+### windows
+#### Prerequisites
+make sure that Visual C++ Redistributable is installed on your computer. if not, download it from [Here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) and install it.
 
-### Prerequisites
+#### Installation
+download the latest build for windows from [releases](https://github.com/Sivan22/otzaria/releases). 
+the library is included in the .exe file.
+in case you need only the app itself (for upgrading) you can download the .msix file.
 
-#### windows
-make sure that Visual C++ Redistributable is installed on your computer. if not download it from [Here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) and install it.
+### linux
+#### Prerequisites
+```sudo apt-get install libgtk-3-0 libblkid1 liblzma5```
+#### Installation
+* download the linux build from releases, extarct and run otzaria.
+* when first running the app, you will be asked to download the library.
+* alternatively, you can download the library manualy from [here], extarct it and provide path to the app.
 
+### android
+* Download the .apk file from the releases page, and install it.
+* when first running the app,.you will be asked to download the library.
+* alternatively, you can download the library manualy from [here] and provide the zip file to the app.
 
-### Installation
+### iOS (iPhone/iPad)
+* you can try the beta version through TestFlight. 
+* follow this [link](https://testflight.apple.com/join/yvNbmaX4).
+* when first running the app,.you will be asked to download the library.
 
-#### windows and linux
-* download the full zip (including the library) from the releases page, unzip it, and run the app.
-* when first running the app, provide the path to the library. the path should be inside the unzipped folder.
-
-#### android
-
-* Download the apk from the releases page, and install it.
-* download the library from the releases page, and unzip it on your device.
-* when first running the app, provide the path to the library. the path should be inside the unzipped folder.
+### macos
+* download the latest macos build from the releases page.
+* run the app while pressing ctl.
+* when first running the app, you will be asked to download the library.
+* alternatively, you can download the library manualy from [here], extarct it and provide path to the app.
 
 
 
