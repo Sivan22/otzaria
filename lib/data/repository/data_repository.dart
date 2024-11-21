@@ -50,7 +50,8 @@ class DataRepository {
     return _isarDataProvider.getNumberOfBooksWithRefs();
   }
 
-  addAllTextsToMimir(Library library, {int start = 0, int end = 100000}) async {
+  addAllTextsToTantivy(Library library,
+      {int start = 0, int end = 100000}) async {
     _mimirDataProvider.addAllTBooksToTantivy(library, start: start, end: end);
   }
 }

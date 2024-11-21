@@ -86,7 +86,7 @@ class FullTextSettingsScreen extends StatelessWidget {
                                       ],
                                     ));
                             if (await result == true) {
-                              context.read<AppModel>().addAllTextsToMimir();
+                              context.read<AppModel>().addAllTextsToTantivy();
                             }
                           },
                           child: const Text(

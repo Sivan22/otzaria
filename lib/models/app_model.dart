@@ -439,57 +439,54 @@ class AppModel with ChangeNotifier {
   Future<List<Book>> findBooks(String query, Category? category,
       {List<String>? topics}) async {
     final queryWords = query.split(RegExp(r'\s+'));
-    var books = category?.getAllBooks() ?? (await library).getAllBooks();
+    var allBooks = category?.getAllBooks() ?? (await library).getAllBooks();
     if (showOtzarHachochma.value) {
-      books += await otzarBooks;
+      allBooks += await otzarBooks;
     }
     if (showHebrewBooks.value) {
-      books += await hebrewBooks;
+      allBooks += await hebrewBooks;
     }
 
-    // First filter the books
-    var filteredBooks = books.where((book) {
+    // First, filter books outside of isolate to get the working set
+    var filteredBooks = allBooks.where((book) {
       final title = book.title.toLowerCase();
-      return queryWords.every((word) => title.contains(word));
+      final bookTopics = book.topics.split(', ');
+
+      bool matchesQuery = queryWords.every((word) => title.contains(word));
+      bool matchesTopics = topics == null ||
+          topics.isEmpty ||
+          topics.every((t) => bookTopics.contains(t));
+
+      return matchesQuery && matchesTopics;
     }).toList();
 
-    if (topics != null && topics.isNotEmpty) {
-      filteredBooks = filteredBooks
-          .where((book) =>
-              topics.every((t) => book.topics.split(', ').contains(t)))
-          .toList();
+    if (filteredBooks.isEmpty) {
+      return [];
     }
 
-    // Create a simple data structure that can be sent to isolate
-    final searchData =
-        filteredBooks.asMap().map((index, book) => MapEntry(index, {
-              'index': index,
+    // Prepare data for isolate - only send what's needed for sorting
+    final List<Map<String, dynamic>> sortData = filteredBooks
+        .asMap()
+        .map((i, book) => MapEntry(i, {
+              'index': i,
               'title': book.title,
-            }));
+            }))
+        .values
+        .toList();
 
-    // Sort using isolate with the simplified data
-    final sortedIndices = await Isolate.run(() {
-      final entries = searchData.entries.toList();
-      entries.sort((a, b) {
-        final scoreA = ratio(query, a.value['title'] as String);
-        final scoreB = ratio(query, b.value['title'] as String);
-        return scoreB.compareTo(scoreA);
-      });
-      return entries.map((e) => e.value['index'] as int).toList();
-    });
+    // Sort indices in isolate
+    final sortedIndices = getSortedIndices(sortData, query);
 
-    // Reorder the original filtered books based on the sorted indices
-    final sortedBooks =
-        sortedIndices.map((index) => filteredBooks[index]).toList();
-    return sortedBooks;
+    // Map sorted indices back to books
+    return (await sortedIndices).map((index) => filteredBooks[index]).toList();
   }
 
   Future<void> createRefsFromLibrary(int startIndex) async {
     data.createRefsFromLibrary(await library, startIndex);
   }
 
-  addAllTextsToMimir({int start = 0, int end = 100000}) async {
-    data.addAllTextsToMimir(await library, start: start, end: end);
+  addAllTextsToTantivy({int start = 0, int end = 100000}) async {
+    data.addAllTextsToTantivy(await library, start: start, end: end);
   }
 
   Future<void> refreshLibrary() async {
@@ -501,3 +498,16 @@ class AppModel with ChangeNotifier {
 
 /// An enum that represents the different screens in the application.
 enum Screens { library, find, reading, search, favorites, settings }
+
+Future<List<int>> getSortedIndices(
+    List<Map<String, dynamic>> data, String query) async {
+  return await Isolate.run(() {
+    List<int> indices = List<int>.generate(data.length, (i) => i);
+    indices.sort((a, b) {
+      final scoreA = ratio(query, data[a]['title'] as String);
+      final scoreB = ratio(query, data[b]['title'] as String);
+      return scoreB.compareTo(scoreA);
+    });
+    return indices;
+  });
+}
