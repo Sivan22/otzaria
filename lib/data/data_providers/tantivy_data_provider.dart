@@ -11,15 +11,31 @@ import 'package:otzaria/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:hive/hive.dart';
 
+/// A singleton class that manages text indexing and searching functionality using Tantivy search engine.
+///
+/// This provider handles both text-based and PDF books, maintaining an index for full-text search
+/// capabilities. It supports incremental indexing with progress tracking and allows for both
+/// synchronous and asynchronous search operations.
 class TantivyDataProvider {
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
 
+  /// Notifies listeners about the number of books that have been processed during indexing
   ValueNotifier<int?> numOfbooksDone = ValueNotifier(null);
+
+  /// Notifies listeners about the total number of books to be processed
   ValueNotifier<int?> numOfbooksTotal = ValueNotifier(null);
+
+  /// Indicates whether the indexing process is currently running
   ValueNotifier<bool> isIndexing = ValueNotifier(false);
+
+  /// Maintains a list of processed books to avoid reindexing
   late List booksDone;
 
+  /// Initializes the data provider and loads the list of previously indexed books from disk.
+  ///
+  /// Uses Hive for persistent storage of indexed book records, storing them in the 'index'
+  /// subdirectory of the configured library path.
   TantivyDataProvider() {
     booksDone = Hive.box(
             name: 'books_indexed',
@@ -29,6 +45,7 @@ class TantivyDataProvider {
         .get('key-books-done', defaultValue: []);
   }
 
+  /// Persists the list of indexed books to disk using Hive storage.
   saveBooksDoneToDisk() {
     Hive.box(
             name: 'books_indexed',
@@ -38,11 +55,20 @@ class TantivyDataProvider {
         .put('key-books-done', booksDone);
   }
 
+  /// Instance of the search engine pointing to the index directory
   final engine = SearchEngine.newInstance(
       path: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
           Platform.pathSeparator +
           'index');
 
+  /// Performs a synchronous search operation across indexed texts.
+  ///
+  /// [query] The search query string
+  /// [books] List of book identifiers to search within
+  /// [limit] Maximum number of results to return
+  /// [fuzzy] Whether to perform fuzzy matching
+  ///
+  /// Returns a Future containing a list of search results
   Future<List<SearchResult>> searchTexts(
       String query, List<String> books, int limit, bool fuzzy) async {
     final index = await engine;
@@ -50,6 +76,14 @@ class TantivyDataProvider {
         query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
 
+  /// Performs an asynchronous stream-based search operation across indexed texts.
+  ///
+  /// [query] The search query string
+  /// [books] List of book identifiers to search within
+  /// [limit] Maximum number of results to return
+  /// [fuzzy] Whether to perform fuzzy matching
+  ///
+  /// Returns a Stream of search results that can be listened to for real-time updates
   Stream<List<SearchResult>> searchTextsStream(
       String query, List<String> books, int limit, bool fuzzy) async* {
     final index = await engine;
@@ -57,6 +91,13 @@ class TantivyDataProvider {
         query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
 
+  /// Indexes all books in the provided library within the specified range.
+  ///
+  /// [library] The library containing books to index
+  /// [start] Starting index in the library's book list (default: 0)
+  /// [end] Ending index in the library's book list (default: 100000)
+  ///
+  /// Updates progress through numOfbooksDone and numOfbooksTotal notifiers
   addAllTBooksToTantivy(Library library,
       {int start = 0, int end = 100000}) async {
     isIndexing.value = true;
@@ -67,11 +108,13 @@ class TantivyDataProvider {
     numOfbooksDone.value = 0;
 
     for (Book book in allBooks) {
+      // Check if indexing was cancelled
       if (!isIndexing.value) {
         return;
       }
       print('Adding ${book.title} to index');
       try {
+        // Handle different book types appropriately
         if (book is TextBook) {
           await addTextsToTantivy(book);
         } else if (book is PdfBook) {
@@ -81,16 +124,27 @@ class TantivyDataProvider {
         print('Error adding ${book.title} to index: $e');
       }
     }
+
+    // Reset progress indicators after completion
     numOfbooksDone.value = null;
     numOfbooksTotal.value = null;
     isIndexing.value = false;
   }
 
+  /// Indexes a text-based book by processing its content and adding it to the search index.
+  ///
+  /// [book] The TextBook instance to be indexed
+  ///
+  /// Processes the book's text by:
+  /// 1. Computing a hash to check for previous indexing
+  /// 2. Stripping HTML and vowel marks
+  /// 3. Splitting into lines and indexing each line separately
   addTextsToTantivy(TextBook book) async {
     final index = await engine;
     var text = await book.text;
     final title = book.title;
 
+    // Check if book was already indexed using content hash
     final hash = sha1.convert(utf8.encode(text)).toString();
     if (booksDone.contains(hash)) {
       print('${book.title} already in index');
@@ -98,9 +152,12 @@ class TantivyDataProvider {
       return;
     }
 
+    // Preprocess text by removing HTML and vowel marks
     text = stripHtmlIfNeeded(text);
     text = removeVolwels(text);
     final texts = text.split('\n');
+
+    // Index each line separately
     for (int i = 0; i < texts.length; i++) {
       if (!isIndexing.value) {
         return;
@@ -113,6 +170,7 @@ class TantivyDataProvider {
           isPdf: false,
           filePath: '');
     }
+
     await index.commit();
     booksDone.add(hash);
     saveBooksDoneToDisk();
@@ -120,8 +178,18 @@ class TantivyDataProvider {
     numOfbooksDone.value = numOfbooksDone.value! + 1;
   }
 
+  /// Indexes a PDF book by extracting and processing text from each page.
+  ///
+  /// [book] The PdfBook instance to be indexed
+  ///
+  /// Processes the PDF by:
+  /// 1. Computing a hash of the PDF file to check for previous indexing
+  /// 2. Extracting text from each page
+  /// 3. Splitting page text into lines and indexing each line separately
   addPdfTextsToMimir(PdfBook book) async {
     final index = await engine;
+
+    // Check if PDF was already indexed using file hash
     final data = await File(book.path).readAsBytes();
     final hash = sha1.convert(data).toString();
     if (booksDone.contains(hash)) {
@@ -129,10 +197,15 @@ class TantivyDataProvider {
       numOfbooksDone.value = numOfbooksDone.value! + 1;
       return;
     }
+
+    // Extract text from each page
     final pages = await PdfDocument.openData(data).then((value) => value.pages);
     final title = book.title;
+
+    // Process each page
     for (int i = 0; i < pages.length; i++) {
       final texts = (await pages[i].loadText()).fullText.split('\n');
+      // Index each line from the page
       for (int j = 0; j < texts.length; j++) {
         if (!isIndexing.value) {
           return;
@@ -146,6 +219,7 @@ class TantivyDataProvider {
             filePath: book.path);
       }
     }
+
     await index.commit();
     booksDone.add(hash);
     saveBooksDoneToDisk();
