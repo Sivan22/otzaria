@@ -446,6 +446,8 @@ class AppModel with ChangeNotifier {
     if (showHebrewBooks.value) {
       books += await hebrewBooks;
     }
+
+    // First filter the books
     var filteredBooks = books.where((book) {
       final title = book.title.toLowerCase();
       return queryWords.every((word) => title.contains(word));
@@ -458,15 +460,28 @@ class AppModel with ChangeNotifier {
           .toList();
     }
 
-    return Isolate.run(() {
-      filteredBooks.sort((a, b) {
-        final scoreA = ratio(query, a.title);
-        final scoreB = ratio(query, b.title);
+    // Create a simple data structure that can be sent to isolate
+    final searchData =
+        filteredBooks.asMap().map((index, book) => MapEntry(index, {
+              'index': index,
+              'title': book.title,
+            }));
+
+    // Sort using isolate with the simplified data
+    final sortedIndices = await Isolate.run(() {
+      final entries = searchData.entries.toList();
+      entries.sort((a, b) {
+        final scoreA = ratio(query, a.value['title'] as String);
+        final scoreB = ratio(query, b.value['title'] as String);
         return scoreB.compareTo(scoreA);
       });
-
-      return filteredBooks;
+      return entries.map((e) => e.value['index'] as int).toList();
     });
+
+    // Reorder the original filtered books based on the sorted indices
+    final sortedBooks =
+        sortedIndices.map((index) => filteredBooks[index]).toList();
+    return sortedBooks;
   }
 
   Future<void> createRefsFromLibrary(int startIndex) async {
