@@ -337,6 +337,9 @@ class FileSystemData {
   /// Reads metadata from a JSON file and creates a structured mapping of
   /// book titles to their metadata information.
   Future<Map<String, Map<String, dynamic>>> _getMetadata() async {
+    if (!Settings.isInitialized) {
+      await Settings.init(cacheProvider: HiveCache());
+    }
     String metadataString = '';
     Map<String, Map<String, dynamic>> metadata = {};
     try {
