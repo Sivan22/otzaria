@@ -115,7 +115,7 @@ class DataRepository {
   ///   - [library]: The library containing books to index
   ///   - [start]: Starting index for batch processing (defaults to 0)
   ///   - [end]: Ending index for batch processing (defaults to 100000)
-  Future<void> addAllTextsToMimir(Library library,
+  addAllTextsToTantivy(Library library,
       {int start = 0, int end = 100000}) async {
     _mimirDataProvider.addAllTBooksToTantivy(library, start: start, end: end);
   }
