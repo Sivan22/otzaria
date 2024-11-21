@@ -19,16 +19,14 @@ class Category {
   String title;
 
   /// A description of the category, obtained from [Data.metadata].
-  String get description =>
-      FileSystemData.instance.metadata[title]?['heDesc'] ?? '';
+  String description;
 
   /// A short description of the category, obtained from [Data.metadata].
-  String get shortDescription =>
-      FileSystemData.instance.metadata[title]?['heShortDesc'] ?? '';
+  String shortDescription;
 
   /// The order of the category, obtained from [Data.metadata].
   /// Defaults to 999 if no order is specified for this category.
-  int get order => FileSystemData.instance.metadata[title]?['order'] ?? 999;
+  int order;
 
   ///the list of sub categories that are contained in this category
   List<Category> subCategories;
@@ -72,6 +70,9 @@ class Category {
   /// in this category, and [parent] is the parent category.
   Category({
     required this.title,
+    required this.description,
+    required this.shortDescription,
+    required this.order,
     required this.subCategories,
     required this.books,
     required this.parent,
@@ -91,6 +92,9 @@ class Library extends Category {
   Library({required List<Category> categories})
       : super(
             title: 'ספריית אוצריא',
+            description: '',
+            shortDescription: '',
+            order: 0,
             subCategories: categories,
             books: [],
             parent: null) {
