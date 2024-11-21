@@ -53,8 +53,9 @@ Future<String> refFromIndex(
   return texts.join(', ');
 }
 
-bool hasTopic(String title, String topic) {
-  return FileSystemData.instance.titleToPath[title]?.contains(topic) ?? false;
+Future<bool> hasTopic(String title, String topic) async {
+  final titleToPath = await FileSystemData.instance.titleToPath;
+  return titleToPath[title]?.contains(topic) ?? false;
 }
 
 String paraphrase(String text) {

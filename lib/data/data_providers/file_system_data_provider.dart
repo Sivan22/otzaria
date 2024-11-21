@@ -25,25 +25,18 @@ import 'package:otzaria/models/links.dart';
 ///  which every book is stored in a file,  and every directory is represents a category.
 /// The metadata is stored in a JSON file.
 class FileSystemData {
-  Map<String, String> titleToPath = {};
+  late Future<Map<String, String>> titleToPath;
   Map<String, dynamic> metadata = {};
 
   FileSystemData() {
-    _initialize();
+    titleToPath = _updateTitleToPath();
   }
 
   static FileSystemData instance = FileSystemData();
 
-  Future<void> _initialize() async {
-    if (!Settings.isInitialized) {
-      await Settings.init(cacheProvider: HiveCache());
-    }
-    await _updateTitleToPath();
-  }
-
   /// Returns the library
   Future<Library> getLibrary() async {
-    await _updateTitleToPath();
+    titleToPath = _updateTitleToPath();
     await _fetchMetadata();
     return _getLibraryFromDirectory(
         '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}אוצריא');
@@ -286,8 +279,8 @@ class FileSystemData {
   }
 
   /// Updates the title to path mapping using the provided library path.
-  Future<void> _updateTitleToPath() async {
-    titleToPath = {};
+  Future<Map<String, String>> _updateTitleToPath() async {
+    Map<String, String> titleToPath = {};
     if (!Settings.isInitialized) {
       await Settings.init(cacheProvider: HiveCache());
     }
@@ -299,6 +292,7 @@ class FileSystemData {
       if (path.toLowerCase().endsWith('.pdf')) continue;
       titleToPath[getTitleFromPath(path)] = path;
     }
+    return titleToPath;
   }
 
   ///fetches the metadata for the books in the library from a json file using the provided library path.
@@ -338,10 +332,9 @@ class FileSystemData {
 
   /// Returns the path of the book with the given title.
   Future<String> _getBookPath(String title) async {
-    //make sure the map is not empty
-    if (titleToPath.isEmpty) {
-      await _updateTitleToPath();
-    }
+    //
+    final titleToPath = await this.titleToPath;
+
     //return the path of the book with the given title
     return titleToPath[title] ?? 'error: book path not found: $title';
   }
@@ -394,7 +387,8 @@ class FileSystemData {
     return '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}links${Platform.pathSeparator}${title}_links.json';
   }
 
-  bool bookExists(String title) {
+  Future<bool> bookExists(String title) async {
+    final titleToPath = await this.titleToPath;
     return titleToPath.keys.contains(title);
   }
 }
