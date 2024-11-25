@@ -1,7 +1,7 @@
 ---
 name: "Bug report \U0001F41E דיווח על באג"
 about: Create a bug report | משהו אינו עובד כצפוי
-labels: bug
+labels: באג
 
 ---
 
@@ -9,15 +9,14 @@ labels: bug
 A clear and concise description of what the bug is.
 תיאור מפורט וברור שמגדיר מהו הבאג
 
-### Steps to reproduce
+### Steps to reproduce | צעדים לשחזור
 Steps to reproduce the behavior.
+כיצד ניתן לשחזר שוב את הבאג?
 
-### Expected behavior
+### Expected behavior | התנהגות צפוייה
 A clear and concise description of what you expected to happen.
+תיאור ברור של מה שמצופה מהתוכנה לעשות.
 
-### Environment
- - OS: [e.g. Arch Linux]
- - Other details that you think may affect.
-
-### Additional context
-Add any other context about the problem here.
+### Environment | סביבה 
+ - OS | מערכת הפעלה: [e.g. Arch Linux]
+ - version | גרסת התוכנה: 
