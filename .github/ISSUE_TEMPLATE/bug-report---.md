@@ -1,12 +1,13 @@
 ---
-name: "Bug report \U0001F41E"
-about: Create a bug report
+name: "Bug report \U0001F41E דיווח על באג"
+about: Create a bug report | משהו אינו עובד כצפוי
 labels: bug
 
 ---
 
-## Describe the bug
+## Describe the bug | תיאור הבאג
 A clear and concise description of what the bug is.
+תיאור מפורט וברור שמגדיר מהו הבאג
 
 ### Steps to reproduce
 Steps to reproduce the behavior.
