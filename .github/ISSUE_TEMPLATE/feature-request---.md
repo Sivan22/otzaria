@@ -1,5 +1,5 @@
 ---
-name: "Feature request \U0001F680 | בקשה להוספת תכונה"
+name: "Feature request \U0001F680  בקשה להוספת תכונה"
 about: Suggest an idea | רעיון לשיפור או שדרוג
 labels: enhancement
 
