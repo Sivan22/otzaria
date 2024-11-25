@@ -1,7 +1,15 @@
-/*this class represents the state of the application.
-it includes the library, a list of the opened tabs, the current tab, the current view, 
-and the some other app settings like dark mode and the seed color*/
-
+/// AppModel is the central state management class for the Otzaria application.
+///
+/// This class manages:
+/// * Library and book data
+/// * Tab management and navigation
+/// * User preferences and settings
+/// * Bookmarks and reading history
+/// * Workspaces for organizing multiple reading sessions
+/// * Search functionality
+///
+/// The model uses [ChangeNotifier] to notify listeners of state changes,
+/// making it suitable for use with Flutter's Provider pattern.
 import 'dart:isolate';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -17,20 +25,17 @@ import 'package:otzaria/models/workspace.dart';
 import 'package:otzaria/utils/calendar.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
-/// Represents the state of the application.
-///
-/// It includes the library, a list of the opened tabs, the current tab,
-/// the current view, and the some other app settings like dark mode and
-/// the seed color.
 class AppModel with ChangeNotifier {
-  /// The data provider for the application.
+  /// The singleton data repository instance for accessing application data
   DataRepository data = DataRepository.instance;
 
-  /// The path of the library.
+  /// The filesystem path to the library's root directory
   late String _libraryPath;
 
+  /// Getter for the library path
   String get libraryPath => _libraryPath;
 
+  /// Setter for the library path. Updates settings and reloads the library
   set libraryPath(String path) {
     _libraryPath = path;
     Settings.setValue('key-library-path', path);
@@ -38,82 +43,92 @@ class AppModel with ChangeNotifier {
     notifyListeners();
   }
 
-  /// The library of books.
+  /// Future containing the main library of books
   late Future<Library> library;
 
-  /// The list of otzar books.
+  /// Future containing the list of books from Otzar HaChochma
   late Future<List<ExternalBook>> otzarBooks;
 
-  /// the list of hebrewBooks
+  /// Future containing the list of books from HebrewBooks
   late Future<List<ExternalBook>> hebrewBooks;
 
-  /// The list of opened tabs.
+  /// List of currently opened tabs in the application
   List<OpenedTab> tabs = [];
 
-  /// The index of the current tab.
+  /// Index of the currently active tab
   int currentTab = 0;
 
-  /// The index of the current view.
+  /// The currently active view/screen in the application
   ValueNotifier<Screens> currentView = ValueNotifier(Screens.library);
 
-  ///the list of bookmarks
+  /// List of user-created bookmarks
   late List<Bookmark> bookmarks;
 
-  /// the history of opened books
+  /// Reading history tracking previously opened books and locations
   late List<Bookmark> history;
 
-  ///the list of worspaces
+  /// List of saved workspaces (collections of opened tabs)
   late List<Workspace> workspaces;
 
-  /// Flag indicating if the app is in dark mode.
+  /// Controls the application's theme mode
   final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(
     Settings.getValue<bool>('key-dark-mode') ?? false,
   );
 
-  /// The color used as seed.
+  /// The primary color used for theming the application
   final ValueNotifier<Color> seedColor = ValueNotifier<Color>(
     ConversionUtils.colorFromString(
         Settings.getValue<String>('key-swatch-color') ?? ('#ff2c1b02')),
   );
 
-  /// The color used as seed.
+  /// Controls the padding size used in the application's UI
   final ValueNotifier<double> paddingSize = ValueNotifier<double>(
       Settings.getValue<double>('key-padding-size') ?? 10);
 
+  /// Controls the default font size used in the application
   final ValueNotifier<double> fontSize =
       ValueNotifier<double>(Settings.getValue<double>('key-font-size') ?? 16);
 
+  /// Controls the default font family used in the application
   final ValueNotifier<String> fontFamily = ValueNotifier<String>(
       Settings.getValue<String>('key-font-family') ?? 'FrankRuhlCLM');
 
-  /// if you should show otzar hachochma books
+  /// Controls visibility of Otzar HaChochma books in search results
   final ValueNotifier<bool> showOtzarHachochma = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-otzar-hachochma') ?? false,
   );
 
-  /// if you should show hebrewbooks books
+  /// Controls visibility of HebrewBooks.org books in search results
   final ValueNotifier<bool> showHebrewBooks = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-hebrew-books') ?? false,
   );
 
-  /// if you should show hebrewbooks books
+  /// Master switch for showing/hiding all external books
   final ValueNotifier<bool> showExternalBooks = ValueNotifier<bool>(
     Settings.getValue<bool>('key-show-external-books') ?? false,
   );
 
-  /// if you should show hebrewbooks books
+  /// Controls whether to use fast search functionality
   final ValueNotifier<bool> useFastSearch = ValueNotifier<bool>(
     Settings.getValue<bool>('key-use-fast-search') ?? true,
   );
 
-  /// a focus node for the search field in libraryBrowser
+  /// Focus node for the book locator search field
   FocusNode bookLocatorFocusNode = FocusNode();
+
+  /// Focus node for the reference finder search field
   FocusNode findReferenceFocusNode = FocusNode();
 
-  /// Constructs a new AppModel instance.
+  /// Creates a new AppModel instance and initializes the application state.
   ///
-  /// This constructor initializes the library and tabs list, and loads the
-  /// tabs list and history from disk.
+  /// [libraryPath] specifies the root directory containing the book library.
+  ///
+  /// The constructor:
+  /// * Initializes the library and external book sources
+  /// * Loads saved tabs from persistent storage
+  /// * Loads bookmarks and reading history
+  /// * Loads saved workspaces
+  /// * Sets up theme and UI preference listeners
   AppModel(String libraryPath) {
     _libraryPath = libraryPath;
     library = data.getLibrary();
@@ -122,7 +137,7 @@ class AppModel with ChangeNotifier {
 
     fontFamily.addListener(() => notifyListeners());
 
-//load tabs from disk. if fails, delete the tabs from disk
+    // Load tabs from disk, handle corrupted data gracefully
     try {
       tabs = List<OpenedTab>.from(
           ((Hive.box(name: 'tabs').get('key-tabs', defaultValue: [])) as List)
@@ -133,15 +148,15 @@ class AppModel with ChangeNotifier {
       Hive.box(name: 'tabs').put('key-tabs', []);
     }
 
-    ///load the current tab from disk
+    // Restore the last active tab
     currentTab = Hive.box(name: 'tabs').get('key-current-tab', defaultValue: 0);
 
-    //if there are any tabs, set the current view to reading
+    // Set reading view if tabs exist
     if (tabs.isNotEmpty) {
       currentView.value = Screens.reading;
     }
 
-    //load bookmarks
+    // Load bookmarks with error handling
     try {
       final List<dynamic> rawBookmarks =
           Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
@@ -152,7 +167,7 @@ class AppModel with ChangeNotifier {
       Hive.box(name: 'bookmarks').put('key-bookmarks', []);
     }
 
-    //load history
+    // Load reading history with error handling
     try {
       final List<dynamic> rawHistory =
           Hive.box(name: 'history').get('key-history') ?? [];
@@ -163,7 +178,7 @@ class AppModel with ChangeNotifier {
       Hive.box(name: 'history').put('key-history', []);
     }
 
-    //load workspaces
+    // Load workspaces with error handling
     try {
       final List<dynamic> rawWorkspaces =
           Hive.box(name: 'workspaces').get('key-workspaces') ?? [];
@@ -184,8 +199,12 @@ class AppModel with ChangeNotifier {
 
   /// Opens a book in a new tab.
   ///
-  /// [book] The book to open.
-  /// [index] The index of the book.
+  /// Creates either a [PdfBookTab] or [TextBookTab] depending on the book type.
+  /// The new tab is inserted after the current tab.
+  ///
+  /// [book] The book to open
+  /// [index] The page or section index to open to
+  /// [openLeftPane] Whether to open the left pane (for TextBooks only)
   void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
       _addTab(PdfBookTab(book, max(index, 1)));
@@ -193,10 +212,13 @@ class AppModel with ChangeNotifier {
       _addTab(
           TextBookTab(book: book, index: index, openLeftPane: openLeftPane));
     }
-    //show the reading screen
     currentView.value = Screens.reading;
   }
 
+  /// Searches for a book by its exact title.
+  ///
+  /// Returns the first exact match, or the closest match if no exact match is found.
+  /// Returns null if no matches are found.
   Future<Book?> findBookByTitle(String title) async {
     final books = await findBooks(title, null);
 
@@ -212,28 +234,24 @@ class AppModel with ChangeNotifier {
     return exactMatch;
   }
 
-  /// Opens a new search tab.
-  ///
-  /// This function creates a new `SearchingTab` instance with the title "חיפוש"
-  /// and adds it to the list of opened tabs.
-  ///
-  /// Does not return anything.
+  /// Opens a new search tab with default title "חיפוש"
   void openNewSearchTab() {
     _addTab(SearchingTab('חיפוש', ''));
   }
 
-  /// Adds a new tab to the list of opened tabs.
+  /// Internal helper to add a new tab to the tabs list.
   ///
-  /// [tab] The tab to add.
+  /// Inserts the tab after the current tab and updates the current tab index.
   void _addTab(OpenedTab tab) {
-    //add the tab after the current tab, or at the end if this is the last tab
     tabs.insert(min(currentTab + 1, tabs.length), tab);
-    //opdate the current tab, while making sure it is not goes beyond the list.
     currentTab = min(currentTab + 1, tabs.length - 1);
     notifyListeners();
     saveTabsToDisk();
   }
 
+  /// Opens an existing tab at the specified index.
+  ///
+  /// Handles both PDF and text books appropriately.
   void openTab(OpenedTab tab, {int index = 1}) {
     if (tab is PdfBookTab) {
       openBook(tab.book, index);
@@ -244,9 +262,7 @@ class AppModel with ChangeNotifier {
     }
   }
 
-  /// Closes a tab.
-  ///
-  /// [tab] The tab to close.
+  /// Closes the specified tab and adds it to history.
   void closeTab(OpenedTab tab) {
     addTabToHistory(tab);
     tabs.remove(tab);
@@ -255,6 +271,9 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  /// Adds a tab's current state to the reading history.
+  ///
+  /// Handles both PDF and text books, saving their current page/position.
   void addTabToHistory(OpenedTab tab) {
     if (tab is PdfBookTab) {
       int index = tab.pdfViewerController.isReady
@@ -277,10 +296,12 @@ class AppModel with ChangeNotifier {
     }
   }
 
+  /// Closes the currently active tab
   void closeCurrentTab() {
     closeTab(tabs[currentTab]);
   }
 
+  /// Navigates to the previous tab if available
   void goToPreviousTab() {
     if (currentTab > 0) {
       currentTab--;
@@ -288,6 +309,7 @@ class AppModel with ChangeNotifier {
     }
   }
 
+  /// Navigates to the next tab if available
   void goToNextTab() {
     if (currentTab < tabs.length - 1) {
       currentTab++;
@@ -295,7 +317,7 @@ class AppModel with ChangeNotifier {
     }
   }
 
-  /// Closes all tabs.
+  /// Closes all open tabs, saving their state to history
   void closeAllTabs() {
     for (final tab in tabs) {
       addTabToHistory(tab);
@@ -306,6 +328,7 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  /// Closes all tabs except the specified one
   void closeOthers(OpenedTab tab) {
     for (int i = 0; i < tabs.length; i++) {
       if (tabs[i] != tab) {
@@ -318,10 +341,12 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  /// Creates a duplicate of the specified tab
   void cloneTab(OpenedTab tab) {
     _addTab(OpenedTab.from(tab));
   }
 
+  /// Moves a tab to a new position in the tabs list
   void moveTab(OpenedTab tab, int newIndex) {
     tabs.remove(tab);
     tabs.insert(
@@ -331,15 +356,17 @@ class AppModel with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Saves the list of tabs and  the current tab index to disk.
+  /// Persists the current tabs state to disk storage
   void saveTabsToDisk() {
     Hive.box(name: 'tabs').put("key-tabs", tabs);
     Hive.box(name: 'tabs').put("key-current-tab", currentTab);
   }
 
+  /// Adds a new bookmark if it doesn't already exist.
+  ///
+  /// Returns true if the bookmark was added, false if it already existed.
   bool addBookmark(
       {required String ref, required Book book, required int index}) {
-    // Check if a bookmark with the same ref, book, and index already exists
     bool bookmarkExists = bookmarks.any((bookmark) =>
         bookmark.ref == ref &&
         bookmark.book.title == book.title &&
@@ -347,40 +374,44 @@ class AppModel with ChangeNotifier {
 
     if (!bookmarkExists) {
       bookmarks.add(Bookmark(ref: ref, book: book, index: index));
-      // write to disk
       Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
       return true;
     }
     return false;
   }
 
+  /// Removes a bookmark at the specified index
   void removeBookmark(int index) {
     bookmarks.removeAt(index);
     Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
   }
 
+  /// Removes all bookmarks
   void clearBookmarks() {
     bookmarks.clear();
     Hive.box(name: 'bookmarks').clear();
   }
 
+  /// Adds a new entry to the reading history
   void addHistory(
       {required String ref, required Book book, required int index}) {
     history.insert(0, Bookmark(ref: ref, book: book, index: index));
-    // write to disk
     Hive.box(name: 'history').put('key-history', history);
   }
 
+  /// Removes a history entry at the specified index
   void removeHistory(int index) {
     history.removeAt(index);
     Hive.box(name: 'history').put('key-history', history);
   }
 
+  /// Clears all reading history
   void clearHistory() {
     history.clear();
     Hive.box(name: 'history').clear();
   }
 
+  /// Switches to a different workspace, saving the current workspace first
   void switchWorkspace(Workspace workspace) {
     saveCurrentWorkspace(getHebrewTimeStamp());
     tabs = workspace.bookmarks
@@ -396,6 +427,7 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  /// Saves the current set of tabs as a new workspace
   void saveCurrentWorkspace(String name) {
     Workspace workspace = Workspace(
       name: name,
@@ -420,22 +452,31 @@ class AppModel with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Persists workspaces to disk storage
   void saveWorkspacesToDisk() {
     Hive.box(name: 'workspaces').put('key-workspaces', workspaces);
   }
 
+  /// Removes a workspace at the specified index
   void removeWorkspace(int index) {
     workspaces.removeAt(index);
     saveWorkspacesToDisk();
     notifyListeners();
   }
 
+  /// Removes all workspaces
   void clearWorkspaces() {
-    workspaces.clear(); // remove all workspaces
+    workspaces.clear();
     Hive.box(name: 'workspaces').clear();
   }
 
-  // Asynchronously finds books based on a query and optional category. Returns a list of filtered books.
+  /// Searches for books based on query text and optional filters.
+  ///
+  /// [query] The search text to match against book titles
+  /// [category] Optional category to filter results
+  /// [topics] Optional list of topics to filter results
+  ///
+  /// Returns a sorted list of books matching the search criteria
   Future<List<Book>> findBooks(String query, Category? category,
       {List<String>? topics}) async {
     final queryWords = query.split(RegExp(r'\s+'));
@@ -447,7 +488,7 @@ class AppModel with ChangeNotifier {
       allBooks += await hebrewBooks;
     }
 
-    // First, filter books outside of isolate to get the working set
+    // Filter books based on query and topics
     var filteredBooks = allBooks.where((book) {
       final title = book.title.toLowerCase();
       final bookTopics = book.topics.split(', ');
@@ -464,7 +505,7 @@ class AppModel with ChangeNotifier {
       return [];
     }
 
-    // Prepare data for isolate - only send what's needed for sorting
+    // Prepare data for isolate processing
     final List<Map<String, dynamic>> sortData = filteredBooks
         .asMap()
         .map((i, book) => MapEntry(i, {
@@ -474,21 +515,26 @@ class AppModel with ChangeNotifier {
         .values
         .toList();
 
-    // Sort indices in isolate
+    // Sort results by relevance in isolate
     final sortedIndices = getSortedIndices(sortData, query);
 
-    // Map sorted indices back to books
     return (await sortedIndices).map((index) => filteredBooks[index]).toList();
   }
 
+  /// Creates reference data for books in the library starting from [startIndex]
   Future<void> createRefsFromLibrary(int startIndex) async {
     data.createRefsFromLibrary(await library, startIndex);
   }
 
-  addAllTextsToTantivy({int start = 0, int end = 100000}) async {
+  /// Adds text content to the Tantivy search index
+  ///
+  /// [start] Starting index in the library
+  /// [end] Ending index in the library
+  Future<void> addAllTextsToTantivy({int start = 0, int end = 100000}) async {
     data.addAllTextsToTantivy(await library, start: start, end: end);
   }
 
+  /// Reloads the library from disk
   Future<void> refreshLibrary() async {
     libraryPath = Settings.getValue<String>('key-library-path') ?? libraryPath;
     library = data.getLibrary();
@@ -496,9 +542,13 @@ class AppModel with ChangeNotifier {
   }
 }
 
-/// An enum that represents the different screens in the application.
+/// Represents the different screens/views available in the application
 enum Screens { library, find, reading, search, favorites, settings }
 
+/// Sorts book indices based on title similarity to query string.
+///
+/// Uses fuzzy string matching to sort books by relevance to the search query.
+/// Runs in a separate isolate to avoid blocking the main thread.
 Future<List<int>> getSortedIndices(
     List<Map<String, dynamic>> data, String query) async {
   return await Isolate.run(() {

@@ -322,10 +322,7 @@ class FileSystemData {
   /// file system paths, excluding PDF files.
   Future<Map<String, String>> _getTitleToPath() async {
     Map<String, String> titleToPath = {};
-    if (!Settings.isInitialized) {
-      await Settings.init(cacheProvider: HiveCache());
-    }
-    final libraryPath = Settings.getValue('key-library-path');
+    final libraryPath = Settings.getValue('key-library-path') ?? 'C:\\אוצריא';
     List<String> paths = await getAllBooksPathsFromDirecctory(libraryPath);
     for (var path in paths) {
       if (path.toLowerCase().endsWith('.pdf')) continue;

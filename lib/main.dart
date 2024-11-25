@@ -114,6 +114,9 @@ Future<void> createDirs() async {
 /// For Windows, defaults to 'C:/אוצריא' if not previously set.
 /// For other platforms, uses the existing settings value.
 Future<void> initLibraryPath() async {
+  if (!Settings.isInitialized) {
+    await Settings.init(cacheProvider: HiveCache());
+  }
   if (Platform.isAndroid || Platform.isIOS) {
     // Mobile platforms use the app's documents directory
     await Settings.setValue(

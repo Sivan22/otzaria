@@ -140,7 +140,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                         return Center(
                           child: Text(
-                            'אין תוצאות עבור "${searchController.text}"',
+                            searchController.text.isNotEmpty
+                                ? 'אין תוצאות עבור "${searchController.text}"'
+                                : 'אין פריטים להצגה בתיקייה זו',
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
