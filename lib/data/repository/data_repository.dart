@@ -1,6 +1,7 @@
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
+import 'package:otzaria/data/data_providers/sql_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/models/library.dart';
@@ -17,6 +18,9 @@ class DataRepository {
 
   /// Manages database operations using Isar for storing and retrieving references
   final IsarDataProvider _isarDataProvider = IsarDataProvider.instance;
+
+  /// Manages database operations for external books
+  final SqlDataProvider _sqlDataProvider = SqlDataProvider.instance;
 
   /// Handles full-text search operations using Tantivy search engine
   final TantivyDataProvider _mimirDataProvider = TantivyDataProvider.instance;
@@ -40,7 +44,7 @@ class DataRepository {
   /// Returns a [Future] that completes with a list of [ExternalBook] objects
   /// representing books from the Otzar HaHochma collection
   Future<List<ExternalBook>> getOtzarBooks() {
-    return _fileSystemData.getOtzarBooks();
+    return _sqlDataProvider.getOtzarBooks();
   }
 
   /// Retrieves the list of books from the Hebrew Books project
@@ -48,7 +52,7 @@ class DataRepository {
   /// Returns a [Future] that completes with a list of [ExternalBook] objects
   /// representing books from the Hebrew Books collection
   Future<List<ExternalBook>> getHebrewBooks() {
-    return _fileSystemData.getHebrewBooks();
+    return _sqlDataProvider.getHebrewBooks();
   }
 
   /// Retrieves the full text content of a specific book
