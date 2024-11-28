@@ -32,7 +32,7 @@ class SqlDataProvider {
       final otzarRows = const CsvToListConverter().convert(otzarData);
       
       for (var row in otzarRows.skip(1)) { // Skip header row
-        await database.insertExternalBook(
+         database.insertExternalBook(
           ExternalBooksCompanion.insert(
             id: row[0] as int,
             title: row[1] as String,
@@ -42,10 +42,9 @@ class SqlDataProvider {
             topics: Value(row[5]?.toString() ?? ''),
             heShortDesc: Value(row[6] as String?),
             link: row[7] as String,
-            source: 'otzar',
-            order: Value(row[8] != null ? int.tryParse(row[8].toString()) ?? 999 : 999),
-          ),
+            source: 'otzar',          ),
         );
+        print('Migrated book: ${row[1]}');
       }
 
       // Migrate Hebrew books
@@ -53,7 +52,7 @@ class SqlDataProvider {
       final hebrewRows = const CsvToListConverter().convert(hebrewData);
       
       for (var row in hebrewRows.skip(1)) { // Skip header row
-        await database.insertExternalBook(
+         database.insertExternalBook(
           ExternalBooksCompanion.insert(
             id: row[0] as int,
             title: row[1] as String,
@@ -64,9 +63,9 @@ class SqlDataProvider {
             heShortDesc: Value(row[6] as String?),
             link: row[7] as String,
             source: 'hebrew',
-            order: Value(row[8] != null ? int.tryParse(row[8].toString()) ?? 999 : 999),
           ),
         );
+        print('Migrated book: ${row[1]}');
       }
     } catch (e) {
       print('Error during CSV migration: $e');
@@ -87,6 +86,7 @@ class SqlDataProvider {
       heShortDesc: book.heShortDesc,
       link: book.link,
     )).toList();
+    
   }
 
   Future<List<model.ExternalBook>> getHebrewBooks() async {
