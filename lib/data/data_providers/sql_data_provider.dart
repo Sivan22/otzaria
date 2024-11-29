@@ -31,8 +31,9 @@ class SqlDataProvider {
       final otzarData = await rootBundle.loadString('assets/otzar_books.csv');
       final otzarRows = const CsvToListConverter().convert(otzarData);
       
-      for (var row in otzarRows.skip(1)) { // Skip header row
-         database.insertExternalBook(
+      for (var row in otzarRows.skip(1)) {
+        () async{ // Skip header row
+        await database.insertExternalBook(
           ExternalBooksCompanion.insert(
             id: row[0] as int,
             title: row[1] as String,
@@ -44,7 +45,7 @@ class SqlDataProvider {
             link: row[7] as String,
             source: 'otzar',          ),
         );
-        print('Migrated book: ${row[1]}');
+        print('Inserted book: ${row[1]}');}();
       }
 
       // Migrate Hebrew books
@@ -52,7 +53,7 @@ class SqlDataProvider {
       final hebrewRows = const CsvToListConverter().convert(hebrewData);
       
       for (var row in hebrewRows.skip(1)) { // Skip header row
-         database.insertExternalBook(
+        await database.insertExternalBook(
           ExternalBooksCompanion.insert(
             id: row[0] as int,
             title: row[1] as String,
@@ -65,7 +66,7 @@ class SqlDataProvider {
             source: 'hebrew',
           ),
         );
-        print('Migrated book: ${row[1]}');
+        print('Inserted book: ${row[1]}');
       }
     } catch (e) {
       print('Error during CSV migration: $e');
@@ -86,7 +87,6 @@ class SqlDataProvider {
       heShortDesc: book.heShortDesc,
       link: book.link,
     )).toList();
-    
   }
 
   Future<List<model.ExternalBook>> getHebrewBooks() async {
