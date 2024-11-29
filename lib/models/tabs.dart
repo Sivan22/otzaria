@@ -231,14 +231,20 @@ class TextBookTab extends OpenedTab {
         .toList();
     List<String> paths = filteredLinks.map((e) => e.path2).toList();
     List<String> uniquePaths = paths.toSet().toList();
-    List<String> availableCommentators = uniquePaths
+    List<String> commentatorTitles = uniquePaths
         .map(
           (e) => getTitleFromPath(e),
         )
         .toList();
-    availableCommentators = availableCommentators
-        .where((element) => FileSystemData.instance.bookExists(element))
-        .toList();
+
+    // Filter commentators asynchronously
+    List<String> availableCommentators = [];
+    for (String title in commentatorTitles) {
+      if (await FileSystemData.instance.bookExists(title)) {
+        availableCommentators.add(title);
+      }
+    }
+
     availableCommentators.sort(
       (a, b) => a.compareTo(b),
     );

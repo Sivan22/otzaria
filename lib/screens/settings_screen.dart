@@ -15,9 +15,14 @@ class MySettingsScreen extends StatefulWidget {
   State<MySettingsScreen> createState() => _MySettingsScreenState();
 }
 
-class _MySettingsScreenState extends State<MySettingsScreen> {
+class _MySettingsScreenState extends State<MySettingsScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     const Map<String, String> shortcuctsList = {
       'ctrl+a': 'CTRL + A',
       'ctrl+b': "CTRL + B",
@@ -187,16 +192,6 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
-                      //       Platform.isAndroid
-                      //           ? const SizedBox.shrink()
-                      //           : const SwitchSettingsTile(
-                      //               settingKey: 'key-close-left-pane-on-scroll',
-                      //               title: 'סגירת תפריט הצד בעת גלילה',
-                      //               enabledLabel:
-                      //                   'עם תחילת הגלילה, ייסגר תפריט הצד אוטומטית',
-                      //               disabledLabel: 'תפריט הצד לא ייסגר אוטומטית',
-                      //               leading: Icon(Icons.arrow_back),
-                      //             ),
                       const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',
@@ -253,21 +248,22 @@ class _MySettingsScreenState extends State<MySettingsScreen> {
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
-                    if (! (Platform.isAndroid || Platform.isIOS))
-                    SimpleSettingsTile(
-                      title: 'מיקום הספרייה',
-                      subtitle: Settings.getValue<String>('key-library-path') ??
-                          'לא קיים',
-                      leading: const Icon(Icons.folder),
-                      onTap: () async {
-                        String? path =
-                            await FilePicker.platform.getDirectoryPath();
-                        if (path != null) {
-                          Settings.setValue<String>('key-library-path', path);
-                          context.read<AppModel>().refreshLibrary();
-                        }
-                      },
-                    ),
+                    if (!(Platform.isAndroid || Platform.isIOS))
+                      SimpleSettingsTile(
+                        title: 'מיקום הספרייה',
+                        subtitle:
+                            Settings.getValue<String>('key-library-path') ??
+                                'לא קיים',
+                        leading: const Icon(Icons.folder),
+                        onTap: () async {
+                          String? path =
+                              await FilePicker.platform.getDirectoryPath();
+                          if (path != null) {
+                            Settings.setValue<String>('key-library-path', path);
+                            context.read<AppModel>().refreshLibrary();
+                          }
+                        },
+                      ),
                     const SwitchSettingsTile(
                       settingKey: 'key-dev-channel',
                       title: 'עדכון לגרסאות מפתחים',

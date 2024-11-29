@@ -5,11 +5,21 @@ import 'package:otzaria/screens/favorites/history_screen.dart';
 import 'package:otzaria/screens/favorites/bookmark_screen.dart';
 import 'package:otzaria/screens/favorites/workspaces_screen.dart';
 
-class FavouritesScreen extends StatelessWidget {
+class FavouritesScreen extends StatefulWidget {
   const FavouritesScreen({Key? key}) : super(key: key);
 
   @override
+  State<FavouritesScreen> createState() => _FavouritesScreenState();
+}
+
+class _FavouritesScreenState extends State<FavouritesScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return const DefaultTabController(
       length: 3,
       child: Scaffold(

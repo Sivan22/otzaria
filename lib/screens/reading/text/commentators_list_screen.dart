@@ -18,14 +18,30 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   Future<List<String>>? commentators;
   List<String> selectedTopics = [];
 
-  void update() {
+  Future<void> update() async {
+    final List<String> baseList = await widget.tab.availableCommentators;
+    final filteredByQuery =
+        baseList.where((title) => title.contains(_filterQuery));
+
+    if (selectedTopics.isEmpty) {
+      setState(() {
+        commentators = Future.value(filteredByQuery.toList());
+      });
+      return;
+    }
+
+    final List<String> filtered = [];
+    for (final title in filteredByQuery) {
+      for (final topic in selectedTopics) {
+        if (await hasTopic(title, topic)) {
+          filtered.add(title);
+          break;
+        }
+      }
+    }
+
     setState(() {
-      commentators = widget.tab.availableCommentators.then((value) => value
-          .where((title) => title.contains(_filterQuery))
-          .where((title) => selectedTopics.isEmpty
-              ? true
-              : selectedTopics.any((element) => hasTopic(title, element)))
-          .toList());
+      commentators = Future.value(filtered);
     });
   }
 
@@ -42,10 +58,12 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
         FilterListWidget<String>(
           hideSearchField: true,
           controlButtons: const [],
-          onApplyButtonClick: (list) => setState(() {
-            selectedTopics = list ?? [];
+          onApplyButtonClick: (list) {
+            setState(() {
+              selectedTopics = list ?? [];
+            });
             update();
-          }),
+          },
           validateSelectedItem: (list, item) =>
               list != null && list.contains(item),
           onItemSearch: (item, query) => item == query,
@@ -77,7 +95,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                     : null,
                 fontSize: 11,
               ),
-              labelPadding: EdgeInsets.all(0),
+              labelPadding: const EdgeInsets.all(0),
             ),
           ),
         ),
@@ -99,8 +117,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                       onChanged: (query) {
                         setState(() {
                           _filterQuery = query;
-                          update();
                         });
+                        update();
                       },
                     ),
                     CheckboxListTile(

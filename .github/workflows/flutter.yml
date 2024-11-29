@@ -35,12 +35,12 @@ jobs:
           sudo apt-get install -y ninja-build libgtk-3-dev libblkid1 liblzma5
       - run: flutter build linux
       - name: zip the bundle
-        run: zip -r otzaria-linux.zip build/linux/x64/release/bundle/
+        run: cd build/linux/x64/release/bundle/ && zip -r otzaria-linux.zip ./
       - name: Upload linux build
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: otzaria-linux.zip
+          path: build/linux/x64/release/bundle/otzaria-linux.zip
 
   build_android:
     runs-on: ubuntu-latest
@@ -52,12 +52,6 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: sudo apt install openjdk-18-jdk
-      - run: wget https://dl.google.com/dl/android/studio/ide-zips/2024.1.2.12/android-studio-2024.1.2.12-linux.tar.gz
-      - run: tar -zxvf android-studio-2024.1.2.12-linux.tar.gz
-      - run: sudo mv android-studio /opt/
-      - run: sudo ln -sf /opt/android-studio/bin/studio.sh /bin/android-studio
-      - run: flutter doctor -v
       - run: flutter pub get
       - run: flutter build apk
       - name: Upload apk
@@ -78,7 +72,7 @@ jobs:
           cache: true
       - run: flutter build macos
       - name: Zip the app bundle
-        run: cd build/macos/Build/Products/Release && zip -r otzaria-macos.zip otzaria.app/
+        run: cd build/macos/Build/Products/Release && zip -r otzaria-macos.zip otzaria.app
       - name: Upload macos build
         uses: actions/upload-artifact@v4
         with:

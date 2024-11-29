@@ -1,5 +1,5 @@
+import 'dart:io';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
@@ -56,7 +56,14 @@ class _LibraryBrowserState extends State<LibraryBrowser>
         future: currentTopCategory,
         builder: (context, resolvedCurrentTopCategory) {
           if (!resolvedCurrentTopCategory.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                Text('טוען ספרייה...'),
+              ],
+            ));
           }
           return Scaffold(
             appBar: AppBar(
@@ -133,7 +140,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                         return Center(
                           child: Text(
-                            'אין תוצאות עבור "${searchController.text}"',
+                            searchController.text.isNotEmpty
+                                ? 'אין תוצאות עבור "${searchController.text}"'
+                                : 'אין פריטים להצגה בתיקייה זו',
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
@@ -229,7 +238,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   child: TextField(
                       focusNode: Provider.of<AppModel>(context, listen: false)
                           .bookLocatorFocusNode,
-                      autofocus: true,
+                      autofocus: !(Platform.isAndroid || Platform.isIOS),
                       controller: searchController,
                       decoration: InputDecoration(
                         constraints: const BoxConstraints(maxWidth: 400),

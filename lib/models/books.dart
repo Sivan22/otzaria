@@ -83,8 +83,7 @@ class TextBook extends Book {
   ///
   /// Returns a [Future] that resolves to a [List] of [TocEntry] objects representing
   /// the table of contents of the book.
-  Future<List<TocEntry>> get tableOfContents =>
-      Isolate.run(() => data.getBookToc(title));
+  Future<List<TocEntry>> get tableOfContents => data.getBookToc(title);
 
   /// Retrieves all the links for the book.
   ///
