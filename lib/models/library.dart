@@ -87,17 +87,22 @@ class Category {
 class Library extends Category {
   /// Initialize a new [Library] instance.
   ///
-  /// The [categories] parameter is a list of categories that are contained in
-  /// this library.
-  Library({required List<Category> categories})
-      : super(
-            title: 'ספריית אוצריא',
-            description: '',
-            shortDescription: '',
-            order: 0,
-            subCategories: categories,
-            books: [],
-            parent: null) {
+  /// The [title] is the name of the library.
+  /// The [subCategories] is a list of categories that are contained in this library.
+  /// The [books] is a list of books that are contained directly in the library root.
+  Library({
+    required String title,
+    required List<Category> subCategories,
+    required List<Book> books,
+  }) : super(
+          title: title,
+          description: '',
+          shortDescription: '',
+          order: 0,
+          subCategories: subCategories,
+          books: books,
+          parent: null,
+        ) {
     parent = this;
   }
 

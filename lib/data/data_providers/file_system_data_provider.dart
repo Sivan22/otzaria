@@ -129,7 +129,11 @@ class FileSystemData {
     }
 
     // Initialize empty library
-    Library library = Library(categories: []);
+    Library library = Library(
+      title: 'אוצריא',
+      subCategories: [],
+      books: [],
+    );
 
     // Process top-level directories
     await for (FileSystemEntity entity in Directory(path).list()) {

@@ -14,6 +14,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'dart:io';
+import 'package:otzaria/data/repository/data_repository.dart';
 
 /// Application entry point that initializes necessary components and launches the app.
 ///
@@ -49,30 +50,43 @@ class OtzariaApp extends StatelessWidget {
           builder: (context, appModel, child) => MaterialApp(
             // Configure RTL support with Hebrew localization
             localizationsDelegates: const [
-              GlobalCupertinoLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: const [
-              Locale("he", "IL"), // Hebrew (Israel) locale
+              Locale('he', 'IL'), // Hebrew
+              Locale('en', 'US'), // English
             ],
-            locale: const Locale("he", "IL"),
-            title: 'אוצריא',
-            // Dynamic theme based on dark mode preference
-            theme: appModel.isDarkMode.value
-                ? ThemeData.dark(useMaterial3: true)
-                : ThemeData(
-                    visualDensity: VisualDensity.adaptivePlatformDensity,
-                    fontFamily: 'Roboto',
-                    colorScheme: ColorScheme.fromSeed(
-                      seedColor: appModel.seedColor.value,
+            locale: const Locale('he', 'IL'),
+            // Configure theme and dark mode
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData.dark(useMaterial3: true),
+            themeMode: context.watch<AppModel>().isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
+            // Set the home screen
+            home: FutureBuilder(
+              future: appModel.library,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
                     ),
-                    textTheme: const TextTheme(
-                      bodyMedium:
-                          TextStyle(fontSize: 18.0, fontFamily: 'candara'),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Scaffold(
+                    body: Center(
+                      child: Text('שגיאה: ${snapshot.error}'),
                     ),
-                  ),
-            home: const MainWindowScreen(),
+                  );
+                }
+                return const MainWindowScreen();
+              },
+            ),
           ),
         );
       },
@@ -94,6 +108,7 @@ Future<void> initialize() async {
   await RustLib.init();
   await initHiveBoxes();
   await createDirs();
+  await DataRepository.instance.initialize();
 }
 
 /// Creates the necessary directory structure for the application.

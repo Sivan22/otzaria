@@ -119,18 +119,15 @@ class AppModel with ChangeNotifier {
   /// Focus node for the reference finder search field
   FocusNode findReferenceFocusNode = FocusNode();
 
-  /// Creates a new AppModel instance and initializes the application state.
-  ///
-  /// [libraryPath] specifies the root directory containing the book library.
-  ///
-  /// The constructor:
-  /// * Initializes the library and external book sources
-  /// * Loads saved tabs from persistent storage
-  /// * Loads bookmarks and reading history
-  /// * Loads saved workspaces
-  /// * Sets up theme and UI preference listeners
+  /// Constructor for AppModel
   AppModel(String libraryPath) {
     _libraryPath = libraryPath;
+    _initializeData();
+  }
+
+  /// Initialize all data sources
+  Future<void> _initializeData() async {
+    await data.initialize();
     library = data.getLibrary();
     otzarBooks = data.getOtzarBooks();
     hebrewBooks = data.getHebrewBooks();
