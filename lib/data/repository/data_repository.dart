@@ -40,7 +40,7 @@ class DataRepository {
   /// Returns a [Future] that completes with a list of [ExternalBook] objects
   /// representing books from the Otzar HaHochma collection
   Future<List<ExternalBook>> getOtzarBooks() {
-    return _fileSystemData.getOtzarBooks();
+    return FileSystemData.getOtzarBooks();
   }
 
   /// Retrieves the list of books from the Hebrew Books project
@@ -48,7 +48,7 @@ class DataRepository {
   /// Returns a [Future] that completes with a list of [ExternalBook] objects
   /// representing books from the Hebrew Books collection
   Future<List<ExternalBook>> getHebrewBooks() {
-    return _fileSystemData.getHebrewBooks();
+    return FileSystemData.getHebrewBooks();
   }
 
   /// Retrieves the full text content of a specific book

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 import 'package:csv/csv.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/utils/docx_to_otzaria.dart';
@@ -23,12 +24,15 @@ class FileSystemData {
   /// Future that resolves to a mapping of book titles to their file system paths
   late Future<Map<String, String>> titleToPath;
 
+  late String libraryPath;
+
   /// Future that resolves to metadata for all books and categories
   late Future<Map<String, Map<String, dynamic>>> metadata;
 
   /// Creates a new instance of [FileSystemData] and initializes the title to path mapping
   /// and metadata
   FileSystemData() {
+    libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
     titleToPath = _getTitleToPath();
     metadata = _getMetadata();
   }
@@ -44,8 +48,7 @@ class FileSystemData {
     titleToPath = _getTitleToPath();
     metadata = _getMetadata();
     return _getLibraryFromDirectory(
-        '${Settings.getValue<String>('key-library-path') ?? '.'}${Platform.pathSeparator}אוצריא',
-        await metadata);
+        '${libraryPath}${Platform.pathSeparator}אוצריא', await metadata);
   }
 
   /// Recursively builds the library structure from a directory.
@@ -143,22 +146,22 @@ class FileSystemData {
   }
 
   /// Retrieves the list of books from Otzar HaChochma
-  Future<List<ExternalBook>> getOtzarBooks() {
+  static Future<List<ExternalBook>> getOtzarBooks() {
     return _getOtzarBooks();
   }
 
   /// Retrieves the list of books from HebrewBooks
-  Future<List<ExternalBook>> getHebrewBooks() {
+  static Future<List<ExternalBook>> getHebrewBooks() {
     return _getHebrewBooks();
   }
 
   /// Internal implementation for loading Otzar HaChochma books from CSV
-  Future<List<ExternalBook>> _getOtzarBooks() async {
+  static Future<List<ExternalBook>> _getOtzarBooks() async {
     try {
       print('Loading Otzar HaChochma books from CSV');
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
 
-      return Isolate.run(() {
+      final table = await Isolate.run(() {
         // Normalize line endings for cross-platform compatibility
         final normalizedCsvData =
             csvData.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
@@ -173,18 +176,19 @@ class FileSystemData {
 
         print('Loaded ${csvTable.length} rows');
 
-        return csvTable.skip(1).map((row) {
-          return ExternalBook(
-            title: row[1],
-            id: int.tryParse(row[0]) ?? -1,
-            author: row[2],
-            pubPlace: row[3],
-            pubDate: row[4],
-            topics: row[5],
-            link: row[7],
-          );
-        }).toList();
+        return csvTable;
       });
+      return table.skip(1).map((row) {
+        return ExternalBook(
+          title: row[1],
+          id: int.tryParse(row[0]) ?? -1,
+          author: row[2],
+          pubPlace: row[3],
+          pubDate: row[4],
+          topics: row[5],
+          link: row[7],
+        );
+      }).toList();
     } catch (e) {
       print('Error loading Otzar HaChochma books: $e');
       return [];
@@ -192,12 +196,12 @@ class FileSystemData {
   }
 
   /// Internal implementation for loading HebrewBooks from CSV
-  Future<List<ExternalBook>> _getHebrewBooks() async {
+  static Future<List<ExternalBook>> _getHebrewBooks() async {
     try {
       print('Loading hebrewbooks from CSV');
       final csvData = await rootBundle.loadString('assets/hebrew_books.csv');
 
-      return Isolate.run(() {
+      final table = await Isolate.run(() {
         // Normalize line endings for cross-platform compatibility
         final normalizedCsvData =
             csvData.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
@@ -212,24 +216,26 @@ class FileSystemData {
 
         print('Loaded ${csvTable.length} rows');
 
-        return csvTable.skip(1).map((row) {
-          try {
-            return ExternalBook(
-              title: row[1].toString(),
-              id: -1,
-              author: row[2].toString(),
-              pubPlace: row[3].toString(),
-              pubDate: row[4].toString(),
-              topics: row[15].toString().replaceAll(';', ', '),
-              heShortDesc: row[13].toString(),
-              link: 'https://beta.hebrewbooks.org/${row[0]}',
-            );
-          } catch (e) {
-            print('Error loading book: $e');
-            return ExternalBook(title: 'error', id: 0, link: '');
-          }
-        }).toList();
+        return csvTable;
       });
+
+      return table.skip(1).map((row) {
+        try {
+          return ExternalBook(
+            title: row[1].toString(),
+            id: -1,
+            author: row[2].toString(),
+            pubPlace: row[3].toString(),
+            pubDate: row[4].toString(),
+            topics: row[15].toString().replaceAll(';', ', '),
+            heShortDesc: row[13].toString(),
+            link: 'https://beta.hebrewbooks.org/${row[0]}',
+          );
+        } catch (e) {
+          print('Error loading book: $e');
+          return ExternalBook(title: 'error', id: 0, link: '');
+        }
+      }).toList();
     } catch (e) {
       print('Error loading hebrewbooks: $e');
       return [];
@@ -322,7 +328,6 @@ class FileSystemData {
   /// file system paths, excluding PDF files.
   Future<Map<String, String>> _getTitleToPath() async {
     Map<String, String> titleToPath = {};
-    final libraryPath = Settings.getValue('key-library-path') ?? 'C:\\אוצריא';
     List<String> paths = await getAllBooksPathsFromDirecctory(libraryPath);
     for (var path in paths) {
       if (path.toLowerCase().endsWith('.pdf')) continue;
