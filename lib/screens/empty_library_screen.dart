@@ -391,15 +391,11 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (Platform.isAndroid || Platform.isIOS)
-                const Text(
-                    'לא נמצאה ספרייה, יש להוריד את הספרייה - נדרש חיבור אינטרנט.\n גודל הורדה: 1200MB')
-              else
-                const Text(
-                  'לא נמצאה ספרייה בנתיב המצוין',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
+              const Text(
+                'לא נמצאה ספרייה',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
               if (!Platform.isAndroid && !Platform.isIOS)
                 const SizedBox(height: 32),
               if (_selectedPath != null)
@@ -423,11 +419,10 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                   onPressed: _isDownloading ? null : _pickAndExtractZipFile,
                   child: const Text('בחר קובץ ZIP מהמכשיר'),
                 ),
-              if (!Platform.isAndroid && !Platform.isIOS)
-                const Text(
-                  'או',
-                  style: TextStyle(fontSize: 18),
-                ),
+              const Text(
+                'או',
+                style: TextStyle(fontSize: 18),
+              ),
               const SizedBox(height: 32),
               if (_isDownloading) ...[
                 Column(
@@ -446,14 +441,14 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.stop),
-                      label: Text(_isCancelling ? 'מבטל...' : 'בטל הורדה'),
+                      label: Text(_isCancelling ? 'מבטל...' : 'בטל'),
                     ),
                   ],
                 ),
               ] else
                 ElevatedButton(
                   onPressed: _downloadAndExtractLibrary,
-                  child: const Text(' הורד את הספרייה מהאינטרנט'),
+                  child: const Text('הורד את הספרייה מהאינטרנט (1.2GB)'),
                 ),
             ],
           ),
