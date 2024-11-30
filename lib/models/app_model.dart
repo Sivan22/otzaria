@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hive/hive.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
@@ -537,6 +538,7 @@ class AppModel with ChangeNotifier {
   /// Reloads the library from disk
   Future<void> refreshLibrary() async {
     libraryPath = Settings.getValue<String>('key-library-path') ?? libraryPath;
+    FileSystemData.instance.libraryPath = libraryPath;
     library = data.getLibrary();
     notifyListeners();
   }
