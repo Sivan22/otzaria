@@ -27,8 +27,7 @@ class _TocViewerState extends State<TocViewer>
 
   TextEditingController searchController = TextEditingController();
 
-  List<Widget> _buildFilteredList(
-      List<TocEntry> entries, BuildContext context) {
+  Widget _buildFilteredList(List<TocEntry> entries, BuildContext context) {
     List<TocEntry> allEntries = [];
     void getAllEntries(List<TocEntry> entries) {
       for (final TocEntry entry in entries) {
@@ -42,39 +41,55 @@ class _TocViewerState extends State<TocViewer>
         .where((e) => e.text.contains(searchController.text))
         .toList();
 
-    List<Widget> widgets = [];
-    for (final TocEntry entry in allEntries) {
-      widgets.add(
-        Padding(
-          padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
-          child: ListTile(
-            title: Text(entry.text),
-            onTap: () {
-              widget.scrollController.scrollTo(
-                index: entry.index,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.ease,
-              );
-              if (Platform.isAndroid) {
-                widget.closeLeftPaneCallback();
-              }
-            },
-          ),
+    return ListView.builder(itemBuilder: (context, index) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+            0, 0, 10 * allEntries[index].level.toDouble(), 0),
+        child: ListTile(
+          title: Text(allEntries[index].text),
+          onTap: () {
+            widget.scrollController.scrollTo(
+              index: allEntries[index].index,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.ease,
+            );
+            if (Platform.isAndroid) {
+              widget.closeLeftPaneCallback();
+            }
+          },
         ),
       );
-    }
-    return widgets;
+    });
   }
 
-  List<Widget> _buildTree(List<TocEntry> entries, BuildContext context) {
-    List<Widget> widgets = [];
-    for (final TocEntry entry in entries) {
-      if (entry.children.isEmpty) {
-        // Leaf node (no children)
-        widgets.add(
-          Padding(
-            padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
-            child: ListTile(
+  Widget _buildTocItem(TocEntry entry) {
+    if (entry.children.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+        child: ListTile(
+          title: Text(entry.text),
+          onTap: () {
+            widget.scrollController.scrollTo(
+              index: entry.index,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.ease,
+            );
+            if (Platform.isAndroid) {
+              widget.closeLeftPaneCallback();
+            }
+          },
+        ),
+      );
+    } else {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+        child: ExpandableNotifier(
+          child: ExpandablePanel(
+            controller: ExpandableController(initialExpanded: entry.level == 1),
+            key: PageStorageKey(entry),
+            collapsed: const SizedBox.shrink(),
+            header: ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
               title: Text(entry.text),
               onTap: () {
                 widget.scrollController.scrollTo(
@@ -87,55 +102,25 @@ class _TocViewerState extends State<TocViewer>
                 }
               },
             ),
-          ),
-        );
-      } else {
-        // Parent node with children
-        widgets.add(
-          Padding(
-            padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
-            child: ExpandableNotifier(
-              child: ExpandablePanel(
-                controller:
-                    ExpandableController(initialExpanded: entry.level == 1),
-                key: PageStorageKey(entry),
-                collapsed: const SizedBox.shrink(),
-                header: ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                  title: Text(entry.text),
-                  onTap: () {
-                    widget.scrollController.scrollTo(
-                      index: entry.index,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.ease,
-                    );
-                    if (Platform.isAndroid) {
-                      widget.closeLeftPaneCallback();
-                    }
-                  },
-                ),
-                expanded: Column(
-                  children: _buildTree(entry.children, context),
-                ),
-                theme: ExpandableThemeData(
-                  tapBodyToCollapse: false,
-                  tapBodyToExpand: false,
-                  hasIcon: true,
-                  iconPlacement: ExpandablePanelIconPlacement.left,
-                  collapseIcon: Icons.keyboard_arrow_down_outlined,
-                  expandIcon: Icons.chevron_right_rounded,
-                  iconPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-                  iconColor: Theme.of(context).colorScheme.primary,
-                  tapHeaderToExpand: false,
-                ),
-                // Recursively build children,
-              ),
+            expanded: ListView.builder(itemBuilder: (context, index) {
+              return _buildTocItem(entry.children[index]);
+            }),
+            theme: ExpandableThemeData(
+              tapBodyToCollapse: false,
+              tapBodyToExpand: false,
+              hasIcon: true,
+              iconPlacement: ExpandablePanelIconPlacement.left,
+              collapseIcon: Icons.keyboard_arrow_down_outlined,
+              expandIcon: Icons.chevron_right_rounded,
+              iconPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+              iconColor: Theme.of(context).colorScheme.primary,
+              tapHeaderToExpand: false,
             ),
+            // Recursively build children,
           ),
-        );
-      }
+        ),
+      );
     }
-    return widgets;
   }
 
   @override
@@ -169,12 +154,13 @@ class _TocViewerState extends State<TocViewer>
                   ),
                 ),
                 Expanded(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: searchController.text.isEmpty
-                        ? _buildTree(snapshot.data!, context)
-                        : _buildFilteredList(snapshot.data!, context),
-                  ),
+                  child: searchController.text.isEmpty
+                      ? ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) =>
+                              _buildTocItem(snapshot.data![index]))
+                      : _buildFilteredList(snapshot.data!, context),
                 ),
               ],
             );
