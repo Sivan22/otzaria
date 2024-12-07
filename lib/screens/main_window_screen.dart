@@ -152,6 +152,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
             child: Consumer<AppModel>(
               builder: (context, appModel, child) => MyUpdatWidget(
                 child: Scaffold(
+                  resizeToAvoidBottomInset: false,
                   body: OrientationBuilder(builder: (context, orientation) {
                     _handleOrientationChange(context, orientation);
 
