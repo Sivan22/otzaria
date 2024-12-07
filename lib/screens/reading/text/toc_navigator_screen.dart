@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/books.dart';
@@ -41,59 +40,18 @@ class _TocViewerState extends State<TocViewer>
         .where((e) => e.text.contains(searchController.text))
         .toList();
 
-    return ListView.builder(itemBuilder: (context, index) {
-      return Padding(
-        padding: EdgeInsets.fromLTRB(
-            0, 0, 10 * allEntries[index].level.toDouble(), 0),
-        child: ListTile(
-          title: Text(allEntries[index].text),
-          onTap: () {
-            widget.scrollController.scrollTo(
-              index: allEntries[index].index,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.ease,
-            );
-            if (Platform.isAndroid) {
-              widget.closeLeftPaneCallback();
-            }
-          },
-        ),
-      );
-    });
-  }
-
-  Widget _buildTocItem(TocEntry entry) {
-    if (entry.children.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
-        child: ListTile(
-          title: Text(entry.text),
-          onTap: () {
-            widget.scrollController.scrollTo(
-              index: entry.index,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.ease,
-            );
-            if (Platform.isAndroid) {
-              widget.closeLeftPaneCallback();
-            }
-          },
-        ),
-      );
-    } else {
-      return Padding(
-        padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
-        child: ExpandableNotifier(
-          child: ExpandablePanel(
-            controller: ExpandableController(initialExpanded: entry.level == 1),
-            key: PageStorageKey(entry),
-            collapsed: const SizedBox.shrink(),
-            header: ListTile(
-              contentPadding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-              title: Text(entry.text),
+    return ListView.builder(
+        shrinkWrap: true,
+        itemCount: allEntries.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+                0, 0, 10 * allEntries[index].level.toDouble(), 0),
+            child: ListTile(
+              title: Text(allEntries[index].text),
               onTap: () {
                 widget.scrollController.scrollTo(
-                  index: entry.index,
+                  index: allEntries[index].index,
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.ease,
                 );
@@ -102,21 +60,59 @@ class _TocViewerState extends State<TocViewer>
                 }
               },
             ),
-            expanded: ListView.builder(itemBuilder: (context, index) {
-              return _buildTocItem(entry.children[index]);
-            }),
-            theme: ExpandableThemeData(
-              tapBodyToCollapse: false,
-              tapBodyToExpand: false,
-              hasIcon: true,
-              iconPlacement: ExpandablePanelIconPlacement.left,
-              collapseIcon: Icons.keyboard_arrow_down_outlined,
-              expandIcon: Icons.chevron_right_rounded,
-              iconPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-              iconColor: Theme.of(context).colorScheme.primary,
-              tapHeaderToExpand: false,
+          );
+        });
+  }
+
+  Widget _buildTocItem(TocEntry entry) {
+    void navigateToEntry() {
+      widget.scrollController.scrollTo(
+        index: entry.index,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.ease,
+      );
+      if (Platform.isAndroid) {
+        widget.closeLeftPaneCallback();
+      }
+    }
+
+    if (entry.children.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+        child: ListTile(
+          title: Text(entry.text),
+          onTap: navigateToEntry,
+        ),
+      );
+    } else {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+          ),
+          child: ExpansionTile(
+            initiallyExpanded: entry.level == 1,
+            title: GestureDetector(
+              onTap: navigateToEntry,
+              child: Text(entry.text),
             ),
-            // Recursively build children,
+            leading: const Icon(Icons.chevron_right_rounded),
+            trailing: const SizedBox.shrink(),
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: EdgeInsets.zero,
+            iconColor: Theme.of(context).colorScheme.primary,
+            collapsedIconColor: Theme.of(context).colorScheme.primary,
+            children: [
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: entry.children.length,
+                itemBuilder: (context, index) {
+                  return _buildTocItem(entry.children[index]);
+                },
+              ),
+            ],
           ),
         ),
       );
@@ -154,13 +150,16 @@ class _TocViewerState extends State<TocViewer>
                   ),
                 ),
                 Expanded(
-                  child: searchController.text.isEmpty
-                      ? ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) =>
-                              _buildTocItem(snapshot.data![index]))
-                      : _buildFilteredList(snapshot.data!, context),
+                  child: SingleChildScrollView(
+                    child: searchController.text.isEmpty
+                        ? ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) =>
+                                _buildTocItem(snapshot.data![index]))
+                        : _buildFilteredList(snapshot.data!, context),
+                  ),
                 ),
               ],
             );
