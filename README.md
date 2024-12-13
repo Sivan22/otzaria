@@ -26,16 +26,16 @@
   <h3 align="center">Otzaria</h3>
 
   <p align="center">
-    Making the jewish library accessible to everyone by creating an app with a modern UI/UX, that could run on any device
+    Making the jewish library accessible to everyone by creating an app with a modern UI/UX that could run on any device
     <br />
     <a href="https://sivan22.github.io/otzaria-download/"><strong>See our site »</strong></a>
     <br />
     <br/>  
-    <a href="https://github.com/sivan22/otzaria/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/sivan22/otzaria/issues/new?labels=bug&template=bug-report---.md">Report a Bug</a>
     ·
-    <a href="https://github.com/sivan22/otzaria/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/sivan22/otzaria/issues/new?labels=enhancement&template=feature-request---.md">Request A Feature</a>
     ·
-    <a href="https://github.com/sivan22/otzaria/wiki">user's manual</a>
+    <a href="https://github.com/sivan22/otzaria/wiki">User manual</a>
   </p>
 </div>
 
@@ -77,22 +77,22 @@
 I felt the lack of an open source app of the jewish library, for PCs.
 
 
-Torat Ememt is old and no longer maintained, and Sefaria's app is great, however, it does not work well on computers.
+Torat Emet is old and no longer maintained, and Sefaria's app is great, however, it does not work well on computers.
 
-So i decided to make one myself. I did not know Dart and Flutter at all in the beginning, but it was fun. I **love** to learn new technologies!
+So I decided to make one myself. I did not know Dart and Flutter at all in the beginning, but it was fun. I **love** to learn new technologies!
 
 The database itself is accessible to everyone following the important work of the Sefaria organization, so a big thank to them for that.
 
 Key features of the project:
-* the software is FREE and will be ALLWAYS FREE.
+* The software is FREE and will remain ALWAYS FREE.
 * Built to work effeciently on any device, including Windows, Linux, and Android.
 * The app is designed to be as user friendly as possible.
 * A thorough selection process has been undertaken to ensure that the books are suitable for the Torah community
-* the library is flexible, means that you can add or remove books from the library.
-* fast search engine, including the user-added books.
-* the app supports the following formats: TXT, Docx and PDF.
+* The library is flexible, means that you can add or remove books from the library.
+* Fast search engine, including user-added books.
+* The app supports the following formats: TXT, Docx and PDF.
 
-I hope that my work will help the Torah community to learn easiely and effectively anytime and anywhere.
+I hope that my work will help the Torah community to learn easily and effectively anytime and anywhere.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -118,36 +118,36 @@ Also, it is a multiplatform framework.
 
 ### windows
 #### Prerequisites
-make sure that Visual C++ Redistributable is installed on your computer. if not, download it from [Here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) and install it.
+Make sure that Visual C++ Redistributable is installed on your computer. if not, download it from [Here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) and install it.
 
 #### Installation
-download the latest build for windows from [releases](https://github.com/Sivan22/otzaria/releases). 
-the library is included in the .exe file.
-in case you need only the app itself (for upgrading) you can download the .msix file.
+Download the latest build for windows from [releases](https://github.com/Sivan22/otzaria/releases). 
+The library is included in the .exe file.
+In case you need only the app itself (for upgrading) you can download the .msix file.
 
 ### linux
 #### Prerequisites
 ```sudo apt-get install libgtk-3-0 libblkid1 liblzma5```
 #### Installation
-* download the linux build from releases, extarct and run otzaria.
-* when first running the app, you will be asked to download the library.
-* alternatively, you can download the library manualy from [here], extarct it and provide path to the app.
+* Download the linux build from releases, extract and run Otzaria.
+* When first running the app, you will be asked to download the library.
+* Llternatively, you can download the library manually from [here], extract it and provide its path to the app.
 
 ### android
 * Download the .apk file from the releases page, and install it.
-* when first running the app,.you will be asked to download the library.
-* alternatively, you can download the library manualy from [here] and provide the zip file to the app.
+* When first running the app, you will be asked to download the library.
+* Alternatively, you can download the library manually from [here] and provide the zip file to the app.
 
 ### iOS (iPhone/iPad)
-* you can try the beta version through TestFlight. 
-* follow this [link](https://testflight.apple.com/join/yvNbmaX4).
-* when first running the app,.you will be asked to download the library.
+* You can try the beta version through TestFlight. 
+* Follow this [link](https://testflight.apple.com/join/yvNbmaX4).
+* When first running the app, you will be asked to download the library.
 
 ### macos
-* download the latest macos build from the releases page.
-* run the app while pressing ctl.
-* when first running the app, you will be asked to download the library.
-* alternatively, you can download the library manualy from [here], extarct it and provide path to the app.
+* Download the latest MacOS build from the releases page.
+* Run the app while pressing the ctrl key.
+* When first running the app, you will be asked to download the library.
+* Alternatively, you can download the library manually from [here], extract it and provide its path to the app.
 
 
 
@@ -169,8 +169,8 @@ See the Wiki section for documentation.
 
 - [ ] Add business logic layer by switching the state management library to Bloc.
 - [ ] Transfer books data from text files to SQLite database
-- [ ] add option for semantic search using an embedding ML model and vector database
-- [ ] language Support
+- [ ] Add option for semantic search using an embedding ML model and vector database
+- [ ] Language Support
     - [ ] English
     - [X] Hebrew
 
@@ -201,9 +201,9 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-the code is currently Unlicensed. it may change in the future, but it will allways stay open-sourced.
+The code is currently Unlicensed. It may change in the future, but it will always remain open-sourced.
 
-the texts has different open licenses. you may check Sefaria's site for more info on that.
+The texts have different open licenses. You may check Sefaria's site for more info on that.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -223,7 +223,7 @@ Project Link: [https://github.com/sivan22/otzaria](https://github.com/sivan22/ot
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-the project was avavilable because of Sefaria's amazing project. 
+The project was possible because of Sefaria's amazing project. 
 <br>
 and Dicta association, by which many important books were added.
 <br>
@@ -235,9 +235,9 @@ and Dicta association, by which many important books were added.
 <a href="http://www.toratemetfreeware.com/index.html?downloads;1;" title="תורת אמת" target="_blank"><img src="images/toratemet.png" alt="תורת אמת" width="80" height="80"/></a>
 <!--a href="https://github.com/projectbenyehuda/public_domain_dump" title="פרוייקט בן יהודה" target="_blank"><img src="images/Project Ben-Yehuda logo.jpg" alt="פרוייקט בן יהודה" width="80" height="80"/></a -->
 
-the PDF viewer is powered by [pdfrx](https://pub.dev/packages/pdfrx).
+The PDF viewer is powered by [pdfrx](https://pub.dev/packages/pdfrx).
 
-for automatic updates, i used [updat](https://pub.dev/packages/updat).
+For automatic updates, I used [updat](https://pub.dev/packages/updat).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
