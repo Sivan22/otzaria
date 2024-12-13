@@ -84,7 +84,7 @@ So I decided to make one myself. I did not know Dart and Flutter at all in the b
 The database itself is accessible to everyone following the important work of the Sefaria organization, so a big thank to them for that.
 
 Key features of the project:
-* the software is FREE and will remain ALWAYS FREE.
+* The software is FREE and will remain ALWAYS FREE.
 * Built to work effeciently on any device, including Windows, Linux, and Android.
 * The app is designed to be as user friendly as possible.
 * A thorough selection process has been undertaken to ensure that the books are suitable for the Torah community
