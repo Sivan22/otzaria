@@ -201,7 +201,7 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-The code is currently Unlicensed. It may change in the future, but it will always remain open-sourced.
+The code is totally open-sourced under the [Unlicense](https://unlicense.org/) license.
 
 The texts have different open licenses. You may check Sefaria's site for more info on that.
 
