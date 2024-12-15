@@ -105,7 +105,7 @@ I hope that my work will help the Torah community to learn easily and effectivel
 * [![Dart][dart]][Dart-url]
 * [![Flutter][Flutter]][Flutter-url]
 
-I Choose to use Dart and Flutter. I think that is the most efficient and most modern way to build a GUI app.
+I Chose to use Dart and Flutter. I think that is the most efficient and most modern way to build a GUI app.
 
 Also, it is a multiplatform framework.
 
