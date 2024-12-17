@@ -7,11 +7,13 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
+![Downloads][Github-downloads]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
+
 
 
 
@@ -253,6 +255,7 @@ For automatic updates, I used [updat](https://pub.dev/packages/updat).
 [stars-url]: https://github.com/sivan22/otzaria/stargazers
 [issues-shield]: https://img.shields.io/github/issues/sivan22/otzaria.svg?style=for-the-badge
 [issues-url]: https://github.com/sivan22/otzaria/issues
+[Github-downloads]: https://img.shields.io/github/downloads/sivan22/otzaria/total.svg?style=for-the-badge
 [license-shield]: https://img.shields.io/github/license/sivan22/otzaria.svg?style=for-the-badge
 [license-url]: https://github.com/sivan22/otzaria/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
