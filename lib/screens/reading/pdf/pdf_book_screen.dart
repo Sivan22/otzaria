@@ -190,11 +190,33 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     length: 3,
                     child: Column(
                       children: [
-                        const TabBar(tabs: [
-                          Tab(text: 'ניווט'),
-                          Tab(text: 'חיפוש'),
-                          Tab(text: 'דפים'),
-                        ]),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TabBar(
+                                tabs: const [
+                                  Tab(text: 'ניווט'),
+                                  Tab(text: 'חיפוש'),
+                                  Tab(text: 'דפים'),
+                                ],
+                              ),
+                            ),
+                            ValueListenableBuilder(
+                              valueListenable: widget.tab.pinLeftPane,
+                              builder: (context, pinLeftPanel, child) =>
+                                  MediaQuery.of(context).size.width < 600
+                                      ? const SizedBox.shrink()
+                                      : IconButton(
+                                          onPressed: () {
+                                            widget.tab.pinLeftPane.value =
+                                                !widget.tab.pinLeftPane.value;
+                                          },
+                                          icon: const Icon(Icons.push_pin),
+                                          isSelected: pinLeftPanel,
+                                        ),
+                            ),
+                          ],
+                        ),
                         Expanded(
                           child: TabBarView(
                             children: [
@@ -226,6 +248,23 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                                 child: ThumbnailsView(
                                     controller: widget.tab.pdfViewerController),
                               ),
+
+                              ValueListenableBuilder(
+                                valueListenable: widget.tab.pinLeftPane,
+                                builder: (context, pinLeftPanel, child) =>
+                                    MediaQuery.of(context).size.width < 600
+                                        ? const SizedBox.shrink()
+                                        : IconButton(
+                                            onPressed: () {
+                                              widget.tab.pinLeftPane.value =
+                                                  !widget.tab.pinLeftPane.value;
+                                            },
+                                            icon: const Icon(
+                                              Icons.push_pin,
+                                            ),
+                                            isSelected: pinLeftPanel,
+                                          ),
+                              )
                             ],
                           ),
                         ),
@@ -262,6 +301,13 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                       params: PdfViewerParams(
                         enableTextSelection: true,
                         maxScale: 8,
+                        onPageChanged: (pageNumber) {
+                          if (!widget.tab.pinLeftPane.value) {
+                            Future.microtask(() {
+                              widget.tab.showLeftPane.value = false;
+                            });
+                          }
+                        },
                         // code to display pages horizontally
                         // layoutPages: (pages, params) {
                         //   final height = pages.fold(
@@ -366,6 +412,9 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           widget.tab.documentRef.value = controller.documentRef;
                           widget.tab.outline.value =
                               await document.loadOutline();
+                          if (mounted) {
+                            widget.tab.showLeftPane.value = true;
+                          }
                         },
                       ),
                     ),
