@@ -151,7 +151,7 @@ class FileSystemData {
   }
 
   /// Retrieves the list of books from HebrewBooks
-  static Future<List<ExternalBook>> getHebrewBooks() {
+  static Future<List<Book>> getHebrewBooks() {
     return _getHebrewBooks();
   }
 
@@ -196,10 +196,12 @@ class FileSystemData {
   }
 
   /// Internal implementation for loading HebrewBooks from CSV
-  static Future<List<ExternalBook>> _getHebrewBooks() async {
+  static Future<List<Book>> _getHebrewBooks() async {
     try {
       print('Loading hebrewbooks from CSV');
       final csvData = await rootBundle.loadString('assets/hebrew_books.csv');
+      final hebrewBooksPath =
+          Settings.getValue<String>('key-hebrew-books-path');
 
       final table = await Isolate.run(() {
         // Normalize line endings for cross-platform compatibility
@@ -211,7 +213,7 @@ class FileSystemData {
           fieldDelimiter: ',',
           textDelimiter: '"',
           eol: '\n',
-          shouldParseNumbers: false,
+          shouldParseNumbers: true,
         ).convert(normalizedCsvData);
 
         print('Loaded ${csvTable.length} rows');
@@ -219,23 +221,48 @@ class FileSystemData {
         return csvTable;
       });
 
-      return table.skip(1).map((row) {
+      final books = <Book>[];
+      for (final row in table.skip(1)) {
         try {
-          return ExternalBook(
-            title: row[1].toString(),
-            id: -1,
-            author: row[2].toString(),
-            pubPlace: row[3].toString(),
-            pubDate: row[4].toString(),
-            topics: row[15].toString().replaceAll(';', ', '),
-            heShortDesc: row[13].toString(),
-            link: 'https://beta.hebrewbooks.org/${row[0]}',
-          );
+          if (row[0] == null || row[0].toString().isEmpty) continue;
+
+          // Check if the ID is numeric
+          final bookId = row[0].toString().trim();
+          if (!RegExp(r'^\d+$').hasMatch(bookId)) continue;
+
+          final localPath = hebrewBooksPath != null
+              ? '$hebrewBooksPath${Platform.pathSeparator}Hebrewbooks_org_$bookId.pdf'
+              : null;
+
+          if (localPath != null && File(localPath).existsSync()) {
+            // If local file exists, add as PdfBook
+            books.add(PdfBook(
+              title: row[1].toString(),
+              path: localPath,
+              author: row[2].toString(),
+              pubPlace: row[3].toString(),
+              pubDate: row[4].toString(),
+              topics: row[15].toString().replaceAll(';', ', '),
+              heShortDesc: row[13].toString(),
+            ));
+          } else {
+            // If no local file, add as ExternalBook
+            books.add(ExternalBook(
+              title: row[1].toString(),
+              id: int.parse(bookId),
+              author: row[2].toString(),
+              pubPlace: row[3].toString(),
+              pubDate: row[4].toString(),
+              topics: row[15].toString().replaceAll(';', ', '),
+              heShortDesc: row[13].toString(),
+              link: 'https://beta.hebrewbooks.org/$bookId',
+            ));
+          }
         } catch (e) {
           print('Error loading book: $e');
-          return ExternalBook(title: 'error', id: 0, link: '');
         }
-      }).toList();
+      }
+      return books;
     } catch (e) {
       print('Error loading hebrewbooks: $e');
       return [];

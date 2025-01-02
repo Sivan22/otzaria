@@ -240,7 +240,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleAlignment: Alignment.centerRight,
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
-                    SwitchSettingsTile(
+                    const SwitchSettingsTile(
                       title: 'סינכרון אוטומטי',
                       leading: Icon(Icons.sync),
                       settingKey: 'key-auto-sync',
@@ -248,7 +248,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
-                    if (!(Platform.isAndroid || Platform.isIOS))
+                    if (!(Platform.isAndroid || Platform.isIOS)) ...[
                       SimpleSettingsTile(
                         title: 'מיקום הספרייה',
                         subtitle:
@@ -264,7 +264,25 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           }
                         },
                       ),
-                    const SwitchSettingsTile(
+                      SimpleSettingsTile(
+                        title: 'מיקום ספרי HebrewBooks',
+                        subtitle: Settings.getValue<String>(
+                                'key-hebrew-books-path') ??
+                            'לא קיים',
+                        leading: const Icon(Icons.folder),
+                        onTap: () async {
+                          String? path =
+                              await FilePicker.platform.getDirectoryPath();
+                          if (path != null) {
+                            Settings.setValue<String>(
+                                'key-hebrew-books-path', path);
+
+                            context.read<AppModel>().refreshLibrary();
+                          }
+                        },
+                      ),
+                    ],
+                    SwitchSettingsTile(
                       settingKey: 'key-dev-channel',
                       title: 'עדכון לגרסאות מפתחים',
                       enabledLabel:
@@ -290,7 +308,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               leading: Icon(Icons.info_rounded),
                             ),
                           );
-                        })
+                        }),
                   ],
                 )
               ],

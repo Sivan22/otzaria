@@ -51,7 +51,7 @@ class AppModel with ChangeNotifier {
   late Future<List<ExternalBook>> otzarBooks;
 
   /// Future containing the list of books from HebrewBooks
-  late Future<List<ExternalBook>> hebrewBooks;
+  late Future<List<Book>> hebrewBooks;
 
   /// List of currently opened tabs in the application
   List<OpenedTab> tabs = [];
