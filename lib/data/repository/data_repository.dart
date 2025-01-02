@@ -45,9 +45,9 @@ class DataRepository {
 
   /// Retrieves the list of books from the Hebrew Books project
   ///
-  /// Returns a [Future] that completes with a list of [ExternalBook] objects
+  /// Returns a [Future] that completes with a list of [Book] objects
   /// representing books from the Hebrew Books collection
-  Future<List<ExternalBook>> getHebrewBooks() {
+  Future<List<Book>> getHebrewBooks() {
     return FileSystemData.getHebrewBooks();
   }
 
