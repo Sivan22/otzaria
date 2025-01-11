@@ -192,6 +192,15 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
+                      SwitchSettingsTile(
+                        settingKey: 'key-show-teamim',
+                        title: 'הצגת טעמי המקרא',
+                        enabledLabel: 'המקרא יוצג עם טעמים',
+                        disabledLabel: 'המקרא יוצג ללא טעמים',
+                        leading: const Icon(Icons.text_format),
+                        defaultValue: true,
+                        onChange: (p0) => appModel.showTeamim.value = p0,
+                      ),
                       const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',

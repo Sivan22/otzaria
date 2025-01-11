@@ -41,20 +41,16 @@ class _CombinedViewState extends State<CombinedView> {
   }
 
   Widget buildOuterList() {
-    return SelectionArea(
-      key: PageStorageKey(widget.tab),
-      selectionControls: DesktopTextSelectionControls(),
-      child: ScrollablePositionedList.builder(
-          initialScrollIndex: widget.tab.index,
-          itemPositionsListener: widget.tab.positionsListener,
-          itemScrollController: widget.tab.scrollController,
-          scrollOffsetController: widget.tab.scrollOffsetController,
-          itemCount: widget.data.length,
-          itemBuilder: (context, index) {
-            ExpansionTileController controller = ExpansionTileController();
-            return buildExpansiomTile(controller, index);
-          }),
-    );
+    return ScrollablePositionedList.builder(
+        initialScrollIndex: widget.tab.index,
+        itemPositionsListener: widget.tab.positionsListener,
+        itemScrollController: widget.tab.scrollController,
+        scrollOffsetController: widget.tab.scrollOffsetController,
+        itemCount: widget.data.length,
+        itemBuilder: (context, index) {
+          ExpansionTileController controller = ExpansionTileController();
+          return buildExpansiomTile(controller, index);
+        });
   }
 
   ExpansionTile buildExpansiomTile(
@@ -68,22 +64,32 @@ class _CombinedViewState extends State<CombinedView> {
         tilePadding: const EdgeInsets.all(0.0),
         collapsedIconColor: Colors.transparent,
         title: ValueListenableBuilder(
-          valueListenable: widget.tab.removeNikud,
-          builder: (context, removeNikud, child) => Html(
-            //remove nikud if needed
-            data: removeNikud
-                ? highLight(removeVolwels('${widget.data[index]}\n'),
-                    widget.tab.searchTextController.text)
-                : highLight('${widget.data[index]}\n',
-                    widget.tab.searchTextController.text),
-            style: {
-              'body': Style(
-                  fontSize: FontSize(widget.textSize),
-                  fontFamily: context.read<AppModel>().fontFamily.value,
-                  textAlign: TextAlign.justify),
-            },
-          ),
-        ),
+            valueListenable: (Provider.of<AppModel>(context).showTeamim),
+            builder: (context, showTeamim, child) {
+              String data = widget.data[index];
+              if (!showTeamim) {
+                data = removeTeamim(data);
+              }
+
+              return ValueListenableBuilder(
+                valueListenable: widget.tab.removeNikud,
+                builder: (context, removeNikud, child) => Html(
+                  //remove nikud if needed
+                  data: removeNikud
+                      ? highLight(removeVolwels('$data\n'),
+                          widget.tab.searchTextController.text)
+                      : highLight(
+                          '$data\n', widget.tab.searchTextController.text),
+                  style: {
+                    'body': Style(
+                        fontSize: FontSize(widget.textSize),
+                        fontFamily:
+                            Settings.getValue('key-font-family') ?? 'candara',
+                        textAlign: TextAlign.justify),
+                  },
+                ),
+              );
+            }),
         children: [
           widget.showSplitedView.value
               ? const SizedBox.shrink()

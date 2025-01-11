@@ -109,6 +109,10 @@ class AppModel with ChangeNotifier {
     Settings.getValue<bool>('key-show-external-books') ?? false,
   );
 
+  final ValueNotifier<bool> showTeamim = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-show-teamim') ?? true,
+  );
+
   /// Controls whether to use fast search functionality
   final ValueNotifier<bool> useFastSearch = ValueNotifier<bool>(
     Settings.getValue<bool>('key-use-fast-search') ?? true,

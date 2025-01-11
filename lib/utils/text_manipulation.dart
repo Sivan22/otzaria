@@ -80,3 +80,10 @@ String paraphrase(String text) {
 
   return text;
 }
+
+String removeTeamim(String s) => s
+    .replaceAll('־', ' ')
+    .replaceAll(' ׀', '')
+    .replaceAll('ֽ', '')
+    .replaceAll('׀', '')
+    .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
