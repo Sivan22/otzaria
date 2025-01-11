@@ -47,24 +47,26 @@ class _TocViewerState extends State<TocViewer>
           return Padding(
             padding: EdgeInsets.fromLTRB(
                 0, 0, 10 * allEntries[index].level.toDouble(), 0),
-            child: ListTile(
-              title: Text(allEntries[index].fullText),
-              onTap: () {
-                widget.scrollController.scrollTo(
-                  index: allEntries[index].index,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.ease,
-                );
-                if (Platform.isAndroid) {
-                  widget.closeLeftPaneCallback();
-                }
-              },
-            ),
+            child: allEntries[index].children.isEmpty
+                ? ListTile(
+                    title: Text(allEntries[index].fullText),
+                    onTap: () {
+                      widget.scrollController.scrollTo(
+                        index: allEntries[index].index,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.ease,
+                      );
+                      if (Platform.isAndroid) {
+                        widget.closeLeftPaneCallback();
+                      }
+                    },
+                  )
+                : _buildTocItem(allEntries[index], showFullText: true),
           );
         });
   }
 
-  Widget _buildTocItem(TocEntry entry) {
+  Widget _buildTocItem(TocEntry entry, {bool showFullText = false}) {
     void navigateToEntry() {
       widget.scrollController.scrollTo(
         index: entry.index,
@@ -95,7 +97,7 @@ class _TocViewerState extends State<TocViewer>
             initiallyExpanded: entry.level == 1,
             title: GestureDetector(
               onTap: navigateToEntry,
-              child: Text(entry.text),
+              child: Text(showFullText ? entry.fullText : entry.text),
             ),
             leading: const Icon(Icons.chevron_right_rounded),
             trailing: const SizedBox.shrink(),
