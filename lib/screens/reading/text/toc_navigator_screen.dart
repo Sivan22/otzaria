@@ -48,7 +48,7 @@ class _TocViewerState extends State<TocViewer>
             padding: EdgeInsets.fromLTRB(
                 0, 0, 10 * allEntries[index].level.toDouble(), 0),
             child: ListTile(
-              title: Text(allEntries[index].text),
+              title: Text(allEntries[index].fullText),
               onTap: () {
                 widget.scrollController.scrollTo(
                   index: allEntries[index].index,

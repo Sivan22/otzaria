@@ -120,13 +120,24 @@ class TocEntry {
   String text;
   final int index;
   final int level;
+  final TocEntry? parent;
   List<TocEntry> children = [];
+  String get fullText => () {
+        TocEntry? parent = this.parent;
+        String text = this.text;
+        while (parent != null && parent.level > 1) {
+          text = '${parent!.text}, $text';
+          parent = parent.parent;
+        }
+        return text;
+      }();
 
   ///creats [TocEntry]
   TocEntry({
     required this.text,
     required this.index,
     this.level = 1,
+    this.parent,
   });
 }
 

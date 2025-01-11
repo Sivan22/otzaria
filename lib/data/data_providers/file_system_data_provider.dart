@@ -429,13 +429,14 @@ class FileSystemData {
           final int level = int.parse(line[2]); // Extract heading level
           final String text = stripHtmlIfNeeded(line);
 
-          TocEntry entry = TocEntry(text: text, index: i, level: level);
-
           if (level == 1) {
             // Add h1 headings as root nodes
+            TocEntry entry = TocEntry(text: text, index: i, level: level);
             toc.add(entry);
             parents[level] = entry;
           } else {
+            TocEntry entry = TocEntry(
+                text: text, index: i, level: level, parent: parents[level - 1]);
             // Add other headings under their parent
             final TocEntry? parent = parents[level - 1];
             if (parent != null) {
