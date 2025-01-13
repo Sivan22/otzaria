@@ -126,7 +126,9 @@ class TocEntry {
         TocEntry? parent = this.parent;
         String text = this.text;
         while (parent != null && parent.level > 1) {
-          text = '${parent!.text}, $text';
+          if (parent.text != '') {
+            text = '${parent.text}, $text';
+          }
           parent = parent.parent;
         }
         return text;

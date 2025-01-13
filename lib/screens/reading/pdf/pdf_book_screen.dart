@@ -279,155 +279,145 @@ class _PdfBookViewrState extends State<PdfBookViewr>
             Expanded(
               child: Stack(
                 children: [
-                  ValueListenableBuilder(
-                    valueListenable: widget.tab.showLeftPane,
-                    builder: (context, showLeftPane, child) => Container(
-                      margin: EdgeInsets.only(left: showLeftPane ? 300 : 0),
-                      child: ColorFiltered(
-                        colorFilter: ColorFilter.mode(
-                            Colors.white,
-                            Provider.of<AppModel>(context).isDarkMode.value
-                                ? BlendMode.difference
-                                : BlendMode.dst),
-                        child: PdfViewer.file(
-                          widget.tab.book.path,
-                          initialPageNumber: widget.tab.pageNumber,
-                          // PdfViewer.file(
-                          //   r"D:\pdfrx\example\assets\hello.pdf",
-                          // PdfViewer.uri(
-                          //   Uri.parse(
-                          //       'https://espresso3389.github.io/pdfrx/assets/assets/PDF32000_2008.pdf'),
-                          // PdfViewer.uri(
-                          //   Uri.parse(kIsWeb
-                          //       ? 'assets/assets/hello.pdf'
-                          //       : 'https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf'),
-                          // Set password provider to show password dialog
-                          passwordProvider: () => passwordDialog(context),
-                          controller: widget.tab.pdfViewerController,
-                          params: PdfViewerParams(
-                            enableTextSelection: true,
-                            maxScale: 8,
-                            onPageChanged: (pageNumber) {
-                              if (!widget.tab.pinLeftPane.value) {
-                                Future.microtask(() {
-                                  widget.tab.showLeftPane.value = false;
-                                });
-                              }
-                            },
-                            // code to display pages horizontally
-                            // layoutPages: (pages, params) {
-                            //   final height = pages.fold(
-                            //           templatePage.height,
-                            //           (prev, page) => max(prev, page.height)) +
-                            //       params.margin * 2;
-                            //   final pageLayouts = <Rect>[];
-                            //   double x = params.margin;
-                            //   for (var page in pages) {
-                            //     page ??= templatePage; // in case the page is not loaded yet
-                            //     pageLayouts.add(
-                            //       Rect.fromLTWH(
-                            //         x,
-                            //         (height - page.height) / 2, // center vertically
-                            //         page.width,
-                            //         page.height,
-                            //       ),
-                            //     );
-                            //     x += page.width + params.margin;
-                            //   }
-                            //   return PdfPageLayout(
-                            //     pageLayouts: pageLayouts,
-                            //     documentSize: Size(x, height),
-                            //   );
-                            // },
-                            //
-                            // Scroll-thumbs example
-                            //
-                            viewerOverlayBuilder: (context, size) => [
-                              // Show vertical scroll thumb on the right; it has page number on it
-                              PdfViewerScrollThumb(
-                                controller: widget.tab.pdfViewerController,
-                                orientation: ScrollbarOrientation.right,
-                                thumbSize: const Size(40, 25),
-                                thumbBuilder: (context, thumbSize, pageNumber,
-                                        controller) =>
+                  ColorFiltered(
+                    colorFilter: ColorFilter.mode(
+                        Colors.white,
+                        Provider.of<AppModel>(context).isDarkMode.value
+                            ? BlendMode.difference
+                            : BlendMode.dst),
+                    child: PdfViewer.file(
+                      widget.tab.book.path,
+                      initialPageNumber: widget.tab.pageNumber,
+                      // PdfViewer.file(
+                      //   r"D:\pdfrx\example\assets\hello.pdf",
+                      // PdfViewer.uri(
+                      //   Uri.parse(
+                      //       'https://espresso3389.github.io/pdfrx/assets/assets/PDF32000_2008.pdf'),
+                      // PdfViewer.uri(
+                      //   Uri.parse(kIsWeb
+                      //       ? 'assets/assets/hello.pdf'
+                      //       : 'https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf'),
+                      // Set password provider to show password dialog
+                      passwordProvider: () => passwordDialog(context),
+                      controller: widget.tab.pdfViewerController,
+                      params: PdfViewerParams(
+                        enableTextSelection: true,
+                        maxScale: 8,
+                        onPageChanged: (pageNumber) {
+                          if (!widget.tab.pinLeftPane.value) {
+                            Future.microtask(() {
+                              widget.tab.showLeftPane.value = false;
+                            });
+                          }
+                        },
+                        // code to display pages horizontally
+                        // layoutPages: (pages, params) {
+                        //   final height = pages.fold(
+                        //           templatePage.height,
+                        //           (prev, page) => max(prev, page.height)) +
+                        //       params.margin * 2;
+                        //   final pageLayouts = <Rect>[];
+                        //   double x = params.margin;
+                        //   for (var page in pages) {
+                        //     page ??= templatePage; // in case the page is not loaded yet
+                        //     pageLayouts.add(
+                        //       Rect.fromLTWH(
+                        //         x,
+                        //         (height - page.height) / 2, // center vertically
+                        //         page.width,
+                        //         page.height,
+                        //       ),
+                        //     );
+                        //     x += page.width + params.margin;
+                        //   }
+                        //   return PdfPageLayout(
+                        //     pageLayouts: pageLayouts,
+                        //     documentSize: Size(x, height),
+                        //   );
+                        // },
+                        //
+                        // Scroll-thumbs example
+                        //
+                        viewerOverlayBuilder: (context, size) => [
+                          // Show vertical scroll thumb on the right; it has page number on it
+                          PdfViewerScrollThumb(
+                            controller: widget.tab.pdfViewerController,
+                            orientation: ScrollbarOrientation.right,
+                            thumbSize: const Size(40, 25),
+                            thumbBuilder:
+                                (context, thumbSize, pageNumber, controller) =>
                                     Container(
-                                  color: Colors.black,
-                                  child: Center(
-                                    child: Text(
-                                      pageNumber.toString(),
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                  ),
+                              color: Colors.black,
+                              child: Center(
+                                child: Text(
+                                  pageNumber.toString(),
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                               ),
-                              // Just a simple horizontal scroll thumb on the bottom
-                              PdfViewerScrollThumb(
-                                controller: widget.tab.pdfViewerController,
-                                orientation: ScrollbarOrientation.bottom,
-                                thumbSize: const Size(80, 5),
-                                thumbBuilder: (context, thumbSize, pageNumber,
-                                        controller) =>
+                            ),
+                          ),
+                          // Just a simple horizontal scroll thumb on the bottom
+                          PdfViewerScrollThumb(
+                            controller: widget.tab.pdfViewerController,
+                            orientation: ScrollbarOrientation.bottom,
+                            thumbSize: const Size(80, 5),
+                            thumbBuilder:
+                                (context, thumbSize, pageNumber, controller) =>
                                     Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                              ),
-                            ],
-                            //
-                            // Loading progress indicator example
-                            //
-                            loadingBannerBuilder:
-                                (context, bytesDownloaded, totalBytes) =>
-                                    Center(
-                              child: CircularProgressIndicator(
-                                value: totalBytes != null
-                                    ? bytesDownloaded / totalBytes
-                                    : null,
-                                backgroundColor: Colors.grey,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(3),
                               ),
                             ),
-                            //
-                            // Link handling example
-                            //
-
-                            linkWidgetBuilder: (context, link, size) =>
-                                Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () async {
-                                  if (link.url != null) {
-                                    navigateToUrl(link.url!);
-                                  } else if (link.dest != null) {
-                                    widget.tab.pdfViewerController
-                                        .goToDest(link.dest);
-                                  }
-                                },
-                                hoverColor: Colors.blue.withOpacity(0.2),
-                              ),
-                            ),
-                            pagePaintCallbacks: [
-                              textSearcher.pageTextMatchPaintCallback
-                            ],
-                            onDocumentChanged: (document) async {
-                              if (document == null) {
-                                widget.tab.documentRef.value = null;
-                                widget.tab.outline.value = null;
-                              }
-                            },
-                            onViewerReady: (document, controller) async {
-                              widget.tab.documentRef.value =
-                                  controller.documentRef;
-                              widget.tab.outline.value =
-                                  await document.loadOutline();
-                              if (mounted) {
-                                widget.tab.showLeftPane.value = true;
-                              }
-                            },
+                          ),
+                        ],
+                        //
+                        // Loading progress indicator example
+                        //
+                        loadingBannerBuilder:
+                            (context, bytesDownloaded, totalBytes) => Center(
+                          child: CircularProgressIndicator(
+                            value: totalBytes != null
+                                ? bytesDownloaded / totalBytes
+                                : null,
+                            backgroundColor: Colors.grey,
                           ),
                         ),
+                        //
+                        // Link handling example
+                        //
+
+                        linkWidgetBuilder: (context, link, size) => Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () async {
+                              if (link.url != null) {
+                                navigateToUrl(link.url!);
+                              } else if (link.dest != null) {
+                                widget.tab.pdfViewerController
+                                    .goToDest(link.dest);
+                              }
+                            },
+                            hoverColor: Colors.blue.withOpacity(0.2),
+                          ),
+                        ),
+                        pagePaintCallbacks: [
+                          textSearcher.pageTextMatchPaintCallback
+                        ],
+                        onDocumentChanged: (document) async {
+                          if (document == null) {
+                            widget.tab.documentRef.value = null;
+                            widget.tab.outline.value = null;
+                          }
+                        },
+                        onViewerReady: (document, controller) async {
+                          widget.tab.documentRef.value = controller.documentRef;
+                          widget.tab.outline.value =
+                              await document.loadOutline();
+                          if (mounted) {
+                            widget.tab.showLeftPane.value = true;
+                          }
+                        },
                       ),
                     ),
                   ),

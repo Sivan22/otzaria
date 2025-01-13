@@ -135,7 +135,7 @@ class _TocViewerState extends State<TocViewer>
                   onChanged: (value) => setState(() {}),
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'איתור..',
+                    hintText: 'איתור כותרת...',
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
