@@ -405,6 +405,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
         items: _getGridItems(currentTopCategory),
       ));
     }
+    // Refocus the search bar after the grid is built.
+    // Doing it here, because the search bar is rebuilt every time the grid is rebuilt
+    Provider.of<AppModel>(context, listen: false)
+        .bookLocatorFocusNode
+        .requestFocus();
 
     return items;
   }
