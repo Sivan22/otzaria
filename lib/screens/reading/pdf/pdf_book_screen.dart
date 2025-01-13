@@ -5,11 +5,11 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:provider/provider.dart';
-import '../../../widgets/page_number_dispaly.dart';
+import 'package:otzaria/widgets/page_number_dispaly.dart';
 import 'pdf_search_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'pdf_outlines_screen.dart';
-import '../../../widgets/password_dialog.dart';
+import 'package:otzaria/widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:printing/printing.dart';
@@ -156,6 +156,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           widget.tab.pdfViewerController.pages.length))
                   : null,
               icon: const Icon(Icons.chevron_right),
+              tooltip: 'הבא',
             ),
             if (wideScreen)
               IconButton(
@@ -194,9 +195,9 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                       children: [
                         Row(
                           children: [
-                            Expanded(
+                            const Expanded(
                               child: TabBar(
-                                tabs: const [
+                                tabs: [
                                   Tab(text: 'ניווט'),
                                   Tab(text: 'חיפוש'),
                                   Tab(text: 'דפים'),

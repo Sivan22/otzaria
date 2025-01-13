@@ -11,18 +11,28 @@ class PageNumberDisplay extends StatefulWidget {
 }
 
 class _PageNumberDisplayState extends State<PageNumberDisplay> {
-  late TextEditingController _dialogTextController;
+  late TextEditingController _textController;
+  bool _isEditing = false;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _dialogTextController = TextEditingController();
+    _textController = TextEditingController();
     widget.controller.addListener(_handlePageChange);
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isEditing) {
+        setState(() {
+          _isEditing = false;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _dialogTextController.dispose();
+    _textController.dispose();
+    _focusNode.dispose();
     widget.controller.removeListener(_handlePageChange);
     super.dispose();
   }
@@ -33,6 +43,18 @@ class _PageNumberDisplayState extends State<PageNumberDisplay> {
     }
   }
 
+  void _handleSubmitted(String value) {
+    final page = int.tryParse(value);
+    if (page != null) {
+      widget.controller.goToPage(
+        pageNumber: page.clamp(1, widget.controller.pages.length),
+      );
+    }
+    setState(() {
+      _isEditing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.controller.isReady) {
@@ -40,78 +62,61 @@ class _PageNumberDisplayState extends State<PageNumberDisplay> {
         width: 60,
         child: Center(
           child: Text(
-            '${widget.controller.pageNumber ?? 1}/${widget.controller.pages.length}',
+            "",
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
       );
     }
 
-    final pageNumber = widget.controller.pageNumber;
+    final pageNumber = widget.controller.pageNumber ?? 1;
     final pageCount = widget.controller.pages.length;
 
-    if (pageNumber == null || pageCount == 0) {
-      return SizedBox(
-        width: 60,
-        child: Center(
-          child: Text(
-            '1/${widget.controller.pages.length}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
-    }
-
-    return TextButton(
-      onPressed: () => _showPageDialog(context),
-      child: Text(
-        '$pageNumber/$pageCount',
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
-    );
-  }
-
-  void _showPageDialog(BuildContext context) {
-    _dialogTextController.clear(); // Clear previous text
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('עבור לדף'),
-        content: TextField(
-          controller: _dialogTextController,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: '1-${widget.controller.pages.length}',
-          ),
-          onSubmitted: (value) {
-            final page = int.tryParse(value);
-            if (page != null) {
-              widget.controller.goToPage(
-                pageNumber: page.clamp(1, widget.controller.pages.length),
-              );
-              Navigator.pop(dialogContext);
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('ביטול'),
-          ),
-          TextButton(
-            onPressed: () {
-              final page = int.tryParse(_dialogTextController.text);
-              if (page != null) {
-                widget.controller.goToPage(
-                  pageNumber: page.clamp(1, widget.controller.pages.length),
-                );
-                Navigator.pop(dialogContext);
-              }
-            },
-            child: const Text('עבור'),
-          ),
-        ],
+    return SizedBox(
+      width: 80,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _isEditing = true;
+            _textController.text = pageNumber.toString();
+          });
+          // Ensure the text is selected when editing starts
+          Future.delayed(const Duration(milliseconds: 50), () {
+            _focusNode.requestFocus();
+            _textController.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _textController.text.length,
+            );
+          });
+        },
+        child: _isEditing
+            ? TextField(
+                controller: _textController,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  isDense: true,
+                  hintText: '1-$pageCount',
+                  border: const OutlineInputBorder(),
+                ),
+                onSubmitted: _handleSubmitted,
+              )
+            : Center(
+                child: Tooltip(
+                  message: "הזן מספר דף",
+                  child: InkWell(
+                    mouseCursor: SystemMouseCursors.click,
+                    child: Text(
+                      '$pageNumber/$pageCount',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+              ),
       ),
     );
   }
