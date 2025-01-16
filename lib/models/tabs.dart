@@ -283,7 +283,8 @@ class TextBookTab extends OpenedTab {
 }
 
 class SearchingTab extends OpenedTab {
-  ValueNotifier<bool> aproximateSearch = ValueNotifier<bool>(false);
+  ValueNotifier<int> distance = ValueNotifier<int>(2);
+  ValueNotifier<bool> fuzzy = ValueNotifier<bool>(false);
   final queryController = TextEditingController();
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
   Future<List<SearchResult>> results = Future.value([]);

@@ -35,7 +35,8 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       final indexedBooks = TantivyDataProvider.instance.booksDone.length;
       _showIndexWarning = totalBooks - indexedBooks > 5;
     }();
-    widget.tab.aproximateSearch.addListener(() => updateResults());
+    widget.tab.fuzzy.addListener(() => updateResults());
+    widget.tab.distance.addListener(() => updateResults());
     widget.tab.booksToSearch.addListener(() => updateResults());
     widget.tab.numResults.addListener(() => updateResults());
     widget.tab.queryController.addListener(() => updateResults());
@@ -43,7 +44,8 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
 
   @override
   void dispose() {
-    widget.tab.aproximateSearch.removeListener(() => updateResults());
+    widget.tab.fuzzy.removeListener(() => updateResults());
+    widget.tab.distance.removeListener(() => updateResults());
     widget.tab.booksToSearch.removeListener(() => updateResults());
     widget.tab.numResults.removeListener(() => updateResults());
     widget.tab.queryController.removeListener(() => updateResults());
@@ -57,19 +59,13 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       } else {
         final booksToSearch =
             widget.tab.booksToSearch.value.map<String>((e) => e.title).toList();
-        if (!widget.tab.aproximateSearch.value) {
-          widget.tab.results = TantivyDataProvider.instance.searchTexts(
-              '"${widget.tab.queryController.text.replaceAll('"', '\\"')}"',
-              booksToSearch,
-              widget.tab.numResults.value,
-              false);
-        } else {
-          widget.tab.results = TantivyDataProvider.instance.searchTexts(
-              widget.tab.queryController.text,
-              booksToSearch,
-              widget.tab.numResults.value,
-              true);
-        }
+
+        widget.tab.results = TantivyDataProvider.instance.searchTexts(
+            widget.tab.queryController.text.replaceAll('"', '\\"'),
+            booksToSearch,
+            widget.tab.numResults.value,
+            fuzzy: widget.tab.fuzzy.value,
+            distance: widget.tab.distance.value);
       }
     });
   }

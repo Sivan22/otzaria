@@ -25,12 +25,30 @@ class FullTextSettingsScreen extends StatelessWidget {
                   children: [
                     Expanded(child: Text('חיפוש מקורב')),
                     ValueListenableBuilder(
-                        valueListenable: tab.aproximateSearch,
+                        valueListenable: tab.fuzzy,
                         builder: (context, aproximateSearch, child) {
                           return Switch(
                               value: aproximateSearch,
-                              onChanged: (value) =>
-                                  tab.aproximateSearch.value = value);
+                              onChanged: (value) => tab.fuzzy.value = value);
+                        }),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(child: Text('מרווח בין מילות החיפוש')),
+                    ValueListenableBuilder(
+                        valueListenable: tab.distance,
+                        builder: (context, distance, child) {
+                          return Slider(
+                            min: 0,
+                            max: 6,
+                            value: distance.toDouble(),
+                            onChanged: (value) =>
+                                tab.distance.value = value.toInt(),
+                          );
                         }),
                   ],
                 ),

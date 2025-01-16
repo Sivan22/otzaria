@@ -70,8 +70,10 @@ class TantivyDataProvider {
   ///
   /// Returns a Future containing a list of search results
   Future<List<SearchResult>> searchTexts(
-      String query, List<String> books, int limit, bool fuzzy) async {
+      String query, List<String> books, int limit,
+      {bool fuzzy = false, int distance = 2}) async {
     final index = await engine;
+    query = distance == 0 ? '"$query"' : '"$query"~$distance';
     return await index.search(
         query: query, books: books, limit: limit, fuzzy: fuzzy);
   }

@@ -960,11 +960,9 @@ packages:
   search_engine:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: f23ba0700a797198037c150a483cebf28d8aa7b3
-      url: "https://github.com/Sivan22/otzaria_search_engine"
-    source: git
+      path: "../search_engine"
+      relative: true
+    source: path
     version: "0.0.1"
   search_highlight_text:
     dependency: "direct main"
