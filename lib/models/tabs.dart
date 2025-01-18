@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -283,11 +284,21 @@ class TextBookTab extends OpenedTab {
 }
 
 class SearchingTab extends OpenedTab {
+  ///the distance between words in the search
   ValueNotifier<int> distance = ValueNotifier<int>(2);
+
+  ///the flag that tells if to perform fuzzy search
   ValueNotifier<bool> fuzzy = ValueNotifier<bool>(false);
+
   final queryController = TextEditingController();
+
+  ///the list of books to search in
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
-  Future<List<SearchResult>> results = Future.value([]);
+
+  ///the list of search results
+  ValueNotifier<Future<List<SearchResult>>> results =
+      ValueNotifier(Future.value([]));
+
   ValueNotifier<int> numResults = ValueNotifier(100);
   FullTextSearcher searcher = FullTextSearcher(
     [],
@@ -302,8 +313,30 @@ class SearchingTab extends OpenedTab {
   ) {
     if (searchText != null) {
       queryController.text = searchText;
+      updateResults();
+    }
+    fuzzy.addListener(() => updateResults());
+    distance.addListener(() => updateResults());
+    booksToSearch.addListener(() => updateResults());
+    numResults.addListener(() => updateResults());
+  }
+
+  void updateResults() {
+    if (queryController.text.isEmpty) {
+      results.value = Future.value([]);
+    } else {
+      final booksNamesToSearch =
+          booksToSearch.value.map<String>((e) => e.title).toList();
+
+      results.value = TantivyDataProvider.instance.searchTexts(
+          queryController.text.replaceAll('"', '\\"'),
+          booksNamesToSearch,
+          numResults.value,
+          fuzzy: fuzzy.value,
+          distance: distance.value);
     }
   }
+
   @override
   factory SearchingTab.fromJson(Map<String, dynamic> json) {
     return SearchingTab(json['title'], json['searchText']);

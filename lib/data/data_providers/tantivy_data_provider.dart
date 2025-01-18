@@ -73,9 +73,17 @@ class TantivyDataProvider {
       String query, List<String> books, int limit,
       {bool fuzzy = false, int distance = 2}) async {
     final index = await engine;
-    query = distance == 0 ? '"$query"' : '"$query"~$distance';
+    if (fuzzy) {
+      final terms = query.split(" ");
+      List<String> finalTerms = [];
+      for (String term in terms) {
+        finalTerms.add("*$term*");
+      }
+      query = finalTerms.join(" ");
+    }
+    query = '"$query"~$distance';
     return await index.search(
-        query: query, books: books, limit: limit, fuzzy: fuzzy);
+        query: query, books: books, limit: limit, fuzzy: false);
   }
 
   /// Performs an asynchronous stream-based search operation across indexed texts.
@@ -120,7 +128,7 @@ class TantivyDataProvider {
         if (book is TextBook) {
           await addTextsToTantivy(book);
         } else if (book is PdfBook) {
-          await addPdfTextsToMimir(book);
+          await addPdfTextsToTantivy(book);
         }
       } catch (e) {
         print('Error adding ${book.title} to index: $e');
@@ -165,7 +173,7 @@ class TantivyDataProvider {
         return;
       }
       index.addDocument(
-          id: BigInt.from(hashCode + i),
+          id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
           title: title,
           text: texts[i],
           segment: BigInt.from(i),
@@ -188,7 +196,7 @@ class TantivyDataProvider {
   /// 1. Computing a hash of the PDF file to check for previous indexing
   /// 2. Extracting text from each page
   /// 3. Splitting page text into lines and indexing each line separately
-  addPdfTextsToMimir(PdfBook book) async {
+  addPdfTextsToTantivy(PdfBook book) async {
     final index = await engine;
 
     // Check if PDF was already indexed using file hash
@@ -213,7 +221,7 @@ class TantivyDataProvider {
           return;
         }
         index.addDocument(
-            id: BigInt.from(hashCode + i + j),
+            id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
             text: texts[j],
             segment: BigInt.from(i),
