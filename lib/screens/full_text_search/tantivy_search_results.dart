@@ -20,6 +20,9 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
     return ValueListenableBuilder(
         valueListenable: widget.tab.results,
         builder: (context, results, child) {
+          if (widget.tab.queryController.text.isEmpty) {
+            return const Center(child: Text("לא בוצע חיפוש"));
+          }
           return FutureBuilder(
               future: results,
               builder: (context, snapshot) {
@@ -32,96 +35,68 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                 if (snapshot.data!.isEmpty) {
                   return const Center(child: Text('אין תוצאות'));
                 }
-                return Scaffold(
-                  body: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Center(
-                            child: Text(
-                              '${snapshot.data!.length} תוצאות',
-                            ),
-                          ),
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Center(
+                        child: Text(
+                          '${snapshot.data!.length} תוצאות',
                         ),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              onTap: () {
-                                if (snapshot.data![index].isPdf) {
-                                  context.read<AppModel>().openTab(
-                                      PdfBookTab(
-                                          searchText:
-                                              widget.tab.queryController.text,
-                                          PdfBook(
-                                              title:
-                                                  snapshot.data![index].title,
-                                              path: snapshot
-                                                  .data![index].filePath),
-                                          snapshot.data![index].segment
-                                                  .toInt() +
-                                              1),
-                                      index: snapshot.data![index].segment
-                                              .toInt() +
-                                          1);
-                                } else {
-                                  context.read<AppModel>().openTab(
-                                        TextBookTab(
-                                            book: TextBook(
-                                              title:
-                                                  snapshot.data![index].title,
-                                            ),
-                                            index: snapshot.data![index].segment
-                                                .toInt(),
-                                            searchText: widget
-                                                .tab.queryController.text),
-                                      );
-                                }
-                              },
-                              title: snapshot.data![index].isPdf
-                                  ? Text(snapshot.data![index].title +
-                                      ' עמוד ${snapshot.data![index].segment.toInt() + 1}')
-                                  : FutureBuilder(
-                                      future: refFromIndex(
-                                          snapshot.data![index].segment.toInt(),
-                                          TextBook(
-                                                  title: snapshot
-                                                      .data![index].title)
-                                              .tableOfContents),
-                                      builder: (context, ref) {
-                                        if (!ref.hasData) {
-                                          return Text(
-                                              '[תוצאה ${index + 1}] ${snapshot.data![index].title} ...');
-                                        }
-                                        return Text(
-                                          '[תוצאה ${index + 1}] ${ref.data!}',
-                                        );
-                                      }),
-                              subtitle: Html(
-                                  data: snapshot.data![index].text,
-                                  style: {
-                                    'body': Style(
-                                        fontSize: FontSize(
-                                          context
-                                              .watch<AppModel>()
-                                              .fontSize
-                                              .value,
-                                        ),
-                                        fontFamily: context
-                                            .watch<AppModel>()
-                                            .fontFamily
-                                            .value,
-                                        textAlign: TextAlign.justify),
-                                  }),
-                            );
-                          },
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            onTap: () {
+                              if (snapshot.data![index].isPdf) {
+                                context.read<AppModel>().openTab(
+                                    PdfBookTab(
+                                        searchText:
+                                            widget.tab.queryController.text,
+                                        PdfBook(
+                                            title: snapshot.data![index].title,
+                                            path:
+                                                snapshot.data![index].filePath),
+                                        snapshot.data![index].segment.toInt() +
+                                            1),
+                                    index:
+                                        snapshot.data![index].segment.toInt() +
+                                            1);
+                              } else {
+                                context.read<AppModel>().openTab(
+                                      TextBookTab(
+                                          book: TextBook(
+                                            title: snapshot.data![index].title,
+                                          ),
+                                          index: snapshot.data![index].segment
+                                              .toInt(),
+                                          searchText:
+                                              widget.tab.queryController.text),
+                                    );
+                              }
+                            },
+                            title: Text(
+                                '[תוצאה ${index + 1}] ${snapshot.data![index].reference}'),
+                            subtitle:
+                                Html(data: snapshot.data![index].text, style: {
+                              'body': Style(
+                                  fontSize: FontSize(
+                                    context.read<AppModel>().fontSize.value,
+                                  ),
+                                  fontFamily:
+                                      context.read<AppModel>().fontFamily.value,
+                                  textAlign: TextAlign.justify),
+                            }),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 );
               });
         });

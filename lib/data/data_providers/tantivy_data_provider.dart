@@ -73,17 +73,10 @@ class TantivyDataProvider {
       String query, List<String> books, int limit,
       {bool fuzzy = false, int distance = 2}) async {
     final index = await engine;
-    if (fuzzy) {
-      final terms = query.split(" ");
-      List<String> finalTerms = [];
-      for (String term in terms) {
-        finalTerms.add("*$term*");
-      }
-      query = finalTerms.join(" ");
-    }
-    query = '"$query"~$distance';
+
+    query = distance > 0 ? '"$query"~$distance' : "query";
     return await index.search(
-        query: query, books: books, limit: limit, fuzzy: false);
+        query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
 
   /// Performs an asynchronous stream-based search operation across indexed texts.
@@ -163,22 +156,38 @@ class TantivyDataProvider {
     }
 
     // Preprocess text by removing HTML and vowel marks
-    text = stripHtmlIfNeeded(text);
-    text = removeVolwels(text);
-    final texts = text.split('\n');
 
+    final texts = text.split('\n');
+    List<String> reference = [];
     // Index each line separately
     for (int i = 0; i < texts.length; i++) {
       if (!isIndexing.value) {
         return;
       }
-      index.addDocument(
-          id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
-          title: title,
-          text: texts[i],
-          segment: BigInt.from(i),
-          isPdf: false,
-          filePath: '');
+      String line = texts[i];
+      // get the reference from the headers
+      if (line.startsWith('<h')) {
+        if (reference.isNotEmpty &&
+            reference.any(
+                (element) => element.substring(0, 4) == line.substring(0, 4))) {
+          reference.removeRange(
+              reference.indexWhere(
+                  (element) => element.substring(0, 4) == line.substring(0, 4)),
+              reference.length);
+        }
+        reference.add(line);
+      } else {
+        line = stripHtmlIfNeeded(line);
+        line = removeVolwels(line);
+        index.addDocument(
+            id: BigInt.from(hashCode + i),
+            title: title,
+            reference: stripHtmlIfNeeded(reference.join(', ')),
+            text: line,
+            segment: BigInt.from(i),
+            isPdf: false,
+            filePath: '');
+      }
     }
 
     await index.commit();
@@ -223,6 +232,7 @@ class TantivyDataProvider {
         index.addDocument(
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
+            reference: '$title, עמוד ${i + 1}',
             text: texts[j],
             segment: BigInt.from(i),
             isPdf: true,

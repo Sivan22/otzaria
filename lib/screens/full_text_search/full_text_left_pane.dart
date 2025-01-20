@@ -30,7 +30,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
         controller: tabController,
         tabs: const [
           Tab(
-            text: "אינדקס",
+            text: "הגדרות",
           ),
           Tab(
             text: " סינון",
