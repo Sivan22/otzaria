@@ -3,7 +3,6 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:provider/provider.dart';
 
 class TantivySearchResults extends StatefulWidget {
@@ -35,68 +34,78 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                 if (snapshot.data!.isEmpty) {
                   return const Center(child: Text('אין תוצאות'));
                 }
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Center(
-                        child: Text(
-                          '${snapshot.data!.length} תוצאות',
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Center(
+                          child: Text(
+                            '${snapshot.data!.length} תוצאות',
+                          ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            onTap: () {
-                              if (snapshot.data![index].isPdf) {
-                                context.read<AppModel>().openTab(
-                                    PdfBookTab(
-                                        searchText:
-                                            widget.tab.queryController.text,
-                                        PdfBook(
-                                            title: snapshot.data![index].title,
-                                            path:
-                                                snapshot.data![index].filePath),
-                                        snapshot.data![index].segment.toInt() +
-                                            1),
-                                    index:
-                                        snapshot.data![index].segment.toInt() +
-                                            1);
-                              } else {
-                                context.read<AppModel>().openTab(
-                                      TextBookTab(
-                                          book: TextBook(
-                                            title: snapshot.data![index].title,
-                                          ),
-                                          index: snapshot.data![index].segment
-                                              .toInt(),
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              onTap: () {
+                                if (snapshot.data![index].isPdf) {
+                                  context.read<AppModel>().openTab(
+                                      PdfBookTab(
                                           searchText:
-                                              widget.tab.queryController.text),
-                                    );
-                              }
-                            },
-                            title: Text(
-                                '[תוצאה ${index + 1}] ${snapshot.data![index].reference}'),
-                            subtitle:
-                                Html(data: snapshot.data![index].text, style: {
-                              'body': Style(
-                                  fontSize: FontSize(
-                                    context.read<AppModel>().fontSize.value,
-                                  ),
-                                  fontFamily:
-                                      context.read<AppModel>().fontFamily.value,
-                                  textAlign: TextAlign.justify),
-                            }),
-                          );
-                        },
+                                              widget.tab.queryController.text,
+                                          PdfBook(
+                                              title:
+                                                  snapshot.data![index].title,
+                                              path: snapshot
+                                                  .data![index].filePath),
+                                          snapshot.data![index].segment
+                                                  .toInt() +
+                                              1),
+                                      index: snapshot.data![index].segment
+                                              .toInt() +
+                                          1);
+                                } else {
+                                  context.read<AppModel>().openTab(
+                                        TextBookTab(
+                                            book: TextBook(
+                                              title:
+                                                  snapshot.data![index].title,
+                                            ),
+                                            index: snapshot.data![index].segment
+                                                .toInt(),
+                                            searchText: widget
+                                                .tab.queryController.text),
+                                      );
+                                }
+                              },
+                              title: Text(
+                                  '[תוצאה ${index + 1}] ${snapshot.data![index].reference}'),
+                              subtitle: Html(
+                                  data: snapshot.data![index].text,
+                                  style: {
+                                    'body': Style(
+                                        fontSize: FontSize(
+                                          context
+                                              .read<AppModel>()
+                                              .fontSize
+                                              .value,
+                                        ),
+                                        fontFamily: context
+                                            .read<AppModel>()
+                                            .fontFamily
+                                            .value,
+                                        textAlign: TextAlign.justify),
+                                  }),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               });
         });

@@ -25,6 +25,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   @override
   void initState() {
     super.initState();
+    _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
     () async {
       final library = await context.read<AppModel>().library;
       final allBooks = (library).getAllBooks();
@@ -107,7 +108,9 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
         child: SizedBox(
           width: isLeftPaneOpen.value ? 300 : 0,
           height: isLeftPaneOpen.value ? double.infinity : 0,
-          child: FullTextLeftPane(tab: widget.tab),
+          child: FullTextLeftPane(
+              tab: widget.tab,
+              library: context.read<AppModel>().library),
         ));
   }
 
