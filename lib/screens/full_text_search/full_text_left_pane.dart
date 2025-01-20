@@ -17,16 +17,13 @@ class FullTextLeftPane extends StatefulWidget {
 
 class _FullTextLeftPaneState extends State<FullTextLeftPane>
     with SingleTickerProviderStateMixin {
-  late TabController tabController;
   List<Book> allBooks = [];
   List<Book> books = [];
-  List<String> allTopics = [];
-  List<String> selectedTopics = [];
-  String _filterQuery = '';
+  TextEditingController _filterQuery = TextEditingController();
 
   void update() {
     var filteredList =
-        allBooks.where((book) => book.title.contains(_filterQuery));
+        allBooks.where((book) => book.title.contains(_filterQuery.text));
     setState(() {
       books = filteredList.toList();
     });
@@ -35,7 +32,9 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    () async {
+      allBooks = (await widget.library).getAllBooks();
+    }();
   }
 
   @override
@@ -46,58 +45,66 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
             size: Size.fromHeight(120.0),
             child: FullTextSettingsScreen(tab: widget.tab)),
         TextField(
-          decoration: const InputDecoration(
-            hintText: "סינון",
-          ),
+          controller: _filterQuery,
+          decoration: InputDecoration(
+              hintText: "סינון ספרים",
+              prefixIcon: Icon(Icons.filter_list_alt),
+              suffixIcon: IconButton(
+                  onPressed: () => setState(() => _filterQuery.text = ''),
+                  icon: Icon(Icons.close))),
           onChanged: (query) {
             setState(() {
-              _filterQuery = query;
               update();
             });
           },
         ),
-        _filterQuery.isEmpty
+        _filterQuery.text.isEmpty
             ? Expanded(child: _buildBooksTree(context))
-            : _buildBooksList(),
+            : Expanded(child: _buildBooksList()),
       ],
     );
   }
 
   Widget _buildBooksList() {
-    return Column(children: [
-      CheckboxListTile(
-        title: const Text("הכל"),
-        value: books
-            .every((test) => widget.tab.booksToSearch.value.contains(test)),
-        onChanged: (value) {
-          setState(() {
-            if (value!) {
-              widget.tab.booksToSearch.value.addAll(books);
-            } else {
-              widget.tab.booksToSearch.value
-                  .removeWhere((e) => books.contains(e));
-            }
-            widget.tab.booksToSearch = widget.tab.booksToSearch;
-          });
-        },
-      ),
+    return Column(mainAxisSize: MainAxisSize.min, children: [
       Expanded(
         child: ListView.builder(
+          shrinkWrap: true,
           itemCount: books.length,
-          itemBuilder: (context, index) => CheckboxListTile(
-            title: Text(books[index].title),
-            value: widget.tab.booksToSearch.value.contains(books[index]),
-            onChanged: (value) {
-              if (value!) {
-                widget.tab.booksToSearch.value.add(books[index]);
-              } else {
-                widget.tab.booksToSearch.value
-                    .removeWhere((s) => s == books[index]);
-              }
-              widget.tab.booksToSearch = widget.tab.booksToSearch;
-              setState(() {});
-            },
-          ),
+          itemBuilder: (context, index) => index == 0
+              ? CheckboxListTile(
+                  title: const Text("הכל"),
+                  value: books.every(
+                      (test) => widget.tab.booksToSearch.value.contains(test)),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value!) {
+                        widget.tab.booksToSearch.value.addAll(books);
+                      } else {
+                        widget.tab.booksToSearch.value
+                            .removeWhere((e) => books.contains(e));
+                      }
+                      widget.tab.booksToSearch.value =
+                          widget.tab.booksToSearch.value;
+                    });
+                  },
+                )
+              : CheckboxListTile(
+                  title: Text(books[index - 1].title),
+                  value:
+                      widget.tab.booksToSearch.value.contains(books[index - 1]),
+                  onChanged: (value) {
+                    if (value!) {
+                      widget.tab.booksToSearch.value.add(books[index - 1]);
+                    } else {
+                      widget.tab.booksToSearch.value
+                          .removeWhere((s) => s == books[index - 1]);
+                    }
+                    widget.tab.booksToSearch.value =
+                        widget.tab.booksToSearch.value;
+                    setState(() {});
+                  },
+                ),
         ),
       )
     ]);
@@ -116,7 +123,9 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
-                return SingleChildScrollView(child: _buildTree(snapshot.data!));
+                return SingleChildScrollView(
+                    key: const PageStorageKey('tree'),
+                    child: _buildTree(snapshot.data!));
               });
         });
   }
@@ -125,7 +134,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
     return ExpansionTile(
       key: PageStorageKey(category), // Ensure unique keys for ExpansionTiles
       title: Text(category.title),
-
+      initiallyExpanded: level == 0,
       tilePadding: EdgeInsets.symmetric(horizontal: 6 + (level) * 6),
       leading: SizedBox.fromSize(
         size: const Size.fromWidth(60.0),
@@ -139,7 +148,9 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                   } else {
                     removeCategory(category);
                   }
-                  widget.tab.booksToSearch = widget.tab.booksToSearch;
+                  widget.tab.booksToSearch.value =
+                      widget.tab.booksToSearch.value;
+                  setState(() {});
                 }),
             const Icon(Icons.folder),
           ], // Icon(Icons.folder,
@@ -161,7 +172,8 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
               widget.tab.booksToSearch.value.contains(entity)
                   ? widget.tab.booksToSearch.value.remove(entity)
                   : widget.tab.booksToSearch.value.add(entity);
-              widget.tab.booksToSearch = widget.tab.booksToSearch;
+              widget.tab.booksToSearch.value = widget.tab.booksToSearch.value;
+              setState(() {});
             }, //TODO: fix
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),

@@ -59,7 +59,7 @@ class _PageNumberDisplayState extends State<PageNumberDisplay> {
   Widget build(BuildContext context) {
     if (!widget.controller.isReady) {
       return SizedBox(
-        width: 60,
+        width: 65,
         child: Center(
           child: Text(
             "",

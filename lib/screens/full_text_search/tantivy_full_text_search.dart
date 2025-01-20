@@ -19,7 +19,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   @override
   bool get wantKeepAlive => true;
 
-  ValueNotifier isLeftPaneOpen = ValueNotifier(false);
+  ValueNotifier isLeftPaneOpen = ValueNotifier(true);
   bool _showIndexWarning = false;
 
   @override
@@ -74,7 +74,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(16.0),
           child: TextField(
             autofocus: true,
             controller: widget.tab.queryController,
@@ -106,11 +106,10 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     return AnimatedSize(
         duration: const Duration(milliseconds: 300),
         child: SizedBox(
-          width: isLeftPaneOpen.value ? 300 : 0,
+          width: isLeftPaneOpen.value ? 350 : 0,
           height: isLeftPaneOpen.value ? double.infinity : 0,
           child: FullTextLeftPane(
-              tab: widget.tab,
-              library: context.read<AppModel>().library),
+              tab: widget.tab, library: context.read<AppModel>().library),
         ));
   }
 

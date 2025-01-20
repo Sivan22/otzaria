@@ -20,7 +20,7 @@ class FullTextSettingsScreen extends StatelessWidget {
               valueListenable: tab.numResults,
               builder: (context, numResults, child) {
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: SpinBox(
                     value: numResults.toDouble(),
                     onChanged: (value) =>

@@ -88,7 +88,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                         ),
                         SyncIconButton(
                             fileSync: FileSyncService(
-                                githubOwner: "Sivan22",
+                                githubOwner: "zevisvei",
                                 repositoryName: "otzaria-library",
                                 branch: "main")),
                       ],

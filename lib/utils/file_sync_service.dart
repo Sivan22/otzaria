@@ -117,7 +117,7 @@ class FileSyncService {
     }
   }
 
-  Future<void> _removeFromLocalManifest(String filePath) async {
+  Future<void> _removeFromLocal(String filePath) async {
     try {
       // Try to remove the actual file if it exists
       final directory = await _localDirectory;
@@ -125,6 +125,12 @@ class FileSyncService {
       if (await file.exists()) {
         await file.delete();
       }
+      //if the directory is empty, remove it
+      final dir = file.parent;
+      if (await dir.exists() && (await dir.list().isEmpty)) {
+        await dir.delete();
+      }
+
       //if successful, remove from manifest
       final manifestFile = File(await _localManifestPath);
       Map<String, dynamic> localManifest = await _getLocalManifest();
@@ -191,7 +197,7 @@ class FileSyncService {
           return count;
         }
         if (!remoteManifest.containsKey(localFilePath)) {
-          await _removeFromLocalManifest(localFilePath);
+          await _removeFromLocal(localFilePath);
           count++;
           _currentProgress = count;
         }
