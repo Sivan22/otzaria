@@ -17,6 +17,9 @@ import 'package:hive/hive.dart';
 /// capabilities. It supports incremental indexing with progress tracking and allows for both
 /// synchronous and asynchronous search operations.
 class TantivyDataProvider {
+  /// Instance of the search engine pointing to the index directory
+  late Future<SearchEngine> engine;
+
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
 
@@ -37,6 +40,15 @@ class TantivyDataProvider {
   /// Uses Hive for persistent storage of indexed book records, storing them in the 'index'
   /// subdirectory of the configured library path.
   TantivyDataProvider() {
+    String indexPath = (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+        Platform.pathSeparator +
+        'index';
+
+    engine = SearchEngine.newInstance(path: indexPath);
+
+    //test the engine
+    searchTexts('בראשית', ['בראשית'], 1);
+
     booksDone = Hive.box(
             name: 'books_indexed',
             directory: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
@@ -55,12 +67,6 @@ class TantivyDataProvider {
         .put('key-books-done', booksDone);
   }
 
-  /// Instance of the search engine pointing to the index directory
-  final engine = SearchEngine.newInstance(
-      path: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
-          Platform.pathSeparator +
-          'index');
-
   /// Performs a synchronous search operation across indexed texts.
   ///
   /// [query] The search query string
@@ -72,8 +78,29 @@ class TantivyDataProvider {
   Future<List<SearchResult>> searchTexts(
       String query, List<String> books, int limit,
       {bool fuzzy = false, int distance = 2}) async {
-    final index = await engine;
-
+    SearchEngine index;
+    try {
+      index = await engine;
+    }
+    // in case the schema has changed, reset the index
+    catch (e) {
+      String indexPath =
+          (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+              Platform.pathSeparator +
+              'index';
+      if (e.toString() ==
+          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+        Directory indexDirectory = Directory(indexPath);
+        Hive.box(name: 'books_indexed', directory: indexPath).close();
+        print('Deleting index and creating a new one');
+        indexDirectory.deleteSync(recursive: true);
+        indexDirectory.createSync(recursive: true);
+        engine = SearchEngine.newInstance(path: indexPath);
+        index = await engine;
+      } else {
+        rethrow;
+      }
+    }
     query = distance > 0 ? '"$query"~$distance' : "query";
     return await index.search(
         query: query, books: books, limit: limit, fuzzy: fuzzy);
