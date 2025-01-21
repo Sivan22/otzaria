@@ -84,8 +84,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                         widget.tab.booksToSearch.value
                             .removeWhere((e) => books.contains(e));
                       }
-                      widget.tab.booksToSearch.value =
-                          widget.tab.booksToSearch.value;
+                      widget.tab.booksToSearch.notifyListeners();
                     });
                   },
                 )
@@ -100,8 +99,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                       widget.tab.booksToSearch.value
                           .removeWhere((s) => s == books[index - 1]);
                     }
-                    widget.tab.booksToSearch.value =
-                        widget.tab.booksToSearch.value;
+                    widget.tab.booksToSearch.notifyListeners();
                     setState(() {});
                   },
                 ),
@@ -148,8 +146,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                   } else {
                     removeCategory(category);
                   }
-                  widget.tab.booksToSearch.value =
-                      widget.tab.booksToSearch.value;
+                  widget.tab.booksToSearch.notifyListeners();
                   setState(() {});
                 }),
             const Icon(Icons.folder),
@@ -172,7 +169,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
               widget.tab.booksToSearch.value.contains(entity)
                   ? widget.tab.booksToSearch.value.remove(entity)
                   : widget.tab.booksToSearch.value.add(entity);
-              widget.tab.booksToSearch.value = widget.tab.booksToSearch.value;
+              widget.tab.booksToSearch.notifyListeners();
               setState(() {});
             }, //TODO: fix
             controlAffinity: ListTileControlAffinity.leading,

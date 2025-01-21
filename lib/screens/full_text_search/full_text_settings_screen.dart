@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
 import 'package:otzaria/models/tabs.dart';
-import 'package:provider/provider.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
 class FullTextSettingsScreen extends StatelessWidget {
@@ -38,14 +37,20 @@ class FullTextSettingsScreen extends StatelessWidget {
             child: ValueListenableBuilder(
                 valueListenable: tab.distance,
                 builder: (context, distance, child) {
-                  return SpinBox(
-                    decoration:
-                        const InputDecoration(labelText: 'מרווח בין מילים'),
-                    min: 0,
-                    max: 30,
-                    value: distance.toDouble(),
-                    onChanged: (value) => tab.distance.value = value.toInt(),
-                  );
+                  return ValueListenableBuilder(
+                      valueListenable: tab.fuzzy,
+                      builder: (context, fuzzy, child) {
+                        return SpinBox(
+                          enabled: !fuzzy,
+                          decoration: const InputDecoration(
+                              labelText: 'מרווח בין מילים'),
+                          min: 0,
+                          max: 30,
+                          value: distance.toDouble(),
+                          onChanged: (value) =>
+                              tab.distance.value = value.toInt(),
+                        );
+                      });
                 }),
           ),
         ),
@@ -56,12 +61,11 @@ class FullTextSettingsScreen extends StatelessWidget {
             builder: (context, aproximateSearch, child) {
               return ToggleSwitch(
                 minWidth: 150,
-                cornerRadius: 20.0,
                 inactiveBgColor: Colors.grey,
                 inactiveFgColor: Colors.white,
                 initialLabelIndex: aproximateSearch ? 1 : 0,
                 totalSwitches: 2,
-                labels: ['התאמה מדוייקת', 'התאמה רופפת'],
+                labels: ['חיפוש מדוייק', 'חיפוש מקורב'],
                 radiusStyle: true,
                 onToggle: (index) {
                   tab.fuzzy.value = index != 0;

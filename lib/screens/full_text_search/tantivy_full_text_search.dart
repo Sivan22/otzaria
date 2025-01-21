@@ -119,6 +119,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
           child: IconButton(
+            tooltip: "הגדרות חיפוש",
             icon: const Icon(Icons.menu),
             onPressed: () {
               isLeftPaneOpen.value = !isLeftPaneOpen.value;

@@ -101,7 +101,9 @@ class TantivyDataProvider {
         rethrow;
       }
     }
-    query = distance > 0 ? '"$query"~$distance' : "query";
+    if (!fuzzy) {
+      query = distance > 0 ? '"$query"~$distance' : "query";
+    }
     return await index.search(
         query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
