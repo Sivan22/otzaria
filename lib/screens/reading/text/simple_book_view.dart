@@ -5,7 +5,6 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 

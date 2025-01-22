@@ -80,14 +80,14 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
             controller: widget.tab.queryController,
             onSubmitted: (e) => widget.tab.updateResults(),
             decoration: InputDecoration(
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
               hintText: "חפש כאן..",
               labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
               prefixIcon: IconButton(
                   onPressed: () {
                     widget.tab.updateResults();
                   },
-                  icon: Icon(Icons.search)),
+                  icon: const Icon(Icons.search)),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
@@ -126,7 +126,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
             },
           ),
         ),
-        Expanded(child: SizedBox.shrink()),
+        const Expanded(child: SizedBox.shrink()),
       ],
     );
   }

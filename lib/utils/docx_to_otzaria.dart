@@ -147,8 +147,8 @@ String docxToText(Uint8List bytes, String title) {
         }
 
         // Add paragraph with its footnotes
-        if (!text.trim().isEmpty) {
-          list.add('$text');
+        if (text.trim().isNotEmpty) {
+          list.add(text);
           if (paragraphFootnotes.isNotEmpty) {
             list.add(
                 '<div class="footnotes"><small>${paragraphFootnotes.join('<br>')}</small></div>');

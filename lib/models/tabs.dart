@@ -362,7 +362,7 @@ class SearchingTab extends OpenedTab {
     }
     return TantivyDataProvider.instance.countTexts(
         queryController.text.replaceAll('"', '\\"'),
-        (await allBooks).map((e) => e.title).toList(),
+        allBooks.map((e) => e.title).toList(),
         facet,
         fuzzy: fuzzy.value,
         distance: distance.value);

@@ -65,7 +65,7 @@ class FullTextSettingsScreen extends StatelessWidget {
                 inactiveFgColor: Colors.white,
                 initialLabelIndex: aproximateSearch ? 1 : 0,
                 totalSwitches: 2,
-                labels: ['חיפוש מדוייק', 'חיפוש מקורב'],
+                labels: const ['חיפוש מדוייק', 'חיפוש מקורב'],
                 radiusStyle: true,
                 onToggle: (index) {
                   tab.fuzzy.value = index != 0;

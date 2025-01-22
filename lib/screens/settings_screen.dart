@@ -216,7 +216,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         enabledLabel:
                             'החיפוש יהיה מהיר יותר, נדרש ליצור אינדקס',
                         disabledLabel: 'החיפוש יהיה איטי יותר, לא נדרש אינדקס',
-                        leading: Icon(Icons.search),
+                        leading: const Icon(Icons.search),
                         defaultValue: true,
                         onChange: (value) => context
                             .read<AppModel>()
@@ -348,7 +348,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         },
                       ),
                     ],
-                    SwitchSettingsTile(
+                    const SwitchSettingsTile(
                       settingKey: 'key-dev-channel',
                       title: 'עדכון לגרסאות מפתחים',
                       enabledLabel:
@@ -360,7 +360,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         future: PackageInfo.fromPlatform(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
-                            return SimpleSettingsTile(
+                            return const SimpleSettingsTile(
                               title: 'גרסה נוכחית',
                               subtitle: 'המתן..',
                               leading: Icon(Icons.info_rounded),
@@ -371,7 +371,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             child: SimpleSettingsTile(
                               title: 'גרסה נוכחית',
                               subtitle: snapshot.data!.version,
-                              leading: Icon(Icons.info_rounded),
+                              leading: const Icon(Icons.info_rounded),
                             ),
                           );
                         }),

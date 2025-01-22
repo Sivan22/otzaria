@@ -125,7 +125,7 @@ class OtzarUtils {
 
         if (await checkBookExistence(bookId)) {
           await Future.delayed(
-            Duration(seconds: 5),
+            const Duration(seconds: 5),
             () => Process.run(
               "c:\\OTZAR\\view.exe",
               ['$bookId', 'DtnOzrV'],

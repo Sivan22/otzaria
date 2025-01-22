@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_visible_for_testing_member
+
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
@@ -12,14 +14,14 @@ class FullTextLeftPane extends StatefulWidget {
   const FullTextLeftPane({Key? key, required this.tab, required this.library})
       : super(key: key);
   @override
-  _FullTextLeftPaneState createState() => _FullTextLeftPaneState();
+  State<FullTextLeftPane> createState() => _FullTextLeftPaneState();
 }
 
 class _FullTextLeftPaneState extends State<FullTextLeftPane>
     with SingleTickerProviderStateMixin {
   List<Book> allBooks = [];
   List<Book> books = [];
-  TextEditingController _filterQuery = TextEditingController();
+  final TextEditingController _filterQuery = TextEditingController();
 
   void update() {
     var filteredList =
@@ -42,16 +44,16 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
     return Column(
       children: [
         SizedBox.fromSize(
-            size: Size.fromHeight(120.0),
+            size: const Size.fromHeight(120.0),
             child: FullTextSettingsScreen(tab: widget.tab)),
         TextField(
           controller: _filterQuery,
           decoration: InputDecoration(
               hintText: "סינון ספרים",
-              prefixIcon: Icon(Icons.filter_list_alt),
+              prefixIcon: const Icon(Icons.filter_list_alt),
               suffixIcon: IconButton(
                   onPressed: () => setState(() => _filterQuery.text = ''),
-                  icon: Icon(Icons.close))),
+                  icon: const Icon(Icons.close))),
           onChanged: (query) {
             setState(() {
               update();
@@ -201,7 +203,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                   : widget.tab.booksToSearch.value.add(entity);
               widget.tab.booksToSearch.notifyListeners();
               setState(() {});
-            }, //TODO: fix
+            },
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),
           );

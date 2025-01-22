@@ -9,7 +9,7 @@ typedef SearchPredict<T> = bool Function(T item, String query);
 typedef LabelDelegate<T> = String? Function(T?);
 typedef ValidateRemoveItem<T> = List<T> Function(List<T>? list, T item);
 
-enum ControlButtonType { All, Reset }
+enum ControlButtonType { ALL, Reset }
 
 /// The [FilterListWidget] is a widget with some filter utilities and callbacks which helps in single/multiple selection from list of data.
 ///
@@ -78,7 +78,7 @@ class FilterListWidget<T extends Object> extends StatelessWidget {
     this.resetButtonText = 'Reset',
     this.selectedItemsText = 'selected items',
     this.controlButtons = const [
-      ControlButtonType.All,
+      ControlButtonType.ALL,
       ControlButtonType.Reset
     ],
   }) : super(key: key);

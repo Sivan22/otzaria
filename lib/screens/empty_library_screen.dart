@@ -257,7 +257,7 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
               throw Exception('קובץ הספרייה הזמני ריק');
             }
 
-            Future<void> _extractWithArchive() async {
+            Future<void> extractWithArchive() async {
               // Create extractor with memory-efficient settings
               final extractor = ZipDecoder();
               final inputStream = InputFileStream(_tempFile!.path);
@@ -297,7 +297,7 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
               inputStream.close();
             }
 
-            Future<void> _extractWithFlutterArchive() async {
+            Future<void> extractWithFlutterArchive() async {
               try {
                 await flutter_archive.ZipFile.extractToDirectory(
                     zipFile: _tempFile!,
@@ -316,9 +316,9 @@ class _EmptyLibraryScreenState extends State<EmptyLibraryScreen> {
             }
 
             if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
-              await _extractWithFlutterArchive();
+              await extractWithFlutterArchive();
             } else {
-              await _extractWithArchive();
+              await extractWithArchive();
             }
             await _cleanupTempFile();
 

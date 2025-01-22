@@ -68,7 +68,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     library.findBookByTitle(widget.tab.title, TextBook))),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return SizedBox.shrink();
+                    return const SizedBox.shrink();
                   }
                   return IconButton(
                       onPressed: () async {
@@ -81,7 +81,10 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           final currentPage =
                               widget.tab.pdfViewerController.pageNumber ?? 0;
                           final textIndex = await pdfToTextPage(
-                              widget.tab.title, currentPage, context);
+                              // ignore: use_build_context_synchronously
+                              widget.tab.title,
+                              currentPage,
+                              context);
 
                           if (textIndex != null) {
                             appModel.openBook(textBook, textIndex);

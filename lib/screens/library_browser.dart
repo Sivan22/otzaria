@@ -218,7 +218,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     ? Theme.of(context).colorScheme.secondary
                     : null,
                 labelStyle: TextStyle(
-                  color: isSelected!
+                  color: isSelected
                       ? Theme.of(context).colorScheme.onSecondary
                       : null,
                   fontSize: 11,
@@ -417,9 +417,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     }
     // Refocus the search bar after the grid is built.
     // Doing it here, because the search bar is rebuilt every time the grid is rebuilt
-    Provider.of<AppModel>(context, listen: false)
-        .bookLocatorFocusNode
-        .requestFocus();
+    // ignore: use_build_context_synchronously
+    context.read<AppModel>().bookLocatorFocusNode.requestFocus();
 
     return items;
   }

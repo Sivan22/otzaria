@@ -2,7 +2,6 @@
 contain other categories and books */
 
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 /// Represents a category in the library.
 ///
@@ -30,10 +29,10 @@ class Category {
 
   /// returns the path of this category e.g תנך/ראשונים/רשי/תורה
   String get path {
-    if (this.title == 'ספריית אוצריא') {
+    if (title == 'ספריית אוצריא') {
       return '/';
     }
-    String path = '${this.title}';
+    String path = title;
     Category? parent = this.parent;
     while (parent != null && parent.title != 'ספריית אוצריא') {
       path = '${parent.title}/$path';

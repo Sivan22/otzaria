@@ -69,7 +69,6 @@ class IsarDataProvider {
     // Process text books
     for (TextBook book in allBooks) {
       try {
-        print('Creating refs for ${book.title} (${i++}/${allBooks.length})');
         refsNumOfbooksDone.value = i - 1;
         List<Ref> refs = [];
         final List<TocEntry> toc = await book.tableOfContents;
@@ -107,7 +106,6 @@ class IsarDataProvider {
           }
         }
         isar.write((isar) => isar.refs.putAll(refs));
-        print('Done creating refs for ${book.title} ');
       } catch (e) {
         print(' Failed creating refs for ${book.title} $e');
       }
