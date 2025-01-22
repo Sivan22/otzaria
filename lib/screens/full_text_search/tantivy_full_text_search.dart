@@ -28,14 +28,14 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
     () async {
       final library = await context.read<AppModel>().library;
-      final allBooks = (library).getAllBooks();
+      widget.tab.allBooks = (library).getAllBooks();
 
       if (widget.tab.booksToSearch.value.isEmpty) {
-        widget.tab.booksToSearch.value = allBooks.toSet();
+        widget.tab.booksToSearch.value = widget.tab.allBooks.toSet();
       }
 
       //Check if index is up to date
-      final totalBooks = allBooks.length;
+      final totalBooks = widget.tab.allBooks.length;
       final indexedBooks = TantivyDataProvider.instance.booksDone.length;
       if (!TantivyDataProvider.instance.isIndexing.value &&
           totalBooks - indexedBooks > 15) {

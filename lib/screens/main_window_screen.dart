@@ -211,10 +211,26 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                           Platform.isIOS)) {
                                         appModel.bookLocatorFocusNode
                                             .requestFocus();
+                                        appModel.bookLocatorController
+                                                .selection =
+                                            TextSelection(
+                                                baseOffset: 0,
+                                                extentOffset: appModel
+                                                    .bookLocatorController
+                                                    .text
+                                                    .length);
                                       }
                                     case 1:
                                       appModel.findReferenceFocusNode
                                           .requestFocus();
+                                      appModel.findReferenceController
+                                              .selection =
+                                          TextSelection(
+                                              baseOffset: 0,
+                                              extentOffset: appModel
+                                                  .findReferenceController
+                                                  .text
+                                                  .length);
                                   }
                                 }),
                           ),

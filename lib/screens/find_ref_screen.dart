@@ -18,16 +18,14 @@ class _FindRefScreenState extends State<FindRefScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
-  final TextEditingController _searchController = TextEditingController();
   late Future<List<Ref>> _refs;
-  bool _needsIndexing = false;
   late AppModel appModel;
 
   @override
   void initState() {
     super.initState();
     appModel = Provider.of<AppModel>(context, listen: false);
-    _refs = findRefs(_searchController.text);
+    _refs = findRefs(appModel.findReferenceController.text);
     _checkIndexStatus();
   }
 
@@ -118,15 +116,16 @@ class _FindRefScreenState extends State<FindRefScreen>
                       icon: const Icon(Icons.clear),
                       onPressed: () {
                         setState(() {
-                          _searchController.clear();
-                          _refs = findRefs(_searchController.text);
+                          appModel.findReferenceController.clear();
+                          _refs =
+                              findRefs(appModel.findReferenceController.text);
                         });
                       },
                     ),
                   ],
                 ),
               ),
-              controller: _searchController,
+              controller: appModel.findReferenceController,
               onChanged: (ref) {
                 setState(() {
                   _refs = findRefs(ref);
@@ -142,7 +141,7 @@ class _FindRefScreenState extends State<FindRefScreen>
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (snapshot.data!.isEmpty &&
-                      _searchController.text.length >= 3) {
+                      appModel.findReferenceController.text.length >= 3) {
                     return const Center(
                       child: Text(
                         'אין תוצאות',

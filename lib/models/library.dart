@@ -30,6 +30,9 @@ class Category {
 
   /// returns the path of this category e.g תנך/ראשונים/רשי/תורה
   String get path {
+    if (this.title == 'ספריית אוצריא') {
+      return '/';
+    }
     String path = '${this.title}';
     Category? parent = this.parent;
     while (parent != null && parent.title != 'ספריית אוצריא') {

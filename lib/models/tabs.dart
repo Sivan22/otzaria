@@ -294,6 +294,10 @@ class SearchingTab extends OpenedTab {
 
   Future<int> totalResultsNum = Future.value(0);
 
+  List<String> booksNamesToSearch = [];
+
+  List<Book> allBooks = [];
+
   ///the list of books to search in
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
 
@@ -327,10 +331,12 @@ class SearchingTab extends OpenedTab {
     if (queryController.text.isEmpty) {
       results.value = Future.value([]);
     } else {
-      final booksNamesToSearch =
+      booksNamesToSearch =
           booksToSearch.value.map<String>((e) => e.title).toList();
 
-      totalResultsNum = countForFacet("/");
+      totalResultsNum = TantivyDataProvider.instance.countTexts(
+          queryController.text.replaceAll('"', '\\"'), booksNamesToSearch, "/",
+          fuzzy: fuzzy.value, distance: distance.value);
 
       results.value = TantivyDataProvider.instance.searchTexts(
           queryController.text.replaceAll('"', '\\"'),
@@ -341,15 +347,25 @@ class SearchingTab extends OpenedTab {
     }
   }
 
+  Future<int> countForBook(String bookTitle) async {
+    if (queryController.text.isEmpty) {
+      return 0;
+    }
+    return TantivyDataProvider.instance.countTexts(
+        queryController.text.replaceAll('"', '\\"'), [bookTitle], "/",
+        fuzzy: fuzzy.value, distance: distance.value);
+  }
+
   Future<int> countForFacet(String facet) async {
     if (queryController.text.isEmpty) {
       return 0;
     }
-    final booksNamesToSearch =
-        booksToSearch.value.map<String>((e) => e.title).toList();
     return TantivyDataProvider.instance.countTexts(
-        queryController.text.replaceAll('"', '\\"'), booksNamesToSearch, facet,
-        fuzzy: fuzzy.value, distance: distance.value);
+        queryController.text.replaceAll('"', '\\"'),
+        (await allBooks).map((e) => e.title).toList(),
+        facet,
+        fuzzy: fuzzy.value,
+        distance: distance.value);
   }
 
   @override
