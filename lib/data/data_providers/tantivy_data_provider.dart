@@ -17,6 +17,9 @@ import 'package:hive/hive.dart';
 /// capabilities. It supports incremental indexing with progress tracking and allows for both
 /// synchronous and asynchronous search operations.
 class TantivyDataProvider {
+  /// Instance of the search engine pointing to the index directory
+  late Future<SearchEngine> engine;
+
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
 
@@ -37,6 +40,15 @@ class TantivyDataProvider {
   /// Uses Hive for persistent storage of indexed book records, storing them in the 'index'
   /// subdirectory of the configured library path.
   TantivyDataProvider() {
+    String indexPath = (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+        Platform.pathSeparator +
+        'index';
+
+    engine = SearchEngine.newInstance(path: indexPath);
+
+    //test the engine
+    searchTexts('בראשית', ['בראשית'], 1);
+
     booksDone = Hive.box(
             name: 'books_indexed',
             directory: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
@@ -55,11 +67,15 @@ class TantivyDataProvider {
         .put('key-books-done', booksDone);
   }
 
-  /// Instance of the search engine pointing to the index directory
-  final engine = SearchEngine.newInstance(
-      path: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
-          Platform.pathSeparator +
-          'index');
+  Future<int> countTexts(String query, List<String> books, String topics,
+      {bool fuzzy = false, int distance = 2}) async {
+    final index = await engine;
+    if (!fuzzy) {
+      query = distance > 0 ? '"$query"~$distance' : '"$query"';
+    }
+    return index.count(
+        query: query, books: books, topics: topics, fuzzy: fuzzy);
+  }
 
   /// Performs a synchronous search operation across indexed texts.
   ///
@@ -70,8 +86,34 @@ class TantivyDataProvider {
   ///
   /// Returns a Future containing a list of search results
   Future<List<SearchResult>> searchTexts(
-      String query, List<String> books, int limit, bool fuzzy) async {
-    final index = await engine;
+      String query, List<String> books, int limit,
+      {bool fuzzy = false, int distance = 2}) async {
+    SearchEngine index;
+    try {
+      index = await engine;
+    }
+    // in case the schema has changed, reset the index
+    catch (e) {
+      String indexPath =
+          (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+              Platform.pathSeparator +
+              'index';
+      if (e.toString() ==
+          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+        Directory indexDirectory = Directory(indexPath);
+        Hive.box(name: 'books_indexed', directory: indexPath).close();
+        print('Deleting index and creating a new one');
+        indexDirectory.deleteSync(recursive: true);
+        indexDirectory.createSync(recursive: true);
+        engine = SearchEngine.newInstance(path: indexPath);
+        index = await engine;
+      } else {
+        rethrow;
+      }
+    }
+    if (!fuzzy) {
+      query = distance > 0 ? '"$query"~$distance' : '"$query"';
+    }
     return await index.search(
         query: query, books: books, limit: limit, fuzzy: fuzzy);
   }
@@ -118,7 +160,7 @@ class TantivyDataProvider {
         if (book is TextBook) {
           await addTextsToTantivy(book);
         } else if (book is PdfBook) {
-          await addPdfTextsToMimir(book);
+          await addPdfTextsToTantivy(book);
         }
       } catch (e) {
         print('Error adding ${book.title} to index: $e');
@@ -143,6 +185,7 @@ class TantivyDataProvider {
     final index = await engine;
     var text = await book.text;
     final title = book.title;
+    final topics = "/${book.topics.replaceAll(', ', '/')}";
 
     // Check if book was already indexed using content hash
     final hash = sha1.convert(utf8.encode(text)).toString();
@@ -153,22 +196,39 @@ class TantivyDataProvider {
     }
 
     // Preprocess text by removing HTML and vowel marks
-    text = stripHtmlIfNeeded(text);
-    text = removeVolwels(text);
-    final texts = text.split('\n');
 
+    final texts = text.split('\n');
+    List<String> reference = [];
     // Index each line separately
     for (int i = 0; i < texts.length; i++) {
       if (!isIndexing.value) {
         return;
       }
-      index.addDocument(
-          id: BigInt.from(hashCode + i),
-          title: title,
-          text: texts[i],
-          segment: BigInt.from(i),
-          isPdf: false,
-          filePath: '');
+      String line = texts[i];
+      // get the reference from the headers
+      if (line.startsWith('<h')) {
+        if (reference.isNotEmpty &&
+            reference.any(
+                (element) => element.substring(0, 4) == line.substring(0, 4))) {
+          reference.removeRange(
+              reference.indexWhere(
+                  (element) => element.substring(0, 4) == line.substring(0, 4)),
+              reference.length);
+        }
+        reference.add(line);
+      } else {
+        line = stripHtmlIfNeeded(line);
+        line = removeVolwels(line);
+        index.addDocument(
+            id: BigInt.from(hashCode + i),
+            title: title,
+            reference: stripHtmlIfNeeded(reference.join(', ')),
+            topics: topics,
+            text: line,
+            segment: BigInt.from(i),
+            isPdf: false,
+            filePath: '');
+      }
     }
 
     await index.commit();
@@ -186,7 +246,7 @@ class TantivyDataProvider {
   /// 1. Computing a hash of the PDF file to check for previous indexing
   /// 2. Extracting text from each page
   /// 3. Splitting page text into lines and indexing each line separately
-  addPdfTextsToMimir(PdfBook book) async {
+  addPdfTextsToTantivy(PdfBook book) async {
     final index = await engine;
 
     // Check if PDF was already indexed using file hash
@@ -201,6 +261,7 @@ class TantivyDataProvider {
     // Extract text from each page
     final pages = await PdfDocument.openData(data).then((value) => value.pages);
     final title = book.title;
+    final topics = "/${book.topics.replaceAll(', ', '/')}";
 
     // Process each page
     for (int i = 0; i < pages.length; i++) {
@@ -211,8 +272,10 @@ class TantivyDataProvider {
           return;
         }
         index.addDocument(
-            id: BigInt.from(hashCode + i + j),
+            id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
+            reference: '$title, עמוד ${i + 1}',
+            topics: topics,
             text: texts[j],
             segment: BigInt.from(i),
             isPdf: true,

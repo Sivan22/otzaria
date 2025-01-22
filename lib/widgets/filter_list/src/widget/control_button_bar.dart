@@ -59,7 +59,7 @@ class ControlButtonBar<T> extends StatelessWidget {
                     /* All Button */
                     if (maximumSelectionLength == null &&
                         !enableOnlySingleSelection &&
-                        controlButtons.contains(ControlButtonType.All)) ...[
+                        controlButtons.contains(ControlButtonType.ALL)) ...[
                       ControlButton(
                         choiceChipLabel: '$allButtonText',
                         onPressed: () {

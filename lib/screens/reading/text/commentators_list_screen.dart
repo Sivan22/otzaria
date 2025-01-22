@@ -90,7 +90,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
               backgroundColor:
                   isSelected! ? Theme.of(context).colorScheme.secondary : null,
               labelStyle: TextStyle(
-                color: isSelected!
+                color: isSelected
                     ? Theme.of(context).colorScheme.onSecondary
                     : null,
                 fontSize: 11,

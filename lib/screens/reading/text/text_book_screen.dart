@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/screens/reading/text/combined_book_screen.dart';
 import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/reading/text/splited_view_screen.dart';
-import 'package:otzaria/utils/daf_yomi_helper.dart';
 import 'package:otzaria/utils/page_converter.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/screens/reading/text/text_book_search_screen.dart';
@@ -119,10 +117,11 @@ class _TextBookViewerState extends State<TextBookViewer>
                                     ? widget.tab.positionsListener.itemPositions
                                         .value.first.index
                                     : 0,
+                                // ignore: use_build_context_synchronously
                                 context);
                             appModel.openBook(book!, index ?? 0);
                           })
-                      : SizedBox.shrink()),
+                      : const SizedBox.shrink()),
 
               // button to switch between splitted view and combined view
               ValueListenableBuilder(
@@ -157,10 +156,12 @@ class _TextBookViewerState extends State<TextBookViewer>
                   String ref = await utils.refFromIndex(
                       index, widget.tab.tableOfContents);
                   bool bookmarkAdded =
+                      // ignore: use_build_context_synchronously
                       Provider.of<AppModel>(context, listen: false).addBookmark(
                           ref: ref, book: widget.tab.book, index: index);
                   // notify user
                   if (mounted) {
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(bookmarkAdded

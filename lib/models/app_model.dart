@@ -121,8 +121,14 @@ class AppModel with ChangeNotifier {
   /// Focus node for the book locator search field
   FocusNode bookLocatorFocusNode = FocusNode();
 
+//// Controller for the book locator search field
+  TextEditingController bookLocatorController = TextEditingController();
+
   /// Focus node for the reference finder search field
   FocusNode findReferenceFocusNode = FocusNode();
+
+  /// Controller for the reference finder search field
+  TextEditingController findReferenceController = TextEditingController();
 
   /// Creates a new AppModel instance and initializes the application state.
   ///

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/utils/file_sync_service.dart';
-import 'package:provider/provider.dart';
 
 class SyncIconButton extends StatefulWidget {
   final FileSyncService fileSync;

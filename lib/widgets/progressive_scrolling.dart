@@ -21,7 +21,7 @@ class ProgressiveScroll extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ProgressiveScrollState createState() => _ProgressiveScrollState();
+  State<ProgressiveScroll> createState() => _ProgressiveScrollState();
 }
 
 class _ProgressiveScrollState extends State<ProgressiveScroll> {

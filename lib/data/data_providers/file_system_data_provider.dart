@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 import 'package:csv/csv.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/utils/docx_to_otzaria.dart';
@@ -48,7 +47,7 @@ class FileSystemData {
     titleToPath = _getTitleToPath();
     metadata = _getMetadata();
     return _getLibraryFromDirectory(
-        '${libraryPath}${Platform.pathSeparator}אוצריא', await metadata);
+        '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
   }
 
   /// Recursively builds the library structure from a directory.
@@ -158,7 +157,6 @@ class FileSystemData {
   /// Internal implementation for loading Otzar HaChochma books from CSV
   static Future<List<ExternalBook>> _getOtzarBooks() async {
     try {
-      print('Loading Otzar HaChochma books from CSV');
       final csvData = await rootBundle.loadString('assets/otzar_books.csv');
 
       final table = await Isolate.run(() {
@@ -174,8 +172,6 @@ class FileSystemData {
           shouldParseNumbers: false,
         ).convert(normalizedCsvData);
 
-        print('Loaded ${csvTable.length} rows');
-
         return csvTable;
       });
       return table.skip(1).map((row) {
@@ -190,7 +186,6 @@ class FileSystemData {
         );
       }).toList();
     } catch (e) {
-      print('Error loading Otzar HaChochma books: $e');
       return [];
     }
   }
@@ -198,7 +193,6 @@ class FileSystemData {
   /// Internal implementation for loading HebrewBooks from CSV
   static Future<List<Book>> _getHebrewBooks() async {
     try {
-      print('Loading hebrewbooks from CSV');
       final csvData = await rootBundle.loadString('assets/hebrew_books.csv');
       final hebrewBooksPath =
           Settings.getValue<String>('key-hebrew-books-path');
@@ -215,8 +209,6 @@ class FileSystemData {
           eol: '\n',
           shouldParseNumbers: true,
         ).convert(normalizedCsvData);
-
-        print('Loaded ${csvTable.length} rows');
 
         return csvTable;
       });

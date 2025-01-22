@@ -235,7 +235,7 @@ class FilterListDialog {
                 validateRemoveItem: validateRemoveItem,
                 maximumSelectionLength: maximumSelectionLength,
                 controlButtons: controlButtons ??
-                    [ControlButtonType.All, ControlButtonType.Reset],
+                    [ControlButtonType.ALL, ControlButtonType.Reset],
               ),
             ),
           ),

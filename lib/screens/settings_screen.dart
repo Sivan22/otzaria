@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
@@ -215,7 +216,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         enabledLabel:
                             'החיפוש יהיה מהיר יותר, נדרש ליצור אינדקס',
                         disabledLabel: 'החיפוש יהיה איטי יותר, לא נדרש אינדקס',
-                        leading: Icon(Icons.search),
+                        leading: const Icon(Icons.search),
                         defaultValue: true,
                         onChange: (value) => context
                             .read<AppModel>()
@@ -257,6 +258,62 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
+                    ValueListenableBuilder(
+                        valueListenable:
+                            TantivyDataProvider.instance.isIndexing,
+                        builder: (context, isIndexing, child) {
+                          return ValueListenableBuilder(
+                              valueListenable:
+                                  TantivyDataProvider.instance.numOfbooksDone,
+                              builder: (context, numOfbooksDone, child) {
+                                return ValueListenableBuilder(
+                                    valueListenable: TantivyDataProvider
+                                        .instance.numOfbooksTotal,
+                                    builder: (context, numOfbooksTotal, child) {
+                                      return SimpleSettingsTile(
+                                        title: "אינדקס חיפוש",
+                                        subtitle: isIndexing
+                                            ? "בתהליך עדכון: $numOfbooksDone/$numOfbooksTotal"
+                                            : "האינדקס מעודכן",
+                                        leading: const Icon(Icons.table_chart),
+                                        onTap: () => () async {
+                                          if (!isIndexing) {
+                                            final result = showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                      content: const Text(
+                                                          'עדכון האינדקס עלול לקחת זמן ומשאבים רבים. להמשיך?'),
+                                                      actions: <Widget>[
+                                                        TextButton(
+                                                          child: const Text(
+                                                              'ביטול'),
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                                context, false);
+                                                          },
+                                                        ),
+                                                        TextButton(
+                                                          child: const Text(
+                                                              'אישור'),
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                                context, true);
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ));
+                                            if (await result == true) {
+                                              context
+                                                  .read<AppModel>()
+                                                  .addAllTextsToTantivy();
+                                            }
+                                          }
+                                        }(),
+                                      );
+                                    });
+                              });
+                        }),
                     if (!(Platform.isAndroid || Platform.isIOS)) ...[
                       SimpleSettingsTile(
                         title: 'מיקום הספרייה',
@@ -291,7 +348,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         },
                       ),
                     ],
-                    SwitchSettingsTile(
+                    const SwitchSettingsTile(
                       settingKey: 'key-dev-channel',
                       title: 'עדכון לגרסאות מפתחים',
                       enabledLabel:
@@ -303,7 +360,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         future: PackageInfo.fromPlatform(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
-                            return SimpleSettingsTile(
+                            return const SimpleSettingsTile(
                               title: 'גרסה נוכחית',
                               subtitle: 'המתן..',
                               leading: Icon(Icons.info_rounded),
@@ -314,7 +371,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             child: SimpleSettingsTile(
                               title: 'גרסה נוכחית',
                               subtitle: snapshot.data!.version,
-                              leading: Icon(Icons.info_rounded),
+                              leading: const Icon(Icons.info_rounded),
                             ),
                           );
                         }),

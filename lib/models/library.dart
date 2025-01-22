@@ -2,7 +2,6 @@
 contain other categories and books */
 
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 /// Represents a category in the library.
 ///
@@ -27,6 +26,20 @@ class Category {
   /// The order of the category, obtained from [Data.metadata].
   /// Defaults to 999 if no order is specified for this category.
   int order;
+
+  /// returns the path of this category e.g תנך/ראשונים/רשי/תורה
+  String get path {
+    if (title == 'ספריית אוצריא') {
+      return '/';
+    }
+    String path = title;
+    Category? parent = this.parent;
+    while (parent != null && parent.title != 'ספריית אוצריא') {
+      path = '${parent.title}/$path';
+      parent = parent.parent;
+    }
+    return '/$path';
+  }
 
   ///the list of sub categories that are contained in this category
   List<Category> subCategories;

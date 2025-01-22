@@ -70,7 +70,7 @@ class TextBookSearcher {
                 min(section.length - 1, index + query.length + 40)),
             index: sectionIndex,
             query: query,
-            address: removeVolwels(stripHtmlIfNeeded(address.join('')))));
+            address: removeVolwels(stripHtmlIfNeeded(address.join(', ')))));
       }
     }
     return results;

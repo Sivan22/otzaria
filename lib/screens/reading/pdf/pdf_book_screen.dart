@@ -41,7 +41,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
   @override
   void dispose() {
     textSearcher.removeListener(_update);
-    textSearcher.dispose();
     widget.tab.outline.dispose();
     widget.tab.documentRef.dispose();
     widget.tab.showLeftPane.dispose();
@@ -69,7 +68,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     library.findBookByTitle(widget.tab.title, TextBook))),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return SizedBox.shrink();
+                    return const SizedBox.shrink();
                   }
                   return IconButton(
                       onPressed: () async {
@@ -82,7 +81,10 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                           final currentPage =
                               widget.tab.pdfViewerController.pageNumber ?? 0;
                           final textIndex = await pdfToTextPage(
-                              widget.tab.title, currentPage, context);
+                              // ignore: use_build_context_synchronously
+                              widget.tab.title,
+                              currentPage,
+                              context);
 
                           if (textIndex != null) {
                             appModel.openBook(textBook, textIndex);
@@ -190,7 +192,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
                   child: DefaultTabController(
-                    length: 3,
+                    length: 4,
                     child: Column(
                       children: [
                         Row(

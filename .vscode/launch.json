@@ -1,12 +1,10 @@
 {
-<<<<<<< HEAD
-=======
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
->>>>>>> cac7e1bcf22b9d3235157aaefb7e87bc6a0c5db9
     "version": "0.2.0",
     "configurations": [
+    
         {
             "name": "otzaria",
             "request": "launch",
@@ -23,25 +21,6 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
-<<<<<<< HEAD
-        },
-        {
-            "name": "Flutter (BE2029)",
-            "program": "lib/main.dart",
-            "deviceId": "9d6029ca",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "Flutter (BE2029) release",
-            "program": "lib/main.dart",
-            "deviceId": "9d6029ca",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
-
-=======
->>>>>>> cac7e1bcf22b9d3235157aaefb7e87bc6a0c5db9
         }
     ]
 }

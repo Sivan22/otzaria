@@ -29,7 +29,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   bool get wantKeepAlive => true;
 
   late Future<Category> currentTopCategory;
-  TextEditingController searchController = TextEditingController();
   late Future<List<Widget>> items;
   int depth = 0;
   List<String> topics = [];
@@ -45,7 +44,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   @override
   void dispose() {
-    searchController.dispose();
     super.dispose();
   }
 
@@ -78,7 +76,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                           icon: const Icon(Icons.home),
                           tooltip: 'חזרה לתיקיה הראשית',
                           onPressed: () => setState(() {
-                            searchController.clear();
+                            Provider.of<AppModel>(context, listen: false)
+                                .bookLocatorController
+                                .text = '';
                             depth = 0;
                             currentTopCategory =
                                 Provider.of<AppModel>(context, listen: false)
@@ -88,7 +88,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                         ),
                         SyncIconButton(
                             fileSync: FileSyncService(
-                                githubOwner: "Sivan22",
+                                githubOwner: "zevisvei",
                                 repositoryName: "otzaria-library",
                                 branch: "main")),
                       ],
@@ -114,7 +114,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                 icon: const Icon(Icons.arrow_upward),
                 tooltip: 'חזרה לתיקיה הקודמת',
                 onPressed: () => setState(() {
-                  searchController.clear();
+                  context.read<AppModel>().bookLocatorController.clear();
                   depth = max(0, depth - 1);
                   currentTopCategory = Future(
                       () => resolvedCurrentTopCategory.data!.parent!.parent!);
@@ -125,7 +125,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             body: Column(
               children: [
                 buildSearchBar(resolvedCurrentTopCategory),
-                searchController.text.length > 2
+                context.read<AppModel>().bookLocatorController.text.length > 2
                     ? showTopicsSelection(context,
                         resolvedCurrentTopCategory: resolvedCurrentTopCategory)
                     : Container(),
@@ -140,8 +140,12 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                         return Center(
                           child: Text(
-                            searchController.text.isNotEmpty
-                                ? 'אין תוצאות עבור "${searchController.text}"'
+                            context
+                                    .read<AppModel>()
+                                    .bookLocatorController
+                                    .text
+                                    .isNotEmpty
+                                ? 'אין תוצאות עבור "${context.read<AppModel>().bookLocatorController.text}"'
                                 : 'אין פריטים להצגה בתיקייה זו',
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
@@ -169,8 +173,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   Widget showTopicsSelection(BuildContext context,
       {required AsyncSnapshot resolvedCurrentTopCategory}) {
     return FutureBuilder(
-        future: Provider.of<AppModel>(context)
-            .findBooks(searchController.text, resolvedCurrentTopCategory.data!),
+        future: Provider.of<AppModel>(context).findBooks(
+            context.read<AppModel>().bookLocatorController.text,
+            resolvedCurrentTopCategory.data!),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -213,7 +218,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     ? Theme.of(context).colorScheme.secondary
                     : null,
                 labelStyle: TextStyle(
-                  color: isSelected!
+                  color: isSelected
                       ? Theme.of(context).colorScheme.onSecondary
                       : null,
                   fontSize: 11,
@@ -239,13 +244,17 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       focusNode: Provider.of<AppModel>(context, listen: false)
                           .bookLocatorFocusNode,
                       autofocus: !(Platform.isAndroid || Platform.isIOS),
-                      controller: searchController,
+                      controller:
+                          context.read<AppModel>().bookLocatorController,
                       decoration: InputDecoration(
                         constraints: const BoxConstraints(maxWidth: 400),
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: IconButton(
                             onPressed: () {
-                              searchController.clear();
+                              context
+                                  .read<AppModel>()
+                                  .bookLocatorController
+                                  .clear();
                               items = getGrids(currentTopCategory);
                               setState(() {});
                             },
@@ -329,7 +338,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   Future<List<Widget>> getFilteredBooks(AppModel appModel, Category? category,
       List<String>? selectedTopics) async {
-    final allEntries = await appModel.findBooks(searchController.text, category,
+    final allEntries = await appModel.findBooks(
+        context.read<AppModel>().bookLocatorController.text, category,
         topics: selectedTopics);
     List<Widget> items = [];
 
@@ -407,9 +417,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     }
     // Refocus the search bar after the grid is built.
     // Doing it here, because the search bar is rebuilt every time the grid is rebuilt
-    Provider.of<AppModel>(context, listen: false)
-        .bookLocatorFocusNode
-        .requestFocus();
+    // ignore: use_build_context_synchronously
+    context.read<AppModel>().bookLocatorFocusNode.requestFocus();
 
     return items;
   }
