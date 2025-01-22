@@ -136,19 +136,15 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   Widget _buildTree(Category category, {int level = 0}) {
     return ExpansionTile(
       key: PageStorageKey(category), // Ensure unique keys for ExpansionTiles
-      title: Builder(builder: (context) {
-        if (level == 1) {
-          return FutureBuilder(
-              future: widget.tab.countForFacet(category.path),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data! > 0) {
-                  return Text("${category.title} (${snapshot.data})");
-                }
-                return Text(category.title);
-              });
-        }
-        return Text(category.title);
-      }),
+      title: FutureBuilder(
+          future: widget.tab.countForFacet(category.path),
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data! > 0) {
+              return Text("${category.title} (${snapshot.data})");
+            }
+            return Text(category.title);
+          }),
+
       initiallyExpanded: level == 0,
       tilePadding: EdgeInsets.symmetric(horizontal: 6 + (level) * 6),
       leading: SizedBox.fromSize(

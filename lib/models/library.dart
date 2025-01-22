@@ -30,12 +30,13 @@ class Category {
 
   /// returns the path of this category e.g תנך/ראשונים/רשי/תורה
   String get path {
-    String path = '/${this.title}';
+    String path = '${this.title}';
     Category? parent = this.parent;
     while (parent != null && parent.title != 'ספריית אוצריא') {
       path = '${parent.title}/$path';
+      parent = parent.parent;
     }
-    return path;
+    return '/$path';
   }
 
   ///the list of sub categories that are contained in this category
