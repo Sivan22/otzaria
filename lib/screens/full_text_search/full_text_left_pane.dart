@@ -109,21 +109,26 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   }
 
   Widget _buildBooksTree(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: widget.tab.booksToSearch,
-        builder: (context, value, child) {
-          return FutureBuilder(
-              future: Provider.of<AppModel>(context, listen: false).library,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                return SingleChildScrollView(
-                    key: const PageStorageKey('tree'),
-                    child: _buildTree(snapshot.data!));
+    return ListenableBuilder(
+        listenable: widget.tab.results,
+        builder: (context, _) {
+          return ValueListenableBuilder(
+              valueListenable: widget.tab.booksToSearch,
+              builder: (context, value, child) {
+                return FutureBuilder(
+                    future:
+                        Provider.of<AppModel>(context, listen: false).library,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      return SingleChildScrollView(
+                          key: const PageStorageKey('tree'),
+                          child: _buildTree(snapshot.data!));
+                    });
               });
         });
   }
@@ -131,7 +136,19 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   Widget _buildTree(Category category, {int level = 0}) {
     return ExpansionTile(
       key: PageStorageKey(category), // Ensure unique keys for ExpansionTiles
-      title: Text(category.title),
+      title: Builder(builder: (context) {
+        if (level == 1) {
+          return FutureBuilder(
+              future: widget.tab.countForFacet(category.path),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data! > 0) {
+                  return Text("${category.title} (${snapshot.data})");
+                }
+                return Text(category.title);
+              });
+        }
+        return Text(category.title);
+      }),
       initiallyExpanded: level == 0,
       tilePadding: EdgeInsets.symmetric(horizontal: 6 + (level) * 6),
       leading: SizedBox.fromSize(

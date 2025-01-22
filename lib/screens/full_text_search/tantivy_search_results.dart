@@ -40,9 +40,22 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Center(
-                          child: Text(
-                            '${snapshot.data!.length} תוצאות',
-                          ),
+                          child: FutureBuilder(
+                              future: widget.tab.totalResultsNum,
+                              builder: (context, totalResults) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                if (snapshot.hasError) {
+                                  return Center(
+                                      child: Text('Error: ${snapshot.error}'));
+                                }
+                                return Text(
+                                  '${snapshot.data!.length} תוצאות מתוך ${totalResults.data}',
+                                );
+                              }),
                         ),
                       ),
                       Expanded(

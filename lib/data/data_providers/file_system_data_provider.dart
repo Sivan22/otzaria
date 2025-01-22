@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 import 'package:csv/csv.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/utils/docx_to_otzaria.dart';
@@ -48,7 +47,7 @@ class FileSystemData {
     titleToPath = _getTitleToPath();
     metadata = _getMetadata();
     return _getLibraryFromDirectory(
-        '${libraryPath}${Platform.pathSeparator}אוצריא', await metadata);
+        '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
   }
 
   /// Recursively builds the library structure from a directory.

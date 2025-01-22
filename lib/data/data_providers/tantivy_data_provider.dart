@@ -67,6 +67,16 @@ class TantivyDataProvider {
         .put('key-books-done', booksDone);
   }
 
+  Future<int> countTexts(String query, List<String> books, String topics,
+      {bool fuzzy = false, int distance = 2}) async {
+    final index = await engine;
+    if (!fuzzy) {
+      query = distance > 0 ? '"$query"~$distance' : '"$query"';
+    }
+    return index.count(
+        query: query, books: books, topics: topics, fuzzy: fuzzy);
+  }
+
   /// Performs a synchronous search operation across indexed texts.
   ///
   /// [query] The search query string
@@ -102,7 +112,7 @@ class TantivyDataProvider {
       }
     }
     if (!fuzzy) {
-      query = distance > 0 ? '"$query"~$distance' : "query";
+      query = distance > 0 ? '"$query"~$distance' : '"$query"';
     }
     return await index.search(
         query: query, books: books, limit: limit, fuzzy: fuzzy);
@@ -175,6 +185,7 @@ class TantivyDataProvider {
     final index = await engine;
     var text = await book.text;
     final title = book.title;
+    final topics = "/${book.topics.replaceAll(', ', '/')}";
 
     // Check if book was already indexed using content hash
     final hash = sha1.convert(utf8.encode(text)).toString();
@@ -212,6 +223,7 @@ class TantivyDataProvider {
             id: BigInt.from(hashCode + i),
             title: title,
             reference: stripHtmlIfNeeded(reference.join(', ')),
+            topics: topics,
             text: line,
             segment: BigInt.from(i),
             isPdf: false,
@@ -249,6 +261,7 @@ class TantivyDataProvider {
     // Extract text from each page
     final pages = await PdfDocument.openData(data).then((value) => value.pages);
     final title = book.title;
+    final topics = "/${book.topics.replaceAll(', ', '/')}";
 
     // Process each page
     for (int i = 0; i < pages.length; i++) {
@@ -262,6 +275,7 @@ class TantivyDataProvider {
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
             reference: '$title, עמוד ${i + 1}',
+            topics: topics,
             text: texts[j],
             segment: BigInt.from(i),
             isPdf: true,

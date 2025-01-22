@@ -41,7 +41,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
   @override
   void dispose() {
     textSearcher.removeListener(_update);
-    textSearcher.dispose();
     widget.tab.outline.dispose();
     widget.tab.documentRef.dispose();
     widget.tab.showLeftPane.dispose();
@@ -190,7 +189,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
                   child: DefaultTabController(
-                    length: 3,
+                    length: 4,
                     child: Column(
                       children: [
                         Row(

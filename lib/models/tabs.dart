@@ -292,6 +292,8 @@ class SearchingTab extends OpenedTab {
 
   final queryController = TextEditingController();
 
+  Future<int> totalResultsNum = Future.value(0);
+
   ///the list of books to search in
   ValueNotifier<Set<Book>> booksToSearch = ValueNotifier({});
 
@@ -328,6 +330,8 @@ class SearchingTab extends OpenedTab {
       final booksNamesToSearch =
           booksToSearch.value.map<String>((e) => e.title).toList();
 
+      totalResultsNum = countForFacet("/");
+
       results.value = TantivyDataProvider.instance.searchTexts(
           queryController.text.replaceAll('"', '\\"'),
           booksNamesToSearch,
@@ -335,6 +339,17 @@ class SearchingTab extends OpenedTab {
           fuzzy: fuzzy.value,
           distance: distance.value);
     }
+  }
+
+  Future<int> countForFacet(String facet) async {
+    if (queryController.text.isEmpty) {
+      return 0;
+    }
+    final booksNamesToSearch =
+        booksToSearch.value.map<String>((e) => e.title).toList();
+    return TantivyDataProvider.instance.countTexts(
+        queryController.text.replaceAll('"', '\\"'), booksNamesToSearch, facet,
+        fuzzy: fuzzy.value, distance: distance.value);
   }
 
   @override
