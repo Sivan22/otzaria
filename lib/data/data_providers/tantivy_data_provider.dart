@@ -226,7 +226,7 @@ class TantivyDataProvider {
         line = stripHtmlIfNeeded(line);
         line = removeVolwels(line);
         index.addDocument(
-            id: BigInt.from(hashCode + i),
+            id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
             reference: stripHtmlIfNeeded(reference.join(', ')),
             topics: topics,
@@ -294,5 +294,12 @@ class TantivyDataProvider {
     saveBooksDoneToDisk();
     print('Added ${book.title} to index');
     numOfbooksDone.value = numOfbooksDone.value! + 1;
+  }
+
+  void clear() async {
+    final index = await engine;
+    await index.clear();
+    booksDone.clear();
+    saveBooksDoneToDisk();
   }
 }

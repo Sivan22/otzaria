@@ -35,7 +35,11 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
                 if (snapshot.data!.isEmpty) {
-                  return const Center(child: Text('אין תוצאות'));
+                  return const Center(
+                      child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('אין תוצאות'),
+                  ));
                 }
                 return Expanded(
                   child: Column(
