@@ -38,7 +38,7 @@ class _CombinedViewState extends State<CombinedView> {
         curve: 10.0,
         accelerationFactor: 5,
         scrollController: widget.tab.scrollOffsetController,
-        child: buildOuterList());
+        child: SelectionArea(child: buildOuterList()));
   }
 
   Widget buildOuterList() {

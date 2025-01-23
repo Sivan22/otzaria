@@ -4,7 +4,6 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:provider/provider.dart';
 import 'package:search_engine/search_engine.dart';
