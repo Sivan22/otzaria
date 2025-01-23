@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
 class FullTextSettingsScreen extends StatelessWidget {

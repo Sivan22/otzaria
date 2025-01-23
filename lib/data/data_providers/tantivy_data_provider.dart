@@ -40,6 +40,10 @@ class TantivyDataProvider {
   /// Uses Hive for persistent storage of indexed book records, storing them in the 'index'
   /// subdirectory of the configured library path.
   TantivyDataProvider() {
+    reopenIndex();
+  }
+
+  void reopenIndex() {
     String indexPath = (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
         Platform.pathSeparator +
         'index';
@@ -87,7 +91,9 @@ class TantivyDataProvider {
   /// Returns a Future containing a list of search results
   Future<List<SearchResult>> searchTexts(
       String query, List<String> books, int limit,
-      {bool fuzzy = false, int distance = 2}) async {
+      {ResultsOrder order = ResultsOrder.relevance,
+      bool fuzzy = false,
+      int distance = 2}) async {
     SearchEngine index;
     try {
       index = await engine;
@@ -115,7 +121,7 @@ class TantivyDataProvider {
       query = distance > 0 ? '"$query"~$distance' : '"$query"';
     }
     return await index.search(
-        query: query, books: books, limit: limit, fuzzy: fuzzy);
+        query: query, books: books, limit: limit, fuzzy: fuzzy, order: order);
   }
 
   /// Performs an asynchronous stream-based search operation across indexed texts.

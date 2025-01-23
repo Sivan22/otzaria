@@ -1,7 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/pdf_tab.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/screens/full_text_search/full_text_search_screen.dart';
 import 'package:otzaria/screens/reading/pdf/pdf_book_screen.dart';
 import 'package:otzaria/screens/reading/text/text_book_screen.dart';
@@ -155,7 +158,20 @@ class _ReadingScreenState extends State<ReadingScreen>
                                                             child) =>
                                                         Text(
                                                             '${tab.title}:  ${tab.queryController.text}'))
-                                                : Text(tab.title),
+                                                : tab is PdfBookTab
+                                                    ? Row(children: [
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8.0),
+                                                          child: Icon(
+                                                              Icons
+                                                                  .picture_as_pdf,
+                                                              size: 16),
+                                                        ),
+                                                        Text(tab.title),
+                                                      ])
+                                                    : Text(tab.title),
                                             IconButton(
                                                 onPressed: () {
                                                   appModel.closeTab(tab);

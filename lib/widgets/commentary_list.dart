@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/models/tabs.dart';
 import 'package:otzaria/models/links.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/widgets/commentary_content.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';

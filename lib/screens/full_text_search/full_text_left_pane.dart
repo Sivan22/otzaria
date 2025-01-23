@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
 import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
 import 'package:provider/provider.dart';
 

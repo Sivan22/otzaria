@@ -2,13 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/widgets/commentary_list.dart';
-import 'package:otzaria/models/tabs.dart';
-import 'package:otzaria/utils/text_manipulation.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class CombinedView extends StatefulWidget {
   const CombinedView({
@@ -68,27 +69,35 @@ class _CombinedViewState extends State<CombinedView> {
             builder: (context, showTeamim, child) {
               String data = widget.data[index];
               if (!showTeamim) {
-                data = removeTeamim(data);
+                data = utils.removeTeamim(data);
               }
-
               return ValueListenableBuilder(
-                valueListenable: widget.tab.removeNikud,
-                builder: (context, removeNikud, child) => Html(
-                  //remove nikud if needed
-                  data: removeNikud
-                      ? highLight(removeVolwels('$data\n'),
-                          widget.tab.searchTextController.text)
-                      : highLight(
-                          '$data\n', widget.tab.searchTextController.text),
-                  style: {
-                    'body': Style(
-                        fontSize: FontSize(widget.textSize),
-                        fontFamily:
-                            Settings.getValue('key-font-family') ?? 'candara',
-                        textAlign: TextAlign.justify),
-                  },
-                ),
-              );
+                  valueListenable:
+                      (Provider.of<AppModel>(context).replaceHolyNames),
+                  builder: (context, replaceHolyNames, child) {
+                    if (replaceHolyNames) {
+                      data = utils.replaceHolyNames(data);
+                    }
+                    return ValueListenableBuilder(
+                      valueListenable: widget.tab.removeNikud,
+                      builder: (context, removeNikud, child) => Html(
+                        //remove nikud if needed
+                        data: removeNikud
+                            ? utils.highLight(utils.removeVolwels('$data\n'),
+                                widget.tab.searchTextController.text)
+                            : utils.highLight('$data\n',
+                                widget.tab.searchTextController.text),
+                        style: {
+                          'body': Style(
+                              fontSize: FontSize(widget.textSize),
+                              fontFamily:
+                                  Settings.getValue('key-font-family') ??
+                                      'candara',
+                              textAlign: TextAlign.justify),
+                        },
+                      ),
+                    );
+                  });
             }),
         children: [
           widget.showSplitedView.value

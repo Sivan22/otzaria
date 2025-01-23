@@ -194,11 +194,20 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
                       SwitchSettingsTile(
+                        settingKey: 'key-replace-holy-names',
+                        title: 'הצגת שמות קדושים',
+                        enabledLabel: 'שמות הקדושים יוצגו ככתיבתם',
+                        disabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
+                        leading: const Icon(Icons.password),
+                        defaultValue: true,
+                        onChange: (p0) => appModel.replaceHolyNames.value = p0,
+                      ),
+                      SwitchSettingsTile(
                         settingKey: 'key-show-teamim',
                         title: 'הצגת טעמי המקרא',
                         enabledLabel: 'המקרא יוצג עם טעמים',
                         disabledLabel: 'המקרא יוצג ללא טעמים',
-                        leading: const Icon(Icons.text_format),
+                        leading: const Icon(Icons.format_overline),
                         defaultValue: true,
                         onChange: (p0) => appModel.showTeamim.value = p0,
                       ),

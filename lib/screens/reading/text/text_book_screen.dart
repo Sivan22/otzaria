@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/screens/reading/text/combined_book_screen.dart';
 import 'package:otzaria/screens/printing_screen.dart';
 import 'package:otzaria/screens/reading/text/splited_view_screen.dart';
@@ -13,7 +14,7 @@ import 'dart:math';
 import 'links_screen.dart';
 import 'commentators_list_screen.dart';
 import 'package:flutter/services.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// A [StatefulWidget] that displays a text book.
@@ -145,7 +146,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                 onPressed: () {
                   widget.tab.removeNikud.value = !widget.tab.removeNikud.value;
                 },
-                icon: const Icon(Icons.format_overline),
+                icon: const Icon(Icons.text_format),
                 tooltip: 'הצג או הסתר ניקוד',
               ),
               //button to add a bookmark

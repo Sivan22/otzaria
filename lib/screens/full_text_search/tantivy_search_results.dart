@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/pdf_tab.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:provider/provider.dart';
+import 'package:search_engine/search_engine.dart';
 
 class TantivySearchResults extends StatefulWidget {
   final SearchingTab tab;
@@ -52,8 +56,46 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                   return Center(
                                       child: Text('Error: ${snapshot.error}'));
                                 }
-                                return Text(
-                                  '${snapshot.data!.length} תוצאות מתוך ${totalResults.data}',
+                                return Row(
+                                  children: [
+                                    ValueListenableBuilder(
+                                        valueListenable: widget.tab.sortBy,
+                                        builder: (context, sortBy, child) {
+                                          return SizedBox(
+                                            width: 300,
+                                            child: Center(
+                                              child:
+                                                  DropdownButton<ResultsOrder>(
+                                                      value: sortBy,
+                                                      items: const [
+                                                        DropdownMenuItem(
+                                                          value: ResultsOrder
+                                                              .relevance,
+                                                          child: Text(
+                                                              'מיון לפי רלוונטיות'),
+                                                        ),
+                                                        DropdownMenuItem(
+                                                          value: ResultsOrder
+                                                              .catalogue,
+                                                          child: Text(
+                                                              'מיון לפי סדר קטלוגי'),
+                                                        ),
+                                                      ],
+                                                      onChanged: (value) {
+                                                        widget.tab.sortBy
+                                                            .value = value!;
+                                                      }),
+                                            ),
+                                          );
+                                        }),
+                                    Expanded(
+                                      child: Container(
+                                        child: Text(
+                                          '${snapshot.data!.length} תוצאות מתוך ${totalResults.data}',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 );
                               }),
                         ),

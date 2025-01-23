@@ -17,11 +17,15 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hive/hive.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/pdf_tab.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
+import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/models/workspace.dart';
 import 'package:otzaria/utils/calendar.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
@@ -116,6 +120,10 @@ class AppModel with ChangeNotifier {
   /// Controls whether to use fast search functionality
   final ValueNotifier<bool> useFastSearch = ValueNotifier<bool>(
     Settings.getValue<bool>('key-use-fast-search') ?? true,
+  );
+
+  final ValueNotifier<bool> replaceHolyNames = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-replace-holy-names') ?? true,
   );
 
   /// Focus node for the book locator search field
@@ -550,6 +558,7 @@ class AppModel with ChangeNotifier {
     libraryPath = Settings.getValue<String>('key-library-path') ?? libraryPath;
     FileSystemData.instance.libraryPath = libraryPath;
     library = data.getLibrary();
+    TantivyDataProvider.instance.reopenIndex();
     notifyListeners();
   }
 }

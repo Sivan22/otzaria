@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
 import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';

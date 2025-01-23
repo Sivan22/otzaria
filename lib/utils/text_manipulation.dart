@@ -81,6 +81,11 @@ String paraphrase(String text) {
   return text;
 }
 
+String replaceHolyNames(String s) {
+  s = s.replaceAll("יהוה", "יקוק").replaceAll("יְהֹוָה", "יְקׂוָק");
+  return s;
+}
+
 String removeTeamim(String s) => s
     .replaceAll('־', ' ')
     .replaceAll(' ׀', '')
