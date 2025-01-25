@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
-import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
@@ -29,21 +28,6 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     () async {
       final library = await context.read<AppModel>().library;
       widget.tab.allBooks = (library).getAllBooks();
-
-      if (widget.tab.booksToSearch.value.isEmpty) {
-        widget.tab.booksToSearch.value = widget.tab.allBooks.toSet();
-      }
-
-      //Check if index is up to date
-      final totalBooks = widget.tab.allBooks.length;
-      final indexedBooks = TantivyDataProvider.instance.booksDone.length;
-      if (!TantivyDataProvider.instance.isIndexing.value &&
-          totalBooks - indexedBooks > 15) {
-        DataRepository.instance.addAllTextsToTantivy(library);
-        setState(() {
-          _showIndexWarning = true;
-        });
-      }
     }();
   }
 

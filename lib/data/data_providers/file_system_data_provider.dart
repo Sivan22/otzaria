@@ -96,6 +96,7 @@ class FileSystemData {
             category.books.add(
               PdfBook(
                 title: title,
+                category: category,
                 path: entity.path,
                 author: metadata[title]?['author'],
                 heShortDesc: metadata[title]?['heShortDesc'],
@@ -113,6 +114,7 @@ class FileSystemData {
             final title = getTitleFromPath(entity.path);
             category.books.add(TextBook(
                 title: title,
+                category: category,
                 author: metadata[title]?['author'],
                 heShortDesc: metadata[title]?['heShortDesc'],
                 pubDate: metadata[title]?['pubDate'],

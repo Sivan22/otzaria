@@ -5,7 +5,6 @@ import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
 import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -50,7 +49,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
         TextField(
           controller: _filterQuery,
           decoration: InputDecoration(
-              hintText: "סינון ספרים",
+              hintText: "איתור ספר...",
               prefixIcon: const Icon(Icons.filter_list_alt),
               suffixIcon: IconButton(
                   onPressed: () => setState(() => _filterQuery.text = ''),
@@ -61,7 +60,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
             });
           },
         ),
-        _filterQuery.text.isEmpty
+        _filterQuery.text.length < 2
             ? Expanded(child: _buildBooksTree(context))
             : Expanded(child: _buildBooksList()),
       ],
@@ -74,48 +73,57 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
         child: ListView.builder(
           shrinkWrap: true,
           itemCount: books.length,
-          itemBuilder: (context, index) => index == 0
-              ? CheckboxListTile(
-                  title: const Text("הכל"),
-                  value: books.every(
-                      (test) => widget.tab.booksToSearch.value.contains(test)),
-                  onChanged: (value) {
-                    setState(() {
-                      if (value!) {
-                        widget.tab.booksToSearch.value.addAll(books);
-                      } else {
-                        widget.tab.booksToSearch.value
-                            .removeWhere((e) => books.contains(e));
-                      }
-                      widget.tab.booksToSearch.notifyListeners();
-                    });
-                  },
-                )
-              : CheckboxListTile(
-                  title: Builder(
-                    builder: (context) => FutureBuilder(
-                        future: widget.tab.countForBook(books[index - 1].title),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData && snapshot.data! > 0) {
-                            return Text(
-                                "${books[index - 1].title} (${snapshot.data})");
+          itemBuilder: (context, index) => FutureBuilder(
+              future: widget.tab.countForFacet(
+                  '${books[index].category?.path}/${books[index].title}'),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data! <= 0) {
+                  return const SizedBox.shrink();
+                }
+                return InkWell(
+                    onDoubleTap: () => setState(() {
+                          if (widget.tab.currentFacets.value.contains(
+                              '${books[index].category?.path}/${books[index].title}')) {
+                            widget.tab.currentFacets.value.remove(
+                                '${books[index].category?.path}/${books[index].title}');
+                          } else if (!isChecked(books[index])) {
+                            widget.tab.currentFacets.value.add(
+                                '${books[index].category?.path}/${books[index].title}');
                           }
-                          return Text(books[index - 1].title);
+                          widget.tab.currentFacets.notifyListeners();
+                          widget.tab.updateResults();
                         }),
-                  ),
-                  value:
-                      widget.tab.booksToSearch.value.contains(books[index - 1]),
-                  onChanged: (value) {
-                    if (value!) {
-                      widget.tab.booksToSearch.value.add(books[index - 1]);
-                    } else {
-                      widget.tab.booksToSearch.value
-                          .removeWhere((s) => s == books[index - 1]);
-                    }
-                    widget.tab.booksToSearch.notifyListeners();
-                    setState(() {});
-                  },
-                ),
+                    child: ListTile(
+                      tileColor: isChecked(books[index].category)
+                          ? Theme.of(context)
+                              .colorScheme
+                              .surfaceTint
+                              .withOpacity(0.1)
+                          : null,
+                      title: Text(snapshot.hasData
+                          ? "${books[index].title} (${snapshot.data})"
+                          : books[index].title),
+                      onTap: () {
+                        widget.tab.currentFacets.value = [
+                          '${books[index].category?.path}/${books[index].title}'
+                        ];
+                        widget.tab.currentFacets.notifyListeners();
+                        widget.tab.updateResults();
+                      },
+                      onLongPress: () => setState(() {
+                        if (widget.tab.currentFacets.value.contains(
+                            '${books[index].category?.path}/${books[index].title}')) {
+                          widget.tab.currentFacets.value.remove(
+                              '${books[index].category?.path}/${books[index].title}');
+                        } else if (!isChecked(books[index])) {
+                          widget.tab.currentFacets.value.add(
+                              '${books[index].category?.path}/${books[index].title}');
+                        }
+                        widget.tab.currentFacets.notifyListeners();
+                        widget.tab.updateResults();
+                      }),
+                    ));
+              }),
         ),
       )
     ]);
@@ -147,97 +155,178 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   }
 
   Widget _buildTree(Category category, {int level = 0}) {
-    return ExpansionTile(
-      key: PageStorageKey(category), // Ensure unique keys for ExpansionTiles
-      title: Builder(
-        builder: (context) => FutureBuilder(
-            future: widget.tab.countForFacet(category.path),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data! > 0) {
-                return Text("${category.title} (${snapshot.data})");
-              }
-              return Text(category.title);
-            }),
-      ),
-
-      initiallyExpanded: level == 0,
-      tilePadding: EdgeInsets.symmetric(horizontal: 6 + (level) * 6),
-      leading: SizedBox.fromSize(
-        size: const Size.fromWidth(60.0),
-        child: Row(
-          children: [
-            Checkbox(
-                value: isCategoryChecked(category),
-                onChanged: (value) {
-                  if (value != null && value) {
-                    addCategory(category);
-                  } else {
-                    removeCategory(category);
-                  }
-                  widget.tab.booksToSearch.notifyListeners();
-                  setState(() {});
-                }),
-            const Icon(Icons.folder),
-          ], // Icon(Icons.folder,
-        ),
-      ),
-
-      children: ([] + category.subCategories + category.books).map((entity) {
-        if (entity is Category) {
-          return _buildTree(entity, level: level + 1);
-        } else if (entity is Book) {
-          return CheckboxListTile(
-            title: Builder(
-              builder: (context) => FutureBuilder(
-                  future: widget.tab.countForBook(entity.title),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData && snapshot.data! > 0) {
-                      return Text("${entity.title} (${snapshot.data})");
-                    }
-                    return Text(entity.title);
-                  }),
-            ),
-            value: widget.tab.booksToSearch.value.contains(entity),
-            onChanged: (value) {
-              widget.tab.booksToSearch.value.contains(entity)
-                  ? widget.tab.booksToSearch.value.remove(entity)
-                  : widget.tab.booksToSearch.value.add(entity);
-              widget.tab.booksToSearch.notifyListeners();
-              setState(() {});
-            },
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16 + level * 16),
-          );
-        } else {
-          return ListTile(
-            title: Text('Unknown: ${entity.path}'),
-          );
-        }
-      }).toList(),
-    );
+    return ListenableBuilder(
+        listenable: widget.tab.results,
+        builder: (context, _) {
+          final count = widget.tab.countForFacet(category.path);
+          return FutureBuilder(
+              future: count,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                }
+                if (snapshot.hasData && snapshot.data! > 0) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      dividerColor: Colors.transparent,
+                    ),
+                    child: ExpansionTile(
+                      backgroundColor: isChecked(category)
+                          ? Theme.of(context)
+                              .colorScheme
+                              .surfaceTint
+                              .withOpacity(0.1)
+                          : null,
+                      collapsedBackgroundColor: isChecked(category)
+                          ? Theme.of(context)
+                              .colorScheme
+                              .surfaceTint
+                              .withOpacity(0.1)
+                          : null,
+                      leading: const Icon(Icons.chevron_right_rounded),
+                      trailing: const SizedBox.shrink(),
+                      iconColor: Theme.of(context).colorScheme.primary,
+                      collapsedIconColor: Theme.of(context).colorScheme.primary,
+                      key: PageStorageKey(category),
+                      title: Builder(
+                        builder: (context) {
+                          if (snapshot.hasData && snapshot.data! > 0) {
+                            return GestureDetector(
+                                onTap: () => setState(() {
+                                      widget.tab.currentFacets.value = [
+                                        category.path
+                                      ];
+                                      widget.tab.currentFacets
+                                          .notifyListeners();
+                                      widget.tab.updateResults();
+                                    }),
+                                onLongPress: () => setState(() {
+                                      if (widget.tab.currentFacets.value
+                                          .contains(category.path)) {
+                                        widget.tab.currentFacets.value
+                                            .remove(category.path);
+                                      } else {
+                                        widget.tab.currentFacets.value
+                                            .add(category.path);
+                                      }
+                                      widget.tab.currentFacets
+                                          .notifyListeners();
+                                      widget.tab.updateResults();
+                                    }),
+                                onDoubleTap: () => setState(() {
+                                      if (widget.tab.currentFacets.value
+                                          .contains(category.path)) {
+                                        widget.tab.currentFacets.value
+                                            .remove(category.path);
+                                      } else if (!isChecked(category)) {
+                                        widget.tab.currentFacets.value
+                                            .add(category.path);
+                                      }
+                                      widget.tab.currentFacets
+                                          .notifyListeners();
+                                      widget.tab.updateResults();
+                                    }),
+                                child: Text(
+                                    "${category.title} (${snapshot.data})"));
+                          }
+                          return SizedBox.shrink();
+                        },
+                      ),
+                      initiallyExpanded: level == 0,
+                      tilePadding:
+                          EdgeInsets.symmetric(horizontal: 6 + (level) * 10),
+                      children: ([] + category.subCategories + category.books)
+                          .map((entity) {
+                        if (entity is Category) {
+                          return _buildTree(entity, level: level + 1);
+                        } else if (entity is Book) {
+                          return ListenableBuilder(
+                              listenable: widget.tab.results,
+                              builder: (context, _) {
+                                final count = widget.tab.countForFacet(
+                                    '${entity.category?.path}/${entity.title}');
+                                return FutureBuilder(
+                                  future: count,
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasError) {
+                                      return Text('Error: ${snapshot.error}');
+                                    }
+                                    if (snapshot.hasData &&
+                                        snapshot.data! > 0) {
+                                      return InkWell(
+                                        onDoubleTap: () => setState(() {
+                                          if (widget.tab.currentFacets.value
+                                              .contains(
+                                                  '${entity.category?.path}/${entity.title}')) {
+                                            widget.tab.currentFacets.value.remove(
+                                                '${entity.category?.path}/${entity.title}');
+                                          } else if (!isChecked(entity)) {
+                                            widget.tab.currentFacets.value.add(
+                                                '${entity.category?.path}/${entity.title}');
+                                          }
+                                          widget.tab.currentFacets
+                                              .notifyListeners();
+                                          widget.tab.updateResults();
+                                        }),
+                                        child: ListTile(
+                                          tileColor: isChecked(category)
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceTint
+                                                  .withOpacity(0.1)
+                                              : null,
+                                          title: Text(snapshot.hasData
+                                              ? "${entity.title} (${snapshot.data})"
+                                              : entity.title),
+                                          onTap: () {
+                                            widget.tab.currentFacets.value = [
+                                              '${entity.category?.path}/${entity.title}'
+                                            ];
+                                            widget.tab.currentFacets
+                                                .notifyListeners();
+                                            widget.tab.updateResults();
+                                          },
+                                          onLongPress: () => setState(() {
+                                            if (widget.tab.currentFacets.value
+                                                .contains(
+                                                    '${entity.category?.path}/${entity.title}')) {
+                                              widget.tab.currentFacets.value.remove(
+                                                  '${entity.category?.path}/${entity.title}');
+                                            } else if (!isChecked(entity)) {
+                                              widget.tab.currentFacets.value.add(
+                                                  '${entity.category?.path}/${entity.title}');
+                                            }
+                                            widget.tab.currentFacets
+                                                .notifyListeners();
+                                            widget.tab.updateResults();
+                                          }),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 16 + level * 16),
+                                        ),
+                                      );
+                                    }
+                                    return SizedBox.shrink();
+                                  },
+                                );
+                              });
+                        }
+                        return const SizedBox.shrink();
+                      }).toList(),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              });
+        });
   }
 
-  void addCategory(Category category) {
-    for (Book book in category.books) {
-      widget.tab.booksToSearch.value.add(book);
+  bool isChecked(dynamic entity) {
+    if (entity is Category) {
+      return widget.tab.currentFacets.value.contains(entity.path) ||
+          (entity.title != "ספריית אוצריא" && isChecked(entity.parent));
     }
-    for (Category subCategory in category.subCategories) {
-      addCategory(subCategory);
-    }
-  }
-
-  void removeCategory(Category category) {
-    for (Book book in category.books) {
-      widget.tab.booksToSearch.value.remove(book);
-    }
-    for (Category subCategory in category.subCategories) {
-      removeCategory(subCategory);
-    }
-  }
-
-  bool isCategoryChecked(Category category) {
-    return category.books
-            .every((test) => widget.tab.booksToSearch.value.contains(test)) &&
-        category.subCategories.every((test) => isCategoryChecked(test));
+    return widget.tab.currentFacets.value
+            .contains('${entity.category?.path}/${entity.title}') ||
+        isChecked(entity.category);
   }
 }

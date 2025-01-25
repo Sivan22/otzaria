@@ -214,6 +214,15 @@ class AppModel with ChangeNotifier {
     isDarkMode.addListener(() {
       notifyListeners();
     });
+    () async {
+      //Check if index is up to date
+      final totalBooks = (await library).getAllBooks().length;
+      final indexedBooks = TantivyDataProvider.instance.booksDone.length;
+      if (!TantivyDataProvider.instance.isIndexing.value &&
+          totalBooks - indexedBooks > 0) {
+        DataRepository.instance.addAllTextsToTantivy(await library);
+      }
+    }();
   }
 
   /// Opens a book in a new tab.

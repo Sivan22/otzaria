@@ -76,6 +76,26 @@ class Category {
     return booksAndCategories;
   }
 
+  factory Category.fromJson(Map<String, dynamic> json) => Category(
+        title: json['title'],
+        description: json['description'],
+        shortDescription: json['shortDescription'],
+        order: json['order'],
+        subCategories: json['subCategories'],
+        books: json['books'],
+        parent: json['parent'],
+      );
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'description': description,
+        'shortDescription': shortDescription,
+        'order': order,
+        'subCategories': subCategories,
+        'books': books,
+        'parent': parent,
+      };
+
   /// Initialize a new [Category] instance.
   ///
   /// The [title] is the name of the category, [subCategories] are the categories
@@ -132,4 +152,10 @@ class Library extends Category {
       return null;
     }
   }
+
+  factory Library.fromJson(Map<String, dynamic> json) => Library(
+        categories: json['categories']
+            .map<Category>((categoryJson) => Category.fromJson(categoryJson))
+            .toList(),
+      );
 }
