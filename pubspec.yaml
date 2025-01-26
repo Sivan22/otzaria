@@ -85,8 +85,8 @@ dependencies:
   search_engine:
     #path: ../search_engine
     git:
-    url: https://github.com/Sivan22/otzaria_search_engine
-    ref: add_topics_facet
+      url: https://github.com/Sivan22/otzaria_search_engine
+      ref: add_topics_facet
   flutter_archive: ^6.0.3
   flutter_spinbox: ^0.13.1
   toggle_switch: ^2.3.0
