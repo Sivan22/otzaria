@@ -82,7 +82,17 @@ String paraphrase(String text) {
 }
 
 String replaceHolyNames(String s) {
-  s = s.replaceAll("יהוה", "יקוק").replaceAll("יְהֹוָה", "יְקׂוָק");
+  s = s
+      .replaceAll("יהוה", "יקוק")
+      .replaceAll("יְהֹוָה", "יְקׂוָק")
+      .replaceAll("יְהֹוָ֤ה", "יְקׂוָ֤ק")
+      .replaceAll("יְהֹוָ֨ה", "יְקׂוָ֨ק")
+      .replaceAll("יְהֹוָ֥ה", "יְקׂוָ֥ק")
+      .replaceAll("יְהֹוָ֖ה", "יְקׂוָ֖ק")
+      .replaceAll("יְהֹוָ֧ה", "יְקׂוָ֧ק")
+      .replaceAll("יְהֹוָ֣ה", "יְקׂוָ֣ק")
+      .replaceAll("יְהֹוָה֙", "יְקׂוָק֙")
+      .replaceAll("יְהֹוָ֑ה", "יְקׂוָ֑ק");
   return s;
 }
 

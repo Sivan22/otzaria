@@ -219,7 +219,7 @@ class AppModel with ChangeNotifier {
       final totalBooks = (await library).getAllBooks().length;
       final indexedBooks = TantivyDataProvider.instance.booksDone.length;
       if (!TantivyDataProvider.instance.isIndexing.value &&
-          totalBooks - indexedBooks > 0) {
+          totalBooks - indexedBooks > 100) {
         DataRepository.instance.addAllTextsToTantivy(await library);
       }
     }();
