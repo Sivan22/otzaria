@@ -20,9 +20,6 @@ class TantivyDataProvider {
   /// Instance of the search engine pointing to the index directory
   late Future<SearchEngine> engine;
 
-  /// Instance of the search engine pointing to the index directory
-  late Future<SearchEngine> engine;
-
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
 
@@ -193,7 +190,6 @@ class TantivyDataProvider {
     var text = await book.text;
     final title = book.title;
     final topics = "/${book.topics.replaceAll(', ', '/')}";
-    final topics = "/${book.topics.replaceAll(', ', '/')}";
 
     // Check if book was already indexed using content hash
     final hash = sha1.convert(utf8.encode(text)).toString();
@@ -204,9 +200,7 @@ class TantivyDataProvider {
 
     // Preprocess text by removing HTML and vowel marks
 
-
     final texts = text.split('\n');
-    List<String> reference = [];
     List<String> reference = [];
     // Index each line separately
     for (int i = 0; i < texts.length; i++) {
@@ -255,7 +249,6 @@ class TantivyDataProvider {
   /// 2. Extracting text from each page
   /// 3. Splitting page text into lines and indexing each line separately
   addPdfTextsToTantivy(PdfBook book) async {
-  addPdfTextsToTantivy(PdfBook book) async {
     final index = await engine;
 
     // Check if PDF was already indexed using file hash
@@ -270,7 +263,6 @@ class TantivyDataProvider {
     final pages = await PdfDocument.openData(data).then((value) => value.pages);
     final title = book.title;
     final topics = "/${book.topics.replaceAll(', ', '/')}";
-    final topics = "/${book.topics.replaceAll(', ', '/')}";
 
     // Process each page
     for (int i = 0; i < pages.length; i++) {
@@ -281,7 +273,6 @@ class TantivyDataProvider {
           return;
         }
         index.addDocument(
-            id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
             reference: '$title, עמוד ${i + 1}',
