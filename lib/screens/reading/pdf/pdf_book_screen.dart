@@ -45,7 +45,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
     widget.tab.outline.dispose();
     widget.tab.documentRef.dispose();
     widget.tab.showLeftPane.dispose();
-
     super.dispose();
   }
 
@@ -172,8 +171,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 icon: const Icon(Icons.share),
                 tooltip: 'שיתוף',
                 onPressed: () async {
-                  //display dialog to choose the pages to print
-
                   await Printing.sharePdf(
                     bytes: File(widget.tab.book.path).readAsBytesSync(),
                   );
@@ -193,7 +190,7 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
                   child: DefaultTabController(
-                    length: 4,
+                    length: 3,
                     child: Column(
                       children: [
                         Row(
@@ -226,9 +223,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                         Expanded(
                           child: TabBarView(
                             children: [
-                              // NOTE: documentRef is not explicitly used but it indicates that
-                              // the document is changed.
-
                               ValueListenableBuilder(
                                 valueListenable: widget.tab.outline,
                                 builder: (context, outline, child) =>
@@ -254,23 +248,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                                 child: ThumbnailsView(
                                     controller: widget.tab.pdfViewerController),
                               ),
-
-                              ValueListenableBuilder(
-                                valueListenable: widget.tab.pinLeftPane,
-                                builder: (context, pinLeftPanel, child) =>
-                                    MediaQuery.of(context).size.width < 600
-                                        ? const SizedBox.shrink()
-                                        : IconButton(
-                                            onPressed: () {
-                                              widget.tab.pinLeftPane.value =
-                                                  !widget.tab.pinLeftPane.value;
-                                            },
-                                            icon: const Icon(
-                                              Icons.push_pin,
-                                            ),
-                                            isSelected: pinLeftPanel,
-                                          ),
-                              )
                             ],
                           ),
                         ),
@@ -292,16 +269,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                     child: PdfViewer.file(
                       widget.tab.book.path,
                       initialPageNumber: widget.tab.pageNumber,
-                      // PdfViewer.file(
-                      //   r"D:\pdfrx\example\assets\hello.pdf",
-                      // PdfViewer.uri(
-                      //   Uri.parse(
-                      //       'https://espresso3389.github.io/pdfrx/assets/assets/PDF32000_2008.pdf'),
-                      // PdfViewer.uri(
-                      //   Uri.parse(kIsWeb
-                      //       ? 'assets/assets/hello.pdf'
-                      //       : 'https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf'),
-                      // Set password provider to show password dialog
                       passwordProvider: () => passwordDialog(context),
                       controller: widget.tab.pdfViewerController,
                       params: PdfViewerParams(
@@ -314,36 +281,8 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                             });
                           }
                         },
-                        // code to display pages horizontally
-                        // layoutPages: (pages, params) {
-                        //   final height = pages.fold(
-                        //           templatePage.height,
-                        //           (prev, page) => max(prev, page.height)) +
-                        //       params.margin * 2;
-                        //   final pageLayouts = <Rect>[];
-                        //   double x = params.margin;
-                        //   for (var page in pages) {
-                        //     page ??= templatePage; // in case the page is not loaded yet
-                        //     pageLayouts.add(
-                        //       Rect.fromLTWH(
-                        //         x,
-                        //         (height - page.height) / 2, // center vertically
-                        //         page.width,
-                        //         page.height,
-                        //       ),
-                        //     );
-                        //     x += page.width + params.margin;
-                        //   }
-                        //   return PdfPageLayout(
-                        //     pageLayouts: pageLayouts,
-                        //     documentSize: Size(x, height),
-                        //   );
-                        // },
-                        //
-                        // Scroll-thumbs example
-                        //
-                        viewerOverlayBuilder: (context, size) => [
-                          // Show vertical scroll thumb on the right; it has page number on it
+                        viewerOverlayBuilder: (context, size, handleLinkTap) =>
+                            [
                           PdfViewerScrollThumb(
                             controller: widget.tab.pdfViewerController,
                             orientation: ScrollbarOrientation.right,
@@ -360,7 +299,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                               ),
                             ),
                           ),
-                          // Just a simple horizontal scroll thumb on the bottom
                           PdfViewerScrollThumb(
                             controller: widget.tab.pdfViewerController,
                             orientation: ScrollbarOrientation.bottom,
@@ -375,9 +313,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                             ),
                           ),
                         ],
-                        //
-                        // Loading progress indicator example
-                        //
                         loadingBannerBuilder:
                             (context, bytesDownloaded, totalBytes) => Center(
                           child: CircularProgressIndicator(
@@ -387,10 +322,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                             backgroundColor: Colors.grey,
                           ),
                         ),
-                        //
-                        // Link handling example
-                        //
-
                         linkWidgetBuilder: (context, link, size) => Material(
                           color: Colors.transparent,
                           child: InkWell(
