@@ -25,7 +25,6 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   void initState() {
     super.initState();
     _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
-    _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
     () async {
       final library = await context.read<AppModel>().library;
       widget.tab.allBooks = (library).getAllBooks();

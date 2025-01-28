@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
-import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'dart:io';
 import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';

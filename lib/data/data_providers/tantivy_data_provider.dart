@@ -164,7 +164,6 @@ class TantivyDataProvider {
           await addTextsToTantivy(book);
         } else if (book is PdfBook) {
           await addPdfTextsToTantivy(book);
-          await addPdfTextsToTantivy(book);
         }
       } catch (e) {
         print('Error adding ${book.title} to index: $e');
@@ -248,7 +247,6 @@ class TantivyDataProvider {
   /// 1. Computing a hash of the PDF file to check for previous indexing
   /// 2. Extracting text from each page
   /// 3. Splitting page text into lines and indexing each line separately
-
   addPdfTextsToTantivy(PdfBook book) async {
     final index = await engine;
 
