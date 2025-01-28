@@ -976,9 +976,11 @@ packages:
   search_engine:
     dependency: "direct main"
     description:
-      path: "../search_engine"
-      relative: true
-    source: path
+      path: "."
+      ref: add_topics_facet
+      resolved-ref: e9af1a7376c7050a31a33c9407923005633dfadd
+      url: "https://github.com/Sivan22/otzaria_search_engine"
+    source: git
     version: "0.0.1"
   search_highlight_text:
     dependency: "direct main"

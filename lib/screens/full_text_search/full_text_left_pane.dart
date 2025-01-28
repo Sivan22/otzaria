@@ -1,5 +1,6 @@
 // Core Flutter imports
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 // Model imports
@@ -94,17 +95,19 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
     );
   }
 
-  Widget _buildBookTile(Book book, AsyncSnapshot<int> snapshot) {
+  Widget _buildBookTile(Book book, AsyncSnapshot<int> snapshot, int level) {
     if (!snapshot.hasData || snapshot.data! <= 0) {
       return const SizedBox.shrink();
     }
 
-    final facet = '${book.category?.path}/${book.title}';
+    final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
     final isSelected = isChecked(book);
 
     return InkWell(
-      onDoubleTap: () => isSelected ? _handleFacetToggle(facet) : null,
+      onDoubleTap: () => _handleFacetToggle(facet),
       child: ListTile(
+        contentPadding: EdgeInsets.only(
+            right: (_kTreePadding * 2) + (level * _kTreeLevelIndent)),
         tileColor: isSelected
             ? Theme.of(context)
                 .colorScheme
@@ -114,7 +117,9 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
         title: Text(
           snapshot.hasData ? "${book.title} (${snapshot.data})" : book.title,
         ),
-        onTap: () => _setFacet(facet),
+        onTap: () => HardwareKeyboard.instance.isControlPressed
+            ? _handleFacetToggle(facet)
+            : _setFacet(facet),
         onLongPress: () => _handleFacetToggle(facet),
       ),
     );
@@ -130,10 +135,10 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
             itemCount: books.length,
             itemBuilder: (context, index) => FutureBuilder<int>(
               future: widget.tab.countForFacet(
-                '${books[index].category?.path}/${books[index].title}',
+                "/${books[index].topics.replaceAll(', ', '/')}/${books[index].title}",
               ),
               builder: (context, snapshot) =>
-                  _buildBookTile(books[index], snapshot),
+                  _buildBookTile(books[index], snapshot, 0),
             ),
           ),
         ),
@@ -166,11 +171,10 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
         trailing: const SizedBox.shrink(),
         iconColor: Theme.of(context).colorScheme.primary,
         collapsedIconColor: Theme.of(context).colorScheme.primary,
-        key: PageStorageKey(category),
         title: _buildCategoryTitle(category, snapshot),
         initiallyExpanded: level == 0,
-        tilePadding: EdgeInsets.symmetric(
-          horizontal: _kTreePadding + (level * _kTreeLevelIndent),
+        tilePadding: EdgeInsets.only(
+          right: _kTreePadding + (level * _kTreeLevelIndent),
         ),
         children: _buildCategoryChildren(category, level),
       ),
@@ -183,7 +187,9 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
     }
 
     return GestureDetector(
-      onTap: () => _setFacet(category.path),
+      onTap: () => HardwareKeyboard.instance.isControlPressed
+          ? _handleFacetToggle(category.path)
+          : _setFacet(category.path),
       onLongPress: () => _handleFacetToggle(category.path),
       onDoubleTap: () {
         if (!isChecked(category)) {
@@ -203,7 +209,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
           listenable: widget.tab.results,
           builder: (context, _) {
             final count = widget.tab.countForFacet(
-              '${entity.category?.path}/${entity.title}',
+              "/${entity.topics.replaceAll(', ', '/')}/${entity.title}",
             );
             return FutureBuilder<int>(
               future: count,
@@ -212,7 +218,7 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                   return Text('Error: ${snapshot.error}');
                 }
                 if (snapshot.hasData && snapshot.data! > 0) {
-                  return _buildBookTile(entity as Book, snapshot);
+                  return _buildBookTile(entity as Book, snapshot, level + 1);
                 }
                 return const SizedBox.shrink();
               },
@@ -259,7 +265,6 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
                 return SingleChildScrollView(
-                  key: const PageStorageKey('tree'),
                   child: _buildTree(snapshot.data!),
                 );
               },
@@ -276,8 +281,8 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
           (entity.title != "ספריית אוצריא" && isChecked(entity.parent));
     }
     return isChecked(entity.category) ||
-        widget.tab.currentFacets.value
-            .contains('${entity.category?.path}/${entity.title}');
+        widget.tab.currentFacets.value.contains(
+            "/${entity.topics.replaceAll(', ', '/')}/${entity.title}");
   }
 
   @override

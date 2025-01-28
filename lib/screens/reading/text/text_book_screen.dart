@@ -146,7 +146,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                 onPressed: () {
                   widget.tab.removeNikud.value = !widget.tab.removeNikud.value;
                 },
-                icon: const Icon(Icons.text_format),
+                icon: const Icon(Icons.format_overline),
                 tooltip: 'הצג או הסתר ניקוד',
               ),
               //button to add a bookmark

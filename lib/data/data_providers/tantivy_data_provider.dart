@@ -51,7 +51,7 @@ class TantivyDataProvider {
     engine = SearchEngine.newInstance(path: indexPath);
 
     //test the engine
-    searchTexts('בראשית', ['בראשית'], 1);
+    searchTexts('בראשית', ['/'], 1);
 
     booksDone = Hive.box(
             name: 'books_indexed',
