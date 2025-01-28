@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
-import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
