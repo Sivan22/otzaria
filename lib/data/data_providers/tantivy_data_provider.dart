@@ -248,6 +248,7 @@ class TantivyDataProvider {
   /// 1. Computing a hash of the PDF file to check for previous indexing
   /// 2. Extracting text from each page
   /// 3. Splitting page text into lines and indexing each line separately
+
   addPdfTextsToTantivy(PdfBook book) async {
     final index = await engine;
 
