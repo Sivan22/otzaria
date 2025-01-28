@@ -20,7 +20,6 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   bool get wantKeepAlive => true;
 
   ValueNotifier isLeftPaneOpen = ValueNotifier(true);
-  ValueNotifier isLeftPaneOpen = ValueNotifier(true);
   bool _showIndexWarning = false;
 
   @override
