@@ -32,6 +32,7 @@ class FullTextLeftPane extends StatefulWidget {
 
   @override
   State<FullTextLeftPane> createState() => _FullTextLeftPaneState();
+  State<FullTextLeftPane> createState() => _FullTextLeftPaneState();
 }
 
 class _FullTextLeftPaneState extends State<FullTextLeftPane>
