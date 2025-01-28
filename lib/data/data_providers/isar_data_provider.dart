@@ -107,7 +107,7 @@ class IsarDataProvider {
         }
         isar.write((isar) => isar.refs.putAll(refs));
       } catch (e) {
-        print(' Failed creating refs for ${book.title} $e');
+        print('Failed creating refs for ${book.title} $e');
       }
     }
 
@@ -144,7 +144,6 @@ class IsarDataProvider {
           pdfBook: true,
           pdfPath: pdfBooks[i].path,
         );
-        print('Adding Pdf ref: ${ref.ref}');
         isar.write((isar) => isar.refs.put(ref));
       }
     }
@@ -242,7 +241,6 @@ class IsarDataProvider {
     linesNumOfbooksDone.value = 0;
 
     for (TextBook book in books) {
-      print('Adding lines for ${book.title}');
       await addLinesForBook(book);
       linesNumOfbooksDone.value = books.indexOf(book) + 1;
     }

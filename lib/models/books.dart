@@ -1,4 +1,5 @@
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/links.dart';
 //import 'package:pdfrx/pdfrx.dart';
 
@@ -10,6 +11,8 @@ import 'package:otzaria/models/links.dart';
 abstract class Book {
   /// The title of the book.
   final String title;
+
+  final Category? category;
 
   /// Additional titles of the book, if available.
   final List<String>? extraTitles;
@@ -39,9 +42,13 @@ abstract class Book {
   factory Book.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
       case 'TextBook':
-        return TextBook(title: json['title']);
+        return TextBook(
+            title: json['title'], category: Category.fromJson(json));
       case 'PdfBook':
-        return PdfBook(title: json['title'], path: json['path']);
+        return PdfBook(
+            title: json['title'],
+            path: json['path'],
+            category: Category.fromJson(json));
       case 'OtzarBook':
         return ExternalBook.fromJson(json);
       default:
@@ -54,6 +61,7 @@ abstract class Book {
   /// The [title] parameter is required and cannot be null.
   Book(
       {required this.title,
+      this.category,
       this.author,
       this.heShortDesc,
       this.pubDate,
@@ -69,6 +77,7 @@ abstract class Book {
 class TextBook extends Book {
   TextBook(
       {required String title,
+      super.category,
       super.author,
       super.heShortDesc,
       super.pubDate,
@@ -98,6 +107,7 @@ class TextBook extends Book {
   factory TextBook.fromJson(Map<String, dynamic> json) {
     return TextBook(
       title: json['title'],
+      category: Category.fromJson(json['category']),
     );
   }
 
@@ -210,6 +220,7 @@ class PdfBook extends Book {
   final String path;
   PdfBook(
       {required String title,
+      super.category,
       required this.path,
       super.topics,
       super.author,
@@ -221,9 +232,9 @@ class PdfBook extends Book {
 
   factory PdfBook.fromJson(Map<String, dynamic> json) {
     return PdfBook(
-      title: json['title'],
-      path: json['path'],
-    );
+        title: json['title'],
+        path: json['path'],
+        category: Category.fromJson(json['category']));
   }
 
   @override

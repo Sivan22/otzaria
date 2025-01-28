@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/models/tabs.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
 import 'package:otzaria/screens/full_text_search/full_text_left_pane.dart';
 import 'package:provider/provider.dart';
@@ -20,28 +20,17 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   bool get wantKeepAlive => true;
 
   ValueNotifier isLeftPaneOpen = ValueNotifier(true);
+  ValueNotifier isLeftPaneOpen = ValueNotifier(true);
   bool _showIndexWarning = false;
 
   @override
   void initState() {
     super.initState();
     _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
+    _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
     () async {
       final library = await context.read<AppModel>().library;
       widget.tab.allBooks = (library).getAllBooks();
-
-      if (widget.tab.booksToSearch.value.isEmpty) {
-        widget.tab.booksToSearch.value = widget.tab.allBooks.toSet();
-      }
-
-      //Check if index is up to date
-      final totalBooks = widget.tab.allBooks.length;
-      final indexedBooks = TantivyDataProvider.instance.booksDone.length;
-      if (!TantivyDataProvider.instance.isIndexing.value &&
-          totalBooks - indexedBooks > 15) {
-        DataRepository.instance.addAllTextsToTantivy(library);
-        _showIndexWarning = true;
-      }
     }();
   }
 
@@ -74,7 +63,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(60, 16, 60, 0),
           child: TextField(
             autofocus: true,
             controller: widget.tab.queryController,

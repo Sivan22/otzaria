@@ -249,6 +249,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  cupertino_icons:
+    dependency: transitive
+    description:
+      name: cupertino_icons
+      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.8"
   dart_style:
     dependency: transitive
     description:
@@ -408,8 +416,10 @@ packages:
     description:
       name: flutter_rust_bridge
       sha256: "35c257fc7f98e34c1314d6c145e5ed54e7c94e8a9f469947e31c9298177d546f"
+      sha256: "35c257fc7f98e34c1314d6c145e5ed54e7c94e8a9f469947e31c9298177d546f"
       url: "https://pub.dev"
     source: hosted
+    version: "2.7.0"
     version: "2.7.0"
   flutter_settings_screens:
     dependency: "direct main"
@@ -419,6 +429,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.4"
+  flutter_spinbox:
+    dependency: "direct main"
+    description:
+      name: flutter_spinbox
+      sha256: "38d8c1a3a39f0fa72823d4470785f5e165f2deb53531ca7803b54ba45e4dbd46"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.13.1"
   flutter_spinbox:
     dependency: "direct main"
     description:
@@ -976,9 +994,11 @@ packages:
   search_engine:
     dependency: "direct main"
     description:
-      path: "../search_engine"
-      relative: true
-    source: path
+      path: "."
+      ref: add_topics_facet
+      resolved-ref: e9af1a7376c7050a31a33c9407923005633dfadd
+      url: "https://github.com/Sivan22/otzaria_search_engine"
+    source: git
     version: "0.0.1"
   search_highlight_text:
     dependency: "direct main"
@@ -1193,6 +1213,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  toggle_switch:
+    dependency: "direct main"
+    description:
+      name: toggle_switch
+      sha256: dca04512d7c23ed320d6c5ede1211a404f177d54d353bf785b07d15546a86ce5
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
   toggle_switch:
     dependency: "direct main"
     description:
