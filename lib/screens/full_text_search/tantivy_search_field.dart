@@ -11,27 +11,24 @@ class TantivySearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(60, 16, 60, 0),
-      child: TextField(
-        autofocus: true,
-        controller: widget.tab.queryController,
-        onSubmitted: (e) => widget.tab.updateResults(),
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          hintText: "חפש כאן..",
-          labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
-          prefixIcon: IconButton(
-              onPressed: () {
-                widget.tab.updateResults();
-              },
-              icon: const Icon(Icons.search)),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.clear),
+    return TextField(
+      autofocus: true,
+      controller: widget.tab.queryController,
+      onSubmitted: (e) => widget.tab.updateResults(),
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        hintText: "חפש כאן..",
+        labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
+        prefixIcon: IconButton(
             onPressed: () {
-              widget.tab.queryController.clear();
+              widget.tab.updateResults();
             },
-          ),
+            icon: const Icon(Icons.search)),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            widget.tab.queryController.clear();
+          },
         ),
       ),
     );

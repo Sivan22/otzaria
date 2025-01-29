@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
+import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_field.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
 import 'package:otzaria/screens/full_text_search/full_text_left_pane.dart';
@@ -41,40 +42,58 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
           builder: (context, value, child) {
             return Column(children: [
               if (_showIndexWarning) _buildIndexWarning(),
-              Expanded(
-                child: Row(
-                  children: [
-                    _buildMenuButton(),
-                    _buildLeftPane(),
-                    Expanded(
-                      child: _buildSearchField(),
-                    )
-                  ],
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  //_buildMenuButton(),
+                  Expanded(
+                    child: TantivySearchField(widget: widget),
+                  ),
+                  FuzzyDistance(tab: widget.tab),
+                  FuzzyToggle(tab: widget.tab)
+                ],
               ),
+              Expanded(
+                  child: ListenableBuilder(
+                      listenable: widget.tab.results,
+                      builder: (context, _) {
+                        return FutureBuilder(
+                            future: widget.tab.results.value,
+                            builder: (context, snapshot) {
+                              if (snapshot.hasError) {
+                                return Center(
+                                    child: Text('Error: ${snapshot.error}'));
+                              }
+                              if (widget.tab.queryController.text.isEmpty) {
+                                return const Center(
+                                    child: Text("לא בוצע חיפוש"));
+                              }
+                              if (snapshot.hasData && snapshot.data!.isEmpty) {
+                                return const Center(
+                                    child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text('אין תוצאות'),
+                                ));
+                              }
+                              return Row(
+                                children: [
+                                  SizedBox(
+                                    width: 350,
+                                    child: SearchFacetFiltering(
+                                        tab: widget.tab,
+                                        library:
+                                            context.read<AppModel>().library),
+                                  ),
+                                  Expanded(
+                                      child:
+                                          TantivySearchResults(tab: widget.tab))
+                                ],
+                              );
+                            });
+                      }))
             ]);
           }),
     );
-  }
-
-  Column _buildSearchField() {
-    return Column(
-      children: [
-        TantivySearchField(widget: widget),
-        TantivySearchResults(tab: widget.tab)
-      ],
-    );
-  }
-
-  AnimatedSize _buildLeftPane() {
-    return AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        child: SizedBox(
-          width: isLeftPaneOpen.value ? 350 : 0,
-          height: isLeftPaneOpen.value ? double.infinity : 0,
-          child: FullTextLeftPane(
-              tab: widget.tab, library: context.read<AppModel>().library),
-        ));
   }
 
   Column _buildMenuButton() {

@@ -9,32 +9,27 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 
-// Screen imports
-import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
-
 // Constants
-const double _kSettingsHeight = 120.0;
 const double _kTreePadding = 6.0;
 const double _kTreeLevelIndent = 10.0;
-const double _kBookTilePadding = 16.0;
 const double _kMinQueryLength = 2;
 const double _kBackgroundOpacity = 0.1;
 
-class FullTextLeftPane extends StatefulWidget {
+class SearchFacetFiltering extends StatefulWidget {
   final SearchingTab tab;
   final Future<Library> library;
 
-  const FullTextLeftPane({
+  const SearchFacetFiltering({
     Key? key,
     required this.tab,
     required this.library,
   }) : super(key: key);
 
   @override
-  State<FullTextLeftPane> createState() => _FullTextLeftPaneState();
+  State<SearchFacetFiltering> createState() => _SearchFacetFilteringState();
 }
 
-class _FullTextLeftPaneState extends State<FullTextLeftPane>
+class _SearchFacetFilteringState extends State<SearchFacetFiltering>
     with SingleTickerProviderStateMixin {
   List<Book> allBooks = [];
   List<Book> books = [];
@@ -289,10 +284,6 @@ class _FullTextLeftPaneState extends State<FullTextLeftPane>
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox.fromSize(
-          size: const Size.fromHeight(_kSettingsHeight),
-          child: FullTextSettingsScreen(tab: widget.tab),
-        ),
         _buildSearchField(),
         _filterQuery.text.length < _kMinQueryLength
             ? Expanded(child: _buildBooksTree(context))
