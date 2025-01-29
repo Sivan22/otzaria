@@ -273,8 +273,8 @@ class _PdfBookViewrState extends State<PdfBookViewr>
                       controller: widget.tab.pdfViewerController,
                       params: PdfViewerParams(
                         enableTextSelection: true,
-                        maxScale: 8,
-                        onPageChanged: (pageNumber) {
+                        maxScale: 10,
+                        onInteractionStart: (pageNumber) {
                           if (!widget.tab.pinLeftPane.value) {
                             Future.microtask(() {
                               widget.tab.showLeftPane.value = false;

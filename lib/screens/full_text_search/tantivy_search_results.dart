@@ -61,41 +61,9 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                 }
                                 return Row(
                                   children: [
-                                    ValueListenableBuilder(
-                                        valueListenable: widget.tab.sortBy,
-                                        builder: (context, sortBy, child) {
-                                          return SizedBox(
-                                            width: 300,
-                                            child: Center(
-                                              child:
-                                                  DropdownButton<ResultsOrder>(
-                                                      value: sortBy,
-                                                      items: const [
-                                                        DropdownMenuItem(
-                                                          value: ResultsOrder
-                                                              .relevance,
-                                                          child: Text(
-                                                              'מיון לפי רלוונטיות'),
-                                                        ),
-                                                        DropdownMenuItem(
-                                                          value: ResultsOrder
-                                                              .catalogue,
-                                                          child: Text(
-                                                              'מיון לפי סדר קטלוגי'),
-                                                        ),
-                                                      ],
-                                                      onChanged: (value) {
-                                                        widget.tab.sortBy
-                                                            .value = value!;
-                                                      }),
-                                            ),
-                                          );
-                                        }),
                                     Expanded(
-                                      child: Container(
-                                        child: Text(
-                                          '${snapshot.data!.length} תוצאות מתוך ${totalResults.data}',
-                                        ),
+                                      child: Text(
+                                        '${snapshot.data!.length} תוצאות מתוך ${totalResults.data}',
                                       ),
                                     ),
                                   ],
@@ -166,6 +134,43 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                   ),
                 );
               });
+        });
+  }
+}
+
+class OrderOfResults extends StatelessWidget {
+  const OrderOfResults({
+    super.key,
+    required this.widget,
+  });
+
+  final TantivySearchResults widget;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+        valueListenable: widget.tab.sortBy,
+        builder: (context, sortBy, child) {
+          return SizedBox(
+            width: 300,
+            child: Center(
+              child: DropdownButton<ResultsOrder>(
+                  value: sortBy,
+                  items: const [
+                    DropdownMenuItem(
+                      value: ResultsOrder.relevance,
+                      child: Text('מיון לפי רלוונטיות'),
+                    ),
+                    DropdownMenuItem(
+                      value: ResultsOrder.catalogue,
+                      child: Text('מיון לפי סדר קטלוגי'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    widget.tab.sortBy.value = value!;
+                  }),
+            ),
+          );
         });
   }
 }
