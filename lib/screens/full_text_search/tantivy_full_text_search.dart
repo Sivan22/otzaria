@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
+import 'package:otzaria/screens/full_text_search/full_text_settings_widgets.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_field.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
-import 'package:otzaria/screens/full_text_search/full_text_left_pane.dart';
+import 'package:otzaria/screens/full_text_search/full_text_facet_filtering.dart';
 import 'package:provider/provider.dart';
 
 class TantivyFullTextSearch extends StatefulWidget {

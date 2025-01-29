@@ -5,7 +5,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
-import 'package:otzaria/screens/full_text_search/full_text_settings_screen.dart';
+import 'package:otzaria/screens/full_text_search/full_text_settings_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:search_engine/search_engine.dart';
 
@@ -128,43 +128,6 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                   ],
                 );
               });
-        });
-  }
-}
-
-class OrderOfResults extends StatelessWidget {
-  const OrderOfResults({
-    super.key,
-    required this.widget,
-  });
-
-  final TantivySearchResults widget;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: widget.tab.sortBy,
-        builder: (context, sortBy, child) {
-          return SizedBox(
-            width: 300,
-            child: Center(
-              child: DropdownButton<ResultsOrder>(
-                  value: sortBy,
-                  items: const [
-                    DropdownMenuItem(
-                      value: ResultsOrder.relevance,
-                      child: Text('מיון לפי רלוונטיות'),
-                    ),
-                    DropdownMenuItem(
-                      value: ResultsOrder.catalogue,
-                      child: Text('מיון לפי סדר קטלוגי'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    widget.tab.sortBy.value = value!;
-                  }),
-            ),
-          );
         });
   }
 }
