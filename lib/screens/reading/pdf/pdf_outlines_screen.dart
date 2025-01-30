@@ -27,7 +27,8 @@ class OutlineView extends StatelessWidget {
         return InkWell(
           onTap: () {
             if (item.node.dest != null) {
-              controller.goToDest(item.node.dest);
+              controller.goTo(controller.calcMatrixFitWidthForPage(
+                  pageNumber: item.node.dest?.pageNumber ?? 1));
             }
           },
           child: Container(

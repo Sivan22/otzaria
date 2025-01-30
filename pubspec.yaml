@@ -56,7 +56,7 @@ dependencies:
   msix: ^3.16.7
   path_provider: ^2.0.15
   html: ^0.15.1
-  pdfrx: 1.0.101
+  pdfrx: ^1.0.65
   url_launcher: ^6.3.1
   flutter_html: ^3.0.0-beta.2
   scrollable_positioned_list: ^0.3.8
@@ -132,6 +132,7 @@ flutter:
   assets:
     - assets/
     - assets/logos/
+    - assets/ca/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

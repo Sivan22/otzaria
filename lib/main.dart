@@ -4,6 +4,7 @@
 /// It includes features for dark mode, customizable themes, and local storage management.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:path_provider/path_provider.dart';
@@ -94,6 +95,7 @@ Future<void> initialize() async {
   await RustLib.init();
   await initHiveBoxes();
   await createDirs();
+  await loadCerts();
 }
 
 /// Creates the necessary directory structure for the application.
@@ -144,5 +146,14 @@ void createDirectoryIfNotExists(String path) {
   Directory directory = Directory(path);
   if (!directory.existsSync()) {
     directory.createSync(recursive: true);
+  }
+}
+
+Future<void> loadCerts() async {
+  final certs = ['assets/ca/netfree_cas.pem'];
+  for (var cert in certs) {
+    final certBytes = await rootBundle.load(cert);
+    SecurityContext.defaultContext
+        .setTrustedCertificatesBytes(certBytes.buffer.asUint8List());
   }
 }

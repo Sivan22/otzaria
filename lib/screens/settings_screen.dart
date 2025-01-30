@@ -195,9 +195,9 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                     children: [
                       SwitchSettingsTile(
                         settingKey: 'key-replace-holy-names',
-                        title: 'הצגת שמות קדושים',
-                        enabledLabel: 'שמות הקדושים יוצגו ככתיבתם',
-                        disabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
+                        title: 'הסתרת שמות הקודש',
+                        enabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
+                        disabledLabel: 'השמות הקדושים יוצגו ככתיבתם',
                         leading: const Icon(Icons.password),
                         defaultValue: true,
                         onChange: (p0) => appModel.replaceHolyNames.value = p0,
@@ -322,7 +322,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                                 builder: (context) =>
                                                     AlertDialog(
                                                       content: const Text(
-                                                          'האם לאפס את האינדקס?'),
+                                                          'האם לעדכן את האינדקס?'),
                                                       actions: <Widget>[
                                                         TextButton(
                                                           child: const Text(
@@ -343,8 +343,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                                       ],
                                                     ));
                                             if (await result == true) {
-                                              TantivyDataProvider.instance
-                                                  .clear();
                                               TantivyDataProvider.instance
                                                   .addAllTBooksToTantivy(
                                                       await appModel.library);

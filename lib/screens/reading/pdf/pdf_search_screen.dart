@@ -40,7 +40,6 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     scrollController.dispose();
     widget.textSearcher.removeListener(_searchResultUpdated);
     searchTextController.removeListener(_searchTextUpdated);
-    searchTextController.dispose();
     focusNode.dispose();
     super.dispose();
   }
