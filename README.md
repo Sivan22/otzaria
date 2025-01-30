@@ -149,7 +149,7 @@ In case you need only the app itself (for upgrading) you can download the .msix 
 * Download the latest MacOS build from the releases page.
 * Run the app while pressing the ctrl key.
 * When first running the app, you will be asked to download the library.
-* Alternatively, you can download the library manually from [here], extract it and provide its path to the app.
+* Alternatively, you can download the library manually from [here](https://github.com/Sivan22/otzaria-library/releases), extract it and provide its path to the app.
 
 
 
