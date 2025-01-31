@@ -37,80 +37,117 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: ValueListenableBuilder(
-          valueListenable: isLeftPaneOpen,
-          builder: (context, value, child) {
-            return Column(children: [
-              if (_showIndexWarning) _buildIndexWarning(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  //_buildMenuButton(),
-                  Expanded(
-                    child: TantivySearchField(widget: widget),
-                  ),
-                  FuzzyDistance(tab: widget.tab),
-                  FuzzyToggle(tab: widget.tab)
-                ],
-              ),
-              Expanded(
-                  child: ListenableBuilder(
-                      listenable: widget.tab.results,
-                      builder: (context, _) {
-                        return FutureBuilder(
-                            future: widget.tab.results.value,
-                            builder: (context, snapshot) {
-                              if (snapshot.hasError) {
-                                return Center(
-                                    child: Text('Error: ${snapshot.error}'));
-                              }
-                              if (widget.tab.queryController.text.isEmpty) {
-                                return const Center(
-                                    child: Text("לא בוצע חיפוש"));
-                              }
-                              if (snapshot.hasData && snapshot.data!.isEmpty) {
-                                return const Center(
-                                    child: Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text('אין תוצאות'),
-                                ));
-                              }
-                              return Row(
-                                children: [
-                                  SizedBox(
-                                    width: 350,
-                                    child: SearchFacetFiltering(
-                                        tab: widget.tab,
-                                        library:
-                                            context.read<AppModel>().library),
-                                  ),
-                                  Expanded(
-                                      child:
-                                          TantivySearchResults(tab: widget.tab))
-                                ],
-                              );
-                            });
-                      }))
-            ]);
-          }),
+      body: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 600) return _buildForSmallScreens();
+        return _buildForWideScreens();
+      }),
     );
   }
 
-  Column _buildMenuButton() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
-          child: IconButton(
-            tooltip: "הגדרות חיפוש",
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              isLeftPaneOpen.value = !isLeftPaneOpen.value;
-            },
-          ),
+  Widget _buildForSmallScreens() {
+    return Column(children: [
+      if (_showIndexWarning) _buildIndexWarning(),
+      Row(
+        children: [
+          _buildMenuButton(),
+          Expanded(child: TantivySearchField(widget: widget)),
+        ],
+      ),
+      Expanded(
+        child: Stack(
+          children: [
+            Expanded(child: TantivySearchResults(tab: widget.tab)),
+            ValueListenableBuilder(
+                valueListenable: isLeftPaneOpen,
+                builder: (context, value, child) => AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    child: SizedBox(
+                      width: value ? 500 : 0,
+                      child: Container(
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                FuzzyDistance(tab: widget.tab),
+                                NumOfResults(tab: widget.tab),
+                              ],
+                            ),
+                            FuzzyToggle(tab: widget.tab),
+                            Expanded(
+                              child: SearchFacetFiltering(
+                                  tab: widget.tab,
+                                  library: context.read<AppModel>().library),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )))
+          ],
         ),
-        const Expanded(child: SizedBox.shrink()),
-      ],
+      )
+    ]);
+  }
+
+  Column _buildForWideScreens() {
+    return Column(children: [
+      if (_showIndexWarning) _buildIndexWarning(),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: TantivySearchField(widget: widget),
+          ),
+          FuzzyDistance(tab: widget.tab),
+          FuzzyToggle(tab: widget.tab)
+        ],
+      ),
+      Expanded(
+          child: ListenableBuilder(
+              listenable: widget.tab.results,
+              builder: (context, _) {
+                return FutureBuilder(
+                    future: widget.tab.results.value,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      if (widget.tab.queryController.text.isEmpty) {
+                        return const Center(child: Text("לא בוצע חיפוש"));
+                      }
+                      if (snapshot.hasData && snapshot.data!.isEmpty) {
+                        return const Center(
+                            child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('אין תוצאות'),
+                        ));
+                      }
+                      return Row(
+                        children: [
+                          SizedBox(
+                            width: 350,
+                            child: SearchFacetFiltering(
+                                tab: widget.tab,
+                                library: context.read<AppModel>().library),
+                          ),
+                          Expanded(child: TantivySearchResults(tab: widget.tab))
+                        ],
+                      );
+                    });
+              }))
+    ]);
+  }
+
+  Widget _buildMenuButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
+      child: IconButton(
+        tooltip: "הגדרות חיפוש",
+        icon: const Icon(Icons.menu),
+        onPressed: () {
+          isLeftPaneOpen.value = !isLeftPaneOpen.value;
+        },
+      ),
     );
   }
 
