@@ -152,131 +152,65 @@ class MainWindowScreenState extends State<MainWindowScreen>
             child: Consumer<AppModel>(
               builder: (context, appModel, child) => MyUpdatWidget(
                 child: Scaffold(
-                  resizeToAvoidBottomInset: false,
                   body: OrientationBuilder(builder: (context, orientation) {
-                    _handleOrientationChange(context, orientation);
-
-                    final pageView = PageView(
-                      scrollDirection: orientation == Orientation.landscape
-                          ? Axis.vertical
-                          : Axis.horizontal,
-                      physics: const NeverScrollableScrollPhysics(),
-                      controller: pageController,
-                      children: _pages,
-                    );
                     if (orientation == Orientation.landscape) {
                       return Row(children: [
                         SizedBox.fromSize(
                           size: const Size.fromWidth(80),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) => NavigationRail(
-                                labelType: NavigationRailLabelType.all,
-                                destinations: [
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.library_books),
-                                    label: Text('ספרייה'),
+                          child: NavigationRail(
+                              labelType: NavigationRailLabelType.all,
+                              destinations: [
+                                NavigationRailDestination(
+                                  icon: Tooltip(
+                                    message: 'דפדף בספריה - ctrl +L',
+                                    child: Icon(Icons.library_books),
                                   ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.auto_stories_rounded),
-                                    label: Text('איתור'),
+                                  label: Text('ספרייה'),
+                                ),
+                                NavigationRailDestination(
+                                  icon: Tooltip(
+                                    message: 'אתר מקורות - ctrl +O',
+                                    child: Icon(Icons.auto_stories_rounded),
                                   ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.menu_book),
-                                    label: Text('עיון'),
+                                  label: Text('איתור'),
+                                ),
+                                NavigationRailDestination(
+                                  icon: Tooltip(
+                                    message: 'ספרים פתוחים - ctrl +R',
+                                    child: Icon(Icons.menu_book),
                                   ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.search),
-                                    label: Text('חיפוש'),
-                                  ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.star),
-                                    label: Text('מועדפים'),
-                                  ),
-                                  NavigationRailDestination(
-                                    icon: const Icon(Icons.settings),
-                                    label: const Text('הגדרות'),
-                                    padding: EdgeInsets.only(
-                                        top: constraints.maxHeight - 410),
-                                  ),
-                                ],
-                                selectedIndex: appModel.currentView.value.index,
-                                onDestinationSelected: (int index) {
-                                  appModel.currentView.value =
-                                      Screens.values[index];
-                                  switch (index) {
-                                    case 3:
-                                      appModel.openNewSearchTab();
-                                    case 0:
-                                      if (!(Platform.isAndroid ||
-                                          Platform.isIOS)) {
-                                        appModel.bookLocatorFocusNode
-                                            .requestFocus();
-                                        appModel.bookLocatorController
-                                                .selection =
-                                            TextSelection(
-                                                baseOffset: 0,
-                                                extentOffset: appModel
-                                                    .bookLocatorController
-                                                    .text
-                                                    .length);
-                                      }
-                                    case 1:
-                                      appModel.findReferenceFocusNode
-                                          .requestFocus();
-                                      appModel.findReferenceController
-                                              .selection =
-                                          TextSelection(
-                                              baseOffset: 0,
-                                              extentOffset: appModel
-                                                  .findReferenceController
-                                                  .text
-                                                  .length);
-                                  }
-                                }),
+                                  label: Text('עיון'),
+                                ),
+                              ],
                           ),
                         ),
-                        Expanded(child: pageView),
                       ]);
                     } else {
                       return Column(children: [
-                        Expanded(child: pageView),
-                        Consumer<AppModel>(
-                          builder: (context, appModel, child) => NavigationBar(
-                              destinations: const [
-                                NavigationDestination(
-                                  icon: Icon(Icons.library_books),
-                                  label: 'ספרייה',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.auto_stories_rounded),
-                                  label: 'איתור',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.menu_book),
-                                  label: 'עיון',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.search),
-                                  label: 'חיפוש',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.star),
-                                  label: 'מועדפים',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.settings),
-                                  label: 'הגדרות',
-                                ),
-                              ],
-                              selectedIndex: appModel.currentView.value.index,
-                              onDestinationSelected: (int index) {
-                                appModel.currentView.value =
-                                    Screens.values[index];
-                                switch (index) {
-                                  case 3:
-                                    appModel.openNewSearchTab();
-                                }
-                              }),
+                        NavigationBar(
+                          destinations: [
+                            NavigationDestination(
+                              icon: Tooltip(
+                                message: 'דפדף בספריה - ctrl +L',
+                                child: Icon(Icons.library_books),
+                              ),
+                              label: 'ספרייה',
+                            ),
+                            NavigationDestination(
+                              icon: Tooltip(
+                                message: 'אתר מקורות - ctrl +O',
+                                child: Icon(Icons.auto_stories_rounded),
+                              ),
+                              label: 'איתור',
+                            ),
+                            NavigationDestination(
+                              icon: Tooltip(
+                                message: 'ספרים פתוחים - ctrl +R',
+                                child: Icon(Icons.menu_book),
+                              ),
+                              label: 'עיון',
+                            ),
+                          ],
                         ),
                       ]);
                     }
@@ -286,30 +220,5 @@ class MainWindowScreenState extends State<MainWindowScreen>
             ),
           ));
         });
-  }
-}
-
-// Widget to keep pages alive when switching orientations
-class KeepAlivePage extends StatefulWidget {
-  final Widget child;
-
-  const KeepAlivePage({
-    Key? key,
-    required this.child,
-  }) : super(key: key);
-
-  @override
-  State<KeepAlivePage> createState() => _KeepAlivePageState();
-}
-
-class _KeepAlivePageState extends State<KeepAlivePage>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
   }
 }
