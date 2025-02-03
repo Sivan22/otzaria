@@ -353,6 +353,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                     });
                               });
                         }),
+                    const SwitchSettingsTile(
+                      title: 'עדכון אינדקס אוטומטי',
+                      leading: Icon(Icons.sync),
+                      settingKey: 'key-auto-index-update',
+                      defaultValue: true,
+                      enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
+                      disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
+                    ),
                     if (!(Platform.isAndroid || Platform.isIOS)) ...[
                       SimpleSettingsTile(
                         title: 'מיקום הספרייה',

@@ -126,6 +126,10 @@ class AppModel with ChangeNotifier {
     Settings.getValue<bool>('key-replace-holy-names') ?? true,
   );
 
+  final ValueNotifier<bool> autoUpdateIndex = ValueNotifier<bool>(
+    Settings.getValue<bool>('key-auto-index-update') ?? true,
+  );
+
   /// Focus node for the book locator search field
   FocusNode bookLocatorFocusNode = FocusNode();
 
@@ -218,7 +222,10 @@ class AppModel with ChangeNotifier {
       //Check if index is up to date
       final totalBooks = (await library).getAllBooks().length;
       final indexedBooks = TantivyDataProvider.instance.booksDone.length;
-      if (!TantivyDataProvider.instance.isIndexing.value &&
+      final autoIndex =
+          Settings.getValue<bool>('key-auto-index-update') ?? true;
+      if (autoIndex &&
+          !TantivyDataProvider.instance.isIndexing.value &&
           totalBooks - indexedBooks > 100) {
         DataRepository.instance.addAllTextsToTantivy(await library);
       }

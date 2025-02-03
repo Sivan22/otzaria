@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/empty_library_screen.dart';
 import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';
@@ -12,6 +13,18 @@ import 'package:otzaria/widgets/keyboard_shortcuts.dart';
 import 'package:otzaria/widgets/my_updat_widget.dart';
 import 'package:provider/provider.dart';
 
+/// The main window of the application that handles navigation between different screens
+/// and manages the overall layout based on device orientation.
+///
+/// This screen implements a responsive layout that adapts between:
+/// - Portrait mode: Bottom navigation bar
+/// - Landscape mode: Side navigation rail
+///
+/// It manages several key features:
+/// - Navigation between main app sections (Library, Reference Finding, Reading, etc.)
+/// - State preservation across orientation changes
+/// - Library availability checking
+/// - Keyboard shortcuts integration
 class MainWindowScreen extends StatefulWidget {
   const MainWindowScreen({Key? key}) : super(key: key);
   @override
@@ -20,16 +33,23 @@ class MainWindowScreen extends StatefulWidget {
 
 class MainWindowScreenState extends State<MainWindowScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+  // Navigation and UI State
   ValueNotifier selectedIndex = ValueNotifier(0);
-  final bookSearchfocusNode = FocusNode();
-  final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
   late final PageController pageController;
-  bool _isLibraryEmpty = false;
   Orientation? _previousOrientation;
 
-  // Store the page views as state to preserve them across rebuilds
+  // Focus Management
+  final bookSearchfocusNode = FocusNode();
+  final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
+
+  // Library State
+  bool _isLibraryEmpty = false;
+
+  /// Cached list of main application pages
+  /// Using KeepAlive to preserve state when switching between pages
   late final List<Widget> _pages;
 
+  /// Initializes the screen state and sets up necessary listeners and controllers
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
@@ -79,6 +99,11 @@ class MainWindowScreenState extends State<MainWindowScreen>
     super.initState();
   }
 
+  /// Checks if the library is properly set up and contains books
+  /// Sets [_isLibraryEmpty] to true if:
+  /// - Library path is not set
+  /// - Library directory doesn't exist
+  /// - Library directory is empty
   void _checkLibrary() {
     final libraryPath = Settings.getValue<String>('key-library-path');
     if (libraryPath == null) {
@@ -111,6 +136,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
     }
   }
 
+  /// Handles orientation changes and ensures correct page display
+  ///
+  /// When orientation changes:
+  /// 1. Updates the previous orientation tracking
+  /// 2. Ensures the correct page is displayed after the change
+  /// 3. Maintains navigation state consistency
   void _handleOrientationChange(BuildContext context, Orientation orientation) {
     if (_previousOrientation != orientation) {
       _previousOrientation = orientation;
@@ -131,6 +162,73 @@ class MainWindowScreenState extends State<MainWindowScreen>
     }
   }
 
+  /// Builds the navigation destinations used in both portrait and landscape modes
+  List<NavigationDestination> _buildNavigationDestinations() {
+    return const [
+      NavigationDestination(
+        icon: Icon(Icons.library_books),
+        label: 'ספרייה',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.auto_stories_rounded),
+        label: 'איתור',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.menu_book),
+        label: 'עיון',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.search),
+        label: 'חיפוש',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.star),
+        label: 'מועדפים',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.settings),
+        label: 'הגדרות',
+      ),
+    ];
+  }
+
+  /// Handles navigation selection and associated side effects
+  void _handleNavigationSelected(int index, AppModel appModel) {
+    switch (index) {
+      case 3:
+        // we need to open a new search if no search tab exists, OR if the current tab is a search tab (meaning the user want a new search)
+        if (appModel.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
+            (appModel.currentView.value == Screens.search &&
+                appModel.tabs[appModel.currentTab].runtimeType ==
+                    SearchingTab)) {
+          appModel.openNewSearchTab();
+        } else if (appModel.tabs
+            .any((tab) => tab.runtimeType == SearchingTab)) {
+          appModel.currentTab = appModel.tabs
+              .indexWhere((tab) => tab.runtimeType == SearchingTab);
+        }
+        appModel.currentView.value = Screens.values[index];
+        break;
+      case 0:
+        appModel.currentView.value = Screens.values[index];
+        if (!(Platform.isAndroid || Platform.isIOS)) {
+          appModel.bookLocatorFocusNode.requestFocus();
+          appModel.bookLocatorController.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: appModel.bookLocatorController.text.length);
+        }
+        break;
+      case 1:
+        appModel.currentView.value = Screens.values[index];
+        appModel.findReferenceFocusNode.requestFocus();
+        appModel.findReferenceController.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: appModel.findReferenceController.text.length);
+        break;
+    }
+  }
+
+  /// Builds the main layout of the application
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -172,67 +270,20 @@ class MainWindowScreenState extends State<MainWindowScreen>
                             builder: (context, constraints) => NavigationRail(
                                 labelType: NavigationRailLabelType.all,
                                 destinations: [
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.library_books),
-                                    label: Text('ספרייה'),
-                                  ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.auto_stories_rounded),
-                                    label: Text('איתור'),
-                                  ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.menu_book),
-                                    label: Text('עיון'),
-                                  ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.search),
-                                    label: Text('חיפוש'),
-                                  ),
-                                  const NavigationRailDestination(
-                                    icon: Icon(Icons.star),
-                                    label: Text('מועדפים'),
-                                  ),
-                                  NavigationRailDestination(
-                                    icon: const Icon(Icons.settings),
-                                    label: const Text('הגדרות'),
-                                    padding: EdgeInsets.only(
-                                        top: constraints.maxHeight - 410),
-                                  ),
+                                  for (var destination
+                                      in _buildNavigationDestinations())
+                                    NavigationRailDestination(
+                                      icon: destination.icon,
+                                      label: Text(destination.label),
+                                      padding: destination.label == 'הגדרות'
+                                          ? EdgeInsets.only(
+                                              top: constraints.maxHeight - 410)
+                                          : null,
+                                    ),
                                 ],
                                 selectedIndex: appModel.currentView.value.index,
-                                onDestinationSelected: (int index) {
-                                  appModel.currentView.value =
-                                      Screens.values[index];
-                                  switch (index) {
-                                    case 3:
-                                      appModel.openNewSearchTab();
-                                    case 0:
-                                      if (!(Platform.isAndroid ||
-                                          Platform.isIOS)) {
-                                        appModel.bookLocatorFocusNode
-                                            .requestFocus();
-                                        appModel.bookLocatorController
-                                                .selection =
-                                            TextSelection(
-                                                baseOffset: 0,
-                                                extentOffset: appModel
-                                                    .bookLocatorController
-                                                    .text
-                                                    .length);
-                                      }
-                                    case 1:
-                                      appModel.findReferenceFocusNode
-                                          .requestFocus();
-                                      appModel.findReferenceController
-                                              .selection =
-                                          TextSelection(
-                                              baseOffset: 0,
-                                              extentOffset: appModel
-                                                  .findReferenceController
-                                                  .text
-                                                  .length);
-                                  }
-                                }),
+                                onDestinationSelected: (index) =>
+                                    _handleNavigationSelected(index, appModel)),
                           ),
                         ),
                         Expanded(child: pageView),
@@ -242,32 +293,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                         Expanded(child: pageView),
                         Consumer<AppModel>(
                           builder: (context, appModel, child) => NavigationBar(
-                              destinations: const [
-                                NavigationDestination(
-                                  icon: Icon(Icons.library_books),
-                                  label: 'ספרייה',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.auto_stories_rounded),
-                                  label: 'איתור',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.menu_book),
-                                  label: 'עיון',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.search),
-                                  label: 'חיפוש',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.star),
-                                  label: 'מועדפים',
-                                ),
-                                NavigationDestination(
-                                  icon: Icon(Icons.settings),
-                                  label: 'הגדרות',
-                                ),
-                              ],
+                              destinations: _buildNavigationDestinations(),
                               selectedIndex: appModel.currentView.value.index,
                               onDestinationSelected: (int index) {
                                 appModel.currentView.value =
