@@ -52,7 +52,18 @@ class _ReadingScreenState extends State<ReadingScreen>
     return Consumer<AppModel>(
       builder: (context, appModel, child) {
         if (appModel.tabs.isEmpty) {
-          appModel.currentView.value = Screens.library;
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('לא נבחרו ספרים'),
+                TextButton(
+                  child: const Text('דפדף בספרייה'),
+                  onPressed: () => appModel.currentView.value = Screens.library,
+                )
+              ],
+            ),
+          );
         }
         return Builder(
           builder: (context) {

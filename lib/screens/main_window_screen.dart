@@ -236,7 +236,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-        listenable: context.watch<AppModel>(),
+        listenable: context.read<AppModel>(),
         builder: (context, child) {
           _checkLibrary();
           if (_isLibraryEmpty) {

@@ -308,6 +308,9 @@ class AppModel with ChangeNotifier {
     addTabToHistory(tab);
     tabs.remove(tab);
     currentTab = max(currentTab - 1, 0);
+    if (tabs.isEmpty) {
+      currentView.value = Screens.library;
+    }
     notifyListeners();
     saveTabsToDisk();
   }
