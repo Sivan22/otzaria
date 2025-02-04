@@ -42,13 +42,12 @@ abstract class Book {
   factory Book.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
       case 'TextBook':
-        return TextBook(
-            title: json['title'], category: Category.fromJson(json));
+        return TextBook(title: json['title']);
       case 'PdfBook':
         return PdfBook(
-            title: json['title'],
-            path: json['path'],
-            category: Category.fromJson(json));
+          title: json['title'],
+          path: json['path'],
+        );
       case 'OtzarBook':
         return ExternalBook.fromJson(json);
       default:
@@ -107,7 +106,6 @@ class TextBook extends Book {
   factory TextBook.fromJson(Map<String, dynamic> json) {
     return TextBook(
       title: json['title'],
-      category: Category.fromJson(json['category']),
     );
   }
 
@@ -232,9 +230,9 @@ class PdfBook extends Book {
 
   factory PdfBook.fromJson(Map<String, dynamic> json) {
     return PdfBook(
-        title: json['title'],
-        path: json['path'],
-        category: Category.fromJson(json['category']));
+      title: json['title'],
+      path: json['path'],
+    );
   }
 
   @override
