@@ -80,33 +80,5 @@ jobs:
           name: otzaria-macos.zip
           path: build/macos/Build/Products/Release/otzaria-macos.zip
 
-  build_ios:
-    runs-on: macos-latest
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - name: Build iOS
-        run: |
-          flutter build ios --release
-          cd build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload
-          zip -r otzaria-ios.ipa Payload
-      - name: Upload iOS build
-        uses: actions/upload-artifact@v4
-        with:
-          name: otzaria-ios.ipa
-          path: build/ios/iphoneos/otzaria-ios.ipa
-      - name: Upload iOS archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build
-          path: |
-            build/ios/archive/Runner.xcarchive
-            build/ios/iphoneos/
+
+     
