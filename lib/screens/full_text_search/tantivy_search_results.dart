@@ -72,9 +72,9 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                         ),
                                       ),
                                     ),
-                                    if (constrains.maxWidth > 600)
+                                    if (constrains.maxWidth > 800)
                                       OrderOfResults(widget: widget),
-                                    if (constrains.maxWidth > 600)
+                                    if (constrains.maxWidth > 800)
                                       NumOfResults(tab: widget.tab),
                                   ],
                                 );

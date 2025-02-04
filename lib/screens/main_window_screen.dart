@@ -73,8 +73,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
       const KeepAlivePage(child: MySettingsScreen()),
     ];
 
-    final currentView =
-        Provider.of<AppModel>(context, listen: false).currentView;
+    final currentView = context.read<AppModel>().currentView;
     pageController = PageController(
       initialPage: currentView.value.index,
     );
@@ -196,21 +195,24 @@ class MainWindowScreenState extends State<MainWindowScreen>
   void _handleNavigationSelected(int index, AppModel appModel) {
     switch (index) {
       case 3:
-        // we need to open a new search if no search tab exists, OR if the current tab is a search tab (meaning the user want a new search)
+        // we need to open a new search if no search tab exists, OR if the current tab is a search tab (meaning the user wants a new search)
         if (appModel.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
             (appModel.currentView.value == Screens.search &&
+            appModel.tabs.length > appModel.currentTab &&
                 appModel.tabs[appModel.currentTab].runtimeType ==
                     SearchingTab)) {
           appModel.openNewSearchTab();
-        } else if (appModel.tabs
-            .any((tab) => tab.runtimeType == SearchingTab)) {
+        }
+        // if sesrch tab exists but not focused, move to it
+        else if (appModel.tabs.any((tab) => tab.runtimeType == SearchingTab)) {
           appModel.currentTab = appModel.tabs
               .indexWhere((tab) => tab.runtimeType == SearchingTab);
+          appModel.setTab(index);
         }
         appModel.currentView.value = Screens.values[index];
         break;
       case 0:
-        appModel.currentView.value = Screens.values[index];
+        appModel.currentView.value = Screens.library;
         if (!(Platform.isAndroid || Platform.isIOS)) {
           appModel.bookLocatorFocusNode.requestFocus();
           appModel.bookLocatorController.selection = TextSelection(
@@ -219,12 +221,14 @@ class MainWindowScreenState extends State<MainWindowScreen>
         }
         break;
       case 1:
-        appModel.currentView.value = Screens.values[index];
+        appModel.currentView.value = Screens.find;
         appModel.findReferenceFocusNode.requestFocus();
         appModel.findReferenceController.selection = TextSelection(
             baseOffset: 0,
             extentOffset: appModel.findReferenceController.text.length);
         break;
+      default:
+        appModel.currentView.value = Screens.values[index];
     }
   }
 

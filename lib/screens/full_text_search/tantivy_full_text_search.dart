@@ -38,7 +38,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     super.build(context);
     return Scaffold(
       body: LayoutBuilder(builder: (context, constraints) {
-        if (constraints.maxWidth < 600) return _buildForSmallScreens();
+        if (constraints.maxWidth < 800) return _buildForSmallScreens();
         return _buildForWideScreens();
       }),
     );
@@ -56,7 +56,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       Expanded(
         child: Stack(
           children: [
-            Expanded(child: TantivySearchResults(tab: widget.tab)),
+            TantivySearchResults(tab: widget.tab),
             ValueListenableBuilder(
                 valueListenable: isLeftPaneOpen,
                 builder: (context, value, child) => AnimatedSize(

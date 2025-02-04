@@ -284,6 +284,12 @@ class AppModel with ChangeNotifier {
     saveTabsToDisk();
   }
 
+  void setTab(int index) {
+    currentTab = index;
+    notifyListeners();
+    saveTabsToDisk();
+  }
+
   /// Opens an existing tab at the specified index.
   ///
   /// Handles both PDF and text books appropriately.
