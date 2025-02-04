@@ -198,7 +198,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
         // we need to open a new search if no search tab exists, OR if the current tab is a search tab (meaning the user wants a new search)
         if (appModel.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
             (appModel.currentView.value == Screens.search &&
-            appModel.tabs.length > appModel.currentTab &&
+                appModel.tabs.length > appModel.currentTab &&
                 appModel.tabs[appModel.currentTab].runtimeType ==
                     SearchingTab)) {
           appModel.openNewSearchTab();
@@ -236,7 +236,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-        listenable: Provider.of<AppModel>(context),
+        listenable: context.watch<AppModel>(),
         builder: (context, child) {
           _checkLibrary();
           if (_isLibraryEmpty) {

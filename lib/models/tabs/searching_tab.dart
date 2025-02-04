@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/books.dart';

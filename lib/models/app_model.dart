@@ -24,7 +24,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/models/workspace.dart';
 import 'package:otzaria/utils/calendar.dart';

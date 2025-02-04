@@ -6,7 +6,7 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/models/links.dart';
 
 class LinksViewer extends StatefulWidget {

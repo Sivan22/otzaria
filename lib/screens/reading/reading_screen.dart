@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/screens/full_text_search/full_text_search_screen.dart';
 import 'package:otzaria/screens/reading/pdf/pdf_book_screen.dart';

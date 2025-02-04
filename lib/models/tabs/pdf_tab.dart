@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:pdfrx/pdfrx.dart';
 

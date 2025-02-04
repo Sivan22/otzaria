@@ -6,7 +6,7 @@ import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 
 class SimpleBookView extends StatefulWidget {

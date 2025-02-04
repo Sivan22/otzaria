@@ -6,7 +6,7 @@ import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import '../../models/full_text_search.dart';
-import '../../models/tabs/tabs.dart';
+import '../../models/tabs/tab.dart';
 import '../../models/search_results.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 

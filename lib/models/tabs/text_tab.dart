@@ -4,7 +4,7 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/links.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 

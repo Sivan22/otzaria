@@ -14,7 +14,7 @@ import 'dart:math';
 import 'links_screen.dart';
 import 'commentators_list_screen.dart';
 import 'package:flutter/services.dart';
-import 'package:otzaria/models/tabs/tabs.dart';
+import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 /// A [StatefulWidget] that displays a text book.
