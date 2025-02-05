@@ -26,6 +26,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initialize();
   runApp(const OtzariaApp());
+  RustLib.dispose();
 }
 
 /// The root widget of the Otzaria application.
