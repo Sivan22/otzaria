@@ -18,6 +18,7 @@ class TantivySearchField extends StatelessWidget {
         controller: widget.tab.queryController,
         onSubmitted: (e) {
           widget.tab.updateResults();
+          widget.tab.isLeftPaneOpen.value = false;
         },
         decoration: InputDecoration(
           border: const OutlineInputBorder(),

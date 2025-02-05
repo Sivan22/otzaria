@@ -198,16 +198,14 @@ class MainWindowScreenState extends State<MainWindowScreen>
         // we need to open a new search if no search tab exists, OR if the current tab is a search tab (meaning the user wants a new search)
         if (appModel.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
             (appModel.currentView.value == Screens.search &&
-                appModel.tabs.length > appModel.currentTab &&
                 appModel.tabs[appModel.currentTab].runtimeType ==
                     SearchingTab)) {
           appModel.openNewSearchTab();
         }
         // if sesrch tab exists but not focused, move to it
         else if (appModel.tabs.any((tab) => tab.runtimeType == SearchingTab)) {
-          appModel.currentTab = appModel.tabs
-              .indexWhere((tab) => tab.runtimeType == SearchingTab);
-          appModel.setTab(index);
+          appModel.setTab(appModel.tabs
+              .indexWhere((tab) => tab.runtimeType == SearchingTab));
         }
         appModel.currentView.value = Screens.values[index];
         break;
