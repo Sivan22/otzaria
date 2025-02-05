@@ -58,37 +58,31 @@ class _PageNumberDisplayState extends State<PageNumberDisplay> {
   @override
   Widget build(BuildContext context) {
     if (!widget.controller.isReady) {
-      return SizedBox(
-        width: 65,
-        child: Center(
-          child: Text(
-            "",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
+      return SizedBox.shrink();
     }
 
     final pageNumber = widget.controller.pageNumber ?? 1;
     final pageCount = widget.controller.pages.length;
 
-    return SizedBox(
-      width: 80,
+    return Center(
       child: _isEditing
-          ? TextField(
-              controller: _textController,
-              focusNode: _focusNode,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-              decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                isDense: true,
-                hintText: '1-$pageCount',
-                border: const OutlineInputBorder(),
+          ? SizedBox(
+              width: 80,
+              child: TextField(
+                controller: _textController,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  isDense: true,
+                  hintText: '1-$pageCount',
+                  border: const OutlineInputBorder(),
+                ),
+                onSubmitted: _handleSubmitted,
               ),
-              onSubmitted: _handleSubmitted,
             )
           : Center(
               child: Tooltip(
