@@ -16,7 +16,9 @@ class TantivySearchField extends StatelessWidget {
       child: TextField(
         autofocus: true,
         controller: widget.tab.queryController,
-        onSubmitted: (e) => widget.tab.updateResults(),
+        onSubmitted: (e) {
+          widget.tab.updateResults();
+        },
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           hintText: "חפש כאן..",

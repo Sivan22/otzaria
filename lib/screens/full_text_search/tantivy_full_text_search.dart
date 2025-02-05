@@ -20,7 +20,6 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   @override
   bool get wantKeepAlive => true;
 
-  ValueNotifier isLeftPaneOpen = ValueNotifier(true);
   bool _showIndexWarning = false;
 
   @override
@@ -58,7 +57,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
           children: [
             TantivySearchResults(tab: widget.tab),
             ValueListenableBuilder(
-                valueListenable: isLeftPaneOpen,
+                valueListenable: widget.tab.isLeftPaneOpen,
                 builder: (context, value, child) => AnimatedSize(
                     duration: const Duration(milliseconds: 300),
                     child: SizedBox(
@@ -145,7 +144,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
         tooltip: "הגדרות חיפוש",
         icon: const Icon(Icons.menu),
         onPressed: () {
-          isLeftPaneOpen.value = !isLeftPaneOpen.value;
+          widget.tab.isLeftPaneOpen.value = !widget.tab.isLeftPaneOpen.value;
         },
       ),
     );

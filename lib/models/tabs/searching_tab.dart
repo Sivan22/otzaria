@@ -16,6 +16,8 @@ class SearchingTab extends OpenedTab {
 
   final queryController = TextEditingController();
 
+  ValueNotifier isLeftPaneOpen = ValueNotifier(true);
+
   Future<int> totalResultsNum = Future.value(0);
 
   List<String> booksNamesToSearch = [];
