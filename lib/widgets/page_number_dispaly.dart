@@ -58,64 +58,56 @@ class _PageNumberDisplayState extends State<PageNumberDisplay> {
   @override
   Widget build(BuildContext context) {
     if (!widget.controller.isReady) {
-      return SizedBox(
-        width: 65,
-        child: Center(
-          child: Text(
-            "",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
+      return SizedBox.shrink();
     }
 
     final pageNumber = widget.controller.pageNumber ?? 1;
     final pageCount = widget.controller.pages.length;
 
-    return SizedBox(
-      width: 80,
+    return Center(
       child: _isEditing
-          ? TextField(
-              controller: _textController,
-              focusNode: _focusNode,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-              decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                isDense: true,
-                hintText: '1-$pageCount',
-                border: const OutlineInputBorder(),
+          ? SizedBox(
+              width: 65,
+              child: TextField(
+                controller: _textController,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  isDense: true,
+                  hintText: '1-$pageCount',
+                  border: const OutlineInputBorder(),
+                ),
+                onSubmitted: _handleSubmitted,
               ),
-              onSubmitted: _handleSubmitted,
             )
-          : Center(
-              child: Tooltip(
-                message: "הזן מספר דף",
-                child: InkWell(
-                    mouseCursor: SystemMouseCursors.click,
-                    child: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isEditing = true;
-                          _textController.text = pageNumber.toString();
-                        });
-                        // Ensure the text is selected when editing starts
-                        Future.delayed(const Duration(milliseconds: 50), () {
-                          _focusNode.requestFocus();
-                          _textController.selection = TextSelection(
-                            baseOffset: 0,
-                            extentOffset: _textController.text.length,
-                          );
-                        });
-                      },
-                      child: Text(
-                        '$pageNumber/$pageCount',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    )),
-              ),
+          : Tooltip(
+              message: "הזן מספר דף",
+              child: InkWell(
+                  mouseCursor: SystemMouseCursors.click,
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isEditing = true;
+                        _textController.text = pageNumber.toString();
+                      });
+                      // Ensure the text is selected when editing starts
+                      Future.delayed(const Duration(milliseconds: 50), () {
+                        _focusNode.requestFocus();
+                        _textController.selection = TextSelection(
+                          baseOffset: 0,
+                          extentOffset: _textController.text.length,
+                        );
+                      });
+                    },
+                    child: Text(
+                      '$pageNumber/$pageCount',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  )),
             ),
     );
   }
