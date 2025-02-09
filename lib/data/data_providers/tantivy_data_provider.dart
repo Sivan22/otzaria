@@ -1,7 +1,4 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:search_engine/search_engine.dart';
@@ -33,12 +30,8 @@ class TantivyDataProvider {
   ValueNotifier<bool> isIndexing = ValueNotifier(false);
 
   /// Maintains a list of processed books to avoid reindexing
-  late List booksDone;
+  late List<(String, String)> booksDone;
 
-  /// Initializes the data provider and loads the list of previously indexed books from disk.
-  ///
-  /// Uses Hive for persistent storage of indexed book records, storing them in the 'index'
-  /// subdirectory of the configured library path.
   TantivyDataProvider() {
     reopenIndex();
   }
@@ -53,12 +46,17 @@ class TantivyDataProvider {
     //test the engine
     searchTexts('בראשית', ['/'], 1);
 
-    booksDone = Hive.box(
-            name: 'books_indexed',
-            directory: (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
-                Platform.pathSeparator +
-                'index')
-        .get('key-books-done', defaultValue: []);
+    try {
+      booksDone = Hive.box(
+              name: 'books_indexed',
+              directory:
+                  (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+                      Platform.pathSeparator +
+                      'index')
+          .get('key-books-done', defaultValue: []);
+    } catch (e) {
+      booksDone = [];
+    }
   }
 
   /// Persists the list of indexed books to disk using Hive storage.
@@ -140,15 +138,13 @@ class TantivyDataProvider {
   /// Indexes all books in the provided library within the specified range.
   ///
   /// [library] The library containing books to index
-  /// [start] Starting index in the library's book list (default: 0)
-  /// [end] Ending index in the library's book list (default: 100000)
   ///
   /// Updates progress through numOfbooksDone and numOfbooksTotal notifiers
-  addAllTBooksToTantivy(Library library,
-      {int start = 0, int end = 100000}) async {
+  addAllTBooksToTantivy(
+    Library library,
+  ) async {
     isIndexing.value = true;
-    var allBooks = library.getAllBooks();
-    allBooks = allBooks.getRange(start, min(end, allBooks.length)).toList();
+    final allBooks = library.getAllBooks();
 
     numOfbooksTotal.value = allBooks.length;
     numOfbooksDone.value = 0;
@@ -161,19 +157,27 @@ class TantivyDataProvider {
       try {
         // Handle different book types appropriately
         if (book is TextBook) {
-          await addTextsToTantivy(book);
+          if (!booksDone.contains((book.title, "textBook"))) {
+            await addTextsToTantivy(book);
+            booksDone.add((book.title, "textBook"));
+          }
+          numOfbooksDone.value = numOfbooksDone.value! + 1;
         } else if (book is PdfBook) {
-          await addPdfTextsToTantivy(book);
+          if (!booksDone.contains((book.title, "pdfBook"))) {
+            await addPdfTextsToTantivy(book);
+            booksDone.add((book.title, "pdfBook"));
+          }
+          numOfbooksDone.value = numOfbooksDone.value! + 1;
         }
       } catch (e) {
         print('Error adding ${book.title} to index: $e');
       }
-    }
 
-    // Reset progress indicators after completion
-    numOfbooksDone.value = null;
-    numOfbooksTotal.value = null;
-    isIndexing.value = false;
+      // Reset progress indicators after completion
+      numOfbooksDone.value = null;
+      numOfbooksTotal.value = null;
+      isIndexing.value = false;
+    }
   }
 
   /// Indexes a text-based book by processing its content and adding it to the search index.
@@ -189,13 +193,6 @@ class TantivyDataProvider {
     var text = await book.text;
     final title = book.title;
     final topics = "/${book.topics.replaceAll(', ', '/')}";
-
-    // Check if book was already indexed using content hash
-    final hash = sha1.convert(utf8.encode(text)).toString();
-    if (booksDone.contains(hash)) {
-      numOfbooksDone.value = numOfbooksDone.value! + 1;
-      return;
-    }
 
     // Preprocess text by removing HTML and vowel marks
 
@@ -234,7 +231,6 @@ class TantivyDataProvider {
     }
 
     await index.commit();
-    booksDone.add(hash);
     saveBooksDoneToDisk();
     numOfbooksDone.value = numOfbooksDone.value! + 1;
   }
@@ -250,16 +246,9 @@ class TantivyDataProvider {
   addPdfTextsToTantivy(PdfBook book) async {
     final index = await engine;
 
-    // Check if PDF was already indexed using file hash
-    final data = await File(book.path).readAsBytes();
-    final hash = sha1.convert(data).toString();
-    if (booksDone.contains(hash)) {
-      numOfbooksDone.value = numOfbooksDone.value! + 1;
-      return;
-    }
-
     // Extract text from each page
-    final pages = await PdfDocument.openData(data).then((value) => value.pages);
+    final pages =
+        await PdfDocument.openFile(book.path).then((value) => value.pages);
     final title = book.title;
     final topics = "/${book.topics.replaceAll(', ', '/')}";
 
@@ -284,7 +273,6 @@ class TantivyDataProvider {
     }
 
     await index.commit();
-    booksDone.add(hash);
     saveBooksDoneToDisk();
     numOfbooksDone.value = numOfbooksDone.value! + 1;
   }

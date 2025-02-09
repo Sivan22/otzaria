@@ -226,7 +226,7 @@ class AppModel with ChangeNotifier {
           Settings.getValue<bool>('key-auto-index-update') ?? true;
       if (autoIndex &&
           !TantivyDataProvider.instance.isIndexing.value &&
-          totalBooks - indexedBooks > 100) {
+          totalBooks - indexedBooks > 10) {
         DataRepository.instance.addAllTextsToTantivy(await library);
       }
     }();
@@ -574,8 +574,8 @@ class AppModel with ChangeNotifier {
   ///
   /// [start] Starting index in the library
   /// [end] Ending index in the library
-  Future<void> addAllTextsToTantivy({int start = 0, int end = 100000}) async {
-    data.addAllTextsToTantivy(await library, start: start, end: end);
+  Future<void> addAllTextsToTantivy() async {
+    data.addAllTextsToTantivy(await library);
   }
 
   /// Reloads the library from disk
