@@ -308,7 +308,7 @@ class _TextBookViewerState extends State<TextBookViewer>
 
                   final Uri emailLaunchUri = Uri(
                     scheme: 'mailto',
-                    path: 'otzaria.1@gmail.com',
+                    path: 'otzaria.200@gmail.com',
                     query: encodeQueryParameters(<String, String>{
                       'subject': 'דיווח על טעות: ${widget.tab.book.title}',
                       'body':
