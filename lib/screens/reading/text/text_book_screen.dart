@@ -16,6 +16,7 @@ import 'commentators_list_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:url_launcher/url_launcher.dart';
 
 /// A [StatefulWidget] that displays a text book.
 ///
@@ -57,6 +58,13 @@ class _TextBookViewerState extends State<TextBookViewer>
     with TickerProviderStateMixin {
   final FocusNode textSearchFocusNode = FocusNode();
   late TabController tabController;
+
+  String? encodeQueryParameters(Map<String, String> params) {
+    return params.entries
+        .map((MapEntry<String, String> e) =>
+            '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+  }
 
   @override
   initState() {
@@ -284,6 +292,49 @@ class _TextBookViewerState extends State<TextBookViewer>
                     ),
                   ),
                 ),
+              ),
+              // Report bug button
+              IconButton(
+                icon: const Icon(Icons.error_outline),
+                tooltip: 'דווח על טעות בספר',
+                onPressed: () async {
+                  final currentRef = await utils.refFromIndex(
+                    widget.tab.positionsListener.itemPositions.value.isNotEmpty
+                        ? widget.tab.positionsListener.itemPositions.value.first
+                            .index
+                        : 0,
+                    widget.tab.tableOfContents,
+                  );
+
+                  final Uri emailLaunchUri = Uri(
+                    scheme: 'mailto',
+                    path: 'otzaria.1@gmail.com',
+                    query: encodeQueryParameters(<String, String>{
+                      'subject': 'דיווח על טעות: ${widget.tab.book.title}',
+                      'body':
+                          'שם הספר: ${widget.tab.book.title}\nמיקום: $currentRef\n\nפירוט הטעות:\n',
+                    }),
+                  );
+
+                  try {
+                    if (!await launchUrl(emailLaunchUri,
+                        mode: LaunchMode.externalApplication)) {
+                      // ignore: use_build_context_synchronously
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('לא ניתן לפתוח את תוכנת הדואר'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // ignore: use_build_context_synchronously
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('לא ניתן לפתוח את תוכנת הדואר'),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),
