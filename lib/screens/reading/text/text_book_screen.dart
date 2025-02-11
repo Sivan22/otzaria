@@ -313,16 +313,117 @@ class _TextBookViewerState extends State<TextBookViewer>
                   final bookDetails =
                       await getBookDetails(widget.tab.book.title);
 
-                  // Show dialog before opening email
+                  // Get all visible text content
+                  final allText = (await widget.data).split('\n');
+                  final visiblePositions = widget
+                      .tab.positionsListener.itemPositions.value
+                      .toList()
+                    ..sort((a, b) =>
+                        a.index.compareTo(b.index)); // Sort positions by index
+                  final visibleText = visiblePositions
+                      .map((pos) => utils.stripHtmlIfNeeded(allText[pos.index]))
+                      .join('\n');
+
+                  String? selectedContent;
+
+                  // Show text selection dialog
+                  if (!mounted) return;
+                  final selectedText = await showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return StatefulBuilder(
+                        builder: (context, setDialogState) {
+                          return AlertDialog(
+                            title: const Text('בחר את הטקסט שבו יש טעות'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('סמן את הטקסט שבו נמצאת הטעות:'),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: SingleChildScrollView(
+                                        child: SelectableText(
+                                          visibleText,
+                                          style: TextStyle(
+                                            fontSize: widget.tab.textFontSize,
+                                            fontFamily: Settings.getValue(
+                                                    'key-font-family') ??
+                                                'candara',
+                                          ),
+                                          onSelectionChanged:
+                                              (selection, cause) {
+                                            if (selection.start !=
+                                                selection.end) {
+                                              final newContent =
+                                                  visibleText.substring(
+                                                      selection.start,
+                                                      selection.end);
+                                              if (newContent.isNotEmpty) {
+                                                setDialogState(() {
+                                                  selectedContent = newContent;
+                                                });
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('ביטול'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('המשך'),
+                                onPressed: selectedContent == null ||
+                                        selectedContent!.isEmpty
+                                    ? null
+                                    : () {
+                                        Navigator.of(context)
+                                            .pop(selectedContent);
+                                      },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+
+                  if (selectedText == null || selectedText.isEmpty) return;
+
+                  // Show confirmation dialog
                   if (!mounted) return;
                   final bool? shouldProceed = await showDialog<bool>(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text('דיווח על טעות בספר'),
-                        content: const Text(
-                          'נא לכתוב את הטקסט המדוייק הקיים כיום (5 מילים לפחות לפני הטקסט להחלפה ו5 מילים אחרי עם הטקסט הצריך שינוי ברצף)\n\n'
-                          'ואת הטקסט שאתם חושבים שצריך להיות במקום הטקסט הנ"ל. עם ציון נוסף בנפרד מה השינוי ועל סמך מה אתם אומרים את זה מסברא או מעיון בספר.',
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'הטקסט שנבחר:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(selectedText),
+                          ],
                         ),
                         actions: <Widget>[
                           TextButton(
@@ -359,6 +460,7 @@ class _TextBookViewerState extends State<TextBookViewer>
                           'שם הקובץ: ${bookDetails['שם הקובץ']}\n'
                           'נתיב הקובץ: ${bookDetails['נתיב הקובץ']}\n'
                           'תיקיית המקור: ${bookDetails['תיקיית המקור']}\n\n'
+                          'הטקסט שבו נמצאה הטעות:\n$selectedText\n\n'
                           'פירוט הטעות:\n',
                     }),
                   );
