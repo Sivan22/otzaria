@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
@@ -18,6 +19,7 @@ import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 /// A [StatefulWidget] that displays a text book.
 ///
@@ -342,9 +344,14 @@ class _TextBookViewerState extends State<TextBookViewer>
 
                   if (shouldProceed != true) return;
 
+                  final String emailAddress =
+                      bookDetails['תיקיית המקור']?.contains('sefaria') == true
+                          ? 'corrections@sefaria.org'
+                          : 'otzaria.200@gmail.com';
+
                   final Uri emailLaunchUri = Uri(
                     scheme: 'mailto',
-                    path: 'otzaria.200@gmail.com',
+                    path: emailAddress,
                     query: encodeQueryParameters(<String, String>{
                       'subject': 'דיווח על טעות: ${widget.tab.book.title}',
                       'body': 'שם הספר: ${widget.tab.book.title}\n'
@@ -615,11 +622,13 @@ class _TextBookViewerState extends State<TextBookViewer>
   // Modify the function to return a map of book details
   Future<Map<String, String>> getBookDetails(String bookTitle) async {
     try {
-      final response = await http.get(Uri.parse(
-          'https://raw.githubusercontent.com/zevisvei/otzaria-library/main/SourcesBooks.csv'));
-
-      if (response.statusCode == 200) {
-        final lines = response.body.split('\n');
+      final libraryPath = Settings.getValue('key-library-path');
+      // אוצריא/אודות התוכנה/SourcesBooks.csv;
+      final file = File(
+          '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv');
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        final lines = contents.split('\n');
 
         // Skip header line
         for (var i = 1; i < lines.length; i++) {
@@ -637,7 +646,7 @@ class _TextBookViewerState extends State<TextBookViewer>
         }
       }
     } catch (e) {
-      debugPrint('Error fetching SourcesBooks.csv: $e');
+      debugPrint('Error reading sourcebooks.csv: $e');
     }
     return {
       'שם הקובץ': 'לא ניתן למצוא את הספר',
