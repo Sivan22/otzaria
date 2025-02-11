@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 /// A [StatefulWidget] that displays a text book.
 ///
@@ -306,13 +307,52 @@ class _TextBookViewerState extends State<TextBookViewer>
                     widget.tab.tableOfContents,
                   );
 
+                  // Get all book details
+                  final bookDetails =
+                      await getBookDetails(widget.tab.book.title);
+
+                  // Show dialog before opening email
+                  if (!mounted) return;
+                  final bool? shouldProceed = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('דיווח על טעות בספר'),
+                        content: const Text(
+                          'נא לכתוב את הטקסט המדוייק הקיים כיום (5 מילים לפחות לפני הטקסט להחלפה ו5 מילים אחרי עם הטקסט הצריך שינוי ברצף)\n\n'
+                          'ואת הטקסט שאתם חושבים שצריך להיות במקום הטקסט הנ"ל. עם ציון נוסף בנפרד מה השינוי ועל סמך מה אתם אומרים את זה מסברא או מעיון בספר.',
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('ביטול'),
+                            onPressed: () {
+                              Navigator.of(context).pop(false);
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('פתיחת דוא"ל'),
+                            onPressed: () {
+                              Navigator.of(context).pop(true);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (shouldProceed != true) return;
+
                   final Uri emailLaunchUri = Uri(
                     scheme: 'mailto',
                     path: 'otzaria.200@gmail.com',
                     query: encodeQueryParameters(<String, String>{
                       'subject': 'דיווח על טעות: ${widget.tab.book.title}',
-                      'body':
-                          'שם הספר: ${widget.tab.book.title}\nמיקום: $currentRef\n\nפירוט הטעות:\n',
+                      'body': 'שם הספר: ${widget.tab.book.title}\n'
+                          'מיקום: $currentRef\n'
+                          'שם הקובץ: ${bookDetails['שם הקובץ']}\n'
+                          'נתיב הקובץ: ${bookDetails['נתיב הקובץ']}\n'
+                          'תיקיית המקור: ${bookDetails['תיקיית המקור']}\n\n'
+                          'פירוט הטעות:\n',
                     }),
                   );
 
@@ -570,5 +610,39 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   void closeLeftPane() {
     widget.tab.showLeftPane.value = false;
+  }
+
+  // Modify the function to return a map of book details
+  Future<Map<String, String>> getBookDetails(String bookTitle) async {
+    try {
+      final response = await http.get(Uri.parse(
+          'https://raw.githubusercontent.com/zevisvei/otzaria-library/main/SourcesBooks.csv'));
+
+      if (response.statusCode == 200) {
+        final lines = response.body.split('\n');
+
+        // Skip header line
+        for (var i = 1; i < lines.length; i++) {
+          final parts = lines[i].split(',');
+          if (parts.length >= 3) {
+            final fileName = parts[0].replaceAll('.txt', '');
+            if (fileName == bookTitle) {
+              return {
+                'שם הקובץ': parts[0],
+                'נתיב הקובץ': parts[1],
+                'תיקיית המקור': parts[2],
+              };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching SourcesBooks.csv: $e');
+    }
+    return {
+      'שם הקובץ': 'לא ניתן למצוא את הספר',
+      'נתיב הקובץ': 'לא ניתן למצוא את הספר',
+      'תיקיית המקור': 'לא ניתן למצוא את הספר'
+    };
   }
 }
