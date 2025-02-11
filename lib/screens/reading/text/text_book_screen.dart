@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
@@ -16,6 +17,9 @@ import 'commentators_list_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 /// A [StatefulWidget] that displays a text book.
 ///
@@ -57,6 +61,13 @@ class _TextBookViewerState extends State<TextBookViewer>
     with TickerProviderStateMixin {
   final FocusNode textSearchFocusNode = FocusNode();
   late TabController tabController;
+
+  String? encodeQueryParameters(Map<String, String> params) {
+    return params.entries
+        .map((MapEntry<String, String> e) =>
+            '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+  }
 
   @override
   initState() {
@@ -284,6 +295,195 @@ class _TextBookViewerState extends State<TextBookViewer>
                     ),
                   ),
                 ),
+              ),
+              // Report bug button
+              IconButton(
+                icon: const Icon(Icons.error_outline),
+                tooltip: 'דווח על טעות בספר',
+                onPressed: () async {
+                  final currentRef = await utils.refFromIndex(
+                    widget.tab.positionsListener.itemPositions.value.isNotEmpty
+                        ? widget.tab.positionsListener.itemPositions.value.first
+                            .index
+                        : 0,
+                    widget.tab.tableOfContents,
+                  );
+
+                  // Get all book details
+                  final bookDetails =
+                      await getBookDetails(widget.tab.book.title);
+
+                  // Get all visible text content
+                  final allText = (await widget.data).split('\n');
+                  final visiblePositions = widget
+                      .tab.positionsListener.itemPositions.value
+                      .toList()
+                    ..sort((a, b) =>
+                        a.index.compareTo(b.index)); // Sort positions by index
+                  final visibleText = visiblePositions
+                      .map((pos) => utils.stripHtmlIfNeeded(allText[pos.index]))
+                      .join('\n');
+
+                  String? selectedContent;
+
+                  // Show text selection dialog
+                  if (!mounted) return;
+                  final selectedText = await showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return StatefulBuilder(
+                        builder: (context, setDialogState) {
+                          return AlertDialog(
+                            title: const Text('בחר את הטקסט שבו יש טעות'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('סמן את הטקסט שבו נמצאת הטעות:'),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: SingleChildScrollView(
+                                        child: SelectableText(
+                                          visibleText,
+                                          style: TextStyle(
+                                            fontSize: widget.tab.textFontSize,
+                                            fontFamily: Settings.getValue(
+                                                    'key-font-family') ??
+                                                'candara',
+                                          ),
+                                          onSelectionChanged:
+                                              (selection, cause) {
+                                            if (selection.start !=
+                                                selection.end) {
+                                              final newContent =
+                                                  visibleText.substring(
+                                                      selection.start,
+                                                      selection.end);
+                                              if (newContent.isNotEmpty) {
+                                                setDialogState(() {
+                                                  selectedContent = newContent;
+                                                });
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('ביטול'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('המשך'),
+                                onPressed: selectedContent == null ||
+                                        selectedContent!.isEmpty
+                                    ? null
+                                    : () {
+                                        Navigator.of(context)
+                                            .pop(selectedContent);
+                                      },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+
+                  if (selectedText == null || selectedText.isEmpty) return;
+
+                  // Show confirmation dialog
+                  if (!mounted) return;
+                  final bool? shouldProceed = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('דיווח על טעות בספר'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'הטקסט שנבחר:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(selectedText),
+                          ],
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('ביטול'),
+                            onPressed: () {
+                              Navigator.of(context).pop(false);
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('פתיחת דוא"ל'),
+                            onPressed: () {
+                              Navigator.of(context).pop(true);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (shouldProceed != true) return;
+
+                  final String emailAddress =
+                      bookDetails['תיקיית המקור']?.contains('sefaria') == true
+                          ? 'corrections@sefaria.org'
+                          : 'otzaria.200@gmail.com';
+
+                  final Uri emailLaunchUri = Uri(
+                    scheme: 'mailto',
+                    path: emailAddress,
+                    query: encodeQueryParameters(<String, String>{
+                      'subject': 'דיווח על טעות: ${widget.tab.book.title}',
+                      'body': 'שם הספר: ${widget.tab.book.title}\n'
+                          'מיקום: $currentRef\n'
+                          'שם הקובץ: ${bookDetails['שם הקובץ']}\n'
+                          'נתיב הקובץ: ${bookDetails['נתיב הקובץ']}\n'
+                          'תיקיית המקור: ${bookDetails['תיקיית המקור']}\n\n'
+                          'הטקסט שבו נמצאה הטעות:\n$selectedText\n\n'
+                          'פירוט הטעות:\n',
+                    }),
+                  );
+
+                  try {
+                    if (!await launchUrl(emailLaunchUri,
+                        mode: LaunchMode.externalApplication)) {
+                      // ignore: use_build_context_synchronously
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('לא ניתן לפתוח את תוכנת הדואר'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // ignore: use_build_context_synchronously
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('לא ניתן לפתוח את תוכנת הדואר'),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -519,5 +719,41 @@ class _TextBookViewerState extends State<TextBookViewer>
 
   void closeLeftPane() {
     widget.tab.showLeftPane.value = false;
+  }
+
+  // Modify the function to return a map of book details
+  Future<Map<String, String>> getBookDetails(String bookTitle) async {
+    try {
+      final libraryPath = Settings.getValue('key-library-path');
+      // אוצריא/אודות התוכנה/SourcesBooks.csv;
+      final file = File(
+          '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv');
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        final lines = contents.split('\n');
+
+        // Skip header line
+        for (var i = 1; i < lines.length; i++) {
+          final parts = lines[i].split(',');
+          if (parts.length >= 3) {
+            final fileName = parts[0].replaceAll('.txt', '');
+            if (fileName == bookTitle) {
+              return {
+                'שם הקובץ': parts[0],
+                'נתיב הקובץ': parts[1],
+                'תיקיית המקור': parts[2],
+              };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error reading sourcebooks.csv: $e');
+    }
+    return {
+      'שם הקובץ': 'לא ניתן למצוא את הספר',
+      'נתיב הקובץ': 'לא ניתן למצוא את הספר',
+      'תיקיית המקור': 'לא ניתן למצוא את הספר'
+    };
   }
 }
