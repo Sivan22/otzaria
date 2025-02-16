@@ -48,6 +48,32 @@ class _PdfBookViewrState extends State<PdfBookViewr>
     super.dispose();
   }
 
+  String? _getCurrentSectionFromOutline() {
+    final outline = widget.tab.outline.value;
+    if (outline == null) return null;
+
+    final currentPage = widget.tab.pdfViewerController.pageNumber;
+    if (currentPage == null) return null;
+
+    // Find the current section by looking through the outline
+    PdfOutlineNode? currentSection;
+
+    void searchOutline(List<PdfOutlineNode> entries, List<String> path) {
+      for (var entry in entries) {
+        if (entry.dest?.pageNumber != null &&
+            entry.dest!.pageNumber <= currentPage) {
+          currentSection = entry;
+          // Continue searching children to find most specific match
+          searchOutline(entry.children, [...path, entry.title ?? '']);
+        }
+      }
+    }
+
+    searchOutline(outline, []);
+
+    return currentSection?.title;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -55,6 +81,28 @@ class _PdfBookViewrState extends State<PdfBookViewr>
       final wideScreen = (MediaQuery.of(context).size.width >= 600);
       return Scaffold(
         appBar: AppBar(
+          title: ListenableBuilder(
+            listenable: Listenable.merge([
+              widget.tab.pdfViewerController,
+              widget.tab.outline,
+            ]),
+            builder: (context, _) {
+              final sectionTitle = _getCurrentSectionFromOutline();
+              if (sectionTitle == null) {
+                return const SizedBox.shrink();
+              }
+              return Align(
+                alignment: Alignment.topRight,
+                child: SelectionArea(
+                  child: Text(
+                    sectionTitle,
+                    style: const TextStyle(fontSize: 17),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              );
+            },
+          ),
           leading: IconButton(
             icon: const Icon(Icons.menu),
             tooltip: 'חיפוש וניווט',
