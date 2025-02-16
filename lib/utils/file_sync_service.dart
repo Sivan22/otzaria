@@ -125,11 +125,6 @@ class FileSyncService {
       if (await file.exists()) {
         await file.delete();
       }
-      //if the directory is empty, remove it
-      final dir = file.parent;
-      if (await dir.exists() && (await dir.list().isEmpty)) {
-        await dir.delete();
-      }
 
       //if successful, remove from manifest
       final manifestFile = File(await _localManifestPath);
@@ -145,6 +140,37 @@ class FileSyncService {
       );
     } catch (e) {
       print('Error removing file $filePath from local manifest: $e');
+    }
+  }
+
+  Future<void> removeEmptyFolders() async {
+    try {
+      final baseDir = Directory(await _localDirectory);
+      if (!await baseDir.exists()) return;
+
+      // Bottom-up approach: process deeper directories first
+      await _cleanEmptyDirectories(baseDir);
+    } catch (e) {
+      print('Error removing empty folders: $e');
+    }
+  }
+
+  Future<void> _cleanEmptyDirectories(Directory dir) async {
+    if (!await dir.exists()) return;
+
+    // First process all subdirectories
+    await for (final entity in dir.list()) {
+      if (entity is Directory) {
+        await _cleanEmptyDirectories(entity);
+      }
+    }
+
+    // After cleaning subdirectories, check if this directory is now empty
+    final contents = await dir.list().toList();
+    final baseDir = await _localDirectory;
+    if (contents.isEmpty && dir.path != baseDir) {
+      await dir.delete();
+      print('Removed empty directory: ${dir.path}');
     }
   }
 
@@ -202,11 +228,13 @@ class FileSyncService {
           _currentProgress = count;
         }
       }
+      // Clean up empty folders after sync
+      await removeEmptyFolders();
     } catch (e) {
-      print('Error during sync: $e');
       isSyncing = false;
       rethrow;
     }
+
     isSyncing = false;
     return count;
   }
