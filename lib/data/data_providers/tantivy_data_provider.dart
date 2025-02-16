@@ -160,12 +160,12 @@ class TantivyDataProvider {
       }
       try {
         // check if this book has already been indexed
-        // use the title as a unique identifier, but also check the hash for backward compatibility
+        // use the title+type as a unique identifier, but also check the hash for backward compatibility
 
         if (book is TextBook) {
           if (!booksDone.contains("${book.title}textBook") &&
               !booksDone.contains(
-                  sha1.convert(utf8.encode(await book.text)).toString())) {
+                  sha1.convert(utf8.encode((await book.text))).toString())) {
             await addTextsToTantivy(book);
             booksDone.add("${book.title}textBook");
           }
@@ -183,12 +183,11 @@ class TantivyDataProvider {
       } catch (e) {
         print('Error adding ${book.title} to index: $e');
       }
-
-      // Reset progress indicators after completion
-      numOfbooksDone.value = null;
-      numOfbooksTotal.value = null;
-      isIndexing.value = false;
     }
+    // Reset progress indicators after completion
+    numOfbooksDone.value = null;
+    numOfbooksTotal.value = null;
+    isIndexing.value = false;
   }
 
   /// Indexes a text-based book by processing its content and adding it to the search index.
