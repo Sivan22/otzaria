@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:search_engine/search_engine.dart';
@@ -30,7 +32,7 @@ class TantivyDataProvider {
   ValueNotifier<bool> isIndexing = ValueNotifier(false);
 
   /// Maintains a list of processed books to avoid reindexing
-  late List<(String, String)> booksDone;
+  late List<String> booksDone;
 
   TantivyDataProvider() {
     reopenIndex();
@@ -53,7 +55,9 @@ class TantivyDataProvider {
                   (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
                       Platform.pathSeparator +
                       'index')
-          .get('key-books-done', defaultValue: []);
+          .get('key-books-done', defaultValue: [])
+          .map<String>((e) => e.toString())
+          .toList() as List<String>;
     } catch (e) {
       booksDone = [];
     }
@@ -155,17 +159,24 @@ class TantivyDataProvider {
         return;
       }
       try {
-        // Handle different book types appropriately
+        // check if this book has already been indexed
+        // use the title as a unique identifier, but also check the hash for backward compatibility
+
         if (book is TextBook) {
-          if (!booksDone.contains((book.title, "textBook"))) {
+          if (!booksDone.contains("${book.title}textBook") &&
+              !booksDone.contains(
+                  sha1.convert(utf8.encode(await book.text)).toString())) {
             await addTextsToTantivy(book);
-            booksDone.add((book.title, "textBook"));
+            booksDone.add("${book.title}textBook");
           }
           numOfbooksDone.value = numOfbooksDone.value! + 1;
         } else if (book is PdfBook) {
-          if (!booksDone.contains((book.title, "pdfBook"))) {
+          if (!booksDone.contains("${book.title}pdfBook") &&
+              !booksDone.contains(sha1
+                  .convert(await File(book.path).readAsBytes())
+                  .toString())) {
             await addPdfTextsToTantivy(book);
-            booksDone.add((book.title, "pdfBook"));
+            booksDone.add("${book.title}pdfBook");
           }
           numOfbooksDone.value = numOfbooksDone.value! + 1;
         }
