@@ -169,8 +169,15 @@ class MainWindowScreenBlocState extends State<MainWindowScreenBloc>
                                   ],
                                   selectedIndex: state.currentScreen.index,
                                   onDestinationSelected: (index) {
-                                    context.read<NavigationBloc>().add(
-                                        NavigateToScreen(Screen.values[index]));
+                                    if (index == Screen.search.index) {
+                                      context
+                                          .read<NavigationBloc>()
+                                          .add(const OpenNewSearchTab());
+                                    } else {
+                                      context.read<NavigationBloc>().add(
+                                          NavigateToScreen(
+                                              Screen.values[index]));
+                                    }
                                   },
                                 ),
                               ),
