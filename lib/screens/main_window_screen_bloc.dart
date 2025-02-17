@@ -6,8 +6,8 @@ import 'package:otzaria/blocs/navigation/navigation_state.dart';
 import 'package:otzaria/screens/empty_library_screen.dart';
 import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';
-import 'package:otzaria/screens/reading/reading_screen.dart';
-import 'package:otzaria/screens/library_browser.dart';
+import 'package:otzaria/screens/reading/reading_screen_bloc.dart';
+import 'package:otzaria/screens/library_browser_bloc.dart';
 import 'package:otzaria/screens/settings_screen.dart';
 import 'package:otzaria/widgets/keyboard_shortcuts_bloc.dart';
 import 'package:otzaria/widgets/my_updat_widget.dart';
@@ -25,9 +25,9 @@ class MainWindowScreenBlocState extends State<MainWindowScreenBloc>
   Orientation? _previousOrientation;
 
   final List<Widget> _pages = const [
-    KeepAlivePage(child: LibraryBrowser()),
+    KeepAlivePage(child: LibraryBrowserBloc()),
     KeepAlivePage(child: FindRefScreen()),
-    KeepAlivePage(child: ReadingScreen()),
+    KeepAlivePage(child: ReadingScreenBloc()),
     KeepAlivePage(child: SizedBox.shrink()),
     KeepAlivePage(child: FavouritesScreen()),
     KeepAlivePage(child: MySettingsScreen()),

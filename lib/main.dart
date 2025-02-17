@@ -5,17 +5,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:otzaria/blocs/library/library_bloc.dart';
-import 'package:otzaria/blocs/library/library_event.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/app.dart';
-import 'package:otzaria/blocs/settings/settings_bloc.dart';
-import 'package:otzaria/blocs/settings/settings_event.dart';
-import 'package:otzaria/blocs/settings/settings_repository.dart';
+import 'package:otzaria/blocs/library/library_bloc.dart';
+import 'package:otzaria/blocs/library/library_event.dart';
 import 'package:otzaria/blocs/navigation/navigation_bloc.dart';
 import 'package:otzaria/blocs/navigation/navigation_event.dart';
 import 'package:otzaria/blocs/navigation/navigation_repository.dart';
+import 'package:otzaria/blocs/settings/settings_bloc.dart';
+import 'package:otzaria/blocs/settings/settings_event.dart';
+import 'package:otzaria/blocs/settings/settings_repository.dart';
+import 'package:otzaria/blocs/tabs/tabs_bloc.dart';
+import 'package:otzaria/blocs/tabs/tabs_event.dart';
+import 'package:otzaria/blocs/tabs/tabs_repository.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/blocs/app_bloc_observer.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
@@ -48,9 +51,15 @@ void main() async {
             repository: SettingsRepository(),
           )..add(LoadSettings()),
         ),
+        BlocProvider<TabsBloc>(
+          create: (context) => TabsBloc(
+            repository: TabsRepository(),
+          )..add(LoadTabs()),
+        ),
         BlocProvider<NavigationBloc>(
           create: (context) => NavigationBloc(
             repository: NavigationRepository(),
+            tabsBloc: context.read<TabsBloc>(),
           )..add(const CheckLibrary()),
         ),
       ],
