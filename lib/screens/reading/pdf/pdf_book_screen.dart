@@ -44,7 +44,6 @@ class _PdfBookViewrState extends State<PdfBookViewr>
     textSearcher.removeListener(_update);
     widget.tab.outline.dispose();
     widget.tab.documentRef.dispose();
-    widget.tab.showLeftPane.dispose();
     super.dispose();
   }
 

@@ -5,12 +5,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/blocs/library/library_bloc.dart';
+import 'package:otzaria/blocs/library/library_event.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/app.dart';
+import 'package:otzaria/blocs/settings/settings_bloc.dart';
+import 'package:otzaria/blocs/settings/settings_event.dart';
+import 'package:otzaria/blocs/settings/settings_repository.dart';
+import 'package:otzaria/blocs/navigation/navigation_bloc.dart';
+import 'package:otzaria/blocs/navigation/navigation_event.dart';
+import 'package:otzaria/blocs/navigation/navigation_repository.dart';
+import 'package:otzaria/blocs/app_bloc_observer.dart';
 import 'package:search_engine/search_engine.dart';
-import 'screens/main_window_screen.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
@@ -21,65 +28,37 @@ import 'dart:io';
 /// This function performs the following initialization steps:
 /// 1. Ensures Flutter bindings are initialized
 /// 2. Calls [initialize] to set up required services and configurations
-/// 3. Launches the main application widget [OtzariaApp]
+/// 3. Launches the main application widget
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize bloc observer for debugging
+  Bloc.observer = AppBlocObserver();
+
   await initialize();
-  runApp(const OtzariaApp());
+
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<LibraryBloc>(
+          create: (context) => LibraryBloc()..add(LoadLibrary()),
+        ),
+        BlocProvider<SettingsBloc>(
+          create: (context) => SettingsBloc(
+            repository: SettingsRepository(),
+          )..add(LoadSettings()),
+        ),
+        BlocProvider<NavigationBloc>(
+          create: (context) => NavigationBloc(
+            repository: NavigationRepository(),
+          )..add(const CheckLibrary()),
+        ),
+      ],
+      child: const App(),
+    ),
+  );
+
   RustLib.dispose();
-}
-
-/// The root widget of the Otzaria application.
-///
-/// This widget sets up the application-wide configurations including:
-/// - State management using Provider
-/// - RTL localization support
-/// - Theme configuration with dark mode support
-/// - Application-wide settings
-class OtzariaApp extends StatelessWidget {
-  const OtzariaApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      // Initialize AppModel with the library path from settings or default path
-      create: (context) => AppModel(
-        Settings.getValue('key-library-path') ?? 'c:\\אוצריא',
-      ),
-      builder: (context, child) {
-        return Consumer<AppModel>(
-          builder: (context, appModel, child) => MaterialApp(
-            // Configure RTL support with Hebrew localization
-            localizationsDelegates: const [
-              GlobalCupertinoLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale("he", "IL"), // Hebrew (Israel) locale
-            ],
-            locale: const Locale("he", "IL"),
-            title: 'אוצריא',
-            // Dynamic theme based on dark mode preference
-            theme: appModel.isDarkMode.value
-                ? ThemeData.dark(useMaterial3: true)
-                : ThemeData(
-                    visualDensity: VisualDensity.adaptivePlatformDensity,
-                    fontFamily: 'Roboto',
-                    colorScheme: ColorScheme.fromSeed(
-                      seedColor: appModel.seedColor.value,
-                    ),
-                    textTheme: const TextTheme(
-                      bodyMedium:
-                          TextStyle(fontSize: 18.0, fontFamily: 'candara'),
-                    ),
-                  ),
-            home: const MainWindowScreen(),
-          ),
-        );
-      },
-    );
-  }
 }
 
 /// Initializes all required services and configurations for the application.

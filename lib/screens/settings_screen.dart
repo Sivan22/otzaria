@@ -3,8 +3,12 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'dart:io';
-import 'package:otzaria/models/app_model.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/blocs/settings/settings_bloc.dart';
+import 'package:otzaria/blocs/settings/settings_event.dart';
+import 'package:otzaria/blocs/settings/settings_state.dart';
+import 'package:otzaria/blocs/library/library_bloc.dart';
+import 'package:otzaria/blocs/library/library_event.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class MySettingsScreen extends StatefulWidget {
@@ -20,6 +24,13 @@ class _MySettingsScreenState extends State<MySettingsScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<SettingsBloc>().add(LoadSettings());
+    context.read<LibraryBloc>().add(LoadLibrary());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +75,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
     };
 
     return Scaffold(
-      body: Consumer<AppModel>(
-        builder: (context, appModel, child) {
+      body: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, state) {
           return Center(
             child: SettingsScreen(
               title: 'הגדרות',
@@ -82,25 +93,31 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       disabledLabel: 'לא מופעל',
                       leading: const Icon(Icons.nightlight_round_outlined),
                       onChange: (value) {
-                        appModel.isDarkMode.value = value;
+                        context.read<SettingsBloc>().add(UpdateDarkMode(value));
                       },
                     ),
                     ColorPickerSettingsTile(
-                        title: 'צבע בסיס',
-                        leading: const Icon(Icons.color_lens),
-                        settingKey: 'key-swatch-color',
-                        onChange: (p0) {
-                          appModel.seedColor.value = p0;
-                        }),
-                    const SliderSettingsTile(
+                      title: 'צבע בסיס',
+                      leading: const Icon(Icons.color_lens),
+                      settingKey: 'key-swatch-color',
+                      onChange: (color) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateSeedColor(color));
+                      },
+                    ),
+                    SliderSettingsTile(
                       title: 'גודל גופן התחלתי בספרים',
                       settingKey: 'key-font-size',
-                      defaultValue: 30,
+                      defaultValue: state.fontSize,
                       min: 15,
                       max: 60,
                       step: 1,
-                      leading: Icon(Icons.format_size),
+                      leading: const Icon(Icons.format_size),
                       decimalPrecision: 0,
+                      onChange: (value) {
+                        context.read<SettingsBloc>().add(UpdateFontSize(value));
+                      },
                     ),
                     DropDownSettingsTile<String>(
                       title: 'גופן',
@@ -119,22 +136,28 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         'Calibri': 'קליברי',
                         'Arial': 'אריאל',
                       },
-                      selected: 'FrankRuhlCLM',
+                      selected: state.fontFamily,
                       leading: const Icon(Icons.font_download_outlined),
                       onChange: (value) {
-                        appModel.fontFamily.value = value;
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateFontFamily(value));
                       },
                     ),
                     SliderSettingsTile(
                       title: 'רוחב השוליים בצידי הטקסט',
                       settingKey: 'key-padding-size',
-                      defaultValue: 10,
+                      defaultValue: state.paddingSize,
                       min: 0,
                       max: 500,
                       step: 2,
                       leading: const Icon(Icons.horizontal_distribute),
                       decimalPrecision: 0,
-                      onChange: (p0) => appModel.paddingSize.value = p0,
+                      onChange: (value) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdatePaddingSize(value));
+                      },
                     ),
                   ],
                 ),
@@ -199,8 +222,12 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         enabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
                         disabledLabel: 'השמות הקדושים יוצגו ככתיבתם',
                         leading: const Icon(Icons.password),
-                        defaultValue: true,
-                        onChange: (p0) => appModel.replaceHolyNames.value = p0,
+                        defaultValue: state.replaceHolyNames,
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateReplaceHolyNames(value));
+                        },
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-teamim',
@@ -208,8 +235,12 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         enabledLabel: 'המקרא יוצג עם טעמים',
                         disabledLabel: 'המקרא יוצג ללא טעמים',
                         leading: const Icon(Icons.format_overline),
-                        defaultValue: true,
-                        onChange: (p0) => appModel.showTeamim.value = p0,
+                        defaultValue: state.showTeamim,
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateShowTeamim(value));
+                        },
                       ),
                       const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
@@ -226,11 +257,12 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             'החיפוש יהיה מהיר יותר, נדרש ליצור אינדקס',
                         disabledLabel: 'החיפוש יהיה איטי יותר, לא נדרש אינדקס',
                         leading: const Icon(Icons.search),
-                        defaultValue: true,
-                        onChange: (value) => context
-                            .read<AppModel>()
-                            .useFastSearch
-                            .value = value,
+                        defaultValue: state.useFastSearch,
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateUseFastSearch(value));
+                        },
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-external-books',
@@ -238,19 +270,17 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         enabledLabel: 'יוצגו גם ספרים מאתרים חיצוניים',
                         disabledLabel: 'יוצגו רק ספרים מספריית אוצריא',
                         leading: const Icon(Icons.open_in_new),
-                        defaultValue: false,
+                        defaultValue: state.showExternalBooks,
                         onChange: (value) {
-                          Provider.of<AppModel>(context, listen: false)
-                              .showExternalBooks
-                              .value = value;
-                          Provider.of<AppModel>(context, listen: false)
-                              .showHebrewBooks
-                              .value = value;
-                          Provider.of<AppModel>(context, listen: false)
-                              .showOtzarHachochma
-                              .value = value;
-                          Settings.setValue('key-show-hebrew-books', value);
-                          Settings.setValue('key-show-otzar-hachochma', value);
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateShowExternalBooks(value));
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateShowHebrewBooks(value));
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateShowOtzarHachochma(value));
                         },
                       ),
                     ]),
@@ -343,9 +373,15 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                                       ],
                                                     ));
                                             if (await result == true) {
-                                              TantivyDataProvider.instance
-                                                  .addAllTBooksToTantivy(
-                                                      await appModel.library);
+                                              final library = context
+                                                  .read<LibraryBloc>()
+                                                  .state
+                                                  .library;
+                                              if (library != null) {
+                                                TantivyDataProvider.instance
+                                                    .addAllTBooksToTantivy(
+                                                        library);
+                                              }
                                             }
                                           }
                                         }(),
@@ -353,13 +389,18 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                     });
                               });
                         }),
-                    const SwitchSettingsTile(
+                    SwitchSettingsTile(
                       title: 'עדכון אינדקס אוטומטי',
-                      leading: Icon(Icons.sync),
+                      leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-index-update',
-                      defaultValue: true,
+                      defaultValue: state.autoUpdateIndex,
                       enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
                       disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
+                      onChange: (value) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateAutoUpdateIndex(value));
+                      },
                     ),
                     if (!(Platform.isAndroid || Platform.isIOS)) ...[
                       SimpleSettingsTile(
@@ -372,8 +413,9 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           String? path =
                               await FilePicker.platform.getDirectoryPath();
                           if (path != null) {
-                            Settings.setValue<String>('key-library-path', path);
-                            context.read<AppModel>().refreshLibrary();
+                            context
+                                .read<LibraryBloc>()
+                                .add(UpdateLibraryPath(path));
                           }
                         },
                       ),
@@ -387,10 +429,9 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           String? path =
                               await FilePicker.platform.getDirectoryPath();
                           if (path != null) {
-                            Settings.setValue<String>(
-                                'key-hebrew-books-path', path);
-
-                            context.read<AppModel>().refreshLibrary();
+                            context
+                                .read<LibraryBloc>()
+                                .add(UpdateHebrewBooksPath(path));
                           }
                         },
                       ),
