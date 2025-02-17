@@ -120,4 +120,46 @@ class DataRepository {
   ) async {
     _tantivyDataProvider.addAllTBooksToTantivy(library);
   }
+
+  /// Searches for books based on query text and optional filters
+  ///
+  /// Parameters:
+  ///   - [query]: The search text to match against book titles
+  ///   - [category]: Optional category to filter results
+  ///   - [topics]: Optional list of topics to filter results
+  ///   - [includeOtzar]: Whether to include Otzar HaChochma books
+  ///   - [includeHebrewBooks]: Whether to include HebrewBooks.org books
+  ///
+  /// Returns a [Future] that completes with a list of [Book] objects matching the criteria
+  Future<List<Book>> findBooks(
+    String query,
+    Category? category, {
+    List<String>? topics,
+    bool includeOtzar = false,
+    bool includeHebrewBooks = false,
+  }) async {
+    final queryWords = query.toLowerCase().split(RegExp(r'\s+'));
+    var allBooks =
+        category?.getAllBooks() ?? (await getLibrary()).getAllBooks();
+
+    if (includeOtzar) {
+      allBooks += await getOtzarBooks();
+    }
+    if (includeHebrewBooks) {
+      allBooks += await getHebrewBooks();
+    }
+
+    // Filter books based on query and topics
+    return allBooks.where((book) {
+      final title = book.title.toLowerCase();
+      final bookTopics = book.topics.split(', ');
+
+      bool matchesQuery = queryWords.every((word) => title.contains(word));
+      bool matchesTopics = topics == null ||
+          topics.isEmpty ||
+          topics.every((t) => bookTopics.contains(t));
+
+      return matchesQuery && matchesTopics;
+    }).toList();
+  }
 }

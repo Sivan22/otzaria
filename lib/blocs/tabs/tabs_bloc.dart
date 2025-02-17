@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/blocs/tabs/tabs_event.dart';
 import 'package:otzaria/blocs/tabs/tabs_repository.dart';
@@ -33,7 +35,7 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
 
   void _onAddTab(AddTab event, Emitter<TabsState> emit) {
     final newTabs = List<OpenedTab>.from(state.tabs);
-    final newIndex = state.currentTabIndex + 1;
+    final newIndex = min(state.currentTabIndex + 1, newTabs.length);
     newTabs.insert(newIndex, event.tab);
 
     _repository.saveTabs(newTabs, newIndex);
