@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/blocs/library/library_bloc.dart';
-import 'package:otzaria/blocs/library/library_event.dart';
-import 'package:otzaria/blocs/library/library_state.dart';
-import 'package:otzaria/blocs/navigation/navigation_bloc.dart';
-import 'package:otzaria/blocs/navigation/navigation_event.dart';
-import 'package:otzaria/blocs/navigation/navigation_state.dart';
-import 'package:otzaria/blocs/tabs/tabs_bloc.dart';
-import 'package:otzaria/blocs/tabs/tabs_event.dart';
+import 'package:otzaria/bloc/library/library_bloc.dart';
+import 'package:otzaria/bloc/library/library_event.dart';
+import 'package:otzaria/bloc/library/library_state.dart';
+import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
@@ -93,7 +93,8 @@ class _LibraryBrowserBlocState extends State<LibraryBrowserBloc>
                         tooltip: 'חזרה לתיקיה הראשית',
                         onPressed: () {
                           setState(() => _depth = 0);
-                          _searchController.clear();
+                          context.read<LibraryBloc>().add(LoadLibrary());
+                          context.read<LibraryBloc>().add(SearchBooks(""));
                           _refocusSearchBar();
                         },
                       ),

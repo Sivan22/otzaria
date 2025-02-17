@@ -4,11 +4,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/blocs/settings/settings_bloc.dart';
-import 'package:otzaria/blocs/settings/settings_event.dart';
-import 'package:otzaria/blocs/settings/settings_state.dart';
-import 'package:otzaria/blocs/library/library_bloc.dart';
-import 'package:otzaria/blocs/library/library_event.dart';
+import 'package:otzaria/bloc/settings/settings_bloc.dart';
+import 'package:otzaria/bloc/settings/settings_event.dart';
+import 'package:otzaria/bloc/settings/settings_state.dart';
+import 'package:otzaria/bloc/library/library_bloc.dart';
+import 'package:otzaria/bloc/library/library_event.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class MySettingsScreen extends StatefulWidget {

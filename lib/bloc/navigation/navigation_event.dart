@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:otzaria/blocs/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
 
 abstract class NavigationEvent extends Equatable {
   const NavigationEvent();

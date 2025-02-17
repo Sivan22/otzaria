@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/blocs/navigation/navigation_bloc.dart';
-import 'package:otzaria/blocs/navigation/navigation_event.dart';
-import 'package:otzaria/blocs/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
 import 'package:otzaria/screens/empty_library_screen.dart';
 import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/blocs/navigation/navigation_event.dart';
-import 'package:otzaria/blocs/navigation/navigation_repository.dart';
-import 'package:otzaria/blocs/navigation/navigation_state.dart';
-import 'package:otzaria/blocs/tabs/tabs_bloc.dart';
-import 'package:otzaria/blocs/tabs/tabs_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_repository.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 
 class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {

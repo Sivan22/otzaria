@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/blocs/settings/settings_event.dart';
-import 'package:otzaria/blocs/settings/settings_repository.dart';
-import 'package:otzaria/blocs/settings/settings_state.dart';
+import 'package:otzaria/bloc/settings/settings_event.dart';
+import 'package:otzaria/bloc/settings/settings_repository.dart';
+import 'package:otzaria/bloc/settings/settings_state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final SettingsRepository _repository;

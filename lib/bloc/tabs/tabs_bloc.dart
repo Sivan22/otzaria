@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/blocs/tabs/tabs_event.dart';
-import 'package:otzaria/blocs/tabs/tabs_repository.dart';
-import 'package:otzaria/blocs/tabs/tabs_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
+import 'package:otzaria/bloc/tabs/tabs_repository.dart';
+import 'package:otzaria/bloc/tabs/tabs_state.dart';
 import 'package:otzaria/models/tabs/tab.dart';
 
 class TabsBloc extends Bloc<TabsEvent, TabsState> {
