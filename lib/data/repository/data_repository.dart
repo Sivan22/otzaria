@@ -1,3 +1,4 @@
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
@@ -98,16 +99,6 @@ class DataRepository {
   ///   - [limit]: Maximum number of results to return (defaults to 10)
   ///
   /// Returns a [Future] that completes with a list of [Ref] objects sorted by relevance
-  Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 10}) {
-    return _isarDataProvider.findRefsByRelevance(ref, limit: limit);
-  }
-
-  /// Gets the total count of books that have associated references
-  ///
-  /// Returns a [Future] that completes with the count of books with references
-  Future<int> getNumberOfBooksWithRefs() {
-    return _isarDataProvider.getNumberOfBooksWithRefs();
-  }
 
   /// Adds text content from the library to the Tantivy search index
   ///
@@ -150,7 +141,7 @@ class DataRepository {
     }
 
     // Filter books based on query and topics
-    return allBooks.where((book) {
+    final filteredBooks = allBooks.where((book) {
       final title = book.title.toLowerCase();
       final bookTopics = book.topics.split(', ');
 
@@ -161,5 +152,12 @@ class DataRepository {
 
       return matchesQuery && matchesTopics;
     }).toList();
+
+    //sort by levenstien distance
+
+    filteredBooks
+        .sort((a, b) => ratio(query, a.title).compareTo(ratio(query, b.title)));
+
+    return filteredBooks;
   }
 }

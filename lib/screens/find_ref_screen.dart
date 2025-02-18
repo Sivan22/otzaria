@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_bloc.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_event.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_state.dart';
+import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_repository.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/isar_collections/ref.dart';
+import 'package:otzaria/models/tabs/pdf_tab.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/screens/ref_indexing_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 
 class FindRefScreen extends StatefulWidget {
   const FindRefScreen({super.key});
@@ -18,70 +27,52 @@ class _FindRefScreenState extends State<FindRefScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
-  late Future<List<Ref>> _refs;
-  late AppModel appModel;
+  final _textController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    appModel = Provider.of<AppModel>(context, listen: false);
-    _refs = findRefs(appModel.findReferenceController.text);
-    _checkIndexStatus();
+
   }
 
-  Future<void> _checkIndexStatus() async {
-    final booksWithRefs =
-        await DataRepository.instance.getNumberOfBooksWithRefs();
-    if (booksWithRefs == 0) {
-      appModel.createRefsFromLibrary(0);
-    }
-  }
-
-  Future<List<Ref>> findRefs(String ref) async {
-    if (ref.length < 3) {
-      return [];
-    }
-    return DataRepository.instance.findRefsByRelevance(
-      ref,
-    );
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
   }
 
   Widget _buildIndexingWarning() {
-    return ValueListenableBuilder(
-      valueListenable: IsarDataProvider.instance.refsNumOfbooksDone,
-      builder: (context, valueDone, child) {
-        if (valueDone == null) return const SizedBox.shrink();
-
-        return ValueListenableBuilder(
-          valueListenable: IsarDataProvider.instance.refsNumOfbooksTotal,
-          builder: (context, valueTotal, child) {
-            if (valueTotal == null || valueDone >= valueTotal) {
-              return const SizedBox.shrink();
-            }
-
-            return Container(
-              padding: const EdgeInsets.all(8.0),
-              margin: const EdgeInsets.only(bottom: 8.0),
-              decoration: BoxDecoration(
-                color: Colors.yellow.shade100,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber, color: Colors.orange[700]),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'אינדקס המקורות בתהליך בנייה. תוצאות החיפוש עלולות להיות חלקיות.',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(color: Colors.black87),
-                    ),
+    return BlocBuilder<FindRefBloc, FindRefState>(
+      builder: (context, state) {
+        if (state is FindRefIndexingStatus) {
+          if (state.totalBooks == null ||
+              state.booksProcessed == null ||
+              state.booksProcessed! >= state.totalBooks!) {
+            return const SizedBox.shrink();
+          }
+          return Container(
+            padding: const EdgeInsets.all(8.0),
+            margin: const EdgeInsets.only(bottom: 8.0),
+            decoration: BoxDecoration(
+              color: Colors.yellow.shade100,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber, color: Colors.orange[700]),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'אינדקס המקורות בתהליך בנייה. תוצאות החיפוש עלולות להיות חלקיות.',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(color: Colors.black87),
                   ),
-                ],
-              ),
-            );
-          },
-        );
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
       },
     );
   }
@@ -89,6 +80,7 @@ class _FindRefScreenState extends State<FindRefScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     return Scaffold(
       drawer: const Drawer(
           shape: RoundedRectangleBorder(
@@ -115,65 +107,68 @@ class _FindRefScreenState extends State<FindRefScreen>
                     IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: () {
-                        setState(() {
-                          appModel.findReferenceController.clear();
-                          _refs =
-                              findRefs(appModel.findReferenceController.text);
-                        });
+                        _textController.clear();
+                        BlocProvider.of<FindRefBloc>(context)
+                            .add(ClearSearchRequested());
                       },
                     ),
                   ],
                 ),
               ),
-              controller: appModel.findReferenceController,
+              controller: _textController,
               onChanged: (ref) {
-                setState(() {
-                  _refs = findRefs(ref);
-                });
+                BlocProvider.of<FindRefBloc>(context)
+                    .add(SearchRefRequested(ref));
               },
             ),
             Expanded(
-              child: FutureBuilder<List<Ref>>(
-                future: _refs,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              child: BlocBuilder<FindRefBloc, FindRefState>(
+                builder: (context, state) {
+                  if (state is FindRefLoading) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (snapshot.data!.isEmpty &&
-                      appModel.findReferenceController.text.length >= 3) {
-                    return const Center(
-                      child: Text(
-                        'אין תוצאות',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    );
-                  } else {
+                  } else if (state is FindRefError) {
+                    return Text('Error: ${state.message}');
+                  } else if (state is FindRefSuccess && state.refs.isEmpty) {
+                    if (_textController.text.length >= 3) {
+                      return const Center(
+                        child: Text(
+                          'אין תוצאות',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  } else if (state is FindRefSuccess) {
                     return ListView.builder(
-                      itemCount: snapshot.data!.length,
+                      itemCount: state.refs.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                            title: Text(snapshot.data![index].ref),
+                            title: Text(state.refs[index].ref),
                             onTap: () {
-                              final appModel =
-                                  Provider.of<AppModel>(context, listen: false);
-                              if (snapshot.data![index].pdfBook) {
-                                appModel.openBook(
+                              TabsBloc tabsBloc = context.read<TabsBloc>();
+                              NavigationBloc navigationBloc =
+                                  context.read<NavigationBloc>();
+                              if (state.refs[index].pdfBook) {
+                                tabsBloc.add(AddTab(PdfBookTab(
                                     PdfBook(
-                                        title: snapshot.data![index].bookTitle,
-                                        path: snapshot.data![index].pdfPath!),
-                                    snapshot.data![index].index);
+                                        title: state.refs[index].bookTitle,
+                                        path: state.refs[index].pdfPath!),
+                                    state.refs[index].index)));
                               } else {
-                                appModel.openBook(
-                                    TextBook(
-                                      title: snapshot.data![index].bookTitle,
+                                tabsBloc.add(AddTab(TextBookTab(
+                                    book: TextBook(
+                                      title: state.refs[index].bookTitle,
                                     ),
-                                    snapshot.data![index].index);
+                                    index: state.refs[index].index)));
                               }
+                              navigationBloc.add(
+                                  const NavigateToScreen(Screen.reading));
                             });
                       },
                     );
                   }
+                  return const SizedBox.shrink();
                 },
               ),
             ),

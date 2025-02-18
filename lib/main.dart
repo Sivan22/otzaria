@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/app.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_bloc.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_event.dart';
+import 'package:otzaria/bloc/find_ref/find_ref_repository.dart';
 import 'package:otzaria/bloc/library/library_bloc.dart';
 import 'package:otzaria/bloc/library/library_event.dart';
 import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
@@ -18,6 +21,7 @@ import 'package:otzaria/bloc/settings/settings_repository.dart';
 import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
 import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/bloc/tabs/tabs_repository.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/bloc/app_bloc_observer.dart';
 import 'package:search_engine/search_engine.dart';
@@ -62,6 +66,11 @@ void main() async {
             tabsBloc: context.read<TabsBloc>(),
           )..add(const CheckLibrary()),
         ),
+        BlocProvider<FindRefBloc>(
+            create: (context) => FindRefBloc(
+                findRefRepository:
+                    FindRefRepository(dataRepository: DataRepository.instance))
+              ..add(CheckIndexStatusRequested()))
       ],
       child: const App(),
     ),
