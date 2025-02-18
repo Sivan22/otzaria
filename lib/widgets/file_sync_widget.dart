@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/utils/file_sync_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/file_sync/file_sync_bloc.dart';
+import 'package:otzaria/bloc/file_sync/file_sync_event.dart';
+import 'package:otzaria/bloc/file_sync/file_sync_state.dart';
 
 class SyncIconButton extends StatefulWidget {
-  final FileSyncService fileSync;
-  final VoidCallback? onCompleted;
   final double size;
   final Color? color;
+  final VoidCallback? onCompleted;
 
   const SyncIconButton({
     Key? key,
-    required this.fileSync,
-    this.onCompleted,
     this.size = 24.0,
     this.color,
+    this.onCompleted,
   }) : super(key: key);
 
   @override
@@ -22,142 +22,89 @@ class SyncIconButton extends StatefulWidget {
 
 class _SyncIconButtonState extends State<SyncIconButton>
     with SingleTickerProviderStateMixin {
-  String _status = 'לחץ לסנכרון קבצים';
-  bool _hasError = false;
-  bool _hasNewSync = false;
-  late AnimationController _rotationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _rotationController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-    if (Settings.getValue<bool>('key-auto-sync') ?? false) {
-      _startSync();
-    }
-  }
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 2),
+  );
 
   @override
   void dispose() {
-    _rotationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  void _clearState() {
-    setState(() {
-      _hasError = false;
-      _hasNewSync = false;
-      _status = 'לחץ לסנכרון קבצים';
-    });
-  }
+  void _handlePress(BuildContext context, FileSyncState state) {
+    final bloc = context.read<FileSyncBloc>();
 
-  // טיפול בלחיצה על הכפתור
-  void _handlePress() {
-    // אם כבר מסנכרן, מפסיקים את הסנכרון
-    if (widget.fileSync.isSyncing) {
-      widget.fileSync.stopSyncing();
-      setState(() {
-        _status = 'לחץ לסנכרון קבצים';
-      });
-      _rotationController.reset();
+    // If syncing, stop the sync
+    if (state.status == FileSyncStatus.syncing) {
+      bloc.add(const StopSync());
       return;
     }
 
-    // אם יש שגיאה או סנכרון מוצלח, מנקים את המצב
-    if (_hasError || _hasNewSync) {
-      _clearState();
+    // If completed or error, reset the state
+    if (state.status == FileSyncStatus.completed ||
+        state.status == FileSyncStatus.error) {
+      bloc.add(const ResetState());
       return;
     }
 
-    // אם במצב רגיל, מתחילים סנכרון
-    _startSync();
-  }
-
-  void _updateStatus() {
-    if (widget.fileSync.isSyncing && widget.fileSync.totalFiles > 0) {
-      setState(() {
-        _status =
-            'מסנכרן קבצים... ${widget.fileSync.currentProgress}/${widget.fileSync.totalFiles}';
-      });
-    }
-  }
-
-  // פונקציה שמבצעת את הסנכרון בפועל
-  Future<void> _startSync() async {
-    setState(() {
-      _status = 'מסנכרן קבצים...';
-    });
-    _rotationController.repeat();
-
-    try {
-      // Set up a timer to update the status periodically
-      final statusTimer =
-          Stream.periodic(const Duration(milliseconds: 100)).listen((_) {
-        _updateStatus();
-      });
-
-      final results = await widget.fileSync.syncFiles();
-      statusTimer.cancel();
-
-      int successCount = results;
-
-      setState(() {
-        _hasNewSync = successCount > 0;
-        _status = successCount > 0
-            ? 'סונכרנו $successCount קבצים חדשים'
-            : 'לחץ לסנכרון קבצים';
-      });
-
-      if (widget.onCompleted != null) {
-        widget.onCompleted!();
-      }
-    } catch (e) {
-      setState(() {
-        _hasError = true;
-        _status = 'שגיאה בסנכרון: ${e.toString()}';
-      });
-    } finally {
-      _rotationController.stop();
-      _rotationController.reset();
-    }
+    // Start new sync
+    bloc.add(const StartSync());
   }
 
   @override
   Widget build(BuildContext context) {
-    Color iconColor;
-    IconData iconData;
+    return BlocConsumer<FileSyncBloc, FileSyncState>(
+      listener: (context, state) {
+        if (state.status == FileSyncStatus.completed &&
+            widget.onCompleted != null) {
+          widget.onCompleted!();
+        }
+      },
+      builder: (context, state) {
+        Color iconColor;
+        IconData iconData;
 
-    if (_hasError) {
-      iconColor = Colors.red;
-      iconData = Icons.sync_problem;
-    } else if (_hasNewSync) {
-      iconColor = Colors.green;
-      iconData = Icons.check_circle;
-    } else {
-      iconColor = widget.color ?? Theme.of(context).iconTheme.color!;
-      iconData = widget.fileSync.isSyncing ? Icons.sync : Icons.sync;
-    }
+        switch (state.status) {
+          case FileSyncStatus.error:
+            _controller.stop();
+            iconColor = Colors.red;
+            iconData = Icons.sync_problem;
+          case FileSyncStatus.completed:
+            _controller.stop();
+            iconColor = Colors.green;
+            iconData = Icons.check_circle;
+          case FileSyncStatus.syncing:
+            _controller.repeat();
+            iconColor = widget.color ?? Theme.of(context).iconTheme.color!;
+            iconData = Icons.sync;
+          case FileSyncStatus.initial:
+            _controller.stop();
+            iconColor = widget.color ?? Theme.of(context).iconTheme.color!;
+            iconData = Icons.sync;
+        }
 
-    return Tooltip(
-      message: _status,
-      textAlign: TextAlign.center,
-      preferBelow: true,
-      waitDuration: const Duration(milliseconds: 500),
-      child: IconButton(
-        onPressed: _handlePress,
-        icon: RotationTransition(
-          turns: _rotationController,
-          child: Icon(
-            iconData,
-            color: iconColor,
-            size: widget.size,
+        return Tooltip(
+          message: state.message,
+          textAlign: TextAlign.center,
+          preferBelow: true,
+          waitDuration: const Duration(milliseconds: 500),
+          child: IconButton(
+            onPressed: () => _handlePress(context, state),
+            icon: RotationTransition(
+              turns: _controller,
+              child: Icon(
+                iconData,
+                color: iconColor,
+                size: widget.size,
+              ),
+            ),
+            splashRadius: widget.size * 0.8,
+            tooltip: null,
           ),
-        ),
-        splashRadius: widget.size * 0.8,
-        tooltip: null,
-      ),
+        );
+      },
     );
   }
 }

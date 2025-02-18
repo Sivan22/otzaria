@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/bloc/settings/settings_bloc.dart';
 import 'package:otzaria/bloc/settings/settings_state.dart';
 import 'package:otzaria/models/app_model.dart';
@@ -17,36 +16,31 @@ class App extends StatelessWidget {
       builder: (context, settingsState) {
         final state = settingsState ?? SettingsState.initial();
         return MaterialApp(
-            localizationsDelegates: const [
-              GlobalCupertinoLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale("he", "IL"),
-            ],
-            locale: const Locale("he", "IL"),
-            title: 'אוצריא',
-            theme: state.isDarkMode
-                ? ThemeData.dark(useMaterial3: true)
-                : ThemeData(
-                    visualDensity: VisualDensity.adaptivePlatformDensity,
-                    fontFamily: 'Roboto',
-                    colorScheme: ColorScheme.fromSeed(
-                      seedColor: state.seedColor,
-                    ),
-                    textTheme: const TextTheme(
-                      bodyMedium:
-                          TextStyle(fontSize: 18.0, fontFamily: 'candara'),
-                    ),
+          localizationsDelegates: const [
+            GlobalCupertinoLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale("he", "IL"),
+          ],
+          locale: const Locale("he", "IL"),
+          title: 'אוצריא',
+          theme: state.isDarkMode
+              ? ThemeData.dark(useMaterial3: true)
+              : ThemeData(
+                  visualDensity: VisualDensity.adaptivePlatformDensity,
+                  fontFamily: 'Roboto',
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: state.seedColor,
                   ),
-            home: ChangeNotifierProvider(
-                create: (context) =>
-                    AppModel(Settings.getValue("key-library-path")),
-                builder: (context, child) => Consumer<AppModel>(
-                      builder: (context, appModel, child) =>
-                          const MainWindowScreenBloc(),
-                    )));
+                  textTheme: const TextTheme(
+                    bodyMedium:
+                        TextStyle(fontSize: 18.0, fontFamily: 'candara'),
+                  ),
+                ),
+          home: const MainWindowScreenBloc(),
+        );
       },
     );
   }

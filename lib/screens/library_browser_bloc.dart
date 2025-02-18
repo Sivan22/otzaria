@@ -14,7 +14,8 @@ import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/utils/daf_yomi_helper.dart';
-import 'package:otzaria/utils/file_sync_service.dart';
+import 'package:otzaria/bloc/file_sync/file_sync_bloc.dart';
+import 'package:otzaria/bloc/file_sync/file_sync_repository.dart';
 import 'package:otzaria/widgets/daf_yomi.dart';
 import 'package:otzaria/widgets/file_sync_widget.dart';
 import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
@@ -98,11 +99,16 @@ class _LibraryBrowserBlocState extends State<LibraryBrowserBloc>
                           _refocusSearchBar();
                         },
                       ),
-                      SyncIconButton(
-                          fileSync: FileSyncService(
-                              githubOwner: "zevisvei",
-                              repositoryName: "otzaria-library",
-                              branch: "main")),
+                      BlocProvider(
+                        create: (context) => FileSyncBloc(
+                          repository: FileSyncRepository(
+                            githubOwner: "zevisvei",
+                            repositoryName: "otzaria-library",
+                            branch: "main",
+                          ),
+                        ),
+                        child: const SyncIconButton(),
+                      ),
                     ],
                   ),
                 ),

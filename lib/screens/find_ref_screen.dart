@@ -89,7 +89,6 @@ class _FindRefScreenState extends State<FindRefScreen>
             _buildIndexingWarning(),
             TextField(
               autofocus: true,
-              focusNode: context.read<AppModel>().findReferenceFocusNode,
               decoration: InputDecoration(
                 hintText:
                     'הקלד מקור מדוייק, לדוגמה: בראשית פרק א או שוע אוח יב   ',

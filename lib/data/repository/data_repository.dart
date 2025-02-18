@@ -156,7 +156,7 @@ class DataRepository {
     //sort by levenstien distance
 
     filteredBooks
-        .sort((a, b) => ratio(query, a.title).compareTo(ratio(query, b.title)));
+        .sort((a, b) => ratio(query, b.title).compareTo(ratio(query, a.title)));
 
     return filteredBooks;
   }
