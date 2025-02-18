@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:kosher_dart/kosher_dart.dart';
-import 'package:otzaria/models/app_model.dart';
 import 'package:provider/provider.dart';
 import 'package:otzaria/utils/calendar.dart';
 
@@ -14,8 +13,8 @@ class DafYomi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppModel>(
-      builder: (context, appModel, child) {
+    return Builder(
+      builder: (context) {
         final Daf dafYomi = getDafYomi(DateTime.now());
 
         final tractate = dafYomi.getMasechta();

@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/models/app_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/library/library_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/models/tabs/pdf_tab.dart';
+import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:provider/provider.dart';
 
 void openDafYomiBook(BuildContext context, String tractate, String daf) async {
-  final appModel = Provider.of<AppModel>(context, listen: false);
-  final book = await appModel.findBookByTitle(tractate);
+  final libraryBlocState = BlocProvider.of<LibraryBloc>(context).state;
+  final book = libraryBlocState.library?.findBookByTitle(tractate, null);
   var index = 0;
   if (book != null) {
     if (book is TextBook) {
       final tocEntry = await _findDafInToc(book, 'דף ${daf.trim()}');
       index = tocEntry?.index ?? 0;
+      final tab = TextBookTab(book: book, index: index, openLeftPane: true);
+      BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else if (book is PdfBook) {
       final outline = await getDafYomiOutline(book, 'דף ${daf.trim()}');
       index = outline?.dest?.pageNumber ?? 0;
+      final tab = PdfBookTab(book, index, openLeftPane: true);
+      BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     }
-    appModel.openBook(book, index, openLeftPane: true);
+    BlocProvider.of<NavigationBloc>(context)
+        .add(NavigateToScreen(Screen.reading));
   }
 }
 
@@ -62,13 +74,23 @@ Future<PdfOutlineNode?> getDafYomiOutline(PdfBook book, String daf) async {
 }
 
 openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
-  final appModel = Provider.of<AppModel>(context, listen: false);
+  final libraryBlocState = BlocProvider.of<LibraryBloc>(context).state;
   final book =
-      (await appModel.library).findBookByTitle(bookname, PdfBook) as PdfBook?;
+      libraryBlocState.library?.findBookByTitle(bookname, PdfBook) as PdfBook?;
 
   if (book != null) {
     final outline = await getDafYomiOutline(book, ref);
-    appModel.openBook(book, outline?.dest?.pageNumber ?? 0, openLeftPane: true);
+    if (outline != null) {
+      final tab =
+          PdfBookTab(book, outline.dest?.pageNumber ?? 0, openLeftPane: true);
+      BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Section not found'),
+        ),
+      );
+    }
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -79,13 +101,23 @@ openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
 }
 
 openTextBookFromRef(String bookname, String ref, BuildContext context) async {
-  final appModel = Provider.of<AppModel>(context, listen: false);
-  final book =
-      (await appModel.library).findBookByTitle(bookname, TextBook) as TextBook?;
+  final libraryBlocState = BlocProvider.of<LibraryBloc>(context).state;
+  final book = libraryBlocState.library?.findBookByTitle(bookname, TextBook)
+      as TextBook?;
 
   if (book != null) {
     final tocEntry = await _findDafInToc(book, ref);
-    appModel.openBook(book, tocEntry?.index ?? 0, openLeftPane: true);
+    if (tocEntry != null) {
+      final tab = TextBookTab(
+          book: book, index: tocEntry.index ?? 0, openLeftPane: true);
+      BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Section not found'),
+        ),
+      );
+    }
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

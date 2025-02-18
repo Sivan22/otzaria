@@ -8,8 +8,6 @@ import 'package:otzaria/bloc/navigation/navigation_event.dart';
 import 'package:otzaria/bloc/navigation/navigation_state.dart';
 import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
 import 'package:otzaria/bloc/tabs/tabs_event.dart';
-import 'package:otzaria/data/repository/data_repository.dart';
-import 'package:otzaria/bloc/find_ref/find_ref_repository.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
@@ -28,12 +26,6 @@ class _FindRefScreenState extends State<FindRefScreen>
   @override
   bool get wantKeepAlive => true;
   final _textController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-
-  }
 
   @override
   void dispose() {
@@ -162,8 +154,8 @@ class _FindRefScreenState extends State<FindRefScreen>
                                     ),
                                     index: state.refs[index].index)));
                               }
-                              navigationBloc.add(
-                                  const NavigateToScreen(Screen.reading));
+                              navigationBloc
+                                  .add(const NavigateToScreen(Screen.reading));
                             });
                       },
                     );
