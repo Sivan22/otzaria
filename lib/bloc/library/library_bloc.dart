@@ -10,7 +10,6 @@ import 'package:otzaria/models/library.dart';
 
 class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   final DataRepository _repository = DataRepository.instance;
-  static Library? _cachedLibrary;
 
   LibraryBloc() : super(LibraryState.initial()) {
     on<LoadLibrary>(_onLoadLibrary);
@@ -30,11 +29,9 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   ) async {
     emit(state.copyWith(isLoading: true));
     try {
-      final Library library = _cachedLibrary ?? await _repository.getLibrary();
-      _cachedLibrary = library;
       emit(state.copyWith(
-        library: library,
-        currentCategory: library,
+        library: _repository.library,
+        currentCategory: _repository.library,
         isLoading: false,
       ));
     } catch (e) {
@@ -49,7 +46,6 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     RefreshLibrary event,
     Emitter<LibraryState> emit,
   ) async {
-    _cachedLibrary = null; // Clear cache on refresh
     emit(state.copyWith(isLoading: true));
     try {
       final libraryPath = Settings.getValue<String>('key-library-path');
@@ -75,15 +71,14 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     UpdateLibraryPath event,
     Emitter<LibraryState> emit,
   ) async {
-    _cachedLibrary = null; // Clear cache when library path changes
     emit(state.copyWith(isLoading: true));
     try {
       await Settings.setValue<String>('key-library-path', event.path);
       FileSystemData.instance.libraryPath = event.path;
-      final Library library = await _repository.getLibrary();
+      DataRepository.instance.library = await _repository.getLibrary();
       emit(state.copyWith(
-        library: library,
-        currentCategory: library,
+        library: DataRepository.instance.library,
+        currentCategory: DataRepository.instance.library,
         isLoading: false,
       ));
     } catch (e) {
@@ -98,14 +93,12 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     UpdateHebrewBooksPath event,
     Emitter<LibraryState> emit,
   ) async {
-    _cachedLibrary = null; // Clear cache when Hebrew books path changes
     emit(state.copyWith(isLoading: true));
     try {
       await Settings.setValue<String>('key-hebrew-books-path', event.path);
-      final Library library = await _repository.getLibrary();
       emit(state.copyWith(
-        library: library,
-        currentCategory: library,
+        library: DataRepository.instance.library,
+        currentCategory: DataRepository.instance.library,
         isLoading: false,
       ));
     } catch (e) {

@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/bloc/search/search_bloc.dart';
 import 'package:otzaria/bloc/search/search_state.dart';
+import 'package:otzaria/bloc/settings/settings_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
@@ -72,16 +75,17 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                     return ListTile(
                       onTap: () {
                         if (result.isPdf) {
-                          context.read<AppModel>().openTab(
-                              PdfBookTab(
-                                  searchText: widget.tab.queryController.text,
+                          context.read<TabsBloc>().add(AddTab(
+                                PdfBookTab(
                                   PdfBook(
                                       title: result.title,
                                       path: result.filePath),
-                                  result.segment.toInt() + 1),
-                              index: result.segment.toInt() + 1);
+                                  result.segment.toInt() + 1,
+                                  searchText: widget.tab.queryController.text,
+                                ),
+                              ));
                         } else {
-                          context.read<AppModel>().openTab(
+                          context.read<TabsBloc>().add(AddTab(
                                 TextBookTab(
                                     book: TextBook(
                                       title: result.title,
@@ -89,17 +93,17 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                     index: result.segment.toInt(),
                                     searchText:
                                         widget.tab.queryController.text),
-                              );
+                              ));
                         }
                       },
                       title: Text('[תוצאה ${index + 1}] ${result.reference}'),
                       subtitle: Html(data: result.text, style: {
                         'body': Style(
                             fontSize: FontSize(
-                              context.read<AppModel>().fontSize.value,
+                              context.read<SettingsBloc>().state.fontSize,
                             ),
                             fontFamily:
-                                context.read<AppModel>().fontFamily.value,
+                                context.read<SettingsBloc>().state.fontFamily,
                             textAlign: TextAlign.justify),
                       }),
                     );

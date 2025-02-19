@@ -28,6 +28,12 @@ class DataRepository {
   /// Provides access to the singleton instance
   static DataRepository get instance => _singleton;
 
+  Library? library;
+
+  DataRepository() {
+    () async => library = await getLibrary();
+  }
+
   /// Retrieves the complete library metadata including all available books
   ///
   /// Returns a [Future] that completes with a [Library] object containing
@@ -130,8 +136,8 @@ class DataRepository {
     bool includeHebrewBooks = false,
   }) async {
     final queryWords = query.toLowerCase().split(RegExp(r'\s+'));
-    var allBooks =
-        category?.getAllBooks() ?? (await getLibrary()).getAllBooks();
+    var allBooks = category?.getAllBooks() ??
+        (library ?? await getLibrary()).getAllBooks();
 
     if (includeOtzar) {
       allBooks += await getOtzarBooks();

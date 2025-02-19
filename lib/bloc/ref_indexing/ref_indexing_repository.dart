@@ -3,8 +3,10 @@ import 'package:otzaria/models/library.dart';
 
 class RefIndexingRepository {
   final IsarDataProvider dataProvider;
+  final Library? _library;
 
-  RefIndexingRepository({required this.dataProvider});
+  RefIndexingRepository({required this.dataProvider, library})
+      : _library = library;
 
   Future<void> createRefsFromLibrary(Library library, int startIndex) async {
     await dataProvider.createRefsFromLibrary(library, startIndex);
