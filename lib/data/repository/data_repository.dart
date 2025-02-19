@@ -28,17 +28,17 @@ class DataRepository {
   /// Provides access to the singleton instance
   static DataRepository get instance => _singleton;
 
-  Library? library;
+  late Future<Library> library;
 
   DataRepository() {
-    () async => library = await getLibrary();
+    library = _getLibrary();
   }
 
   /// Retrieves the complete library metadata including all available books
   ///
   /// Returns a [Future] that completes with a [Library] object containing
   /// the full library structure and metadata
-  Future<Library> getLibrary() async {
+  Future<Library> _getLibrary() async {
     return _fileSystemData.getLibrary();
   }
 
@@ -136,8 +136,7 @@ class DataRepository {
     bool includeHebrewBooks = false,
   }) async {
     final queryWords = query.toLowerCase().split(RegExp(r'\s+'));
-    var allBooks = category?.getAllBooks() ??
-        (library ?? await getLibrary()).getAllBooks();
+    var allBooks = category?.getAllBooks() ?? (await library).getAllBooks();
 
     if (includeOtzar) {
       allBooks += await getOtzarBooks();

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bloc/library/library_bloc.dart';
-import 'package:otzaria/bloc/library/library_event.dart';
 import 'package:otzaria/bloc/library/library_state.dart';
 import 'package:otzaria/bloc/search/search_bloc.dart';
 import 'package:otzaria/bloc/search/search_event.dart';
@@ -97,7 +96,9 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
                   .surfaceTint
                   .withOpacity(_kBackgroundOpacity)
               : null,
-          title: Text("${book.title} ($count)"),
+          title: InkWell(
+              onDoubleTap: () => _handleFacetToggle(context, facet),
+              child: Text("${book.title} ($count)")),
           onTap: () => HardwareKeyboard.instance.isControlPressed
               ? _handleFacetToggle(context, facet)
               : _setFacet(context, facet),
@@ -143,6 +144,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
         return Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
+            key: PageStorageKey(category.path),
             backgroundColor: isSelected
                 ? Theme.of(context)
                     .colorScheme
@@ -159,7 +161,13 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
             trailing: const SizedBox.shrink(),
             iconColor: Theme.of(context).colorScheme.primary,
             collapsedIconColor: Theme.of(context).colorScheme.primary,
-            title: Text("${category.title} ($count)"),
+            title: InkWell(
+                onTap: () => HardwareKeyboard.instance.isControlPressed
+                    ? _handleFacetToggle(context, category.path)
+                    : _setFacet(context, category.path),
+                onDoubleTap: () => _handleFacetToggle(context, category.path),
+                onLongPress: () => _handleFacetToggle(context, category.path),
+                child: Text("${category.title} ($count)")),
             initiallyExpanded: level == 0,
             tilePadding: EdgeInsets.only(
               right: _kTreePadding + (level * _kTreeLevelIndent),
@@ -219,9 +227,9 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
                 return Center(child: Text('Error: ${libraryState.error}'));
               }
 
-              if (_filterQuery.text.length >= _kMinQueryLength &&
-                  libraryState.searchResults != null) {
-                return _buildBooksList(libraryState.searchResults!);
+              if (_filterQuery.text.length >= _kMinQueryLength) {
+                return _buildBooksList(
+                    context.read<SearchBloc>().state.booksToSearch.toList());
               }
 
               if (libraryState.library == null) {

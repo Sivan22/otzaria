@@ -5,7 +5,6 @@ import 'package:otzaria/bloc/library/library_state.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 
 class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
@@ -27,11 +26,12 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     LoadLibrary event,
     Emitter<LibraryState> emit,
   ) async {
+    Library library = await _repository.library;
     emit(state.copyWith(isLoading: true));
     try {
       emit(state.copyWith(
-        library: _repository.library,
-        currentCategory: _repository.library,
+        library: library,
+        currentCategory: library,
         isLoading: false,
       ));
     } catch (e) {
@@ -52,7 +52,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
       if (libraryPath != null) {
         FileSystemData.instance.libraryPath = libraryPath;
       }
-      final Library library = await _repository.getLibrary();
+      final library = await _repository.library;
       TantivyDataProvider.instance.reopenIndex();
       emit(state.copyWith(
         library: library,
@@ -75,10 +75,11 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     try {
       await Settings.setValue<String>('key-library-path', event.path);
       FileSystemData.instance.libraryPath = event.path;
-      DataRepository.instance.library = await _repository.getLibrary();
+      DataRepository.instance.library = FileSystemData.instance.getLibrary();
+      final library = await _repository.library;
       emit(state.copyWith(
-        library: DataRepository.instance.library,
-        currentCategory: DataRepository.instance.library,
+        library: library,
+        currentCategory: library,
         isLoading: false,
       ));
     } catch (e) {
@@ -96,9 +97,10 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     emit(state.copyWith(isLoading: true));
     try {
       await Settings.setValue<String>('key-hebrew-books-path', event.path);
+      final library = await _repository.library;
       emit(state.copyWith(
-        library: DataRepository.instance.library,
-        currentCategory: DataRepository.instance.library,
+        library: library,
+        currentCategory: library,
         isLoading: false,
       ));
     } catch (e) {

@@ -26,7 +26,7 @@ class LibraryState extends Equatable {
   });
 
   factory LibraryState.initial() {
-    return const LibraryState();
+    return const LibraryState(isLoading: true);
   }
 
   LibraryState copyWith({

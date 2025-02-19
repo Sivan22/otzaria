@@ -44,7 +44,7 @@ class AppModel with ChangeNotifier {
   set libraryPath(String path) {
     _libraryPath = path;
     Settings.setValue('key-library-path', path);
-    library = data.getLibrary();
+    library = data.library;
     notifyListeners();
   }
 
@@ -154,7 +154,7 @@ class AppModel with ChangeNotifier {
   /// * Sets up theme and UI preference listeners
   AppModel(String libraryPath) {
     _libraryPath = libraryPath;
-    library = data.getLibrary();
+    library = data.library;
     otzarBooks = data.getOtzarBooks();
     hebrewBooks = data.getHebrewBooks();
 
@@ -582,7 +582,7 @@ class AppModel with ChangeNotifier {
   Future<void> refreshLibrary() async {
     libraryPath = Settings.getValue<String>('key-library-path') ?? libraryPath;
     FileSystemData.instance.libraryPath = libraryPath;
-    library = data.getLibrary();
+    library = data.library;
     TantivyDataProvider.instance.reopenIndex();
     notifyListeners();
   }

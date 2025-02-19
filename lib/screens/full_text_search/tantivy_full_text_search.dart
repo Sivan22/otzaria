@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/library/library_bloc.dart';
 import 'package:otzaria/bloc/search/search_bloc.dart';
 import 'package:otzaria/bloc/search/search_state.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
@@ -28,10 +29,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   void initState() {
     super.initState();
     _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
-    () async {
-      final library = await context.read<AppModel>().library;
-      widget.tab.allBooks = (library).getAllBooks();
-    }();
+    () async {}();
   }
 
   @override
