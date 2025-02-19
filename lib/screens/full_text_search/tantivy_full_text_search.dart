@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/search/search_bloc.dart';
+import 'package:otzaria/bloc/search/search_state.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
@@ -6,7 +9,6 @@ import 'package:otzaria/screens/full_text_search/full_text_settings_widgets.dart
 import 'package:otzaria/screens/full_text_search/tantivy_search_field.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
 import 'package:otzaria/screens/full_text_search/full_text_facet_filtering.dart';
-import 'package:provider/provider.dart';
 
 class TantivyFullTextSearch extends StatefulWidget {
   final SearchingTab tab;
@@ -44,48 +46,63 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   }
 
   Widget _buildForSmallScreens() {
-    return Column(children: [
-      if (_showIndexWarning) _buildIndexWarning(),
-      Row(
-        children: [
-          _buildMenuButton(),
-          Expanded(child: TantivySearchField(widget: widget)),
-        ],
-      ),
-      Expanded(
-        child: Stack(
-          children: [
-            TantivySearchResults(tab: widget.tab),
-            ValueListenableBuilder(
-                valueListenable: widget.tab.isLeftPaneOpen,
-                builder: (context, value, child) => AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    child: SizedBox(
-                      width: value ? 500 : 0,
-                      child: Container(
-                        color: Theme.of(context).colorScheme.surface,
-                        child: Column(
-                          children: [
-                            Row(
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        return Column(children: [
+          if (_showIndexWarning) _buildIndexWarning(),
+          Row(
+            children: [
+              _buildMenuButton(),
+              Expanded(child: TantivySearchField(widget: widget)),
+            ],
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                if (state.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (state.searchQuery.isEmpty)
+                  const Center(child: Text("לא בוצע חיפוש"))
+                else if (state.results.isEmpty)
+                  const Center(
+                      child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('אין תוצאות'),
+                  ))
+                else
+                  TantivySearchResults(tab: widget.tab),
+                ValueListenableBuilder(
+                    valueListenable: widget.tab.isLeftPaneOpen,
+                    builder: (context, value, child) => AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        child: SizedBox(
+                          width: value ? 500 : 0,
+                          child: Container(
+                            color: Theme.of(context).colorScheme.surface,
+                            child: Column(
                               children: [
-                                FuzzyDistance(tab: widget.tab),
-                                NumOfResults(tab: widget.tab),
+                                Row(
+                                  children: [
+                                    FuzzyDistance(tab: widget.tab),
+                                    NumOfResults(tab: widget.tab),
+                                  ],
+                                ),
+                                FuzzyToggle(tab: widget.tab),
+                                Expanded(
+                                  child: SearchFacetFiltering(
+                                    tab: widget.tab,
+                                  ),
+                                ),
                               ],
                             ),
-                            FuzzyToggle(tab: widget.tab),
-                            Expanded(
-                              child: SearchFacetFiltering(
-                                  tab: widget.tab,
-                                  library: context.read<AppModel>().library),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )))
-          ],
-        ),
-      )
-    ]);
+                          ),
+                        )))
+              ],
+            ),
+          )
+        ]);
+      },
+    );
   }
 
   Column _buildForWideScreens() {
@@ -102,38 +119,33 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
         ],
       ),
       Expanded(
-          child: ListenableBuilder(
-              listenable: widget.tab.results,
-              builder: (context, _) {
-                return FutureBuilder(
-                    future: widget.tab.results.value,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-                      if (widget.tab.queryController.text.isEmpty) {
-                        return const Center(child: Text("לא בוצע חיפוש"));
-                      }
-                      if (snapshot.hasData && snapshot.data!.isEmpty) {
-                        return const Center(
-                            child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text('אין תוצאות'),
-                        ));
-                      }
-                      return Row(
-                        children: [
-                          SizedBox(
-                            width: 350,
-                            child: SearchFacetFiltering(
-                                tab: widget.tab,
-                                library: context.read<AppModel>().library),
-                          ),
-                          Expanded(child: TantivySearchResults(tab: widget.tab))
-                        ],
-                      );
-                    });
-              }))
+        child: BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.searchQuery.isEmpty) {
+              return const Center(child: Text("לא בוצע חיפוש"));
+            }
+            if (state.results.isEmpty) {
+              return const Center(
+                  child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('אין תוצאות'),
+              ));
+            }
+            return Row(
+              children: [
+                SizedBox(
+                  width: 350,
+                  child: SearchFacetFiltering(tab: widget.tab),
+                ),
+                Expanded(child: TantivySearchResults(tab: widget.tab))
+              ],
+            );
+          },
+        ),
+      )
     ]);
   }
 

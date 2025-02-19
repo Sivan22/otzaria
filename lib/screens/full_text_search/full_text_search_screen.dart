@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/models/full_text_search.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_full_text_search.dart';
@@ -21,7 +22,7 @@ class FullTextSearchScreen extends StatelessWidget {
               tab: tab,
             )
           : TextFileSearchScreen(
-              searcher: tab.searcher,
+              searcher: FullTextSearcher([], TextEditingController(), []),
               openBookCallback: openBookCallback,
             ),
     );

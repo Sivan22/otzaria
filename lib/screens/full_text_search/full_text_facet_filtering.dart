@@ -1,10 +1,12 @@
-// Core Flutter imports
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-
-// Model imports
-import 'package:otzaria/models/app_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/library/library_bloc.dart';
+import 'package:otzaria/bloc/library/library_event.dart';
+import 'package:otzaria/bloc/library/library_state.dart';
+import 'package:otzaria/bloc/search/search_bloc.dart';
+import 'package:otzaria/bloc/search/search_event.dart';
+import 'package:otzaria/bloc/search/search_state.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/library.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
@@ -17,62 +19,42 @@ const double _kBackgroundOpacity = 0.1;
 
 class SearchFacetFiltering extends StatefulWidget {
   final SearchingTab tab;
-  final Future<Library> library;
 
   const SearchFacetFiltering({
     Key? key,
     required this.tab,
-    required this.library,
   }) : super(key: key);
 
   @override
   State<SearchFacetFiltering> createState() => _SearchFacetFilteringState();
 }
 
-class _SearchFacetFilteringState extends State<SearchFacetFiltering>
-    with SingleTickerProviderStateMixin {
-  List<Book> allBooks = [];
-  List<Book> books = [];
+class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
   final TextEditingController _filterQuery = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _initializeBooks();
-  }
-
-  void _initializeBooks() async {
-    allBooks = (await widget.library).getAllBooks();
-  }
-
-  void _updateFilteredBooks() {
-    var filteredList =
-        allBooks.where((book) => book.title.contains(_filterQuery.text));
-    setState(() {
-      books = filteredList.toList();
-    });
+  void dispose() {
+    _filterQuery.dispose();
+    super.dispose();
   }
 
   void _clearFilter() {
-    setState(() => _filterQuery.text = '');
+    _filterQuery.clear();
+    context.read<SearchBloc>().add(ClearFilter());
   }
 
-  void _handleFacetToggle(String facet) {
-    setState(() {
-      if (widget.tab.currentFacets.value.contains(facet)) {
-        widget.tab.currentFacets.value.remove(facet);
-      } else {
-        widget.tab.currentFacets.value.add(facet);
-      }
-      widget.tab.currentFacets.notifyListeners();
-      widget.tab.updateResults();
-    });
+  void _handleFacetToggle(BuildContext context, String facet) {
+    final searchBloc = context.read<SearchBloc>();
+    final state = searchBloc.state;
+    if (state.currentFacets.contains(facet)) {
+      searchBloc.add(RemoveFacet(facet));
+    } else {
+      searchBloc.add(AddFacet(facet));
+    }
   }
 
-  void _setFacet(String facet) {
-    widget.tab.currentFacets.value = [facet];
-    widget.tab.currentFacets.notifyListeners();
-    widget.tab.updateResults();
+  void _setFacet(BuildContext context, String facet) {
+    context.read<SearchBloc>().add(SetFacet(facet));
   }
 
   Widget _buildSearchField() {
@@ -86,198 +68,139 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
           icon: const Icon(Icons.close),
         ),
       ),
-      onChanged: (_) => setState(() => _updateFilteredBooks()),
+      onChanged: (query) {
+        if (query.length >= 3) {
+          context.read<SearchBloc>().add(UpdateFilterQuery(query));
+        } else if (query.isEmpty) {
+          context.read<SearchBloc>().add(ClearFilter());
+        }
+      },
     );
   }
 
-  Widget _buildBookTile(Book book, AsyncSnapshot<int> snapshot, int level) {
-    if (!snapshot.hasData || snapshot.data! <= 0) {
+  Widget _buildBookTile(Book book, int count, int level) {
+    if (count <= 0) {
       return const SizedBox.shrink();
     }
 
     final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-    final isSelected = isChecked(book);
-
-    return InkWell(
-      onDoubleTap: () => _handleFacetToggle(facet),
-      child: ListTile(
-        contentPadding: EdgeInsets.only(
-            right: (_kTreePadding * 2) + (level * _kTreeLevelIndent)),
-        tileColor: isSelected
-            ? Theme.of(context)
-                .colorScheme
-                .surfaceTint
-                .withOpacity(_kBackgroundOpacity)
-            : null,
-        title: Text(
-          snapshot.hasData ? "${book.title} (${snapshot.data})" : book.title,
-        ),
-        onTap: () => HardwareKeyboard.instance.isControlPressed
-            ? _handleFacetToggle(facet)
-            : _setFacet(facet),
-        onLongPress: () => _handleFacetToggle(facet),
-      ),
-    );
-  }
-
-  Widget _buildBooksList() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Expanded(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: books.length,
-            itemBuilder: (context, index) => FutureBuilder<int>(
-              future: widget.tab.countForFacet(
-                "/${books[index].topics.replaceAll(', ', '/')}/${books[index].title}",
-              ),
-              builder: (context, snapshot) =>
-                  _buildBookTile(books[index], snapshot, 0),
-            ),
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        final isSelected = state.currentFacets.contains(facet);
+        return ListTile(
+          contentPadding: EdgeInsets.only(
+            right: (_kTreePadding * 2) + (level * _kTreeLevelIndent),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryTile(
-      Category category, AsyncSnapshot<int> snapshot, int level) {
-    if (!snapshot.hasData || snapshot.data! <= 0) {
-      return const SizedBox.shrink();
-    }
-
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        backgroundColor: isChecked(category)
-            ? Theme.of(context)
-                .colorScheme
-                .surfaceTint
-                .withOpacity(_kBackgroundOpacity)
-            : null,
-        collapsedBackgroundColor: isChecked(category)
-            ? Theme.of(context)
-                .colorScheme
-                .surfaceTint
-                .withOpacity(_kBackgroundOpacity)
-            : null,
-        leading: const Icon(Icons.chevron_right_rounded),
-        trailing: const SizedBox.shrink(),
-        iconColor: Theme.of(context).colorScheme.primary,
-        collapsedIconColor: Theme.of(context).colorScheme.primary,
-        title: _buildCategoryTitle(category, snapshot),
-        initiallyExpanded: level == 0,
-        tilePadding: EdgeInsets.only(
-          right: _kTreePadding + (level * _kTreeLevelIndent),
-        ),
-        children: _buildCategoryChildren(category, level),
-      ),
-    );
-  }
-
-  Widget _buildCategoryTitle(Category category, AsyncSnapshot<int> snapshot) {
-    if (!snapshot.hasData || snapshot.data! <= 0) {
-      return const SizedBox.shrink();
-    }
-
-    return GestureDetector(
-      onTap: () => HardwareKeyboard.instance.isControlPressed
-          ? _handleFacetToggle(category.path)
-          : _setFacet(category.path),
-      onLongPress: () => _handleFacetToggle(category.path),
-      onDoubleTap: () {
-        if (!isChecked(category)) {
-          _handleFacetToggle(category.path);
-        }
+          tileColor: isSelected
+              ? Theme.of(context)
+                  .colorScheme
+                  .surfaceTint
+                  .withOpacity(_kBackgroundOpacity)
+              : null,
+          title: Text("${book.title} ($count)"),
+          onTap: () => HardwareKeyboard.instance.isControlPressed
+              ? _handleFacetToggle(context, facet)
+              : _setFacet(context, facet),
+          onLongPress: () => _handleFacetToggle(context, facet),
+        );
       },
-      child: Text("${category.title} (${snapshot.data})"),
     );
   }
 
-  List<Widget> _buildCategoryChildren(Category category, int level) {
-    return ([] + category.subCategories + category.books).map((entity) {
-      if (entity is Category) {
-        return _buildTree(entity, level: level + 1);
-      } else if (entity is Book) {
-        return ListenableBuilder(
-          listenable: widget.tab.results,
-          builder: (context, _) {
-            final count = widget.tab.countForFacet(
-              "/${entity.topics.replaceAll(', ', '/')}/${entity.title}",
-            );
+  Widget _buildBooksList(List<Book> books) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: books.length,
+      itemBuilder: (context, index) {
+        final book = books[index];
+        final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+        return BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            final count = context.read<SearchBloc>().countForFacet(facet);
             return FutureBuilder<int>(
               future: count,
               builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
-                if (snapshot.hasData && snapshot.data! > 0) {
-                  return _buildBookTile(entity as Book, snapshot, level + 1);
+                if (snapshot.hasData) {
+                  return _buildBookTile(book, snapshot.data!, 0);
                 }
                 return const SizedBox.shrink();
               },
             );
           },
         );
-      }
-      return const SizedBox.shrink();
-    }).toList();
+      },
+    );
   }
 
-  Widget _buildTree(Category category, {int level = 0}) {
-    return ListenableBuilder(
-      listenable: widget.tab.results,
-      builder: (context, _) {
-        final count = widget.tab.countForFacet(category.path);
+  Widget _buildCategoryTile(Category category, int count, int level) {
+    if (count <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        final isSelected = state.currentFacets.contains(category.path);
+        return Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            backgroundColor: isSelected
+                ? Theme.of(context)
+                    .colorScheme
+                    .surfaceTint
+                    .withOpacity(_kBackgroundOpacity)
+                : null,
+            collapsedBackgroundColor: isSelected
+                ? Theme.of(context)
+                    .colorScheme
+                    .surfaceTint
+                    .withOpacity(_kBackgroundOpacity)
+                : null,
+            leading: const Icon(Icons.chevron_right_rounded),
+            trailing: const SizedBox.shrink(),
+            iconColor: Theme.of(context).colorScheme.primary,
+            collapsedIconColor: Theme.of(context).colorScheme.primary,
+            title: Text("${category.title} ($count)"),
+            initiallyExpanded: level == 0,
+            tilePadding: EdgeInsets.only(
+              right: _kTreePadding + (level * _kTreeLevelIndent),
+            ),
+            onExpansionChanged: (_) {},
+            children: _buildCategoryChildren(category, level),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildCategoryChildren(Category category, int level) {
+    return [
+      ...category.subCategories.map((subCategory) {
+        final count =
+            context.read<SearchBloc>().countForFacet(subCategory.path);
         return FutureBuilder<int>(
           future: count,
           builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
+            if (snapshot.hasData) {
+              return _buildCategoryTile(subCategory, snapshot.data!, level + 1);
             }
-            return _buildCategoryTile(category, snapshot, level);
+            return const SizedBox.shrink();
           },
         );
-      },
-    );
-  }
-
-  Widget _buildBooksTree(BuildContext context) {
-    return ListenableBuilder(
-      listenable: widget.tab.results,
-      builder: (context, _) {
-        return ValueListenableBuilder(
-          valueListenable: widget.tab.booksToSearch,
-          builder: (context, value, child) {
-            return FutureBuilder<Library>(
-              future: Provider.of<AppModel>(context, listen: false).library,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                return SingleChildScrollView(
-                  child: _buildTree(snapshot.data!),
-                );
-              },
-            );
+      }),
+      ...category.books.map((book) {
+        final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+        final count = context.read<SearchBloc>().countForFacet(facet);
+        return FutureBuilder<int>(
+          future: count,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return _buildBookTile(book, snapshot.data!, level + 1);
+            }
+            return const SizedBox.shrink();
           },
         );
-      },
-    );
-  }
-
-  bool isChecked(dynamic entity) {
-    if (entity is Category) {
-      return widget.tab.currentFacets.value.contains(entity.path) ||
-          (entity.title != "ספריית אוצריא" && isChecked(entity.parent));
-    }
-    return isChecked(entity.category) ||
-        widget.tab.currentFacets.value.contains(
-            "/${entity.topics.replaceAll(', ', '/')}/${entity.title}");
+      }),
+    ];
   }
 
   @override
@@ -285,9 +208,44 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
     return Column(
       children: [
         _buildSearchField(),
-        _filterQuery.text.length < _kMinQueryLength
-            ? Expanded(child: _buildBooksTree(context))
-            : Expanded(child: _buildBooksList()),
+        Expanded(
+          child: BlocBuilder<LibraryBloc, LibraryState>(
+            builder: (context, libraryState) {
+              if (libraryState.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (libraryState.error != null) {
+                return Center(child: Text('Error: ${libraryState.error}'));
+              }
+
+              if (_filterQuery.text.length >= _kMinQueryLength &&
+                  libraryState.searchResults != null) {
+                return _buildBooksList(libraryState.searchResults!);
+              }
+
+              if (libraryState.library == null) {
+                return const Center(child: Text('No library data available'));
+              }
+
+              final rootCategory = libraryState.library!;
+              final count =
+                  context.read<SearchBloc>().countForFacet(rootCategory.path);
+              return FutureBuilder<int>(
+                future: count,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return SingleChildScrollView(
+                      child:
+                          _buildCategoryTile(rootCategory, snapshot.data!, 0),
+                    );
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                },
+              );
+            },
+          ),
+        ),
       ],
     );
   }

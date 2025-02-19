@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
+import 'package:otzaria/bloc/search/search_bloc.dart';
+import 'package:otzaria/bloc/search/search_event.dart';
+import 'package:otzaria/bloc/search/search_state.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_search_results.dart';
 import 'package:search_engine/search_engine.dart';
@@ -15,26 +19,26 @@ class FuzzyToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: tab.fuzzy,
-        builder: (context, aproximateSearch, child) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ToggleSwitch(
-              minWidth: 150,
-              minHeight: 45,
-              inactiveBgColor: Colors.grey,
-              inactiveFgColor: Colors.white,
-              initialLabelIndex: aproximateSearch ? 1 : 0,
-              totalSwitches: 2,
-              labels: const ['חיפוש מדוייק', 'חיפוש מקורב'],
-              radiusStyle: true,
-              onToggle: (index) {
-                tab.fuzzy.value = index != 0;
-              },
-            ),
-          );
-        });
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ToggleSwitch(
+            minWidth: 150,
+            minHeight: 45,
+            inactiveBgColor: Colors.grey,
+            inactiveFgColor: Colors.white,
+            initialLabelIndex: state.fuzzy ? 1 : 0,
+            totalSwitches: 2,
+            labels: const ['חיפוש מדוייק', 'חיפוש מקורב'],
+            radiusStyle: true,
+            onToggle: (index) {
+              context.read<SearchBloc>().add(ToggleFuzzy());
+            },
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -48,28 +52,24 @@ class FuzzyDistance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 200,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ValueListenableBuilder(
-            valueListenable: tab.distance,
-            builder: (context, distance, child) {
-              return ValueListenableBuilder(
-                  valueListenable: tab.fuzzy,
-                  builder: (context, fuzzy, child) {
-                    return SpinBox(
-                      enabled: !fuzzy,
-                      decoration:
-                          const InputDecoration(labelText: 'מרווח בין מילים'),
-                      min: 0,
-                      max: 30,
-                      value: distance.toDouble(),
-                      onChanged: (value) => tab.distance.value = value.toInt(),
-                    );
-                  });
-            }),
-      ),
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        return SizedBox(
+          width: 200,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SpinBox(
+              enabled: !state.fuzzy,
+              decoration: const InputDecoration(labelText: 'מרווח בין מילים'),
+              min: 0,
+              max: 30,
+              value: state.distance.toDouble(),
+              onChanged: (value) =>
+                  context.read<SearchBloc>().add(UpdateDistance(value.toInt())),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -84,23 +84,25 @@ class NumOfResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: tab.numResults,
-        builder: (context, numResults, child) {
-          return SizedBox(
-            width: 200,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SpinBox(
-                value: numResults.toDouble(),
-                onChanged: (value) => tab.numResults.value = (value.toInt()),
-                min: 10,
-                max: 10000,
-                decoration: const InputDecoration(labelText: 'מספר תוצאות'),
-              ),
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        return SizedBox(
+          width: 200,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SpinBox(
+              value: state.numResults.toDouble(),
+              onChanged: (value) => context
+                  .read<SearchBloc>()
+                  .add(UpdateNumResults(value.toInt())),
+              min: 10,
+              max: 10000,
+              decoration: const InputDecoration(labelText: 'מספר תוצאות'),
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -114,29 +116,31 @@ class OrderOfResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: widget.tab.sortBy,
-        builder: (context, sortBy, child) {
-          return SizedBox(
-            width: 300,
-            child: Center(
-              child: DropdownButton<ResultsOrder>(
-                  value: sortBy,
-                  items: const [
-                    DropdownMenuItem(
-                      value: ResultsOrder.relevance,
-                      child: Text('מיון לפי רלוונטיות'),
-                    ),
-                    DropdownMenuItem(
-                      value: ResultsOrder.catalogue,
-                      child: Text('מיון לפי סדר קטלוגי'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    widget.tab.sortBy.value = value!;
-                  }),
-            ),
-          );
-        });
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        return SizedBox(
+          width: 300,
+          child: Center(
+            child: DropdownButton<ResultsOrder>(
+                value: state.sortBy,
+                items: const [
+                  DropdownMenuItem(
+                    value: ResultsOrder.relevance,
+                    child: Text('מיון לפי רלוונטיות'),
+                  ),
+                  DropdownMenuItem(
+                    value: ResultsOrder.catalogue,
+                    child: Text('מיון לפי סדר קטלוגי'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    context.read<SearchBloc>().add(UpdateSortOrder(value));
+                  }
+                }),
+          ),
+        );
+      },
+    );
   }
 }

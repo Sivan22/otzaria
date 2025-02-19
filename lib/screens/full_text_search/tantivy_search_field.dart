@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/search/search_bloc.dart';
+import 'package:otzaria/bloc/search/search_event.dart';
 import 'package:otzaria/screens/full_text_search/tantivy_full_text_search.dart';
 
 class TantivySearchField extends StatelessWidget {
@@ -17,7 +20,7 @@ class TantivySearchField extends StatelessWidget {
         autofocus: true,
         controller: widget.tab.queryController,
         onSubmitted: (e) {
-          widget.tab.updateResults();
+          context.read<SearchBloc>().add(UpdateSearchQuery(e));
           widget.tab.isLeftPaneOpen.value = false;
         },
         decoration: InputDecoration(
@@ -25,14 +28,18 @@ class TantivySearchField extends StatelessWidget {
           hintText: "חפש כאן..",
           labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
           prefixIcon: IconButton(
-              onPressed: () {
-                widget.tab.updateResults();
-              },
-              icon: const Icon(Icons.search)),
+            onPressed: () {
+              context
+                  .read<SearchBloc>()
+                  .add(UpdateSearchQuery(widget.tab.queryController.text));
+            },
+            icon: const Icon(Icons.search),
+          ),
           suffixIcon: IconButton(
             icon: const Icon(Icons.clear),
             onPressed: () {
               widget.tab.queryController.clear();
+              context.read<SearchBloc>().add(UpdateSearchQuery(''));
             },
           ),
         ),
