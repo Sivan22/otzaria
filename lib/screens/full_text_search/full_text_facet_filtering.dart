@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bloc/library/library_bloc.dart';
@@ -28,7 +29,10 @@ class SearchFacetFiltering extends StatefulWidget {
   State<SearchFacetFiltering> createState() => _SearchFacetFilteringState();
 }
 
-class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
+class _SearchFacetFilteringState extends State<SearchFacetFiltering>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final TextEditingController _filterQuery = TextEditingController();
 
   @override
@@ -92,21 +96,24 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         final isSelected = state.currentFacets.contains(facet);
-        return ListTile(
-          contentPadding: EdgeInsets.only(
-            right: (_kTreePadding * 2) + (level * _kTreeLevelIndent),
+        return InkWell(
+          onDoubleTap: () => _handleFacetToggle(context, facet),
+          child: ListTile(
+            contentPadding: EdgeInsets.only(
+              right: (_kTreePadding * 2) + (level * _kTreeLevelIndent),
+            ),
+            tileColor: isSelected
+                ? Theme.of(context)
+                    .colorScheme
+                    .surfaceTint
+                    .withOpacity(_kBackgroundOpacity)
+                : null,
+            title: Text("${book.title} ($count)"),
+            onTap: () => HardwareKeyboard.instance.isControlPressed
+                ? _handleFacetToggle(context, facet)
+                : _setFacet(context, facet),
+            onLongPress: () => _handleFacetToggle(context, facet),
           ),
-          tileColor: isSelected
-              ? Theme.of(context)
-                  .colorScheme
-                  .surfaceTint
-                  .withOpacity(_kBackgroundOpacity)
-              : null,
-          title: Text("${book.title} ($count)"),
-          onTap: () => HardwareKeyboard.instance.isControlPressed
-              ? _handleFacetToggle(context, facet)
-              : _setFacet(context, facet),
-          onLongPress: () => _handleFacetToggle(context, facet),
         );
       },
     );
@@ -165,7 +172,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
             trailing: const SizedBox.shrink(),
             iconColor: Theme.of(context).colorScheme.primary,
             collapsedIconColor: Theme.of(context).colorScheme.primary,
-            title: InkWell(
+            title: GestureDetector(
                 onTap: () => HardwareKeyboard.instance.isControlPressed
                     ? _handleFacetToggle(context, category.path)
                     : _setFacet(context, category.path),
@@ -248,6 +255,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return SingleChildScrollView(
+                      key: PageStorageKey(widget.tab),
                       child:
                           _buildCategoryTile(rootCategory, snapshot.data!, 0),
                     );

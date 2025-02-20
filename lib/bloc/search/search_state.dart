@@ -45,18 +45,17 @@ class SearchState {
     List<Book>? filteredBooks,
   }) {
     return SearchState(
-      distance: distance ?? this.distance,
-      fuzzy: fuzzy ?? this.fuzzy,
-      results: results ?? this.results,
-      booksToSearch: booksToSearch ?? this.booksToSearch,
-      currentFacets: currentFacets ?? this.currentFacets,
-      sortBy: sortBy ?? this.sortBy,
-      numResults: numResults ?? this.numResults,
-      isLoading: isLoading ?? this.isLoading,
-      searchQuery: searchQuery ?? this.searchQuery,
-      totalResults: totalResults ?? this.totalResults,
-      filterQuery: filterQuery ?? this.filterQuery,
-      filteredBooks: filteredBooks ?? this.filteredBooks,
-    );
+        distance: distance ?? this.distance,
+        fuzzy: fuzzy ?? this.fuzzy,
+        results: results ?? this.results,
+        booksToSearch: booksToSearch ?? this.booksToSearch,
+        currentFacets: currentFacets ?? this.currentFacets,
+        sortBy: sortBy ?? this.sortBy,
+        numResults: numResults ?? this.numResults,
+        isLoading: isLoading ?? this.isLoading,
+        searchQuery: searchQuery ?? this.searchQuery,
+        totalResults: totalResults ?? this.totalResults,
+        filterQuery: filterQuery,
+        filteredBooks: filteredBooks);
   }
 }

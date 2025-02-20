@@ -119,26 +119,30 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       Expanded(
         child: BlocBuilder<SearchBloc, SearchState>(
           builder: (context, state) {
-            if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (state.searchQuery.isEmpty) {
-              return const Center(child: Text("לא בוצע חיפוש"));
-            }
-            if (state.results.isEmpty) {
-              return const Center(
-                  child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('אין תוצאות'),
-              ));
-            }
             return Row(
               children: [
                 SizedBox(
                   width: 350,
                   child: SearchFacetFiltering(tab: widget.tab),
                 ),
-                Expanded(child: TantivySearchResults(tab: widget.tab))
+                Expanded(
+                  child: Builder(builder: (context) {
+                    if (state.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (state.searchQuery.isEmpty) {
+                      return const Center(child: Text("לא בוצע חיפוש"));
+                    }
+                    if (state.results.isEmpty) {
+                      return const Center(
+                          child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('אין תוצאות'),
+                      ));
+                    }
+                    return TantivySearchResults(tab: widget.tab);
+                  }),
+                )
               ],
             );
           },
