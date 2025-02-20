@@ -231,7 +231,7 @@ class MainWindowScreenBlocState extends State<MainWindowScreenBloc>
       tabsBloc.add(SetCurrentTab(tabsBloc.state.tabs
           .indexWhere((tab) => tab.runtimeType == SearchingTab)));
     }
-    navigationBloc.add(NavigateToScreen(Screen.reading));
+    navigationBloc.add(const NavigateToScreen(Screen.search));
   }
 }
 

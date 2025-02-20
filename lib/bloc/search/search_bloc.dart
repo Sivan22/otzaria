@@ -52,30 +52,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
       // If no results with current facets, try root facet
       if (totalResults == 0 && !state.currentFacets.contains("/")) {
-        final newFacets = ["/"];
-        final newTotalResults = await TantivyDataProvider.instance.countTexts(
-          event.query.replaceAll('"', '\\"'),
-          booksToSearch,
-          newFacets,
-          fuzzy: state.fuzzy,
-          distance: state.distance,
-        );
-
-        final results = await TantivyDataProvider.instance.searchTexts(
-          event.query.replaceAll('"', '\\"'),
-          newFacets,
-          state.numResults,
-          fuzzy: state.fuzzy,
-          distance: state.distance,
-          order: state.sortBy,
-        );
-
-        emit(state.copyWith(
-          currentFacets: newFacets,
-          results: results,
-          totalResults: newTotalResults,
-          isLoading: false,
-        ));
+        add(AddFacet("/"));
         return;
       }
 
