@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
@@ -159,10 +161,36 @@ class DataRepository {
       return matchesQuery && matchesTopics;
     }).toList();
 
-    //sort by levenstien distance
+    //sort by levenstien distance - using an isolate
     if (sortByRatio) {
-      filteredBooks.sort(
-          (a, b) => ratio(query, b.title).compareTo(ratio(query, a.title)));
+      Future<List<int>> getSortedIndices(
+          List<Map<String, dynamic>> data, String query) async {
+        return await Isolate.run(() {
+          List<int> indices = List<int>.generate(data.length, (i) => i);
+          indices.sort((a, b) {
+            final scoreA = ratio(query, data[a]['title'] as String);
+            final scoreB = ratio(query, data[b]['title'] as String);
+            return scoreB.compareTo(scoreA);
+          });
+          return indices;
+        });
+      }
+
+      final List<Map<String, dynamic>> sortData = filteredBooks
+          .asMap()
+          .map((i, book) => MapEntry(i, {
+                'index': i,
+                'title': book.title,
+              }))
+          .values
+          .toList();
+
+      // Sort results by relevance in isolate
+      final sortedIndices = getSortedIndices(sortData, query);
+
+      return (await sortedIndices)
+          .map((index) => filteredBooks[index])
+          .toList();
     }
     return filteredBooks;
   }

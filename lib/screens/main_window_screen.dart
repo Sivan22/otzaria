@@ -6,8 +6,8 @@ import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/empty_library_screen.dart';
 import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';
+import 'package:otzaria/screens/library_browser_bloc.dart';
 import 'package:otzaria/screens/reading/reading_screen.dart';
-import 'package:otzaria/screens/library_browser.dart';
 import 'package:otzaria/screens/settings_screen.dart';
 import 'package:otzaria/widgets/keyboard_shortcuts.dart';
 import 'package:otzaria/widgets/my_updat_widget.dart';
@@ -54,18 +54,11 @@ class MainWindowScreenState extends State<MainWindowScreen>
   void initState() {
     WidgetsBinding.instance.addObserver(this);
 
-    if (Settings.getValue('key-font-size') == null) {
-      Settings.setValue('key-font-size', 25.0);
-    }
-    if (Settings.getValue('key-font-family') == null) {
-      Settings.setValue('key-font-family', 'FrankRuhlCLM');
-    }
-
     _checkLibrary();
 
     // Initialize the pages with KeepAlive widgets
     _pages = [
-      const KeepAlivePage(child: LibraryBrowser()),
+      const KeepAlivePage(child: LibraryBrowserBloc()),
       const KeepAlivePage(child: FindRefScreen()),
       const KeepAlivePage(child: ReadingScreen()),
       const KeepAlivePage(child: SizedBox.shrink()),
