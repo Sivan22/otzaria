@@ -14,7 +14,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
-        final state = settingsState ?? SettingsState.initial();
+        final state = settingsState;
         return MaterialApp(
           localizationsDelegates: const [
             GlobalCupertinoLocalizations.delegate,

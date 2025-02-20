@@ -42,6 +42,12 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
     context.read<SearchBloc>().add(ClearFilter());
   }
 
+  @override
+  void initState() {
+    _filterQuery.text = context.read<SearchBloc>().state.filterQuery ?? '';
+    super.initState();
+  }
+
   void _handleFacetToggle(BuildContext context, String facet) {
     final searchBloc = context.read<SearchBloc>();
     final state = searchBloc.state;
@@ -96,9 +102,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
                   .surfaceTint
                   .withOpacity(_kBackgroundOpacity)
               : null,
-          title: InkWell(
-              onDoubleTap: () => _handleFacetToggle(context, facet),
-              child: Text("${book.title} ($count)")),
+          title: Text("${book.title} ($count)"),
           onTap: () => HardwareKeyboard.instance.isControlPressed
               ? _handleFacetToggle(context, facet)
               : _setFacet(context, facet),
@@ -115,8 +119,8 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
       itemBuilder: (context, index) {
         final book = books[index];
         final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-        return BlocBuilder<SearchBloc, SearchState>(
-          builder: (context, state) {
+        return Builder(
+          builder: (context) {
             final count = context.read<SearchBloc>().countForFacet(facet);
             return FutureBuilder<int>(
               future: count,
@@ -229,7 +233,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering> {
 
               if (_filterQuery.text.length >= _kMinQueryLength) {
                 return _buildBooksList(
-                    context.read<SearchBloc>().state.booksToSearch.toList());
+                    context.read<SearchBloc>().state.filteredBooks ?? []);
               }
 
               if (libraryState.library == null) {

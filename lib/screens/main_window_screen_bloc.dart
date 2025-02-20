@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
 import 'package:otzaria/bloc/navigation/navigation_event.dart';
 import 'package:otzaria/bloc/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
+import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/empty_library_screen.dart';
 import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';
@@ -170,9 +173,7 @@ class MainWindowScreenBlocState extends State<MainWindowScreenBloc>
                                   selectedIndex: state.currentScreen.index,
                                   onDestinationSelected: (index) {
                                     if (index == Screen.search.index) {
-                                      context
-                                          .read<NavigationBloc>()
-                                          .add(const OpenNewSearchTab());
+                                      _handleSearchTabOpen(context);
                                     } else {
                                       context.read<NavigationBloc>().add(
                                           NavigateToScreen(
@@ -194,9 +195,7 @@ class MainWindowScreenBlocState extends State<MainWindowScreenBloc>
                               selectedIndex: state.currentScreen.index,
                               onDestinationSelected: (index) {
                                 if (index == Screen.search.index) {
-                                  context
-                                      .read<NavigationBloc>()
-                                      .add(const OpenNewSearchTab());
+                                  _handleSearchTabOpen(context);
                                 } else {
                                   context.read<NavigationBloc>().add(
                                       NavigateToScreen(Screen.values[index]));
@@ -215,6 +214,24 @@ class MainWindowScreenBlocState extends State<MainWindowScreenBloc>
         },
       ),
     );
+  }
+
+  void _handleSearchTabOpen(BuildContext context) {
+    final tabsBloc = context.read<TabsBloc>();
+    final navigationBloc = context.read<NavigationBloc>();
+    if (tabsBloc.state.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
+        (navigationBloc.state.currentScreen == Screen.search &&
+            tabsBloc.state.tabs[tabsBloc.state.currentTabIndex].runtimeType ==
+                SearchingTab)) {
+      tabsBloc.add(AddTab(SearchingTab("חיפוש", "")));
+    }
+    // if sesrch tab exists but not focused, move to it
+    else if (tabsBloc.state.tabs
+        .any((tab) => tab.runtimeType == SearchingTab)) {
+      tabsBloc.add(SetCurrentTab(tabsBloc.state.tabs
+          .indexWhere((tab) => tab.runtimeType == SearchingTab)));
+    }
+    navigationBloc.add(NavigateToScreen(Screen.reading));
   }
 }
 

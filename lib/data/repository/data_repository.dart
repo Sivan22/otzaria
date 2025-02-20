@@ -134,6 +134,7 @@ class DataRepository {
     List<String>? topics,
     bool includeOtzar = false,
     bool includeHebrewBooks = false,
+    bool sortByRatio = true,
   }) async {
     final queryWords = query.toLowerCase().split(RegExp(r'\s+'));
     var allBooks = category?.getAllBooks() ?? (await library).getAllBooks();
@@ -159,10 +160,10 @@ class DataRepository {
     }).toList();
 
     //sort by levenstien distance
-
-    filteredBooks
-        .sort((a, b) => ratio(query, b.title).compareTo(ratio(query, a.title)));
-
+    if (sortByRatio) {
+      filteredBooks.sort(
+          (a, b) => ratio(query, b.title).compareTo(ratio(query, a.title)));
+    }
     return filteredBooks;
   }
 }

@@ -115,12 +115,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
 
     try {
-      final results = await _repository.findBooks(
-        event.query,
-        null, // No category restriction
-        includeOtzar: true,
-        includeHebrewBooks: true,
-      );
+      final results =
+          await _repository.findBooks(event.query, null, sortByRatio: false);
 
       emit(state.copyWith(
         filterQuery: event.query,
