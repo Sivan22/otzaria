@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:otzaria/bloc/settings/settings_bloc.dart';
 import 'package:otzaria/bloc/settings/settings_state.dart';
 import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/screens/main_window_screen_bloc.dart';
+import 'package:otzaria/screens/main_window_screen.dart';
 import 'package:provider/provider.dart';
 
 class App extends StatelessWidget {
@@ -39,7 +39,7 @@ class App extends StatelessWidget {
                         TextStyle(fontSize: 18.0, fontFamily: 'candara'),
                   ),
                 ),
-          home: const MainWindowScreenBloc(),
+          home: const MainWindowScreen(),
         );
       },
     );

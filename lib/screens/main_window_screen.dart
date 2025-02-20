@@ -1,150 +1,65 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/models/app_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
+import 'package:otzaria/bloc/navigation/navigation_event.dart';
+import 'package:otzaria/bloc/navigation/navigation_state.dart';
+import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
+import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/screens/empty_library_screen.dart';
 import 'package:otzaria/screens/favorites/favoriets.dart';
 import 'package:otzaria/screens/find_ref_screen.dart';
-import 'package:otzaria/screens/library_browser_bloc.dart';
-import 'package:otzaria/screens/reading/reading_screen.dart';
+import 'package:otzaria/screens/library_browser.dart';
+import 'package:otzaria/screens/reading/reading_screen_bloc.dart';
 import 'package:otzaria/screens/settings_screen.dart';
-import 'package:otzaria/widgets/keyboard_shortcuts.dart';
+import 'package:otzaria/widgets/keyboard_shortcuts_bloc.dart';
 import 'package:otzaria/widgets/my_updat_widget.dart';
-import 'package:provider/provider.dart';
 
-/// The main window of the application that handles navigation between different screens
-/// and manages the overall layout based on device orientation.
-///
-/// This screen implements a responsive layout that adapts between:
-/// - Portrait mode: Bottom navigation bar
-/// - Landscape mode: Side navigation rail
-///
-/// It manages several key features:
-/// - Navigation between main app sections (Library, Reference Finding, Reading, etc.)
-/// - State preservation across orientation changes
-/// - Library availability checking
-/// - Keyboard shortcuts integration
 class MainWindowScreen extends StatefulWidget {
-  const MainWindowScreen({Key? key}) : super(key: key);
+  const MainWindowScreen({super.key});
+
   @override
   MainWindowScreenState createState() => MainWindowScreenState();
 }
 
 class MainWindowScreenState extends State<MainWindowScreen>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
-  // Navigation and UI State
-  ValueNotifier selectedIndex = ValueNotifier(0);
+    with TickerProviderStateMixin {
   late final PageController pageController;
   Orientation? _previousOrientation;
 
-  // Focus Management
-  final bookSearchfocusNode = FocusNode();
-  final FocusScopeNode mainFocusScopeNode = FocusScopeNode();
+  final List<Widget> _pages = const [
+    KeepAlivePage(child: LibraryBrowser()),
+    KeepAlivePage(child: FindRefScreen()),
+    KeepAlivePage(child: ReadingScreenBloc()),
+    KeepAlivePage(child: SizedBox.shrink()),
+    KeepAlivePage(child: FavouritesScreen()),
+    KeepAlivePage(child: MySettingsScreen()),
+  ];
 
-  // Library State
-  bool _isLibraryEmpty = false;
-
-  /// Cached list of main application pages
-  /// Using KeepAlive to preserve state when switching between pages
-  late final List<Widget> _pages;
-
-  /// Initializes the screen state and sets up necessary listeners and controllers
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
-
-    _checkLibrary();
-
-    // Initialize the pages with KeepAlive widgets
-    _pages = [
-      const KeepAlivePage(child: LibraryBrowserBloc()),
-      const KeepAlivePage(child: FindRefScreen()),
-      const KeepAlivePage(child: ReadingScreen()),
-      const KeepAlivePage(child: SizedBox.shrink()),
-      const KeepAlivePage(child: FavouritesScreen()),
-      const KeepAlivePage(child: MySettingsScreen()),
-    ];
-
-    final currentView = context.read<AppModel>().currentView;
-    pageController = PageController(
-      initialPage: currentView.value.index,
-    );
-
-    currentView.addListener(() {
-      if (!mounted) return;
-      final targetPage = currentView.value == Screens.search
-          ? Screens.reading.index
-          : currentView.value.index;
-
-      if (pageController.hasClients &&
-          pageController.page?.round() != targetPage) {
-        pageController.animateToPage(
-          targetPage,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.linear,
-        );
-      }
-      setState(() {});
-    });
-
     super.initState();
-  }
-
-  /// Checks if the library is properly set up and contains books
-  /// Sets [_isLibraryEmpty] to true if:
-  /// - Library path is not set
-  /// - Library directory doesn't exist
-  /// - Library directory is empty
-  void _checkLibrary() {
-    final libraryPath = Settings.getValue<String>('key-library-path');
-    if (libraryPath == null) {
-      _isLibraryEmpty = true;
-      return;
-    }
-
-    final libraryDir = Directory('$libraryPath/אוצריא');
-    if (!libraryDir.existsSync() || libraryDir.listSync().isEmpty) {
-      _isLibraryEmpty = true;
-      return;
-    }
-
-    _isLibraryEmpty = false;
+    pageController = PageController(
+      initialPage: Screen.library.index,
+    );
   }
 
   @override
   void dispose() {
     pageController.dispose();
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      Provider.of<AppModel>(context, listen: false).saveTabsToDisk();
-    }
-  }
-
-  /// Handles orientation changes and ensures correct page display
-  ///
-  /// When orientation changes:
-  /// 1. Updates the previous orientation tracking
-  /// 2. Ensures the correct page is displayed after the change
-  /// 3. Maintains navigation state consistency
   void _handleOrientationChange(BuildContext context, Orientation orientation) {
     if (_previousOrientation != orientation) {
       _previousOrientation = orientation;
-
-      // Ensure we maintain the correct page after orientation change
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && pageController.hasClients) {
-          final appModel = Provider.of<AppModel>(context, listen: false);
-          final targetPage = appModel.currentView.value == Screens.search
-              ? Screens.reading.index
-              : appModel.currentView.value.index;
+          final currentScreen =
+              context.read<NavigationBloc>().state.currentScreen;
+          final targetPage = currentScreen == Screen.search
+              ? Screen.reading.index
+              : currentScreen.index;
 
           if (pageController.page?.round() != targetPage) {
             pageController.jumpToPage(targetPage);
@@ -154,7 +69,6 @@ class MainWindowScreenState extends State<MainWindowScreen>
     }
   }
 
-  /// Builds the navigation destinations used in both portrait and landscape modes
   List<NavigationDestination> _buildNavigationDestinations() {
     return const [
       NavigationDestination(
@@ -184,140 +98,150 @@ class MainWindowScreenState extends State<MainWindowScreen>
     ];
   }
 
-  /// Handles navigation selection and associated side effects
-  void _handleNavigationSelected(int index, AppModel appModel) {
-    switch (index) {
-      case 3:
-        // we need to open a new search if no search tab exists, OR if the current tab is a search tab (meaning the user wants a new search)
-        if (appModel.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
-            (appModel.currentView.value == Screens.search &&
-                appModel.tabs[appModel.currentTab].runtimeType ==
-                    SearchingTab)) {
-          appModel.openNewSearchTab();
-        }
-        // if sesrch tab exists but not focused, move to it
-        else if (appModel.tabs.any((tab) => tab.runtimeType == SearchingTab)) {
-          appModel.setTab(appModel.tabs
-              .indexWhere((tab) => tab.runtimeType == SearchingTab));
-        }
-        appModel.currentView.value = Screens.values[index];
-        break;
-      case 0:
-        appModel.currentView.value = Screens.library;
-        if (!(Platform.isAndroid || Platform.isIOS)) {
-          appModel.bookLocatorFocusNode.requestFocus();
-          appModel.bookLocatorController.selection = TextSelection(
-              baseOffset: 0,
-              extentOffset: appModel.bookLocatorController.text.length);
-        }
-        break;
-      case 1:
-        appModel.currentView.value = Screens.find;
-        appModel.findReferenceFocusNode.requestFocus();
-        appModel.findReferenceController.selection = TextSelection(
-            baseOffset: 0,
-            extentOffset: appModel.findReferenceController.text.length);
-        break;
-      default:
-        appModel.currentView.value = Screens.values[index];
+  void _handleNavigationChange(BuildContext context, NavigationState state) {
+    if (mounted && pageController.hasClients) {
+      final targetPage = state.currentScreen == Screen.search
+          ? Screen.reading.index
+          : state.currentScreen.index;
+
+      if (pageController.page?.round() != targetPage) {
+        pageController.animateToPage(
+          targetPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     }
   }
 
-  /// Builds the main layout of the application
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-        listenable: context.read<AppModel>(),
-        builder: (context, child) {
-          _checkLibrary();
-          if (_isLibraryEmpty) {
+    return BlocListener<NavigationBloc, NavigationState>(
+      listenWhen: (previous, current) =>
+          previous.currentScreen != current.currentScreen,
+      listener: _handleNavigationChange,
+      child: BlocBuilder<NavigationBloc, NavigationState>(
+        builder: (context, state) {
+          if (state.isLibraryEmpty) {
             return EmptyLibraryScreen(
               onLibraryLoaded: () {
-                Provider.of<AppModel>(context, listen: false).refreshLibrary();
-                setState(() {
-                  _checkLibrary();
-                });
+                context.read<NavigationBloc>().refreshLibrary();
               },
             );
           }
+
           return SafeArea(
-              child: KeyboardShortcuts(
-            child: Consumer<AppModel>(
-              builder: (context, appModel, child) => MyUpdatWidget(
+            child: KeyboardShortcutsBloc(
+              child: MyUpdatWidget(
                 child: Scaffold(
                   resizeToAvoidBottomInset: false,
-                  body: OrientationBuilder(builder: (context, orientation) {
-                    _handleOrientationChange(context, orientation);
+                  body: OrientationBuilder(
+                    builder: (context, orientation) {
+                      _handleOrientationChange(context, orientation);
 
-                    final pageView = PageView(
-                      scrollDirection: orientation == Orientation.landscape
-                          ? Axis.vertical
-                          : Axis.horizontal,
-                      physics: const NeverScrollableScrollPhysics(),
-                      controller: pageController,
-                      children: _pages,
-                    );
-                    if (orientation == Orientation.landscape) {
-                      return Row(children: [
-                        SizedBox.fromSize(
-                          size: const Size.fromWidth(80),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) => NavigationRail(
-                                labelType: NavigationRailLabelType.all,
-                                destinations: [
-                                  for (var destination
-                                      in _buildNavigationDestinations())
-                                    NavigationRailDestination(
-                                      icon: destination.icon,
-                                      label: Text(destination.label),
-                                      padding: destination.label == 'הגדרות'
-                                          ? EdgeInsets.only(
-                                              top: constraints.maxHeight - 410)
-                                          : null,
-                                    ),
-                                ],
-                                selectedIndex: appModel.currentView.value.index,
-                                onDestinationSelected: (index) =>
-                                    _handleNavigationSelected(index, appModel)),
-                          ),
-                        ),
-                        Expanded(child: pageView),
-                      ]);
-                    } else {
-                      return Column(children: [
-                        Expanded(child: pageView),
-                        Consumer<AppModel>(
-                          builder: (context, appModel, child) => NavigationBar(
+                      final pageView = PageView(
+                        scrollDirection: orientation == Orientation.landscape
+                            ? Axis.vertical
+                            : Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        controller: pageController,
+                        children: _pages,
+                      );
+
+                      if (orientation == Orientation.landscape) {
+                        return Row(
+                          children: [
+                            SizedBox.fromSize(
+                              size: const Size.fromWidth(80),
+                              child: LayoutBuilder(
+                                builder: (context, constraints) =>
+                                    NavigationRail(
+                                  labelType: NavigationRailLabelType.all,
+                                  destinations: [
+                                    for (var destination
+                                        in _buildNavigationDestinations())
+                                      NavigationRailDestination(
+                                        icon: destination.icon,
+                                        label: Text(destination.label),
+                                        padding: destination.label == 'הגדרות'
+                                            ? EdgeInsets.only(
+                                                top:
+                                                    constraints.maxHeight - 410)
+                                            : null,
+                                      ),
+                                  ],
+                                  selectedIndex: state.currentScreen.index,
+                                  onDestinationSelected: (index) {
+                                    if (index == Screen.search.index) {
+                                      _handleSearchTabOpen(context);
+                                    } else {
+                                      context.read<NavigationBloc>().add(
+                                          NavigateToScreen(
+                                              Screen.values[index]));
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                            Expanded(child: pageView),
+                          ],
+                        );
+                      } else {
+                        return Column(
+                          children: [
+                            Expanded(child: pageView),
+                            NavigationBar(
                               destinations: _buildNavigationDestinations(),
-                              selectedIndex: appModel.currentView.value.index,
-                              onDestinationSelected: (int index) {
-                                appModel.currentView.value =
-                                    Screens.values[index];
-                                switch (index) {
-                                  case 3:
-                                    appModel.openNewSearchTab();
+                              selectedIndex: state.currentScreen.index,
+                              onDestinationSelected: (index) {
+                                if (index == Screen.search.index) {
+                                  _handleSearchTabOpen(context);
+                                } else {
+                                  context.read<NavigationBloc>().add(
+                                      NavigateToScreen(Screen.values[index]));
                                 }
-                              }),
-                        ),
-                      ]);
-                    }
-                  }),
+                              },
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
                 ),
               ),
             ),
-          ));
-        });
+          );
+        },
+      ),
+    );
+  }
+
+  void _handleSearchTabOpen(BuildContext context) {
+    final tabsBloc = context.read<TabsBloc>();
+    final navigationBloc = context.read<NavigationBloc>();
+    if (tabsBloc.state.tabs.every((tab) => tab.runtimeType != SearchingTab) ||
+        (navigationBloc.state.currentScreen == Screen.search &&
+            tabsBloc.state.tabs[tabsBloc.state.currentTabIndex].runtimeType ==
+                SearchingTab)) {
+      tabsBloc.add(AddTab(SearchingTab("חיפוש", "")));
+    }
+    // if sesrch tab exists but not focused, move to it
+    else if (tabsBloc.state.tabs
+        .any((tab) => tab.runtimeType == SearchingTab)) {
+      tabsBloc.add(SetCurrentTab(tabsBloc.state.tabs
+          .indexWhere((tab) => tab.runtimeType == SearchingTab)));
+    }
+    navigationBloc.add(const NavigateToScreen(Screen.search));
   }
 }
 
-// Widget to keep pages alive when switching orientations
 class KeepAlivePage extends StatefulWidget {
   final Widget child;
 
   const KeepAlivePage({
-    Key? key,
+    super.key,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   State<KeepAlivePage> createState() => _KeepAlivePageState();
