@@ -18,8 +18,8 @@ abstract class OpenedTab {
       );
     } else if (tab is PdfBookTab) {
       return PdfBookTab(
-        tab.book,
-        tab.pageNumber,
+        book: tab.book,
+        initialPage: tab.initialPage,
       );
     }
     return tab;

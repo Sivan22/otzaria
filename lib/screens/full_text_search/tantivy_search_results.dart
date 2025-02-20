@@ -77,11 +77,10 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                         if (result.isPdf) {
                           context.read<TabsBloc>().add(AddTab(
                                 PdfBookTab(
-                                  PdfBook(
+                                  book: PdfBook(
                                       title: result.title,
                                       path: result.filePath),
-                                  result.segment.toInt() + 1,
-                                  searchText: widget.tab.queryController.text,
+                                  initialPage: result.segment.toInt() + 1,
                                 ),
                               ));
                         } else {

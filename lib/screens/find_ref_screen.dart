@@ -142,10 +142,10 @@ class _FindRefScreenState extends State<FindRefScreen>
                                   context.read<NavigationBloc>();
                               if (state.refs[index].pdfBook) {
                                 tabsBloc.add(AddTab(PdfBookTab(
-                                    PdfBook(
+                                    book: PdfBook(
                                         title: state.refs[index].bookTitle,
                                         path: state.refs[index].pdfPath!),
-                                    state.refs[index].index)));
+                                    initialPage: state.refs[index].index)));
                               } else {
                                 tabsBloc.add(AddTab(TextBookTab(
                                     book: TextBook(

@@ -242,7 +242,7 @@ class AppModel with ChangeNotifier {
   /// [openLeftPane] Whether to open the left pane (for TextBooks only)
   void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
-      _addTab(PdfBookTab(book, max(index, 1)));
+      _addTab(PdfBookTab(book: book, initialPage: max(index, 1)));
     } else if (book is TextBook) {
       _addTab(
           TextBookTab(book: book, index: index, openLeftPane: openLeftPane));
@@ -320,14 +320,14 @@ class AppModel with ChangeNotifier {
   /// Handles both PDF and text books, saving their current page/position.
   void addTabToHistory(OpenedTab tab) {
     if (tab is PdfBookTab) {
-      int index = tab.pdfViewerController.isReady
-          ? tab.pdfViewerController.pageNumber!
-          : 1;
-      addHistory(
-        ref: '${tab.title} עמוד $index',
-        book: tab.book,
-        index: index,
-      );
+      // int index = tab.pdfViewerController.isReady
+      //     ? tab.pdfViewerController.pageNumber!
+      //     : 1;
+      // addHistory(
+      //   ref: '${tab.title} עמוד $index',
+      //   book: tab.book,
+      //   index: index,
+      // );
     }
     if (tab is TextBookTab) {
       final index = tab.positionsListener.itemPositions.value.isEmpty
@@ -460,7 +460,7 @@ class AppModel with ChangeNotifier {
     saveCurrentWorkspace(getHebrewTimeStamp());
     tabs = workspace.bookmarks
         .map((b) => b.book is PdfBook
-            ? PdfBookTab(b.book as PdfBook, b.index)
+            ? PdfBookTab(book: b.book as PdfBook, initialPage: b.index)
             : TextBookTab(
                 book: b.book as TextBook,
                 index: b.index,
@@ -473,25 +473,25 @@ class AppModel with ChangeNotifier {
 
   /// Saves the current set of tabs as a new workspace
   void saveCurrentWorkspace(String name) {
-    Workspace workspace = Workspace(
-      name: name,
-      currentTab: currentTab,
-      bookmarks: tabs
-          .where((t) => t is! SearchingTab)
-          .map((t) => Bookmark(
-                ref: '',
-                book: t is PdfBookTab ? (t).book : (t as TextBookTab).book,
-                index: t is PdfBookTab
-                    ? (t).pdfViewerController.isReady
-                        ? (t).pdfViewerController.pageNumber!
-                        : 1
-                    : (t as TextBookTab).index,
-                commentatorsToShow:
-                    t is TextBookTab ? t.commentatorsToShow.value : [],
-              ))
-          .toList(),
-    );
-    workspaces.add(workspace);
+    // Workspace workspace = Workspace(
+    //   name: name,
+    //   currentTab: currentTab,
+    //   bookmarks: tabs
+    //       .where((t) => t is! SearchingTab)
+    //       .map((t) => Bookmark(
+    //             ref: '',
+    //             book: t is PdfBookTab ? (t).book : (t as TextBookTab).book,
+    //             index: t is PdfBookTab
+    //                 ? (t).pdfViewerController.isReady
+    //                     ? (t).pdfViewerController.pageNumber!
+    //                     : 1
+    //                 : (t as TextBookTab).index,
+    //             commentatorsToShow:
+    //                 t is TextBookTab ? t.commentatorsToShow.value : [],
+    //           ))
+    //       .toList(),
+    // );
+    // workspaces.add(workspace);
     saveWorkspacesToDisk();
     notifyListeners();
   }

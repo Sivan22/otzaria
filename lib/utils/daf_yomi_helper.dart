@@ -24,7 +24,10 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
     } else if (book is PdfBook) {
       final outline = await getDafYomiOutline(book, 'דף ${daf.trim()}');
       index = outline?.dest?.pageNumber ?? 0;
-      final tab = PdfBookTab(book, index, openLeftPane: true);
+      final tab = PdfBookTab(
+        book: book,
+        initialPage: index,
+      );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     }
     BlocProvider.of<NavigationBloc>(context)
@@ -81,8 +84,10 @@ openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
   if (book != null) {
     final outline = await getDafYomiOutline(book, ref);
     if (outline != null) {
-      final tab =
-          PdfBookTab(book, outline.dest?.pageNumber ?? 0, openLeftPane: true);
+      final tab = PdfBookTab(
+        book: book,
+        initialPage: outline.dest?.pageNumber ?? 0,
+      );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -207,9 +207,10 @@ class _ReadingScreenBlocState extends State<ReadingScreenBloc>
 
   Widget _buildTabView(OpenedTab tab) {
     if (tab is PdfBookTab) {
-      return PdfBookViewr(
+      return PdfBookScreen(
         key: PageStorageKey(tab),
-        tab: tab,
+        book: tab.book,
+        initialPage: tab.initialPage,
       );
     } else if (tab is TextBookTab) {
       return TextBookViewer(

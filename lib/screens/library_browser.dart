@@ -372,7 +372,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _openBook(Book book) {
     if (book is PdfBook) {
-      context.read<TabsBloc>().add(AddTab(PdfBookTab(book, 1)));
+      context
+          .read<TabsBloc>()
+          .add(AddTab(PdfBookTab(book: book, initialPage: 1)));
     } else if (book is TextBook) {
       context.read<TabsBloc>().add(
             AddTab(
