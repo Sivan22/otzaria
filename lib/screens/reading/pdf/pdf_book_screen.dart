@@ -145,7 +145,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               params: PdfViewerParams(
                 maxScale: 10,
                 onInteractionStart: (_) {
-                  if (!state.isLeftPanePinned) {
+                  if (!state.isLeftPanePinned && state.isLeftPaneVisible) {
                     _bloc.add(const ToggleLeftPane());
                   }
                 },
@@ -251,13 +251,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           outline: state.outline,
                           controller: state.controller,
                         ),
-                        if (textSearcher != null && searchController != null)
-                          PdfBookSearchView(
-                            textSearcher: textSearcher,
-                            searchTextController: searchController,
-                          )
-                        else
-                          const SizedBox.shrink(),
+                        PdfBookSearchView(
+                          textSearcher: textSearcher,
+                          searchTextController: searchController,
+                        ),
                         ThumbnailsView(
                           controller: state.controller,
                         ),

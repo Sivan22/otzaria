@@ -108,7 +108,7 @@ class PdfBookBloc extends Bloc<PdfBookEvent, PdfBookState> {
       final currentState = state as PdfBookLoaded;
       final outline = await event.document.loadOutline();
       emit(currentState.copyWith(
-        totalPages: event.controller.pages.length,
+        totalPages: event.controller.pageCount,
         outline: outline,
         documentRef: event.controller.documentRef,
         isLeftPaneVisible: true,
