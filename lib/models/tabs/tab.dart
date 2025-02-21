@@ -9,6 +9,10 @@ abstract class OpenedTab {
   String title;
   OpenedTab(this.title);
 
+  /// Called when the tab is being disposed.
+  /// Override this method to perform cleanup.
+  void dispose() {}
+
   factory OpenedTab.from(OpenedTab tab) {
     if (tab is TextBookTab) {
       return TextBookTab(

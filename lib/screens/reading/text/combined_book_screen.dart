@@ -1,6 +1,11 @@
 // a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:otzaria/bloc/settings/settings_bloc.dart';
+import 'package:otzaria/bloc/settings/settings_state.dart';
+import 'package:otzaria/bloc/text_book/text_book_bloc.dart';
+import 'package:otzaria/bloc/text_book/text_book_state.dart';
 import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
@@ -64,41 +69,34 @@ class _CombinedViewState extends State<CombinedView> {
         iconColor: Colors.transparent,
         tilePadding: const EdgeInsets.all(0.0),
         collapsedIconColor: Colors.transparent,
-        title: ValueListenableBuilder(
-            valueListenable: (Provider.of<AppModel>(context).showTeamim),
-            builder: (context, showTeamim, child) {
-              String data = widget.data[index];
-              if (!showTeamim) {
-                data = utils.removeTeamim(data);
-              }
-              return ValueListenableBuilder(
-                  valueListenable:
-                      (Provider.of<AppModel>(context).replaceHolyNames),
-                  builder: (context, replaceHolyNames, child) {
-                    if (replaceHolyNames) {
-                      data = utils.replaceHolyNames(data);
-                    }
-                    return ValueListenableBuilder(
-                      valueListenable: widget.tab.removeNikud,
-                      builder: (context, removeNikud, child) => Html(
-                        //remove nikud if needed
-                        data: removeNikud
-                            ? utils.highLight(utils.removeVolwels('$data\n'),
-                                widget.tab.searchTextController.text)
-                            : utils.highLight('$data\n',
-                                widget.tab.searchTextController.text),
-                        style: {
-                          'body': Style(
-                              fontSize: FontSize(widget.textSize),
-                              fontFamily:
-                                  Settings.getValue('key-font-family') ??
-                                      'candara',
-                              textAlign: TextAlign.justify),
-                        },
-                      ),
-                    );
-                  });
-            }),
+        title: BlocBuilder<SettingsBloc, SettingsState>(
+            builder: (context, settingsState) {
+          String data = widget.data[index];
+          if (!settingsState.showTeamim) {
+            data = utils.removeTeamim(data);
+          }
+
+          if (settingsState.replaceHolyNames) {
+            data = utils.replaceHolyNames(data);
+          }
+          return BlocBuilder<TextBookBloc, TextBookState>(
+            builder: (context, state) => Html(
+              //remove nikud if needed
+              data: state.removeNikud
+                  ? utils.highLight(utils.removeVolwels('$data\n'),
+                      widget.tab.searchTextController.text)
+                  : utils.highLight(
+                      '$data\n', widget.tab.searchTextController.text),
+              style: {
+                'body': Style(
+                    fontSize: FontSize(widget.textSize),
+                    fontFamily:
+                        Settings.getValue('key-font-family') ?? 'candara',
+                    textAlign: TextAlign.justify),
+              },
+            ),
+          );
+        }),
         children: [
           widget.showSplitedView.value
               ? const SizedBox.shrink()

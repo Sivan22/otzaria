@@ -14,7 +14,7 @@ import 'package:otzaria/models/tabs/tab.dart';
 import 'package:otzaria/models/tabs/text_tab.dart';
 import 'package:otzaria/screens/full_text_search/full_text_search_screen.dart';
 import 'package:otzaria/screens/reading/pdf/pdf_book_screen.dart';
-import 'package:otzaria/screens/reading/text/text_book_screen.dart';
+import 'package:otzaria/screens/reading/text/text_book_screen_bloc.dart';
 import 'package:otzaria/utils/calendar.dart';
 
 class ReadingScreenBloc extends StatefulWidget {
@@ -213,12 +213,11 @@ class _ReadingScreenBlocState extends State<ReadingScreenBloc>
         initialPage: tab.initialPage,
       );
     } else if (tab is TextBookTab) {
-      return TextBookViewer(
+      return TextBookViewerBloc(
         tab: tab,
         openBookCallback: (tab, {int index = 1}) {
           context.read<TabsBloc>().add(AddTab(tab));
         },
-        data: tab.text,
       );
     } else if (tab is SearchingTab) {
       return FullTextSearchScreen(
