@@ -8,6 +8,7 @@ import 'package:otzaria/bloc/navigation/navigation_state.dart' show Screen;
 import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
 import 'package:otzaria/bloc/tabs/tabs_event.dart';
 import 'package:otzaria/bloc/tabs/tabs_state.dart';
+import 'package:otzaria/bloc/text_book/text_book_bloc.dart';
 import 'package:otzaria/models/tabs/pdf_tab.dart';
 import 'package:otzaria/models/tabs/searching_tab.dart';
 import 'package:otzaria/models/tabs/tab.dart';
@@ -213,11 +214,14 @@ class _ReadingScreenBlocState extends State<ReadingScreenBloc>
         initialPage: tab.initialPage,
       );
     } else if (tab is TextBookTab) {
-      return TextBookViewerBloc(
-        tab: tab,
-        openBookCallback: (tab, {int index = 1}) {
-          context.read<TabsBloc>().add(AddTab(tab));
-        },
+      return BlocProvider(
+        create: (context) => tab.bloc,
+        child: TextBookViewerBloc(
+          tab: tab,
+          openBookCallback: (tab, {int index = 1}) {
+            context.read<TabsBloc>().add(AddTab(tab));
+          },
+        ),
       );
     } else if (tab is SearchingTab) {
       return FullTextSearchScreen(

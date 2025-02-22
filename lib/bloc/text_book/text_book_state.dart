@@ -21,32 +21,33 @@ class TextBookState extends Equatable {
   final String searchText;
   final TextBookStatus status;
   final String? error;
+  final String? currentTitle;
 
   // Controllers
   final ItemScrollController scrollController;
   final ScrollOffsetController scrollOffsetController;
   final ItemPositionsListener positionsListener;
 
-  const TextBookState({
-    required this.book,
-    this.content,
-    required this.fontSize,
-    required this.showLeftPane,
-    required this.showSplitView,
-    required this.activeCommentators,
-    this.links,
-    this.tableOfContents,
-    required this.removeNikud,
-    required this.currentIndex,
-    this.selectedIndex,
-    required this.pinLeftPane,
-    required this.searchText,
-    required this.status,
-    this.error,
-    required this.scrollController,
-    required this.scrollOffsetController,
-    required this.positionsListener,
-  });
+  const TextBookState(
+      {required this.book,
+      this.content,
+      required this.fontSize,
+      required this.showLeftPane,
+      required this.showSplitView,
+      required this.activeCommentators,
+      this.links,
+      this.tableOfContents,
+      required this.removeNikud,
+      required this.currentIndex,
+      this.selectedIndex,
+      required this.pinLeftPane,
+      required this.searchText,
+      required this.status,
+      this.error,
+      required this.scrollController,
+      required this.scrollOffsetController,
+      required this.positionsListener,
+      this.currentTitle});
 
   factory TextBookState.initial({
     required TextBook book,
@@ -72,26 +73,26 @@ class TextBookState extends Equatable {
     );
   }
 
-  TextBookState copyWith({
-    TextBook? book,
-    List<String>? content,
-    double? fontSize,
-    bool? showLeftPane,
-    bool? showSplitView,
-    List<String>? activeCommentators,
-    List<Link>? links,
-    List<TocEntry>? tableOfContents,
-    bool? removeNikud,
-    int? currentIndex,
-    int? selectedIndex,
-    bool? pinLeftPane,
-    String? searchText,
-    TextBookStatus? status,
-    String? error,
-    ItemScrollController? scrollController,
-    ScrollOffsetController? scrollOffsetController,
-    ItemPositionsListener? positionsListener,
-  }) {
+  TextBookState copyWith(
+      {TextBook? book,
+      List<String>? content,
+      double? fontSize,
+      bool? showLeftPane,
+      bool? showSplitView,
+      List<String>? activeCommentators,
+      List<Link>? links,
+      List<TocEntry>? tableOfContents,
+      bool? removeNikud,
+      int? currentIndex,
+      int? selectedIndex,
+      bool? pinLeftPane,
+      String? searchText,
+      TextBookStatus? status,
+      String? error,
+      ItemScrollController? scrollController,
+      ScrollOffsetController? scrollOffsetController,
+      ItemPositionsListener? positionsListener,
+      String? currentTitle}) {
     return TextBookState(
       book: book ?? this.book,
       content: content ?? this.content,
@@ -112,6 +113,7 @@ class TextBookState extends Equatable {
       scrollOffsetController:
           scrollOffsetController ?? this.scrollOffsetController,
       positionsListener: positionsListener ?? this.positionsListener,
+      currentTitle: currentTitle ?? this.currentTitle,
     );
   }
 
@@ -132,5 +134,6 @@ class TextBookState extends Equatable {
         searchText,
         status,
         error,
+        currentTitle,
       ];
 }

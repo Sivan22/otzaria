@@ -41,6 +41,7 @@ class _TocViewerState extends State<TocViewer>
         .toList();
 
     return ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         itemCount: allEntries.length,
         itemBuilder: (context, index) {

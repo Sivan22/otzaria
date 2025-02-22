@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bloc/text_book/text_book_event.dart';
 import 'package:otzaria/bloc/text_book/text_book_repository.dart';
 import 'package:otzaria/bloc/text_book/text_book_state.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
@@ -24,6 +25,11 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
 
     // Load initial content
     add(LoadContent(book: initialState.book, index: initialState.currentIndex));
+
+    //listen to index changes
+    initialState.positionsListener.itemPositions.addListener(() {
+      add(UpdateIndex(state.positionsListener.itemPositions.value.first.index));
+    });
   }
 
   Future<void> _onLoadContent(
@@ -36,6 +42,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final content = await _repository.getBookContent(event.book);
       final links = await _repository.getBookLinks(event.book);
       final tableOfContents = await _repository.getTableOfContents(event.book);
+      final currentTilte =
+          await refFromIndex(event.index, Future.value(tableOfContents));
       final availableCommentators =
           await _repository.getAvailableCommentators(links);
 
@@ -45,6 +53,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         links: links,
         tableOfContents: tableOfContents,
         currentIndex: event.index,
+        currentTitle: currentTilte,
         status: TextBookStatus.loaded,
       ));
     } catch (e) {
@@ -93,9 +102,11 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   void _onUpdateIndex(
     UpdateIndex event,
     Emitter<TextBookState> emit,
-  ) {
+  ) async {
     emit(state.copyWith(
       currentIndex: event.index,
+      currentTitle:
+          await refFromIndex(event.index, Future.value(state.tableOfContents)),
       selectedIndex: null,
     ));
   }

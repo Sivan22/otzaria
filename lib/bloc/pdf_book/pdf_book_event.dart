@@ -23,11 +23,12 @@ class LoadPdfBook extends PdfBookEvent {
 
 class ChangePage extends PdfBookEvent {
   final int pageNumber;
+  final List<PdfOutlineNode>? outline;
 
-  const ChangePage(this.pageNumber);
+  const ChangePage(this.pageNumber, {this.outline});
 
   @override
-  List<Object?> get props => [pageNumber];
+  List<Object?> get props => [pageNumber, outline];
 }
 
 class ToggleLeftPane extends PdfBookEvent {
@@ -44,6 +45,10 @@ class ZoomIn extends PdfBookEvent {
 
 class ZoomOut extends PdfBookEvent {
   const ZoomOut();
+}
+
+class UpdateCurrentTitle extends PdfBookEvent {
+  const UpdateCurrentTitle();
 }
 
 class UpdateSearchText extends PdfBookEvent {

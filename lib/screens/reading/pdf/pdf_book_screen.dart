@@ -79,7 +79,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       final wideScreen = (MediaQuery.of(context).size.width >= 600);
       return Scaffold(
         appBar: AppBar(
-          title: Text(widget.book.title),
+          title: Text(state.currentTitle ?? ''),
           leading: IconButton(
             icon: const Icon(Icons.menu),
             tooltip: 'חיפוש וניווט',
@@ -149,6 +149,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     _bloc.add(const ToggleLeftPane());
                   }
                 },
+                onPageChanged: (page) => _bloc.add(UpdateCurrentTitle()),
                 viewerOverlayBuilder: (context, size, handleLinkTap) => [
                   PdfViewerScrollThumb(
                     controller: state.controller,

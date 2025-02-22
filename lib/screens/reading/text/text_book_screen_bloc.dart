@@ -96,30 +96,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   Widget _buildTitle(TextBookState state) {
-    return ListenableBuilder(
-      listenable: state.positionsListener.itemPositions,
-      builder: (context, _) {
-        return FutureBuilder(
-          future: Future(() async {
-            final index = state.positionsListener.itemPositions.value.isNotEmpty
-                ? state.positionsListener.itemPositions.value.first.index
-                : 0;
-            final toc = state.book.tableOfContents;
-            return utils.refFromIndex(index, toc);
-          }),
-          builder: (context, snapshot) => snapshot.hasData
-              ? Center(
-                  child: SelectionArea(
-                    child: Text(
-                      snapshot.data!,
-                      style: const TextStyle(fontSize: 17),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        );
-      },
-    );
+    return state.currentTitle != null
+        ? Center(
+            child: SelectionArea(
+              child: Text(
+                state.currentTitle!,
+                style: const TextStyle(fontSize: 17),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
   }
 
   Widget _buildMenuButton(TextBookState state) {

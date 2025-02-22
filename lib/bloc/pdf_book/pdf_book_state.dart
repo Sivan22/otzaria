@@ -35,41 +35,42 @@ class PdfBookLoaded extends PdfBookState {
   final String searchText;
   final PdfDocumentRef? documentRef;
   final PdfViewerController controller;
+  final String? currentTitle;
 
-  const PdfBookLoaded({
-    required this.currentPage,
-    required this.totalPages,
-    required this.isLeftPaneVisible,
-    required this.isLeftPanePinned,
-    required this.zoomLevel,
-    required this.controller,
-    this.outline,
-    this.searchText = '',
-    this.documentRef,
-  });
+  const PdfBookLoaded(
+      {required this.currentPage,
+      required this.totalPages,
+      required this.isLeftPaneVisible,
+      required this.isLeftPanePinned,
+      required this.zoomLevel,
+      required this.controller,
+      this.outline,
+      this.searchText = '',
+      this.documentRef,
+      this.currentTitle});
 
-  PdfBookLoaded copyWith({
-    int? currentPage,
-    int? totalPages,
-    bool? isLeftPaneVisible,
-    bool? isLeftPanePinned,
-    double? zoomLevel,
-    List<PdfOutlineNode>? outline,
-    String? searchText,
-    PdfDocumentRef? documentRef,
-    PdfViewerController? controller,
-  }) {
+  PdfBookLoaded copyWith(
+      {int? currentPage,
+      int? totalPages,
+      bool? isLeftPaneVisible,
+      bool? isLeftPanePinned,
+      double? zoomLevel,
+      List<PdfOutlineNode>? outline,
+      String? searchText,
+      PdfDocumentRef? documentRef,
+      PdfViewerController? controller,
+      String? currentTitle}) {
     return PdfBookLoaded(
-      currentPage: currentPage ?? this.currentPage,
-      totalPages: totalPages ?? this.totalPages,
-      isLeftPaneVisible: isLeftPaneVisible ?? this.isLeftPaneVisible,
-      isLeftPanePinned: isLeftPanePinned ?? this.isLeftPanePinned,
-      zoomLevel: zoomLevel ?? this.zoomLevel,
-      outline: outline ?? this.outline,
-      searchText: searchText ?? this.searchText,
-      documentRef: documentRef ?? this.documentRef,
-      controller: controller ?? this.controller,
-    );
+        currentPage: currentPage ?? this.currentPage,
+        totalPages: totalPages ?? this.totalPages,
+        isLeftPaneVisible: isLeftPaneVisible ?? this.isLeftPaneVisible,
+        isLeftPanePinned: isLeftPanePinned ?? this.isLeftPanePinned,
+        zoomLevel: zoomLevel ?? this.zoomLevel,
+        outline: outline ?? this.outline,
+        searchText: searchText ?? this.searchText,
+        documentRef: documentRef ?? this.documentRef,
+        controller: controller ?? this.controller,
+        currentTitle: currentTitle);
   }
 
   @override
@@ -83,5 +84,6 @@ class PdfBookLoaded extends PdfBookState {
         searchText,
         documentRef,
         controller,
+        currentTitle
       ];
 }

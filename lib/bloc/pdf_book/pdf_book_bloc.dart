@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'pdf_book_event.dart';
 import 'pdf_book_state.dart';
@@ -17,12 +18,14 @@ class PdfBookBloc extends Bloc<PdfBookEvent, PdfBookState> {
     on<LoadOutline>(_onLoadOutline);
     on<UpdateDocumentRef>(_onUpdateDocumentRef);
     on<OnViewerReady>(_onViewerReady);
+    on<UpdateCurrentTitle>(_onUpdateCurrentTitle);
   }
 
   void _onLoadPdfBook(LoadPdfBook event, Emitter<PdfBookState> emit) {
     emit(const PdfBookLoading());
     try {
       _controller = PdfViewerController();
+
       emit(PdfBookLoaded(
         currentPage: event.initialPage,
         totalPages: 0, // Will be updated when viewer is ready
@@ -36,11 +39,13 @@ class PdfBookBloc extends Bloc<PdfBookEvent, PdfBookState> {
     }
   }
 
-  void _onChangePage(ChangePage event, Emitter<PdfBookState> emit) {
+  void _onChangePage(ChangePage event, Emitter<PdfBookState> emit) async {
     if (state is PdfBookLoaded) {
       final currentState = state as PdfBookLoaded;
       _controller?.goToPage(pageNumber: event.pageNumber);
-      emit(currentState.copyWith(currentPage: event.pageNumber));
+      emit(currentState.copyWith(
+        currentPage: event.pageNumber,
+      ));
     }
   }
 
@@ -116,9 +121,48 @@ class PdfBookBloc extends Bloc<PdfBookEvent, PdfBookState> {
     }
   }
 
+  void _onUpdateCurrentTitle(
+      UpdateCurrentTitle event, Emitter<PdfBookState> emit) async {
+    if (state is PdfBookLoaded) {
+      final currentState = state as PdfBookLoaded;
+      emit(currentState.copyWith(
+        currentTitle: await refFromPageNumber(
+            currentState.outline!, currentState.controller.pageNumber ?? 1),
+      ));
+    }
+  }
+
   @override
   Future<void> close() {
     _controller = null;
     return super.close();
+  }
+
+  Future<String> refFromPageNumber(
+    List<PdfOutlineNode> entries,
+    int pageNumber,
+  ) async {
+    List<String> texts = [];
+    void searchOutline(List<PdfOutlineNode> entries, {int level = 1}) {
+      for (final entry in entries) {
+        if (entry.dest?.pageNumber != null &&
+            entry.dest!.pageNumber > pageNumber) {
+          return;
+        }
+        if (level > texts.length) {
+          texts.add(entry.title);
+        } else {
+          texts[level - 1] = entry.title;
+          texts = texts.getRange(0, level).toList();
+        }
+        searchOutline(entry.children, level: level + 1);
+      }
+    }
+
+    searchOutline(
+      entries,
+    );
+    texts = texts.map((e) => e.trim()).toList();
+    return texts.join(', ');
   }
 }
