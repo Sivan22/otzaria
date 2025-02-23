@@ -5,11 +5,11 @@ import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
-import 'package:otzaria/text_book/view/simple_book_view.dart';
-import 'package:otzaria/text_book/view/commentary_list.dart';
+import 'package:otzaria/text_book/view/splited_view/simple_book_view.dart';
+import 'package:otzaria/text_book/view/splited_view/commentary_list_for_splited_view.dart';
 
-class SplitedViewScreenBloc extends StatelessWidget {
-  const SplitedViewScreenBloc({
+class SplitedViewScreen extends StatelessWidget {
+  const SplitedViewScreen({
     super.key,
     required this.tab,
     required this.content,

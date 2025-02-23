@@ -7,7 +7,7 @@ import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import '../models/legacy_full_text_searcher.dart';
 import '../../tabs/models/tab.dart';
-import '../../text_book/search_results.dart';
+import '../../text_book/models/search_results.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TextFileSearchScreen extends StatefulWidget {

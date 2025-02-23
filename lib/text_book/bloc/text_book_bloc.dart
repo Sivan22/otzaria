@@ -74,35 +74,50 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     UpdateFontSize event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(fontSize: event.fontSize));
+    emit(state.copyWith(
+      fontSize: event.fontSize,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 
   void _onToggleLeftPane(
     ToggleLeftPane event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(showLeftPane: event.show));
+    emit(state.copyWith(
+      showLeftPane: event.show,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 
   void _onToggleSplitView(
     ToggleSplitView event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(showSplitView: event.show));
+    emit(state.copyWith(
+      showSplitView: event.show,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 
   void _onUpdateCommentators(
     UpdateCommentators event,
     Emitter<TextBookState> emit,
   ) async {
-    emit(state.copyWith(activeCommentators: event.commentators));
+    emit(state.copyWith(
+      activeCommentators: event.commentators,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 
   void _onToggleNikud(
     ToggleNikud event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(removeNikud: event.remove));
+    emit(state.copyWith(
+      removeNikud: event.remove,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 
   void _onUpdateVisibleIndecies(
@@ -111,6 +126,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   ) async {
     emit(state.copyWith(
       visibleIndices: event.visibleIndecies,
+      selectedIndex: state.selectedIndex,
       currentTitle: await refFromIndex(
           event.visibleIndecies.first, Future.value(state.tableOfContents)),
     ));
@@ -127,13 +143,19 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     TogglePinLeftPane event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(pinLeftPane: event.pin));
+    emit(state.copyWith(
+      pinLeftPane: event.pin,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 
   void _onUpdateSearchText(
     UpdateSearchText event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(searchText: event.text));
+    emit(state.copyWith(
+      searchText: event.text,
+      selectedIndex: state.selectedIndex,
+    ));
   }
 }

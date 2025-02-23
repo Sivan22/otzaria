@@ -4,18 +4,18 @@ import 'package:otzaria/models/links.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
-import 'package:otzaria/text_book/view/commentary_content.dart';
+import 'package:otzaria/text_book/view/combined_view/commentary_content.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-class CommentaryList extends StatefulWidget {
+class CommentaryListForCombinedView extends StatefulWidget {
   final Function(TextBookTab) openBookCallback;
   final TextBookTab textBookTab;
   final double fontSize;
   final int index;
   final bool showSplitView;
 
-  const CommentaryList({
+  const CommentaryListForCombinedView({
     super.key,
     required this.openBookCallback,
     required this.textBookTab,
@@ -25,30 +25,22 @@ class CommentaryList extends StatefulWidget {
   });
 
   @override
-  State<CommentaryList> createState() => _CommentaryListState();
+  State<CommentaryListForCombinedView> createState() =>
+      _CommentaryListForCombinedViewState();
 }
 
-class _CommentaryListState extends State<CommentaryList> {
+class _CommentaryListForCombinedViewState
+    extends State<CommentaryListForCombinedView> {
   late Future<List<Link>> thisLinks;
   late List<int> indexes;
   final ScrollOffsetController scrollController = ScrollOffsetController();
 
-  void _updateThisLinks(TextBookState state) {
-    thisLinks = getLinksforIndexs(
-        links: state.links ?? [],
-        commentatorsToShow: state.activeCommentators,
-        indexes: indexes);
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
-      final indexes = state.selectedIndex != null
-          ? [state.selectedIndex!]
-          : state.visibleIndices ?? [];
       return FutureBuilder(
         future: getLinksforIndexs(
-            indexes: indexes,
+            indexes: [widget.index],
             links: state.links ?? [],
             commentatorsToShow: state.activeCommentators),
         builder: (context, thisLinksSnapshot) {

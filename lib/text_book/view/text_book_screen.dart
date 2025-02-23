@@ -15,10 +15,10 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/printing/printing_screen.dart';
-import 'package:otzaria/text_book/view/combined_book_screen.dart';
+import 'package:otzaria/text_book/view/combined_view/combined_book_screen.dart';
 import 'package:otzaria/text_book/view/commentators_list_screen.dart';
 import 'package:otzaria/text_book/view/links_screen.dart';
-import 'package:otzaria/text_book/view/splited_view_screen_bloc.dart';
+import 'package:otzaria/text_book/view/splited_view/splited_view_screen.dart';
 import 'package:otzaria/text_book/view/text_book_search_screen.dart';
 import 'package:otzaria/text_book/view/toc_navigator_screen.dart';
 import 'package:otzaria/utils/open_book.dart';
@@ -172,11 +172,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                 final book = await library.then((library) =>
                     library.findBookByTitle(state.book.title, PdfBook));
                 final index = await textToPdfPage(
-                  state.book.title,
+                  state.book,
                   state.positionsListener.itemPositions.value.isNotEmpty
                       ? state.positionsListener.itemPositions.value.first.index
                       : 0,
-                  context,
                 );
                 openBook(context, book!, index ?? 0, '');
               },
@@ -646,7 +645,7 @@ $selectedText
 
   Widget _buildSplitedOrCombinedView(TextBookState state) {
     if (state.showSplitView && state.activeCommentators.isNotEmpty) {
-      return SplitedViewScreenBloc(
+      return SplitedViewScreen(
         tab: widget.tab,
         content: state.content!,
         openBookCallback: widget.openBookCallback,

@@ -3,10 +3,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_bloc.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_event.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
+import 'package:otzaria/utils/open_book.dart';
+import 'package:otzaria/utils/page_converter.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/pdf_book/view/pdf_page_number_dispaly.dart';
 import 'pdf_search_screen.dart';
@@ -100,6 +104,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             onPressed: () => _bloc.add(const ToggleLeftPane()),
           ),
           actions: [
+            _buildTextButton(context, widget.book, state),
             IconButton(
               icon: const Icon(
                 Icons.bookmark_add,
@@ -348,6 +353,26 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       },
     );
     return result ?? false;
+  }
+
+  Widget _buildTextButton(
+      BuildContext context, PdfBook book, PdfBookState state) {
+    return FutureBuilder(
+      future: DataRepository.instance.library
+          .then((library) => library.findBookByTitle(book.title, PdfBook)),
+      builder: (context, snapshot) => snapshot.hasData
+          ? IconButton(
+              icon: const Icon(Icons.article),
+              tooltip: 'פתח טקסט',
+              onPressed: () async {
+                if (state is PdfBookLoaded && state.outline != null) {
+                  final index = await pdfToTextPage(book, state.outline!,
+                      state.controller.pageNumber ?? 1, context);
+                  openBook(context, book, index ?? 0, '');
+                }
+              })
+          : const SizedBox.shrink(),
+    );
   }
 
   @override
