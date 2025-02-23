@@ -12,6 +12,8 @@ import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_repository.dart';
+import 'package:otzaria/history/bloc/history_bloc.dart';
+import 'package:otzaria/history/history_repository.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
@@ -46,6 +48,8 @@ void main() async {
 
   await initialize();
 
+  final historyRepository = HistoryRepository();
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -57,9 +61,12 @@ void main() async {
             repository: SettingsRepository(),
           )..add(LoadSettings()),
         ),
+        BlocProvider<HistoryBloc>(
+            create: (context) => HistoryBloc(historyRepository)),
         BlocProvider<TabsBloc>(
           create: (context) => TabsBloc(
             repository: TabsRepository(),
+            historyRepository: historyRepository,
           )..add(LoadTabs()),
         ),
         BlocProvider<NavigationBloc>(
