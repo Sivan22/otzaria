@@ -1,65 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/models/app_model.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/history/bloc/history_bloc.dart';
+import 'package:otzaria/utils/open_book.dart';
 
-class HistoryView extends StatefulWidget {
-  const HistoryView({
-    Key? key,
-  }) : super(key: key);
+class HistoryView extends StatelessWidget {
+  const HistoryView({Key? key}) : super(key: key);
 
-  @override
-  State<HistoryView> createState() => _HistoryViewState();
-}
-
-class _HistoryViewState extends State<HistoryView> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppModel>(builder: (context, appModel, child) {
-      return appModel.history.isEmpty
-          ? const Center(child: Text('אין היסטוריה'))
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: appModel.history.length,
-                    itemBuilder: (context, index) => ListTile(
-                        title: Text(appModel.history[index].ref),
-                        onTap: () => appModel.openBook(
-                            appModel.history[index].book,
-                            appModel.history[index].index),
-                        trailing: IconButton(
-                          icon: const Icon(
-                            Icons.delete_forever,
-                          ),
-                          onPressed: () {
-                            appModel.removeHistory(index);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('נמחק בהצלחה'),
-                              ),
-                            );
-                            setState(() {});
-                          },
-                        )),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
+    return BlocBuilder<HistoryBloc, HistoryState>(
+      builder: (context, state) {
+        if (state is HistoryLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is HistoryError) {
+          return Center(child: Text('Error: ${state.message}'));
+        }
+
+        if (state.history.isEmpty) {
+          return const Center(child: Text('אין היסטוריה'));
+        }
+
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: state.history.length,
+                itemBuilder: (context, index) => ListTile(
+                  title: Text(state.history[index].ref),
+                  onTap: () {
+                    openBook(context, state.history[index].book, index, '');
+                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_forever),
                     onPressed: () {
-                      appModel.clearHistory();
+                      context.read<HistoryBloc>().add(RemoveHistory(index));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('כל ההיסטוריה נמחקה'),
-                        ),
+                        const SnackBar(content: Text('נמחק בהצלחה')),
                       );
-                      setState(() {});
                     },
-                    child: const Text('מחק את כל ההיסטוריה'),
                   ),
                 ),
-              ],
-            );
-    });
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  context.read<HistoryBloc>().add(ClearHistory());
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('כל ההיסטוריה נמחקה')),
+                  );
+                },
+                child: const Text('מחק את כל ההיסטוריה'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

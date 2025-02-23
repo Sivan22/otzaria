@@ -7,6 +7,9 @@ import 'package:otzaria/library/bloc/library_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_event.dart';
+import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/models/books.dart';
@@ -158,45 +161,48 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   Widget _buildSearchBar(LibraryState state) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              autofocus: true,
-              decoration: InputDecoration(
-                constraints: const BoxConstraints(maxWidth: 400),
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _refocusSearchBar();
-                  },
-                  icon: const Icon(Icons.cancel),
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settingsState) {
+        return Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                autofocus: true,
+                decoration: InputDecoration(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      _searchController.clear();
+                      _refocusSearchBar();
+                    },
+                    icon: const Icon(Icons.cancel),
+                  ),
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                  ),
+                  hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
                 ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                ),
-                hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
+                onChanged: (value) {
+                  context.read<LibraryBloc>().add(
+                        SearchBooks(
+                          value,
+                          topics: state.selectedTopics,
+                        ),
+                      );
+                },
               ),
-              onChanged: (value) {
-                context.read<LibraryBloc>().add(
-                      SearchBooks(
-                        value,
-                        topics: state.selectedTopics,
-                      ),
-                    );
-              },
             ),
-          ),
-          if (Settings.getValue<bool>('key-show-external-books') ?? false)
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () => _showFilterDialog(context),
-            ),
-        ],
-      ),
+            if (settingsState.showExternalBooks)
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: () => _showFilterDialog(context, settingsState),
+              ),
+          ],
+        );
+      }),
     );
   }
 
@@ -405,7 +411,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     _refocusSearchBar();
   }
 
-  void _showFilterDialog(BuildContext context) {
+  void _showFilterDialog(BuildContext context, SettingsState settingsState) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -417,13 +423,12 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                 children: [
                   CheckboxListTile(
                     title: const Text('הצג ספרים מאוצר החכמה'),
-                    value:
-                        Settings.getValue<bool>('key-show-otzar-hachochma') ??
-                            false,
+                    value: settingsState.showHebrewBooks,
                     onChanged: (bool? value) {
                       setState(() {
-                        Settings.setValue<bool>(
-                            'key-show-otzar-hachochma', value ?? false);
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateShowOtzarHachochma(value!));
                         context
                             .read<LibraryBloc>()
                             .add(ToggleExternalBooks('otzar', value ?? false));
@@ -432,12 +437,12 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   ),
                   CheckboxListTile(
                     title: const Text('הצג ספרים מהיברובוקס'),
-                    value: Settings.getValue<bool>('key-show-hebrew-books') ??
-                        false,
+                    value: settingsState.showHebrewBooks,
                     onChanged: (bool? value) {
                       setState(() {
-                        Settings.setValue<bool>(
-                            'key-show-hebrew-books', value ?? false);
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateShowHebrewBooks(value!));
                         context
                             .read<LibraryBloc>()
                             .add(ToggleExternalBooks('hebrew', value ?? false));
