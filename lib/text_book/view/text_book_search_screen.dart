@@ -3,7 +3,7 @@ import 'package:otzaria/text_book/text_book_searcher.dart';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
-import 'package:otzaria/search/models/search_results.dart';
+import 'package:otzaria/text_book/search_results.dart';
 
 class TextBookSearchView extends StatefulWidget {
   final String data;

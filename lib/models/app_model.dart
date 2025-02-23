@@ -26,10 +26,10 @@ import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
-import 'package:otzaria/models/workspace.dart';
 import 'package:otzaria/daf_yomi/calendar.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/workspaces/workspace.dart';
 
 class AppModel with ChangeNotifier {
   /// The singleton data repository instance for accessing application data
