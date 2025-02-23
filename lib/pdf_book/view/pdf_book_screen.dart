@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_bloc.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_event.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
@@ -99,6 +100,29 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             onPressed: () => _bloc.add(const ToggleLeftPane()),
           ),
           actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.bookmark_add,
+              ),
+              tooltip: 'הוספת סימניה',
+              onPressed: () {
+                int index = state.controller.pageNumber ?? 1;
+                bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
+                    ref: '${widget.book.title} עמוד $index',
+                    book: widget.book,
+                    index: index);
+                // notify user
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(bookmarkAdded
+                          ? 'הסימניה נוספה בהצלחה'
+                          : 'הסימניה כבר קיימת'),
+                    ),
+                  );
+                }
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.zoom_in),
               tooltip: 'הגדל',

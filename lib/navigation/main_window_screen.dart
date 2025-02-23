@@ -7,7 +7,7 @@ import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/empty_library/empty_library_screen.dart';
-import 'package:otzaria/favoriets.dart';
+import 'package:otzaria/favoriets_screen.dart';
 import 'package:otzaria/find_ref/find_ref_screen.dart';
 import 'package:otzaria/library/view/library_browser.dart';
 import 'package:otzaria/tabs/reading_screen.dart';

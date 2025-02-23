@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
@@ -216,20 +217,19 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         int index = state.positionsListener.itemPositions.value.first.index;
         final toc = state.book.tableOfContents;
         String ref = await refFromIndex(index, toc);
-        // bool bookmarkAdded =
-        //     Provider.of<AppModel>(context, listen: false).addBookmark(
-        //   ref: ref,
-        //   book: state.book,
-        //   index: index,
-        // );
-        // if (mounted) {
-        //   ScaffoldMessenger.of(context).showSnackBar(
-        //     SnackBar(
-        //       content: Text(
-        //           bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת'),
-        //     ),
-        //   );
-        // }
+        bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
+              ref: ref,
+              book: state.book,
+              index: index,
+            );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת'),
+            ),
+          );
+        }
       },
       icon: const Icon(Icons.bookmark_add),
       tooltip: 'הוספת סימניה',

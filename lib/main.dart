@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/app.dart';
+import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
+import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_repository.dart';
@@ -70,7 +72,10 @@ void main() async {
             create: (context) => FindRefBloc(
                 findRefRepository:
                     FindRefRepository(dataRepository: DataRepository.instance))
-              ..add(CheckIndexStatusRequested()))
+              ..add(CheckIndexStatusRequested())),
+        BlocProvider<BookmarkBloc>(
+          create: (context) => BookmarkBloc(BookmarkRepository()),
+        ),
       ],
       child: const App(),
     ),

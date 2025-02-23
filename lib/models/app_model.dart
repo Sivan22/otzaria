@@ -67,9 +67,6 @@ class AppModel with ChangeNotifier {
   /// The currently active view/screen in the application
   ValueNotifier<Screens> currentView = ValueNotifier(Screens.library);
 
-  /// List of user-created bookmarks
-  late List<Bookmark> bookmarks;
-
   /// Reading history tracking previously opened books and locations
   late List<Bookmark> history;
 
@@ -178,17 +175,6 @@ class AppModel with ChangeNotifier {
     // Set reading view if tabs exist
     if (tabs.isNotEmpty) {
       currentView.value = Screens.reading;
-    }
-
-    // Load bookmarks with error handling
-    try {
-      final List<dynamic> rawBookmarks =
-          Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
-      bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
-    } catch (e) {
-      bookmarks = [];
-      print('error loading bookmarks from disk: $e');
-      Hive.box(name: 'bookmarks').put('key-bookmarks', []);
     }
 
     // Load reading history with error handling
@@ -405,36 +391,6 @@ class AppModel with ChangeNotifier {
   void saveTabsToDisk() {
     Hive.box(name: 'tabs').put("key-tabs", tabs);
     Hive.box(name: 'tabs').put("key-current-tab", currentTab);
-  }
-
-  /// Adds a new bookmark if it doesn't already exist.
-  ///
-  /// Returns true if the bookmark was added, false if it already existed.
-  bool addBookmark(
-      {required String ref, required Book book, required int index}) {
-    bool bookmarkExists = bookmarks.any((bookmark) =>
-        bookmark.ref == ref &&
-        bookmark.book.title == book.title &&
-        bookmark.index == index);
-
-    if (!bookmarkExists) {
-      bookmarks.add(Bookmark(ref: ref, book: book, index: index));
-      Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-      return true;
-    }
-    return false;
-  }
-
-  /// Removes a bookmark at the specified index
-  void removeBookmark(int index) {
-    bookmarks.removeAt(index);
-    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-  }
-
-  /// Removes all bookmarks
-  void clearBookmarks() {
-    bookmarks.clear();
-    Hive.box(name: 'bookmarks').clear();
   }
 
   /// Adds a new entry to the reading history
