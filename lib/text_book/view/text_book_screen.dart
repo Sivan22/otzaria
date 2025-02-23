@@ -334,7 +334,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         MaterialPageRoute(
           builder: (context) => PrintingScreen(
             data: Future.value(state.content?.join('\n') ?? ''),
-            startLine: state.currentIndex,
+            startLine: state.visibleIndices?.first ?? 0,
             removeNikud: state.removeNikud,
           ),
         ),

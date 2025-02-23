@@ -19,17 +19,26 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     on<ToggleSplitView>(_onToggleSplitView);
     on<UpdateCommentators>(_onUpdateCommentators);
     on<ToggleNikud>(_onToggleNikud);
-    on<UpdateIndex>(_onUpdateIndex);
+    on<UpdateVisibleIndecies>(_onUpdateVisibleIndecies);
     on<UpdateSelectedIndex>(_onUpdateSelectedIndex);
     on<TogglePinLeftPane>(_onTogglePinLeftPane);
     on<UpdateSearchText>(_onUpdateSearchText);
 
     // Load initial content
-    add(LoadContent(book: initialState.book, index: initialState.currentIndex));
+    add(LoadContent(
+        book: initialState.book,
+        index: initialState.visibleIndices?.first ?? 0));
 
     //listen to index changes
     initialState.positionsListener.itemPositions.addListener(() {
-      add(UpdateIndex(state.positionsListener.itemPositions.value.first.index));
+      final visibleInecies = state.positionsListener.itemPositions.value
+          .map((e) => e.index)
+          .toList();
+      add(UpdateVisibleIndecies(visibleInecies));
+      if (state.selectedIndex != null &&
+          !visibleInecies.contains(state.selectedIndex)) {
+        add(UpdateSelectedIndex(null));
+      }
     });
   }
 
@@ -52,8 +61,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         book: event.book,
         content: content.split('\n'),
         links: links,
+        availableCommentators: availableCommentators,
         tableOfContents: tableOfContents,
-        currentIndex: event.index,
         currentTitle: currentTilte,
         status: TextBookStatus.loaded,
       ));
@@ -100,15 +109,14 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     emit(state.copyWith(removeNikud: event.remove));
   }
 
-  void _onUpdateIndex(
-    UpdateIndex event,
+  void _onUpdateVisibleIndecies(
+    UpdateVisibleIndecies event,
     Emitter<TextBookState> emit,
   ) async {
     emit(state.copyWith(
-      currentIndex: event.index,
-      currentTitle:
-          await refFromIndex(event.index, Future.value(state.tableOfContents)),
-      selectedIndex: null,
+      visibleIndices: event.visibleIndecies,
+      currentTitle: await refFromIndex(
+          event.visibleIndecies.first, Future.value(state.tableOfContents)),
     ));
   }
 

@@ -316,15 +316,6 @@ class AppModel with ChangeNotifier {
       //   index: index,
       // );
     }
-    if (tab is TextBookTab) {
-      final index = tab.positionsListener.itemPositions.value.isEmpty
-          ? 0
-          : tab.positionsListener.itemPositions.value.first.index;
-      (() async => addHistory(
-          ref: await refFromIndex(index, tab.tableOfContents),
-          book: tab.book,
-          index: index))();
-    }
   }
 
   /// Closes the currently active tab

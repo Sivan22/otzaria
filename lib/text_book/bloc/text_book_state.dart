@@ -12,10 +12,11 @@ class TextBookState extends Equatable {
   final bool showLeftPane;
   final bool showSplitView;
   final List<String> activeCommentators;
+  final List<String>? availableCommentators;
   final List<Link>? links;
   final List<TocEntry>? tableOfContents;
   final bool removeNikud;
-  final int currentIndex;
+  final List<int>? visibleIndices;
   final int? selectedIndex;
   final bool pinLeftPane;
   final String searchText;
@@ -35,10 +36,11 @@ class TextBookState extends Equatable {
       required this.showLeftPane,
       required this.showSplitView,
       required this.activeCommentators,
+      this.availableCommentators,
       this.links,
       this.tableOfContents,
       required this.removeNikud,
-      required this.currentIndex,
+      this.visibleIndices,
       this.selectedIndex,
       required this.pinLeftPane,
       required this.searchText,
@@ -63,11 +65,10 @@ class TextBookState extends Equatable {
       showSplitView: splitView,
       activeCommentators: commentators ?? [],
       removeNikud: false,
-      currentIndex: index,
       pinLeftPane: false,
       searchText: '',
       status: TextBookStatus.initial,
-      scrollController: ItemScrollController(),
+      scrollController: ItemScrollController()..jumpTo(index: index),
       scrollOffsetController: ScrollOffsetController(),
       positionsListener: ItemPositionsListener.create(),
     );
@@ -80,11 +81,12 @@ class TextBookState extends Equatable {
       bool? showLeftPane,
       bool? showSplitView,
       List<String>? activeCommentators,
+      List<String>? availableCommentators,
       List<Link>? links,
       List<TocEntry>? tableOfContents,
       bool? removeNikud,
-      int? currentIndex,
       int? selectedIndex,
+      List<int>? visibleIndices,
       bool? pinLeftPane,
       String? searchText,
       TextBookStatus? status,
@@ -100,11 +102,13 @@ class TextBookState extends Equatable {
       showLeftPane: showLeftPane ?? this.showLeftPane,
       showSplitView: showSplitView ?? this.showSplitView,
       activeCommentators: activeCommentators ?? this.activeCommentators,
+      availableCommentators:
+          availableCommentators ?? this.availableCommentators,
       links: links ?? this.links,
       tableOfContents: tableOfContents ?? this.tableOfContents,
       removeNikud: removeNikud ?? this.removeNikud,
-      currentIndex: currentIndex ?? this.currentIndex,
-      selectedIndex: selectedIndex ?? this.selectedIndex,
+      visibleIndices: visibleIndices ?? this.visibleIndices,
+      selectedIndex: selectedIndex,
       pinLeftPane: pinLeftPane ?? this.pinLeftPane,
       searchText: searchText ?? this.searchText,
       status: status ?? this.status,
@@ -128,7 +132,7 @@ class TextBookState extends Equatable {
         links,
         tableOfContents,
         removeNikud,
-        currentIndex,
+        visibleIndices,
         selectedIndex,
         pinLeftPane,
         searchText,

@@ -38,20 +38,22 @@ class CombinedView extends StatefulWidget {
 
 class _CombinedViewState extends State<CombinedView> {
   Widget buildKeyboardListener() {
-    return ProgressiveScroll(
-        maxSpeed: 10000.0,
-        curve: 10.0,
-        accelerationFactor: 5,
-        scrollController: widget.tab.scrollOffsetController,
-        child: SelectionArea(child: buildOuterList()));
+    return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      return ProgressiveScroll(
+          maxSpeed: 10000.0,
+          curve: 10.0,
+          accelerationFactor: 5,
+          scrollController: state.scrollOffsetController,
+          child: SelectionArea(child: buildOuterList(state)));
+    });
   }
 
-  Widget buildOuterList() {
+  Widget buildOuterList(TextBookState state) {
     return ScrollablePositionedList.builder(
         initialScrollIndex: widget.tab.index,
-        itemPositionsListener: widget.tab.positionsListener,
-        itemScrollController: widget.tab.scrollController,
-        scrollOffsetController: widget.tab.scrollOffsetController,
+        itemPositionsListener: state.positionsListener,
+        itemScrollController: state.scrollController,
+        scrollOffsetController: state.scrollOffsetController,
         itemCount: widget.data.length,
         itemBuilder: (context, index) {
           ExpansionTileController controller = ExpansionTileController();
@@ -83,10 +85,9 @@ class _CombinedViewState extends State<CombinedView> {
             builder: (context, state) => Html(
               //remove nikud if needed
               data: state.removeNikud
-                  ? utils.highLight(utils.removeVolwels('$data\n'),
-                      widget.tab.searchTextController.text)
-                  : utils.highLight(
-                      '$data\n', widget.tab.searchTextController.text),
+                  ? utils.highLight(
+                      utils.removeVolwels('$data\n'), state.searchText)
+                  : utils.highLight('$data\n', state.searchText),
               style: {
                 'body': Style(
                     fontSize: FontSize(widget.textSize),
@@ -105,7 +106,7 @@ class _CombinedViewState extends State<CombinedView> {
                   fontSize: widget.textSize,
                   textBookTab: widget.tab,
                   openBookCallback: widget.openBookCallback,
-                  showSplitView: ValueNotifier<bool>(false),
+                  showSplitView: false,
                 )
         ]);
   }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/view/commentary_content.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -10,7 +13,7 @@ class CommentaryList extends StatefulWidget {
   final TextBookTab textBookTab;
   final double fontSize;
   final int index;
-  final ValueNotifier<bool> showSplitView;
+  final bool showSplitView;
 
   const CommentaryList({
     super.key,
@@ -30,99 +33,59 @@ class _CommentaryListState extends State<CommentaryList> {
   late List<int> indexes;
   final ScrollOffsetController scrollController = ScrollOffsetController();
 
-  void _updateThisLinks() {
+  void _updateThisLinks(TextBookState state) {
     thisLinks = getLinksforIndexs(
-        links: widget.textBookTab.links,
-        commentatorsToShow: widget.textBookTab.commentatorsToShow.value,
+        links: state.links ?? [],
+        commentatorsToShow: state.activeCommentators,
         indexes: indexes);
   }
 
   @override
-  void initState() {
-    super.initState();
-    indexes = [widget.index];
-    _updateThisLinks();
-
-    //we listen to the commentators
-    widget.textBookTab.commentatorsToShow.addListener(() => setState(() {
-          _updateThisLinks();
-        }));
-
-    // in case we are inside a splited view, we need to listen to the selected item and item positions
-    if (widget.showSplitView.value) {
-      /// listen to the selected item
-      widget.textBookTab.selectedIndex.addListener(() {
-        if (widget.textBookTab.selectedIndex.value != null) {
-          setState(() {
-            indexes = [widget.textBookTab.selectedIndex.value!];
-            _updateThisLinks();
-          });
-        }
-      });
-      //listen to item positions
-      widget.textBookTab.positionsListener.itemPositions.addListener(() {
-        if (mounted) {
-          setState(() {
-            indexes = widget.textBookTab.positionsListener.itemPositions.value
-                .map((e) => e.index)
-                .toList();
-            _updateThisLinks();
-          });
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.textBookTab.positionsListener.itemPositions.removeListener(() {});
-    widget.textBookTab.commentatorsToShow.removeListener(() {});
-    widget.textBookTab.selectedIndex.removeListener(() {});
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: thisLinks,
-      builder: (context, thisLinksSnapshot) {
-        if (thisLinksSnapshot.hasData) {
-          return thisLinksSnapshot.data!.isEmpty
-              ? const SizedBox.shrink()
-              : ValueListenableBuilder(
-                  valueListenable: widget.textBookTab.removeNikud,
-                  builder: (context, _, child) {
-                    return ProgressiveScroll(
-                      scrollController: scrollController,
-                      maxSpeed: 10000.0,
-                      curve: 10.0,
-                      accelerationFactor: 5,
-                      child: ScrollablePositionedList.builder(
-                        key: PageStorageKey(thisLinksSnapshot.data![0].heRef),
-                        physics: const ClampingScrollPhysics(),
-                        scrollOffsetController: scrollController,
-                        shrinkWrap: true,
-                        itemCount: thisLinksSnapshot.data!.length,
-                        itemBuilder: (context, index1) => GestureDetector(
-                          child: ListTile(
-                            focusNode: FocusNode(),
-                            title: Text(thisLinksSnapshot.data![index1].heRef),
-                            subtitle: CommentaryContent(
-                              link: thisLinksSnapshot.data![index1],
-                              fontSize: widget.fontSize,
-                              openBookCallback: widget.openBookCallback,
-                              removeNikud: widget.textBookTab.removeNikud.value,
-                            ),
+    return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      final indexes = state.selectedIndex != null
+          ? [state.selectedIndex!]
+          : state.visibleIndices ?? [];
+      return FutureBuilder(
+        future: getLinksforIndexs(
+            indexes: indexes,
+            links: state.links ?? [],
+            commentatorsToShow: state.activeCommentators),
+        builder: (context, thisLinksSnapshot) {
+          if (thisLinksSnapshot.hasData) {
+            return thisLinksSnapshot.data!.isEmpty
+                ? const SizedBox.shrink()
+                : ProgressiveScroll(
+                    scrollController: scrollController,
+                    maxSpeed: 10000.0,
+                    curve: 10.0,
+                    accelerationFactor: 5,
+                    child: ScrollablePositionedList.builder(
+                      key: PageStorageKey(thisLinksSnapshot.data![0].heRef),
+                      physics: const ClampingScrollPhysics(),
+                      scrollOffsetController: scrollController,
+                      shrinkWrap: true,
+                      itemCount: thisLinksSnapshot.data!.length,
+                      itemBuilder: (context, index1) => GestureDetector(
+                        child: ListTile(
+                          focusNode: FocusNode(),
+                          title: Text(thisLinksSnapshot.data![index1].heRef),
+                          subtitle: CommentaryContent(
+                            link: thisLinksSnapshot.data![index1],
+                            fontSize: widget.fontSize,
+                            openBookCallback: widget.openBookCallback,
+                            removeNikud: state.removeNikud,
                           ),
                         ),
                       ),
-                    );
-                  });
-        }
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
-    );
+                    ),
+                  );
+          }
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+    });
   }
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
+import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/view/simple_book_view.dart';
 import 'package:otzaria/text_book/view/commentary_list.dart';
 
@@ -21,9 +24,8 @@ class SplitedViewScreenBloc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: tab.commentatorsToShow,
-      builder: (context, commentariesNames, child) => MultiSplitView(
+    return BlocBuilder<TextBookBloc, TextBookState>(
+      builder: (context, state) => MultiSplitView(
         controller: tab.splitController,
         axis: Axis.horizontal,
         resizable: true,
@@ -32,26 +34,21 @@ class SplitedViewScreenBloc extends StatelessWidget {
                 const VerticalDivider(),
         children: [
           SelectionArea(
-            child: ValueListenableBuilder(
-              valueListenable: tab.selectedIndex,
-              builder: (context, selectedIndex, child) {
-                return CommentaryList(
-                  index:
-                      0, // we don't need the index here, b/c we listen to the selected index in the commentary list
-                  textBookTab: tab,
-                  fontSize: tab.textFontSize,
-                  openBookCallback: openBookCallback,
-                  showSplitView: tab.showSplitedView,
-                );
-              },
+            child: CommentaryList(
+              index:
+                  0, // we don't need the index here, b/c we listen to the selected index in the commentary list
+              textBookTab: tab,
+              fontSize: state.fontSize,
+              openBookCallback: openBookCallback,
+              showSplitView: state.showSplitView,
             ),
           ),
           SimpleBookView(
             tab: tab,
             data: content,
-            textSize: tab.textFontSize,
+            textSize: state.fontSize,
             openBookCallback: openBookCallback,
-            showSplitedView: tab.showSplitedView,
+            showSplitedView: state.showSplitView,
           )
         ],
       ),

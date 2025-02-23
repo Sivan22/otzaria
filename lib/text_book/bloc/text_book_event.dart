@@ -66,13 +66,13 @@ class ToggleNikud extends TextBookEvent {
   List<Object?> get props => [remove];
 }
 
-class UpdateIndex extends TextBookEvent {
-  final int index;
+class UpdateVisibleIndecies extends TextBookEvent {
+  final List<int> visibleIndecies;
 
-  const UpdateIndex(this.index);
+  const UpdateVisibleIndecies(this.visibleIndecies);
 
   @override
-  List<Object?> get props => [index];
+  List<Object?> get props => [visibleIndecies];
 }
 
 class UpdateSelectedIndex extends TextBookEvent {

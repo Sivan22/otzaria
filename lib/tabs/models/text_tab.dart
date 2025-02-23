@@ -29,35 +29,6 @@ class TextBookTab extends OpenedTab {
   final MultiSplitViewController splitController =
       MultiSplitViewController(areas: Area.weights([0.4, 0.6]));
 
-  // Getters that delegate to bloc state
-  Future<String> get text => bloc.state.book.text;
-  Future<List<Link>> get links => bloc.state.book.links;
-  Future<List<TocEntry>> get tableOfContents => bloc.state.book.tableOfContents;
-  Future<List<String>> get availableCommentators async {
-    final repository = TextBookRepository(fileSystem: FileSystemData.instance);
-    final links = await bloc.state.book.links;
-    return repository.getAvailableCommentators(links);
-  }
-
-  ValueNotifier<int?> get selectedIndex =>
-      ValueNotifier(bloc.state.selectedIndex);
-  ValueNotifier<List<String>> get commentatorsToShow =>
-      ValueNotifier(bloc.state.activeCommentators);
-  double get textFontSize => bloc.state.fontSize;
-  set textFontSize(double value) => bloc.add(UpdateFontSize(value));
-  ValueNotifier<bool> get showLeftPane =>
-      ValueNotifier(bloc.state.showLeftPane);
-  ValueNotifier<bool> get pinLeftPane => ValueNotifier(bloc.state.pinLeftPane);
-  ValueNotifier<bool> get showSplitedView =>
-      ValueNotifier(bloc.state.showSplitView);
-  ValueNotifier<bool> get removeNikud => ValueNotifier(bloc.state.removeNikud);
-  ItemScrollController get scrollController => bloc.state.scrollController;
-  ScrollOffsetController get scrollOffsetController =>
-      bloc.state.scrollOffsetController;
-  ItemPositionsListener get positionsListener => bloc.state.positionsListener;
-  TextEditingController get searchTextController =>
-      TextEditingController(text: bloc.state.searchText);
-
   /// Creates a new instance of [TextBookTab].
   ///
   /// The [index] parameter represents the initial index of the item in the scrollable list,
@@ -120,13 +91,6 @@ class TextBookTab extends OpenedTab {
   @override
   void dispose() {
     bloc.close();
-    selectedIndex.dispose();
-    commentatorsToShow.dispose();
-    showLeftPane.dispose();
-    pinLeftPane.dispose();
-    showSplitedView.dispose();
-    removeNikud.dispose();
-    searchTextController.dispose();
     super.dispose();
   }
 }

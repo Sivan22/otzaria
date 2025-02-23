@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_event.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
 import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
@@ -18,8 +22,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   Future<List<String>>? commentators;
   List<String> selectedTopics = [];
 
-  Future<void> update() async {
-    final List<String> baseList = await widget.tab.availableCommentators;
+  Future<void> update(TextBookState state) async {
+    final List<String> baseList = state.availableCommentators ?? [];
     final filteredByQuery =
         baseList.where((title) => title.contains(_filterQuery));
 
@@ -46,124 +50,125 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    commentators = widget.tab.availableCommentators;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        FilterListWidget<String>(
-          hideSearchField: true,
-          controlButtons: const [],
-          onApplyButtonClick: (list) {
-            setState(() {
-              selectedTopics = list ?? [];
-            });
-            update();
-          },
-          validateSelectedItem: (list, item) =>
-              list != null && list.contains(item),
-          onItemSearch: (item, query) => item == query,
-          listData: [
-            'ראשונים',
-            'אחרונים',
-            'מחברי זמננו',
-            'על ${widget.tab.book.title}'
-          ],
-          selectedListData: selectedTopics,
-          choiceChipLabel: (p0) => p0,
-          hideSelectedTextCount: true,
-          themeData: FilterListThemeData(
-            context,
-            wrapAlignment: WrapAlignment.center,
-          ),
-          choiceChipBuilder: (context, item, isSelected) => Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 3,
-              vertical: 2,
+    return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      return Column(
+        children: [
+          FilterListWidget<String>(
+            hideSearchField: true,
+            controlButtons: const [],
+            onApplyButtonClick: (list) {
+              setState(() {
+                selectedTopics = list ?? [];
+              });
+              update(state);
+            },
+            validateSelectedItem: (list, item) =>
+                list != null && list.contains(item),
+            onItemSearch: (item, query) => item == query,
+            listData: [
+              'ראשונים',
+              'אחרונים',
+              'מחברי זמננו',
+              'על ${widget.tab.book.title}'
+            ],
+            selectedListData: selectedTopics,
+            choiceChipLabel: (p0) => p0,
+            hideSelectedTextCount: true,
+            themeData: FilterListThemeData(
+              context,
+              wrapAlignment: WrapAlignment.center,
             ),
-            child: Chip(
-              label: Text(item),
-              backgroundColor:
-                  isSelected! ? Theme.of(context).colorScheme.secondary : null,
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? Theme.of(context).colorScheme.onSecondary
-                    : null,
-                fontSize: 11,
+            choiceChipBuilder: (context, item, isSelected) => Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 3,
+                vertical: 2,
               ),
-              labelPadding: const EdgeInsets.all(0),
+              child: Chip(
+                label: Text(item),
+                backgroundColor: isSelected!
+                    ? Theme.of(context).colorScheme.secondary
+                    : null,
+                labelStyle: TextStyle(
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.onSecondary
+                      : null,
+                  fontSize: 11,
+                ),
+                labelPadding: const EdgeInsets.all(0),
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: FutureBuilder(
-              future: commentators,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                return Column(
-                  children: [
-                    TextField(
-                      decoration: const InputDecoration(
-                        hintText: "סינון",
+          Expanded(
+            child: FutureBuilder(
+                future: commentators,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      TextField(
+                        decoration: const InputDecoration(
+                          hintText: "סינון",
+                        ),
+                        onChanged: (query) {
+                          setState(() {
+                            _filterQuery = query;
+                          });
+                          update(state);
+                        },
                       ),
-                      onChanged: (query) {
-                        setState(() {
-                          _filterQuery = query;
-                        });
-                        update();
-                      },
-                    ),
-                    CheckboxListTile(
-                      title: const Text("הכל"),
-                      value: snapshot.data!.every((test) =>
-                          widget.tab.commentatorsToShow.value.contains(test)),
-                      onChanged: (value) {
-                        setState(() {
-                          if (value!) {
-                            widget.tab.commentatorsToShow.value
-                                .addAll(snapshot.data!);
-                          } else {
-                            widget.tab.commentatorsToShow.value
-                                .removeWhere((e) => snapshot.data!.contains(e));
-                          }
-                          widget.tab.commentatorsToShow.notifyListeners();
-                        });
-                      },
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) => CheckboxListTile(
-                          title: Text(snapshot.data![index]),
-                          value: widget.tab.commentatorsToShow.value
-                              .contains(snapshot.data![index]),
-                          onChanged: (value) {
+                      CheckboxListTile(
+                        title: const Text("הכל"),
+                        value: snapshot.data!.every(
+                            (test) => state.activeCommentators.contains(test)),
+                        onChanged: (value) {
+                          setState(() {
                             if (value!) {
-                              widget.tab.commentatorsToShow.value
-                                  .add(snapshot.data![index]);
+                              context
+                                  .read<TextBookBloc>()
+                                  .add(UpdateCommentators(snapshot.data!));
                             } else {
-                              widget.tab.commentatorsToShow.value.removeWhere(
-                                  (s) => s == snapshot.data![index]);
+                              context.read<TextBookBloc>().add(
+                                  UpdateCommentators(state.activeCommentators
+                                      .where((element) =>
+                                          !snapshot.data!.contains(element))
+                                      .toList()));
                             }
-                            widget.tab.commentatorsToShow.notifyListeners();
-                            setState(() {});
-                          },
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) => CheckboxListTile(
+                            title: Text(snapshot.data![index]),
+                            value: state.activeCommentators
+                                .contains(snapshot.data![index]),
+                            onChanged: (value) {
+                              if (value!) {
+                                state.activeCommentators
+                                    .add(snapshot.data![index]);
+                              } else {
+                                context.read<TextBookBloc>().add(
+                                    UpdateCommentators(state.activeCommentators
+                                        .where((element) =>
+                                            element != snapshot.data![index])
+                                        .toList()));
+                              }
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              }),
-        )
-      ],
-    );
+                    ],
+                  );
+                }),
+          )
+        ],
+      );
+    });
   }
 }
