@@ -25,9 +25,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     on<UpdateSearchText>(_onUpdateSearchText);
 
     // Load initial content
-    add(LoadContent(
-        book: initialState.book,
-        index: initialState.visibleIndices?.first ?? 0));
+    add(LoadContent(book: initialState.book));
 
     //listen to index changes
     initialState.positionsListener.itemPositions.addListener(() {
@@ -52,8 +50,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final content = await _repository.getBookContent(event.book);
       final links = await _repository.getBookLinks(event.book);
       final tableOfContents = await _repository.getTableOfContents(event.book);
-      final currentTilte =
-          await refFromIndex(event.index, Future.value(tableOfContents));
+
       final availableCommentators =
           await _repository.getAvailableCommentators(links);
 
@@ -63,7 +60,6 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         links: links,
         availableCommentators: availableCommentators,
         tableOfContents: tableOfContents,
-        currentTitle: currentTilte,
         status: TextBookStatus.loaded,
       ));
     } catch (e) {
@@ -98,7 +94,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   void _onUpdateCommentators(
     UpdateCommentators event,
     Emitter<TextBookState> emit,
-  ) {
+  ) async {
     emit(state.copyWith(activeCommentators: event.commentators));
   }
 

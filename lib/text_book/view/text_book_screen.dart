@@ -767,7 +767,6 @@ $selectedText
 
   Widget _buildLinkView(TextBookState state) {
     return LinksViewer(
-      links: state.book.links,
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: state.positionsListener,
       closeLeftPanelCallback: () =>

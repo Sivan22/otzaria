@@ -19,17 +19,17 @@ class CommentatorsListView extends StatefulWidget {
 
 class CommentatorsListViewState extends State<CommentatorsListView> {
   String _filterQuery = "";
-  Future<List<String>>? commentators;
   List<String> selectedTopics = [];
+  List<String> commentatorsList = [];
 
-  Future<void> update(TextBookState state) async {
+  Future<void> update(BuildContext context, TextBookState state) async {
     final List<String> baseList = state.availableCommentators ?? [];
     final filteredByQuery =
         baseList.where((title) => title.contains(_filterQuery));
 
     if (selectedTopics.isEmpty) {
       setState(() {
-        commentators = Future.value(filteredByQuery.toList());
+        commentatorsList = filteredByQuery.toList();
       });
       return;
     }
@@ -45,7 +45,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
     }
 
     setState(() {
-      commentators = Future.value(filtered);
+      commentatorsList = filtered;
     });
   }
 
@@ -61,7 +61,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
               setState(() {
                 selectedTopics = list ?? [];
               });
-              update(state);
+              update(context, state);
             },
             validateSelectedItem: (list, item) =>
                 list != null && list.contains(item),
@@ -100,72 +100,79 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
             ),
           ),
           Expanded(
-            child: FutureBuilder(
-                future: commentators,
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  return Column(
-                    children: [
-                      TextField(
-                        decoration: const InputDecoration(
-                          hintText: "סינון",
-                        ),
-                        onChanged: (query) {
-                          setState(() {
-                            _filterQuery = query;
-                          });
-                          update(state);
-                        },
-                      ),
-                      CheckboxListTile(
-                        title: const Text("הכל"),
-                        value: snapshot.data!.every(
-                            (test) => state.activeCommentators.contains(test)),
+            child: Builder(builder: (context) {
+              if (state.availableCommentators == null) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (state.availableCommentators!.isEmpty) {
+                return const Center(
+                  child: Text("אין פרשנים"),
+                );
+              }
+              commentatorsList = state.availableCommentators!.toList();
+              return Column(
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                      hintText: "סינון",
+                    ),
+                    onChanged: (query) {
+                      setState(() {
+                        _filterQuery = query;
+                      });
+                      update(context, state);
+                    },
+                  ),
+                  CheckboxListTile(
+                    title: const Text("הכל"),
+                    value: commentatorsList.every(
+                        (test) => state.activeCommentators.contains(test)),
+                    onChanged: (value) {
+                      setState(() {
+                        if (value!) {
+                          final allCommentators = commentatorsList.toList()
+                            ..addAll(state.activeCommentators);
+                          context
+                              .read<TextBookBloc>()
+                              .add(UpdateCommentators(allCommentators));
+                        } else {
+                          context.read<TextBookBloc>().add(UpdateCommentators(
+                              state.activeCommentators
+                                  .where((element) =>
+                                      !commentatorsList.contains(element))
+                                  .toList()));
+                        }
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: commentatorsList.length,
+                      itemBuilder: (context, index) => CheckboxListTile(
+                        title: Text(commentatorsList[index]),
+                        value: state.activeCommentators
+                            .contains(commentatorsList[index]),
                         onChanged: (value) {
-                          setState(() {
-                            if (value!) {
-                              context
-                                  .read<TextBookBloc>()
-                                  .add(UpdateCommentators(snapshot.data!));
-                            } else {
-                              context.read<TextBookBloc>().add(
-                                  UpdateCommentators(state.activeCommentators
-                                      .where((element) =>
-                                          !snapshot.data!.contains(element))
-                                      .toList()));
-                            }
-                          });
+                          if (value!) {
+                            context.read<TextBookBloc>().add(UpdateCommentators(
+                                state.activeCommentators +
+                                    [commentatorsList[index]]));
+                          } else {
+                            context.read<TextBookBloc>().add(UpdateCommentators(
+                                state.activeCommentators
+                                    .where((element) =>
+                                        element != commentatorsList[index])
+                                    .toList()));
+                          }
                         },
                       ),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) => CheckboxListTile(
-                            title: Text(snapshot.data![index]),
-                            value: state.activeCommentators
-                                .contains(snapshot.data![index]),
-                            onChanged: (value) {
-                              if (value!) {
-                                state.activeCommentators
-                                    .add(snapshot.data![index]);
-                              } else {
-                                context.read<TextBookBloc>().add(
-                                    UpdateCommentators(state.activeCommentators
-                                        .where((element) =>
-                                            element != snapshot.data![index])
-                                        .toList()));
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }),
+                    ),
+                  ),
+                ],
+              );
+            }),
           )
         ],
       );

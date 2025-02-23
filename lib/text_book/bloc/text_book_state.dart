@@ -63,12 +63,13 @@ class TextBookState extends Equatable {
       fontSize: 25.0, // Default font size
       showLeftPane: showLeftPane,
       showSplitView: splitView,
-      activeCommentators: commentators ?? [],
+      activeCommentators: [],
+      availableCommentators: commentators,
       removeNikud: false,
       pinLeftPane: false,
       searchText: '',
       status: TextBookStatus.initial,
-      scrollController: ItemScrollController()..jumpTo(index: index),
+      scrollController: ItemScrollController(),
       scrollOffsetController: ScrollOffsetController(),
       positionsListener: ItemPositionsListener.create(),
     );
