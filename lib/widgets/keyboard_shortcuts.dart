@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_event.dart';
+import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_event.dart';
+import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:provider/provider.dart';
 
 class KeyboardShortcuts extends StatelessWidget {
@@ -90,46 +96,47 @@ class KeyboardShortcuts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppModel>(
-      builder: (context, appModel, child) => CallbackShortcuts(
-        bindings: <ShortcutActivator, VoidCallback>{
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-library-browser') ??
-                  'ctrl+l']!: () {
-            appModel.currentView.value = Screens.library;
-            appModel.bookLocatorFocusNode.requestFocus();
-          },
-          shortcuts[Settings.getValue<String>('key-shortcut-open-find-ref') ??
-              'ctrl+o']!: () {
-            appModel.currentView.value = Screens.find;
-            appModel.findReferenceFocusNode.requestFocus();
-          },
-          shortcuts[Settings.getValue<String>('key-shortcut-close-tab') ??
-              'ctrl+w']!: () {
-            appModel.closeCurrentTab();
-          },
-          shortcuts[Settings.getValue<String>('key-shortcut-close-all-tabs') ??
-              'ctrl+x']!: () {
-            appModel.closeAllTabs();
-          },
-          shortcuts[
-              Settings.getValue<String>('key-shortcut-open-reading-screen') ??
-                  'ctrl+r']!: () {
-            appModel.currentView.value = Screens.reading;
-          },
-          shortcuts[Settings.getValue<String>('key-shortcut-open-new-search') ??
-              'ctrl+q']!: () {
-            appModel.openNewSearchTab();
-          },
-          shortcuts['ctrl+shift+tab']!: () {
-            appModel.goToPreviousTab();
-          },
-          shortcuts['ctrl+tab']!: () {
-            appModel.goToNextTab();
-          }
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        shortcuts[
+            Settings.getValue<String>('key-shortcut-open-library-browser') ??
+                'ctrl+l']!: () {
+          context.read<NavigationBloc>().add(NavigateToScreen(Screen.library));
+          //TODO: replace with a focus bloc
+          //appModel.bookLocatorFocusNode.requestFocus();
         },
-        child: this.child,
-      ),
+        shortcuts[Settings.getValue<String>('key-shortcut-open-find-ref') ??
+            'ctrl+o']!: () {
+          context.read<NavigationBloc>().add(NavigateToScreen(Screen.find));
+          //TODO: replace with a focus bloc
+          //appModel.findReferenceFocusNode.requestFocus();
+        },
+        shortcuts[Settings.getValue<String>('key-shortcut-close-tab') ??
+            'ctrl+w']!: () {
+          context.read<TabsBloc>().add(CloseCurrentTab());
+        },
+        shortcuts[Settings.getValue<String>('key-shortcut-close-all-tabs') ??
+            'ctrl+x']!: () {
+          context.read<TabsBloc>().add(CloseAllTabs());
+        },
+        shortcuts[
+            Settings.getValue<String>('key-shortcut-open-reading-screen') ??
+                'ctrl+r']!: () {
+          context.read<NavigationBloc>().add(NavigateToScreen(Screen.reading));
+        },
+        shortcuts[Settings.getValue<String>('key-shortcut-open-new-search') ??
+            'ctrl+q']!: () {
+          context.read<NavigationBloc>().add(NavigateToScreen(Screen.search));
+          context.read<TabsBloc>().add(AddTab(SearchingTab('חיפוש', null)));
+        },
+        shortcuts['ctrl+shift+tab']!: () {
+          context.read<TabsBloc>().add(NavigateToPreviousTab());
+        },
+        shortcuts['ctrl+tab']!: () {
+          context.read<TabsBloc>().add(NavigateToNextTab());
+        }
+      },
+      child: this.child,
     );
   }
 }

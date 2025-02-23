@@ -6,7 +6,7 @@ import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/library.dart';
+import 'package:otzaria/library/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:hive/hive.dart';
 

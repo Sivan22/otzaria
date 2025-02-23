@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/bloc/navigation/navigation_bloc.dart';
-import 'package:otzaria/bloc/navigation/navigation_event.dart';
-import 'package:otzaria/bloc/navigation/navigation_state.dart';
-import 'package:otzaria/bloc/tabs/tabs_bloc.dart';
-import 'package:otzaria/bloc/tabs/tabs_event.dart';
+import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_event.dart';
+import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/models/books.dart';
 import "package:flutter_bloc/flutter_bloc.dart";
-import 'package:otzaria/models/tabs/pdf_tab.dart';
-import 'package:otzaria/models/tabs/text_tab.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
 
 void openBook(BuildContext context, Book book, int index, String searchQuery) {
   if (book is TextBook) {

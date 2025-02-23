@@ -19,15 +19,16 @@ import 'package:hive/hive.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
-import 'package:otzaria/models/bookmark.dart';
+import 'package:otzaria/bookmarks/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/library.dart';
-import 'package:otzaria/models/tabs/pdf_tab.dart';
-import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/models/tabs/tab.dart';
-import 'package:otzaria/models/tabs/text_tab.dart';
+import 'package:otzaria/library/models/library.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
+import 'package:otzaria/tabs/models/searching_tab.dart';
+import 'package:otzaria/tabs/models/tab.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/models/workspace.dart';
-import 'package:otzaria/utils/calendar.dart';
+import 'package:otzaria/daf_yomi/calendar.dart';
+import 'package:otzaria/utils/ref_helper.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class AppModel with ChangeNotifier {
@@ -334,7 +335,7 @@ class AppModel with ChangeNotifier {
           ? 0
           : tab.positionsListener.itemPositions.value.first.index;
       (() async => addHistory(
-          ref: await utils.refFromIndex(index, tab.tableOfContents),
+          ref: await refFromIndex(index, tab.tableOfContents),
           book: tab.book,
           index: index))();
     }

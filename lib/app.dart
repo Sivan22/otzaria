@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:otzaria/bloc/settings/settings_bloc.dart';
-import 'package:otzaria/bloc/settings/settings_state.dart';
-import 'package:otzaria/models/app_model.dart';
-import 'package:otzaria/screens/main_window_screen.dart';
-import 'package:provider/provider.dart';
+import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/navigation/main_window_screen.dart';
 
 class App extends StatelessWidget {
   const App({super.key});

@@ -6,7 +6,7 @@ import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
-import 'package:otzaria/models/library.dart';
+import 'package:otzaria/library/models/library.dart';
 
 /// DataRepository acts as a centralized data access layer that coordinates between different
 /// data providers (file system, Isar database, and Tantivy search engine).

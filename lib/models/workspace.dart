@@ -1,4 +1,4 @@
-import 'package:otzaria/models/bookmark.dart';
+import 'package:otzaria/bookmarks/models/bookmark.dart';
 
 /// Represents a workspace in the application.
 ///
