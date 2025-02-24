@@ -14,10 +14,12 @@ import 'package:otzaria/models/books.dart';
 class BookmarkView extends StatelessWidget {
   const BookmarkView({Key? key}) : super(key: key);
 
-  void _openBook(BuildContext context, Book book, int index) {
+  void _openBook(
+      BuildContext context, Book book, int index, List<String>? commentators) {
     final tab = book is PdfBook
         ? PdfBookTab(book: book, initialPage: index)
-        : TextBookTab(book: book as TextBook, index: index);
+        : TextBookTab(
+            book: book as TextBook, index: index, commentators: commentators);
 
     context.read<TabsBloc>().add(AddTab(tab));
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
@@ -38,10 +40,10 @@ class BookmarkView extends StatelessWidget {
                           selected: false,
                           title: Text(state.bookmarks[index].ref),
                           onTap: () => _openBook(
-                                context,
-                                state.bookmarks[index].book,
-                                state.bookmarks[index].index,
-                              ),
+                              context,
+                              state.bookmarks[index].book,
+                              state.bookmarks[index].index,
+                              state.bookmarks[index].commentatorsToShow),
                           trailing: IconButton(
                             icon: const Icon(
                               Icons.delete_forever,

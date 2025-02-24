@@ -217,10 +217,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         final toc = state.book.tableOfContents;
         String ref = await refFromIndex(index, toc);
         bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
-              ref: ref,
-              book: state.book,
-              index: index,
-            );
+            ref: ref,
+            book: state.book,
+            index: index,
+            commentatorsToShow: state.activeCommentators);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

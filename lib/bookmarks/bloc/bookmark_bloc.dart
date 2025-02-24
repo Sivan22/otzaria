@@ -10,8 +10,15 @@ class BookmarkBloc extends Cubit<BookmarkState> {
   BookmarkBloc(this._repository) : super(BookmarkState.initial(_repository));
 
   bool addBookmark(
-      {required String ref, required Book book, required int index}) {
-    final bookmark = Bookmark(ref: ref, book: book, index: index);
+      {required String ref,
+      required Book book,
+      required int index,
+      List<String>? commentatorsToShow}) {
+    final bookmark = Bookmark(
+        ref: ref,
+        book: book,
+        index: index,
+        commentatorsToShow: commentatorsToShow ?? []);
     // check if bookmark already exists
     if (state.bookmarks.any((b) => b.ref == bookmark.ref)) return false;
 
