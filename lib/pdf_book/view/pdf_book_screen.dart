@@ -359,7 +359,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       BuildContext context, PdfBook book, PdfBookState state) {
     return FutureBuilder(
       future: DataRepository.instance.library
-          .then((library) => library.findBookByTitle(book.title, PdfBook)),
+          .then((library) => library.findBookByTitle(book.title, TextBook)),
       builder: (context, snapshot) => snapshot.hasData
           ? IconButton(
               icon: const Icon(Icons.article),
@@ -368,7 +368,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 if (state is PdfBookLoaded && state.outline != null) {
                   final index = await pdfToTextPage(book, state.outline!,
                       state.controller.pageNumber ?? 1, context);
-                  openBook(context, book, index ?? 0, '');
+                  openBook(context, snapshot.data!, index ?? 0, '');
                 }
               })
           : const SizedBox.shrink(),
