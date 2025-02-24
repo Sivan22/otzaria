@@ -8,7 +8,6 @@ import 'package:otzaria/pdf_book/bloc/pdf_book_bloc.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_event.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/utils/open_book.dart';
 import 'package:otzaria/utils/page_converter.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -202,7 +201,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     _bloc.add(const ToggleLeftPane());
                   }
                 },
-                onPageChanged: (page) => _bloc.add(UpdateCurrentTitle()),
+                onPageChanged: (page) => _bloc.add(const UpdateCurrentTitle()),
                 viewerOverlayBuilder: (context, size, handleLinkTap) => [
                   PdfViewerScrollThumb(
                     controller: state.controller,

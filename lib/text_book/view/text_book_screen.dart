@@ -483,10 +483,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 TextButton(
-                  child: const Text('המשך'),
                   onPressed: selectedContent == null || selectedContent!.isEmpty
                       ? null
                       : () => Navigator.of(context).pop(selectedContent),
+                  child: const Text('המשך'),
                 ),
               ],
             );

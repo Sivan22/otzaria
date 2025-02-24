@@ -16,10 +16,8 @@ class RefIndexingBloc extends Bloc<RefIndexingEvent, RefIndexingState> {
 
   Future<void> _onStartRefIndexing(
       StartRefIndexing event, Emitter<RefIndexingState> emit) async {
-    emit(RefIndexingInProgress());
+    emit(const RefIndexingInProgress());
     final library = await DataRepository.instance.library;
-    assert(library != null,
-        'Library should not be null when starting ref indexing');
     await refIndexingRepository.createRefsFromLibrary(library, 0);
     emit(RefIndexingComplete());
   }

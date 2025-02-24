@@ -32,8 +32,13 @@ class DataRepository {
 
   late Future<Library> library;
 
+  late Future<List<Book>> hebrewBooks;
+  late Future<List<ExternalBook>> otzarBooks;
+
   DataRepository() {
     library = _getLibrary();
+    hebrewBooks = getHebrewBooks();
+    otzarBooks = getOtzarBooks();
   }
 
   /// Retrieves the complete library metadata including all available books
@@ -142,10 +147,10 @@ class DataRepository {
     var allBooks = category?.getAllBooks() ?? (await library).getAllBooks();
 
     if (includeOtzar) {
-      allBooks += await getOtzarBooks();
+      allBooks += await otzarBooks;
     }
     if (includeHebrewBooks) {
-      allBooks += await getHebrewBooks();
+      allBooks += await hebrewBooks;
     }
 
     // Filter books based on query and topics

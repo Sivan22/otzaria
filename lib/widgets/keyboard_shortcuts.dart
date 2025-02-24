@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -101,19 +100,23 @@ class KeyboardShortcuts extends StatelessWidget {
         shortcuts[
             Settings.getValue<String>('key-shortcut-open-library-browser') ??
                 'ctrl+l']!: () {
-          context.read<NavigationBloc>().add(NavigateToScreen(Screen.library));
+          context
+              .read<NavigationBloc>()
+              .add(const NavigateToScreen(Screen.library));
           //TODO: replace with a focus bloc
           //appModel.bookLocatorFocusNode.requestFocus();
         },
         shortcuts[Settings.getValue<String>('key-shortcut-open-find-ref') ??
             'ctrl+o']!: () {
-          context.read<NavigationBloc>().add(NavigateToScreen(Screen.find));
+          context
+              .read<NavigationBloc>()
+              .add(const NavigateToScreen(Screen.find));
           //TODO: replace with a focus bloc
           //appModel.findReferenceFocusNode.requestFocus();
         },
         shortcuts[Settings.getValue<String>('key-shortcut-close-tab') ??
             'ctrl+w']!: () {
-          context.read<TabsBloc>().add(CloseCurrentTab());
+          context.read<TabsBloc>().add(const CloseCurrentTab());
         },
         shortcuts[Settings.getValue<String>('key-shortcut-close-all-tabs') ??
             'ctrl+x']!: () {
@@ -122,11 +125,15 @@ class KeyboardShortcuts extends StatelessWidget {
         shortcuts[
             Settings.getValue<String>('key-shortcut-open-reading-screen') ??
                 'ctrl+r']!: () {
-          context.read<NavigationBloc>().add(NavigateToScreen(Screen.reading));
+          context
+              .read<NavigationBloc>()
+              .add(const NavigateToScreen(Screen.reading));
         },
         shortcuts[Settings.getValue<String>('key-shortcut-open-new-search') ??
             'ctrl+q']!: () {
-          context.read<NavigationBloc>().add(NavigateToScreen(Screen.search));
+          context
+              .read<NavigationBloc>()
+              .add(const NavigateToScreen(Screen.search));
           context.read<TabsBloc>().add(AddTab(SearchingTab('חיפוש', null)));
         },
         shortcuts['ctrl+shift+tab']!: () {
@@ -136,7 +143,7 @@ class KeyboardShortcuts extends StatelessWidget {
           context.read<TabsBloc>().add(NavigateToNextTab());
         }
       },
-      child: this.child,
+      child: child,
     );
   }
 }

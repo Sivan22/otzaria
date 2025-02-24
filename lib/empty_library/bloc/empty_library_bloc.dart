@@ -49,7 +49,7 @@ class EmptyLibraryBloc extends Bloc<EmptyLibraryEvent, EmptyLibraryState> {
   Future<void> _onCancelDownloadRequested(
       CancelDownloadRequested event, Emitter<EmptyLibraryState> emit) async {
     _isCancelling = true;
-    emit(EmptyLibraryLoading(isCancelling: true));
+    emit(const EmptyLibraryLoading(isCancelling: true));
 
     await _downloadSubscription?.cancel();
     await _fileSink?.close();
@@ -69,7 +69,7 @@ class EmptyLibraryBloc extends Bloc<EmptyLibraryEvent, EmptyLibraryState> {
       return;
     }
 
-    emit(EmptyLibraryLoading(
+    emit(const EmptyLibraryLoading(
         isDownloading: true,
         currentOperation: 'פותח קובץ...',
         downloadProgress: 0));
@@ -116,7 +116,7 @@ class EmptyLibraryBloc extends Bloc<EmptyLibraryEvent, EmptyLibraryState> {
       DownloadLibraryRequested event, Emitter<EmptyLibraryState> emit) async {
     if (state.isDownloading) return;
 
-    emit(EmptyLibraryLoading(
+    emit(const EmptyLibraryLoading(
         isDownloading: true,
         downloadProgress: 0,
         downloadedMB: 0,

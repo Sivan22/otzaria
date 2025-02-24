@@ -113,8 +113,8 @@ openTextBookFromRef(String bookname, String ref, BuildContext context) async {
   if (book != null) {
     final tocEntry = await _findDafInToc(book, ref);
     if (tocEntry != null) {
-      final tab = TextBookTab(
-          book: book, index: tocEntry.index ?? 0, openLeftPane: true);
+      final tab =
+          TextBookTab(book: book, index: tocEntry.index, openLeftPane: true);
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:otzaria/library/models/library.dart';
 
 abstract class LibraryEvent extends Equatable {
@@ -45,21 +44,14 @@ class NavigateUp extends LibraryEvent {}
 class SearchBooks extends LibraryEvent {
   final String query;
   final List<String>? topics;
+  final bool? showOtzarHachochma;
+  final bool? showHebrewBooks;
 
-  const SearchBooks(this.query, {this.topics});
+  const SearchBooks(this.query,
+      {this.topics, this.showOtzarHachochma, this.showHebrewBooks});
 
   @override
   List<Object?> get props => [query, topics];
-}
-
-class ToggleExternalBooks extends LibraryEvent {
-  final String source;
-  final bool enabled;
-
-  const ToggleExternalBooks(this.source, this.enabled);
-
-  @override
-  List<Object?> get props => [source, enabled];
 }
 
 class SelectTopics extends LibraryEvent {

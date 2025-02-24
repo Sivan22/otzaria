@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
-import 'package:otzaria/models/books.dart';
-import 'package:pdfrx/pdfrx.dart';
 
 String stripHtmlIfNeeded(String text) {
   return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');

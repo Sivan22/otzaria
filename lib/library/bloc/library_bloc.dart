@@ -18,7 +18,6 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     on<NavigateToCategory>(_onNavigateToCategory);
     on<NavigateUp>(_onNavigateUp);
     on<SearchBooks>(_onSearchBooks);
-    on<ToggleExternalBooks>(_onToggleExternalBooks);
     on<SelectTopics>(_onSelectTopics);
   }
 
@@ -155,8 +154,8 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         event.query,
         state.currentCategory,
         topics: event.topics,
-        includeOtzar: state.showOtzarHachochma,
-        includeHebrewBooks: state.showHebrewBooks,
+        includeOtzar: event.showOtzarHachochma ?? false,
+        includeHebrewBooks: event.showHebrewBooks ?? false,
       );
 
       emit(state.copyWith(
@@ -169,24 +168,6 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         error: e.toString(),
         searchResults: null,
       ));
-    }
-  }
-
-  void _onToggleExternalBooks(
-    ToggleExternalBooks event,
-    Emitter<LibraryState> emit,
-  ) {
-    if (event.source == 'otzar') {
-      Settings.setValue<bool>('key-show-otzar-hachochma', event.enabled);
-      emit(state.copyWith(showOtzarHachochma: event.enabled));
-    } else if (event.source == 'hebrew') {
-      Settings.setValue<bool>('key-show-hebrew-books', event.enabled);
-      emit(state.copyWith(showHebrewBooks: event.enabled));
-    }
-
-    // Refresh search results if there's an active search
-    if (state.searchQuery != null && state.searchQuery!.length >= 3) {
-      add(SearchBooks(state.searchQuery!, topics: state.selectedTopics));
     }
   }
 

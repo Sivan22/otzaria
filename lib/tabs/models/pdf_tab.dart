@@ -68,7 +68,6 @@ class PdfBookTab extends OpenedTab {
     };
   }
 
-  @override
   List<Object?> get props => [book, initialPage];
 
   /// Clean up resources when the tab is closed

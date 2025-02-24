@@ -3,7 +3,6 @@ import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/text_book_repository.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/ref_helper.dart';
-import 'package:otzaria/utils/text_manipulation.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
@@ -35,7 +34,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       add(UpdateVisibleIndecies(visibleInecies));
       if (state.selectedIndex != null &&
           !visibleInecies.contains(state.selectedIndex)) {
-        add(UpdateSelectedIndex(null));
+        add(const UpdateSelectedIndex(null));
       }
     });
   }

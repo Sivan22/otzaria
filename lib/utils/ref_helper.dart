@@ -6,7 +6,6 @@ import 'package:pdfrx/pdfrx.dart';
 
 Future<void> createRefsFromLibrary(
     Library library, Isar isar, int startIndex) async {
-  int i = 0;
   final allBooks = library.getAllBooks().whereType<TextBook>().skip(startIndex);
   for (TextBook book in allBooks) {
     List<Ref> refs = [];

@@ -19,5 +19,5 @@ void openBook(BuildContext context, Book book, int index, String searchQuery) {
           initialPage: index,
         )));
   }
-  context.read<NavigationBloc>().add(NavigateToScreen(Screen.reading));
+  context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
 }

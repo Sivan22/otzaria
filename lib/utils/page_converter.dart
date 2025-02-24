@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
-import 'package:otzaria/models/app_model.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:provider/provider.dart';
 
 /// Represents a node in the hierarchy with its full path
 class HierarchyNode<T> {

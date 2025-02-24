@@ -1,5 +1,4 @@
 import 'package:otzaria/models/books.dart'; // Import Book models
-import 'package:otzaria/models/books.dart'; // Import Book models
 import 'package:equatable/equatable.dart';
 
 abstract class FindRefEvent extends Equatable {

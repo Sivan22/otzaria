@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/library/bloc/library_state.dart';
@@ -98,7 +97,9 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                         onPressed: () {
                           setState(() => _depth = 0);
                           context.read<LibraryBloc>().add(LoadLibrary());
-                          context.read<LibraryBloc>().add(SearchBooks(""));
+                          context
+                              .read<LibraryBloc>()
+                              .add(const SearchBooks(""));
                           _refocusSearchBar();
                         },
                       ),
@@ -176,6 +177,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   suffixIcon: IconButton(
                     onPressed: () {
                       _searchController.clear();
+                      _update(context);
                       _refocusSearchBar();
                     },
                     icon: const Icon(Icons.cancel),
@@ -186,19 +188,14 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
                 ),
                 onChanged: (value) {
-                  context.read<LibraryBloc>().add(
-                        SearchBooks(
-                          value,
-                          topics: state.selectedTopics,
-                        ),
-                      );
+                  _update(context);
                 },
               ),
             ),
             if (settingsState.showExternalBooks)
               IconButton(
                 icon: const Icon(Icons.filter_list),
-                onPressed: () => _showFilterDialog(context, settingsState),
+                onPressed: () => _showFilterDialog(context),
               ),
           ],
         );
@@ -411,50 +408,43 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     _refocusSearchBar();
   }
 
-  void _showFilterDialog(BuildContext context, SettingsState settingsState) {
+  void _showFilterDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CheckboxListTile(
-                    title: const Text('הצג ספרים מאוצר החכמה'),
-                    value: settingsState.showHebrewBooks,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        context
-                            .read<SettingsBloc>()
-                            .add(UpdateShowOtzarHachochma(value!));
-                        context
-                            .read<LibraryBloc>()
-                            .add(ToggleExternalBooks('otzar', value ?? false));
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('הצג ספרים מהיברובוקס'),
-                    value: settingsState.showHebrewBooks,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        context
-                            .read<SettingsBloc>()
-                            .add(UpdateShowHebrewBooks(value!));
-                        context
-                            .read<LibraryBloc>()
-                            .add(ToggleExternalBooks('hebrew', value ?? false));
-                      });
-                    },
-                  ),
-                ],
+      builder: (context) => AlertDialog(
+        content: BlocBuilder<SettingsBloc, SettingsState>(
+            builder: (context, settingsState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CheckboxListTile(
+                title: const Text('הצג ספרים מאוצר החכמה'),
+                value: settingsState.showOtzarHachochma,
+                onChanged: (bool? value) {
+                  setState(() {
+                    context
+                        .read<SettingsBloc>()
+                        .add(UpdateShowOtzarHachochma(value!));
+                    _update(context);
+                  });
+                },
               ),
-            );
-          },
-        );
-      },
+              CheckboxListTile(
+                title: const Text('הצג ספרים מהיברובוקס'),
+                value: settingsState.showHebrewBooks,
+                onChanged: (bool? value) {
+                  setState(() {
+                    context
+                        .read<SettingsBloc>()
+                        .add(UpdateShowHebrewBooks(value!));
+                    _update(context);
+                  });
+                },
+              ),
+            ],
+          );
+        }),
+      ),
     ).then((_) => _refocusSearchBar());
   }
 
@@ -464,5 +454,18 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       topics.addAll(book.topics.split(', '));
     }
     return topics.toList()..sort();
+  }
+
+  void _update(BuildContext context) {
+    final settingsState = context.read<SettingsState>();
+    final state = context.read<LibraryState>();
+    context.read<LibraryBloc>().add(
+          SearchBooks(
+            _searchController.text,
+            topics: state.selectedTopics,
+            showHebrewBooks: settingsState.showHebrewBooks,
+            showOtzarHachochma: settingsState.showOtzarHachochma,
+          ),
+        );
   }
 }
