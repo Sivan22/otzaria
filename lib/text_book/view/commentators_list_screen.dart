@@ -52,6 +52,17 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      update(context, state);
+      if (state.availableCommentators == null) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      }
+      if (state.availableCommentators!.isEmpty) {
+        return const Center(
+          child: Text("אין פרשנים"),
+        );
+      }
       return Column(
         children: [
           FilterListWidget<String>(
@@ -101,17 +112,6 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
           ),
           Expanded(
             child: Builder(builder: (context) {
-              if (state.availableCommentators == null) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              if (state.availableCommentators!.isEmpty) {
-                return const Center(
-                  child: Text("אין פרשנים"),
-                );
-              }
-              commentatorsList = state.availableCommentators!.toList();
               return Column(
                 children: [
                   TextField(
@@ -132,7 +132,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                     onChanged: (value) {
                       setState(() {
                         if (value!) {
-                          final allCommentators = commentatorsList.toList()
+                          final allCommentators = commentatorsList
                             ..addAll(state.activeCommentators);
                           context
                               .read<TextBookBloc>()
