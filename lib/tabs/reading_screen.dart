@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart' show Screen;
@@ -106,24 +107,24 @@ class _ReadingScreenState extends State<ReadingScreen>
     return Listener(
       onPointerDown: (PointerDownEvent event) {
         if (event.buttons == 4) {
-          context.read<TabsBloc>().add(RemoveTab(tab));
+          closeTab(tab, context);
         }
       },
       child: ContextMenuRegion(
         contextMenu: ContextMenu(
           entries: [
+            MenuItem(label: 'סגור', onSelected: () => closeTab(tab, context)),
             MenuItem(
-              label: 'סגור',
-              onSelected: () => context.read<TabsBloc>().add(RemoveTab(tab)),
-            ),
-            MenuItem(
-              label: 'סגור הכל',
-              onSelected: () => context.read<TabsBloc>().add(CloseAllTabs()),
-            ),
+                label: 'סגור הכל',
+                onSelected: () {
+                  for (final tab in state.tabs) {
+                    context.read<HistoryBloc>().add(AddHistory(tab));
+                  }
+                  context.read<TabsBloc>().add(CloseAllTabs());
+                }),
             MenuItem(
               label: 'סגור את האחרים',
-              onSelected: () =>
-                  context.read<TabsBloc>().add(CloseOtherTabs(tab)),
+              onSelected: () => closeAllTabsButCurrent(state, context),
             ),
             MenuItem(
               label: 'שיכפול',
@@ -191,8 +192,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                   else
                     Text(tab.title),
                   IconButton(
-                    onPressed: () =>
-                        context.read<TabsBloc>().add(RemoveTab(tab)),
+                    onPressed: () => closeTab(tab, context),
                     icon: const Icon(Icons.close, size: 10),
                   ),
                 ],
@@ -276,6 +276,29 @@ class _ReadingScreenState extends State<ReadingScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('סביבת העבודה נוצרה בהצלחה')),
       );
+    }
+  }
+
+  void closeTab(OpenedTab tab, BuildContext context) {
+    context.read<HistoryBloc>().add(AddHistory(tab));
+    context.read<TabsBloc>().add(RemoveTab(tab));
+  }
+
+  void closeAllTabs(TabsState state, BuildContext context) {
+    for (final tab in state.tabs) {
+      context.read<HistoryBloc>().add(AddHistory(tab));
+    }
+    context.read<TabsBloc>().add(CloseAllTabs());
+  }
+
+  void closeAllTabsButCurrent(TabsState state, BuildContext context) {
+    for (final tab in state.tabs) {
+      if (tab is! SearchingTab && tab != state.tabs[state.currentTabIndex]) {
+        context.read<HistoryBloc>().add(AddHistory(tab));
+      }
+      context
+          .read<TabsBloc>()
+          .add(CloseOtherTabs(state.tabs[state.currentTabIndex]));
     }
   }
 }

@@ -1,24 +1,17 @@
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/bookmarks/models/bookmark.dart';
-import 'package:otzaria/history/history_repository.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
-import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/tabs_repository.dart';
 import 'package:otzaria/tabs/bloc/tabs_state.dart';
 import 'package:otzaria/tabs/models/tab.dart';
-import 'package:otzaria/utils/ref_helper.dart';
 
 class TabsBloc extends Bloc<TabsEvent, TabsState> {
   final TabsRepository _repository;
-  final HistoryRepository _historyRepository;
 
-  TabsBloc(
-      {required TabsRepository repository,
-      required HistoryRepository historyRepository})
-      : _repository = repository,
-        _historyRepository = historyRepository,
+  TabsBloc({
+    required TabsRepository repository,
+  })  : _repository = repository,
         super(TabsState.initial()) {
     on<LoadTabs>(_onLoadTabs);
     on<AddTab>(_onAddTab);
@@ -55,10 +48,6 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
   }
 
   void _onRemoveTab(RemoveTab event, Emitter<TabsState> emit) async {
-    if (event.tab is! SearchingTab) {
-      _historyRepository.addHistoryFromTab(event.tab);
-    }
-    ;
     final newTabs = List<OpenedTab>.from(state.tabs)..remove(event.tab);
     final newIndex = state.currentTabIndex > 0 ? state.currentTabIndex - 1 : 0;
 
@@ -81,11 +70,6 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
   }
 
   void _onCloseAllTabs(CloseAllTabs event, Emitter<TabsState> emit) {
-    for (final tab in state.tabs) {
-      if (tab is! SearchingTab) {
-        _historyRepository.addHistoryFromTab(tab);
-      }
-    }
     _repository.saveTabs([], 0);
     emit(state.copyWith(
       tabs: [],

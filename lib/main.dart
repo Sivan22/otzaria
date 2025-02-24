@@ -66,7 +66,6 @@ void main() async {
         BlocProvider<TabsBloc>(
           create: (context) => TabsBloc(
             repository: TabsRepository(),
-            historyRepository: historyRepository,
           )..add(LoadTabs()),
         ),
         BlocProvider<NavigationBloc>(
