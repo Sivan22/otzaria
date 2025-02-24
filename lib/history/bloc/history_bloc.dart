@@ -77,12 +77,10 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
       if (event.tab is TextBookTab) {
         final tab = event.tab as TextBookTab;
         bookmark = Bookmark(
-          ref: await refFromIndex(
-              tab.bloc.state.positionsListener.itemPositions.value.first.index,
+          ref: await refFromIndex(tab.bloc.state.visibleIndices?.first ?? 0,
               tab.book.tableOfContents),
           book: tab.book,
-          index:
-              tab.bloc.state.positionsListener.itemPositions.value.first.index,
+          index: tab.bloc.state.visibleIndices?.first ?? 0,
         );
       } else {
         final tab = event.tab as PdfBookTab;

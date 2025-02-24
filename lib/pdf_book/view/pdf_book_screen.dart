@@ -185,6 +185,17 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               passwordProvider: () => passwordDialog(context),
               controller: state.controller,
               params: PdfViewerParams(
+                pageAnchor: PdfPageAnchor.topLeft,
+                pageAnchorEnd: PdfPageAnchor.topRight,
+                loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
+                    Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                        value: totalBytes == null
+                            ? null
+                            : (bytesDownloaded / totalBytes)),
+                  ),
+                ),
                 maxScale: 10,
                 onInteractionStart: (_) {
                   if (!state.isLeftPanePinned && state.isLeftPaneVisible) {
@@ -243,9 +254,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   }
                 },
                 onViewerReady: (document, controller) {
-                  _bloc.add(OnViewerReady(document, controller));
                   textSearcher = PdfTextSearcher(controller);
                   searchController = TextEditingController();
+                  _bloc.add(OnViewerReady(document, controller));
+                  controller.goTo(controller.calcMatrixFitWidthForPage(
+                      pageNumber: controller.pageNumber ?? 1));
                 },
               ),
             ),
