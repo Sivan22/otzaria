@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/color_utils.dart';
+import 'package:otzaria/utils/settings_wrapper.dart';
 
 class SettingsRepository {
   static const String keyDarkMode = 'key-dark-mode';
@@ -16,44 +16,49 @@ class SettingsRepository {
   static const String keyReplaceHolyNames = 'key-replace-holy-names';
   static const String keyAutoUpdateIndex = 'key-auto-index-update';
 
+  final SettingsWrapper _settings;
+
+  SettingsRepository({SettingsWrapper? settings})
+      : _settings = settings ?? SettingsWrapper();
+
   Future<Map<String, dynamic>> loadSettings() async {
     return {
-      'isDarkMode': Settings.getValue<bool>(keyDarkMode, defaultValue: false),
+      'isDarkMode': _settings.getValue<bool>(keyDarkMode, defaultValue: false),
       'seedColor': ColorUtils.colorFromString(
-        Settings.getValue<String>(keySwatchColor, defaultValue: '#ff2c1b02'),
+        _settings.getValue<String>(keySwatchColor, defaultValue: '#ff2c1b02'),
       ),
       'paddingSize':
-          Settings.getValue<double>(keyPaddingSize, defaultValue: 10),
-      'fontSize': Settings.getValue<double>(keyFontSize, defaultValue: 16),
-      'fontFamily': Settings.getValue<String>(
+          _settings.getValue<double>(keyPaddingSize, defaultValue: 10),
+      'fontSize': _settings.getValue<double>(keyFontSize, defaultValue: 16),
+      'fontFamily': _settings.getValue<String>(
         keyFontFamily,
         defaultValue: 'FrankRuhlCLM',
       ),
-      'showOtzarHachochma': Settings.getValue<bool>(
+      'showOtzarHachochma': _settings.getValue<bool>(
         keyShowOtzarHachochma,
         defaultValue: false,
       ),
-      'showHebrewBooks': Settings.getValue<bool>(
+      'showHebrewBooks': _settings.getValue<bool>(
         keyShowHebrewBooks,
         defaultValue: false,
       ),
-      'showExternalBooks': Settings.getValue<bool>(
+      'showExternalBooks': _settings.getValue<bool>(
         keyShowExternalBooks,
         defaultValue: false,
       ),
-      'showTeamim': Settings.getValue<bool>(
+      'showTeamim': _settings.getValue<bool>(
         keyShowTeamim,
         defaultValue: true,
       ),
-      'useFastSearch': Settings.getValue<bool>(
+      'useFastSearch': _settings.getValue<bool>(
         keyUseFastSearch,
         defaultValue: true,
       ),
-      'replaceHolyNames': Settings.getValue<bool>(
+      'replaceHolyNames': _settings.getValue<bool>(
         keyReplaceHolyNames,
         defaultValue: true,
       ),
-      'autoUpdateIndex': Settings.getValue<bool>(
+      'autoUpdateIndex': _settings.getValue<bool>(
         keyAutoUpdateIndex,
         defaultValue: true,
       ),
@@ -61,50 +66,50 @@ class SettingsRepository {
   }
 
   Future<void> updateDarkMode(bool value) async {
-    await Settings.setValue(keyDarkMode, value);
+    await _settings.setValue(keyDarkMode, value);
   }
 
   Future<void> updateSeedColor(Color value) async {
-    await Settings.setValue(keySwatchColor, ColorUtils.colorToString(value));
+    await _settings.setValue(keySwatchColor, ColorUtils.colorToString(value));
   }
 
   Future<void> updatePaddingSize(double value) async {
-    await Settings.setValue(keyPaddingSize, value);
+    await _settings.setValue(keyPaddingSize, value);
   }
 
   Future<void> updateFontSize(double value) async {
-    await Settings.setValue(keyFontSize, value);
+    await _settings.setValue(keyFontSize, value);
   }
 
   Future<void> updateFontFamily(String value) async {
-    await Settings.setValue(keyFontFamily, value);
+    await _settings.setValue(keyFontFamily, value);
   }
 
   Future<void> updateShowOtzarHachochma(bool value) async {
-    await Settings.setValue(keyShowOtzarHachochma, value);
+    await _settings.setValue(keyShowOtzarHachochma, value);
   }
 
   Future<void> updateShowHebrewBooks(bool value) async {
-    await Settings.setValue(keyShowHebrewBooks, value);
+    await _settings.setValue(keyShowHebrewBooks, value);
   }
 
   Future<void> updateShowExternalBooks(bool value) async {
-    await Settings.setValue(keyShowExternalBooks, value);
+    await _settings.setValue(keyShowExternalBooks, value);
   }
 
   Future<void> updateShowTeamim(bool value) async {
-    await Settings.setValue(keyShowTeamim, value);
+    await _settings.setValue(keyShowTeamim, value);
   }
 
   Future<void> updateUseFastSearch(bool value) async {
-    await Settings.setValue(keyUseFastSearch, value);
+    await _settings.setValue(keyUseFastSearch, value);
   }
 
   Future<void> updateReplaceHolyNames(bool value) async {
-    await Settings.setValue(keyReplaceHolyNames, value);
+    await _settings.setValue(keyReplaceHolyNames, value);
   }
 
   Future<void> updateAutoUpdateIndex(bool value) async {
-    await Settings.setValue(keyAutoUpdateIndex, value);
+    await _settings.setValue(keyAutoUpdateIndex, value);
   }
 }
