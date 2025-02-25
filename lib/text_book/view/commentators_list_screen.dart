@@ -54,7 +54,6 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
-      update(context, state);
       if (state.availableCommentators == null) {
         return const Center(
           child: CircularProgressIndicator(),
@@ -65,6 +64,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
           child: Text("אין פרשנים"),
         );
       }
+      if (commentatorsList.isEmpty) update(context, state);
       return Column(
         children: [
           FilterListWidget<String>(

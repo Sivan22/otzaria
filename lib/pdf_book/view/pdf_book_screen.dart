@@ -37,7 +37,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     with AutomaticKeepAliveClientMixin<PdfBookScreen> {
   late final PdfBookBloc _bloc;
   late final TextEditingController searchController;
-  late final PdfTextSearcher textSearcher;
+  PdfTextSearcher? textSearcher;
 
   @override
   void initState() {
@@ -187,13 +187,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 pageAnchor: PdfPageAnchor.topLeft,
                 pageAnchorEnd: PdfPageAnchor.topRight,
                 loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
-                    Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                        value: totalBytes == null
-                            ? null
-                            : (bytesDownloaded / totalBytes)),
-                  ),
+                    Center(
+                  child: CircularProgressIndicator(
+                      value: totalBytes == null
+                          ? null
+                          : (bytesDownloaded / totalBytes)),
                 ),
                 maxScale: 10,
                 onInteractionStart: (_) {
@@ -306,10 +304,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           outline: state.outline,
                           controller: state.controller,
                         ),
-                        PdfBookSearchView(
-                          textSearcher: textSearcher,
-                          searchTextController: searchController,
-                        ),
+                        textSearcher != null
+                            ? PdfBookSearchView(
+                                textSearcher: textSearcher!,
+                                searchTextController: searchController,
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                         ThumbnailsView(
                           controller: state.controller,
                         ),

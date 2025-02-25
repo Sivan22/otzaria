@@ -125,8 +125,8 @@ class PdfBookBloc extends Bloc<PdfBookEvent, PdfBookState> {
     if (state is PdfBookLoaded) {
       final currentState = state as PdfBookLoaded;
       emit(currentState.copyWith(
-        currentTitle: await refFromPageNumber(
-            currentState.outline!, currentState.controller.pageNumber ?? 1),
+        currentTitle: await refFromPageNumber(currentState.outline ?? [],
+            currentState.controller.pageNumber ?? 1),
       ));
     }
   }
