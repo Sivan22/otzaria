@@ -3,15 +3,16 @@ import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/navigation_repository.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/tabs_repository.dart';
 
 class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   final NavigationRepository _repository;
 
   NavigationBloc({
     required NavigationRepository repository,
-    required TabsBloc tabsBloc,
+    required TabsRepository tabsRepository,
   })  : _repository = repository,
-        super(NavigationState.initial(tabsBloc.state.tabs.isNotEmpty)) {
+        super(NavigationState.initial(tabsRepository.loadTabs().isNotEmpty)) {
     on<NavigateToScreen>(_onNavigateToScreen);
     on<CheckLibrary>(_onCheckLibrary);
     on<UpdateLibraryStatus>(_onUpdateLibraryStatus);

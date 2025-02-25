@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/focus/focus_bloc.dart';
+import 'package:otzaria/focus/focus_event.dart';
+import 'package:otzaria/focus/focus_state.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/library/bloc/library_state.dart';
@@ -56,6 +59,17 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _refocusSearchBar() {
     _searchFocusNode.requestFocus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Listen to FocusBloc state changes
+    context.read<FocusBloc>().stream.listen((state) {
+      if (state.focusTarget == FocusTarget.librarySearch && mounted) {
+        _refocusSearchBar();
+      }
+    });
   }
 
   @override

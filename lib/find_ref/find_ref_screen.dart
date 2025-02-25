@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
+import 'package:otzaria/focus/focus_bloc.dart';
+import 'package:otzaria/focus/focus_event.dart';
+import 'package:otzaria/focus/focus_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -25,11 +28,33 @@ class _FindRefScreenState extends State<FindRefScreen>
   @override
   bool get wantKeepAlive => true;
   final _textController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initial focus
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFocusNode.requestFocus();
+    });
+  }
 
   @override
   void dispose() {
     _textController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Listen to FocusBloc state changes
+    context.read<FocusBloc>().stream.listen((state) {
+      if (state.focusTarget == FocusTarget.findRefSearch && mounted) {
+        _searchFocusNode.requestFocus();
+      }
+    });
   }
 
   Widget _buildIndexingWarning() {
@@ -87,6 +112,7 @@ class _FindRefScreenState extends State<FindRefScreen>
           children: [
             _buildIndexingWarning(),
             TextField(
+              focusNode: _searchFocusNode,
               autofocus: true,
               decoration: InputDecoration(
                 hintText:

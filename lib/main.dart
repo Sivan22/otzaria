@@ -12,6 +12,7 @@ import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_repository.dart';
+import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/history_repository.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
@@ -71,7 +72,7 @@ void main() async {
         BlocProvider<NavigationBloc>(
           create: (context) => NavigationBloc(
             repository: NavigationRepository(),
-            tabsBloc: context.read<TabsBloc>(),
+            tabsRepository: TabsRepository(),
           )..add(const CheckLibrary()),
         ),
         BlocProvider<FindRefBloc>(
@@ -81,6 +82,11 @@ void main() async {
               ..add(CheckIndexStatusRequested())),
         BlocProvider<BookmarkBloc>(
           create: (context) => BookmarkBloc(BookmarkRepository()),
+        ),
+        BlocProvider<FocusBloc>(
+          create: (context) => FocusBloc(
+            navigationBloc: context.read<NavigationBloc>(),
+          ),
         ),
       ],
       child: const App(),
