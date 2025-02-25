@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
-import 'package:otzaria/utils/open_book.dart';
+import 'package:otzaria/models/books.dart';
+import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_event.dart';
+import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_event.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
 
 class HistoryView extends StatelessWidget {
   const HistoryView({Key? key}) : super(key: key);
+  void _openBook(
+      BuildContext context, Book book, int index, List<String>? commentators) {
+    final tab = book is PdfBook
+        ? PdfBookTab(book: book, initialPage: index)
+        : TextBookTab(
+            book: book as TextBook, index: index, commentators: commentators);
+
+    context.read<TabsBloc>().add(AddTab(tab));
+    context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +47,11 @@ class HistoryView extends StatelessWidget {
                 itemBuilder: (context, index) => ListTile(
                   title: Text(state.history[index].ref),
                   onTap: () {
-                    openBook(context, state.history[index].book, index, '');
+                    _openBook(
+                        context,
+                        state.history[index].book,
+                        state.history[index].index,
+                        state.history[index].commentatorsToShow);
                   },
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_forever),

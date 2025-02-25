@@ -81,6 +81,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
               tab.book.tableOfContents),
           book: tab.book,
           index: tab.bloc.state.visibleIndices?.first ?? 0,
+          commentatorsToShow: tab.bloc.state.activeCommentators,
         );
       } else {
         final tab = event.tab as PdfBookTab;
