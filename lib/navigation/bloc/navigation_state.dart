@@ -11,9 +11,9 @@ class NavigationState extends Equatable {
     this.isLibraryEmpty = false,
   });
 
-  factory NavigationState.initial() {
-    return const NavigationState(
-      currentScreen: Screen.library,
+  factory NavigationState.initial(bool hasTabs) {
+    return NavigationState(
+      currentScreen: hasTabs ? Screen.reading : Screen.library,
       isLibraryEmpty: false,
     );
   }

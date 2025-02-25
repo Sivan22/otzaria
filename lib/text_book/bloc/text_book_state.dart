@@ -63,8 +63,9 @@ class TextBookState extends Equatable {
       fontSize: 25.0, // Default font size
       showLeftPane: showLeftPane,
       showSplitView: splitView,
-      activeCommentators: const [],
-      availableCommentators: commentators,
+      activeCommentators:
+          commentators ?? const [], // Use commentators for activeCommentators
+      availableCommentators: const [], // This will be populated later in the bloc
       removeNikud: false,
       pinLeftPane: false,
       searchText: '',

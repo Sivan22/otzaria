@@ -177,7 +177,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   suffixIcon: IconButton(
                     onPressed: () {
                       _searchController.clear();
-                      _update(context);
+                      _update(context, state, settingsState);
                       _refocusSearchBar();
                     },
                     icon: const Icon(Icons.cancel),
@@ -188,14 +188,14 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
                 ),
                 onChanged: (value) {
-                  _update(context);
+                  _update(context, state, settingsState);
                 },
               ),
             ),
             if (settingsState.showExternalBooks)
               IconButton(
                 icon: const Icon(Icons.filter_list),
-                onPressed: () => _showFilterDialog(context),
+                onPressed: () => _showFilterDialog(context, state),
               ),
           ],
         );
@@ -408,7 +408,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     _refocusSearchBar();
   }
 
-  void _showFilterDialog(BuildContext context) {
+  void _showFilterDialog(BuildContext context, LibraryState state) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -425,7 +425,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     context
                         .read<SettingsBloc>()
                         .add(UpdateShowOtzarHachochma(value!));
-                    _update(context);
+                    _update(context, state, settingsState);
                   });
                 },
               ),
@@ -437,7 +437,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     context
                         .read<SettingsBloc>()
                         .add(UpdateShowHebrewBooks(value!));
-                    _update(context);
+                    _update(context, state, settingsState);
                   });
                 },
               ),
@@ -456,9 +456,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     return topics.toList()..sort();
   }
 
-  void _update(BuildContext context) {
-    final settingsState = context.read<SettingsState>();
-    final state = context.read<LibraryState>();
+  void _update(
+      BuildContext context, LibraryState state, SettingsState settingsState) {
     context.read<LibraryBloc>().add(
           SearchBooks(
             _searchController.text,
@@ -467,5 +466,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             showOtzarHachochma: settingsState.showOtzarHachochma,
           ),
         );
+    setState(() {});
+    _refocusSearchBar();
   }
 }
