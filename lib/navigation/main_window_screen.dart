@@ -115,16 +115,6 @@ class MainWindowScreenState extends State<MainWindowScreen>
         );
       }
     }
-    if (state.currentScreen == Screen.library) {
-      context
-          .read<FocusBloc>()
-          .add(const RequestLibrarySearchFocus(selectAll: true));
-    }
-    if (state.currentScreen == Screen.find) {
-      context
-          .read<FocusBloc>()
-          .add(const RequestFindRefSearchFocus(selectAll: true));
-    }
   }
 
   @override
@@ -192,6 +182,16 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                           NavigateToScreen(
                                               Screen.values[index]));
                                     }
+                                    if (index == Screen.library.index) {
+                                      context.read<FocusBloc>().add(
+                                          const RequestLibrarySearchFocus(
+                                              selectAll: true));
+                                    }
+                                    if (index == Screen.find.index) {
+                                      context.read<FocusBloc>().add(
+                                          const RequestFindRefSearchFocus(
+                                              selectAll: true));
+                                    }
                                   },
                                 ),
                               ),
@@ -212,6 +212,16 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                 } else {
                                   context.read<NavigationBloc>().add(
                                       NavigateToScreen(Screen.values[index]));
+                                }
+                                if (index == Screen.library.index) {
+                                  context.read<FocusBloc>().add(
+                                      const RequestLibrarySearchFocus(
+                                          selectAll: true));
+                                }
+                                if (index == Screen.find.index) {
+                                  context.read<FocusBloc>().add(
+                                      const RequestFindRefSearchFocus(
+                                          selectAll: true));
                                 }
                               },
                             ),
