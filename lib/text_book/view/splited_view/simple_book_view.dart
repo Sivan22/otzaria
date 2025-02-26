@@ -47,7 +47,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           child: SelectionArea(
               key: PageStorageKey(widget.tab),
               child: ScrollablePositionedList.builder(
-                  initialScrollIndex: widget.tab.index,
+                  initialScrollIndex: state.visibleIndices?.first ?? 0,
                   itemPositionsListener: state.positionsListener,
                   itemScrollController: state.scrollController,
                   scrollOffsetController: state.scrollOffsetController,

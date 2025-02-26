@@ -73,6 +73,7 @@ class TextBookState extends Equatable {
       scrollController: ItemScrollController(),
       scrollOffsetController: ScrollOffsetController(),
       positionsListener: ItemPositionsListener.create(),
+      visibleIndices: [index],
     );
   }
 

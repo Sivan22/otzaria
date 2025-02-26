@@ -48,7 +48,7 @@ class _CombinedViewState extends State<CombinedView> {
 
   Widget buildOuterList(TextBookState state) {
     return ScrollablePositionedList.builder(
-        initialScrollIndex: widget.tab.index,
+        initialScrollIndex: state.visibleIndices?.first ?? 0,
         itemPositionsListener: state.positionsListener,
         itemScrollController: state.scrollController,
         scrollOffsetController: state.scrollOffsetController,
