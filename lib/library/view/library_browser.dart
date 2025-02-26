@@ -203,7 +203,23 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       return const SizedBox.shrink();
     }
 
-    final allTopics = _getAllTopics(state.searchResults!);
+    final categoryTopics = [
+      "תנך",
+      "מדרש",
+      "משנה",
+      "תלמוד בבלי",
+      "הלכה",
+      "חסידות"
+          "קבלה",
+      "שות",
+      "ראשונים",
+      "אחרונים",
+      "מחברי זמננו"
+    ];
+
+    final allTopics = _getAllTopics(state.searchResults!)
+        .where((element) => categoryTopics.contains(element))
+        .toList();
 
     return FilterListWidget<String>(
       hideSearchField: true,
@@ -449,7 +465,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     for (final book in books) {
       topics.addAll(book.topics.split(', '));
     }
-    return topics.toList()..sort();
+    return topics.toList();
   }
 
   void _update(
