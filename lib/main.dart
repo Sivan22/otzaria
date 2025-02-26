@@ -84,9 +84,7 @@ void main() async {
           create: (context) => BookmarkBloc(BookmarkRepository()),
         ),
         BlocProvider<FocusBloc>(
-          create: (context) => FocusBloc(
-            navigationBloc: context.read<NavigationBloc>(),
-          ),
+          create: (context) => FocusBloc(),
         ),
       ],
       child: const App(),

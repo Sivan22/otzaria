@@ -7,8 +7,16 @@ abstract class FocusEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class RequestLibrarySearchFocus extends FocusEvent {}
+class RequestLibrarySearchFocus extends FocusEvent {
+  final bool selectAll;
 
-class RequestFindRefSearchFocus extends FocusEvent {}
+  const RequestLibrarySearchFocus({required this.selectAll});
+}
+
+class RequestFindRefSearchFocus extends FocusEvent {
+  final bool selectAll;
+
+  const RequestFindRefSearchFocus({required this.selectAll});
+}
 
 class ClearFocus extends FocusEvent {}

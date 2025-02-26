@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/focus/focus_bloc.dart';
+import 'package:otzaria/focus/focus_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -111,6 +113,16 @@ class MainWindowScreenState extends State<MainWindowScreen>
           curve: Curves.easeInOut,
         );
       }
+    }
+    if (state.currentScreen == Screen.library) {
+      context
+          .read<FocusBloc>()
+          .add(const RequestLibrarySearchFocus(selectAll: true));
+    }
+    if (state.currentScreen == Screen.find) {
+      context
+          .read<FocusBloc>()
+          .add(const RequestFindRefSearchFocus(selectAll: true));
     }
   }
 

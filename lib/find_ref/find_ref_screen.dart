@@ -16,46 +16,8 @@ import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/ref_indexing/ref_indexing_screen.dart';
 
-class FindRefScreen extends StatefulWidget {
+class FindRefScreen extends StatelessWidget {
   const FindRefScreen({super.key});
-
-  @override
-  State<FindRefScreen> createState() => _FindRefScreenState();
-}
-
-class _FindRefScreenState extends State<FindRefScreen>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-  final _textController = TextEditingController();
-  final _searchFocusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    // Initial focus
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _searchFocusNode.requestFocus();
-    });
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    _searchFocusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Listen to FocusBloc state changes
-    context.read<FocusBloc>().stream.listen((state) {
-      if (state.focusTarget == FocusTarget.findRefSearch && mounted) {
-        _searchFocusNode.requestFocus();
-      }
-    });
-  }
 
   Widget _buildIndexingWarning() {
     return BlocBuilder<FindRefBloc, FindRefState>(
@@ -95,7 +57,7 @@ class _FindRefScreenState extends State<FindRefScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    final focusBloc = BlocProvider.of<FocusBloc>(context);
 
     return Scaffold(
       drawer: const Drawer(
@@ -112,7 +74,7 @@ class _FindRefScreenState extends State<FindRefScreen>
           children: [
             _buildIndexingWarning(),
             TextField(
-              focusNode: _searchFocusNode,
+              focusNode: focusBloc.state.findRefSearchFocusNode,
               autofocus: true,
               decoration: InputDecoration(
                 hintText:
@@ -123,7 +85,7 @@ class _FindRefScreenState extends State<FindRefScreen>
                     IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: () {
-                        _textController.clear();
+                        focusBloc.state.findRefSearchController.clear();
                         BlocProvider.of<FindRefBloc>(context)
                             .add(ClearSearchRequested());
                       },
@@ -131,7 +93,7 @@ class _FindRefScreenState extends State<FindRefScreen>
                   ],
                 ),
               ),
-              controller: _textController,
+              controller: focusBloc.state.findRefSearchController,
               onChanged: (ref) {
                 BlocProvider.of<FindRefBloc>(context)
                     .add(SearchRefRequested(ref));
@@ -145,7 +107,8 @@ class _FindRefScreenState extends State<FindRefScreen>
                   } else if (state is FindRefError) {
                     return Text('Error: ${state.message}');
                   } else if (state is FindRefSuccess && state.refs.isEmpty) {
-                    if (_textController.text.length >= 3) {
+                    if (focusBloc.state.findRefSearchController.text.length >=
+                        3) {
                       return const Center(
                         child: Text(
                           'אין תוצאות',
