@@ -100,14 +100,15 @@ class MainWindowScreenState extends State<MainWindowScreen>
     ];
   }
 
-  void _handleNavigationChange(BuildContext context, NavigationState state) {
+  void _handleNavigationChange(
+      BuildContext context, NavigationState state) async {
     if (mounted && pageController.hasClients) {
       final targetPage = state.currentScreen == Screen.search
           ? Screen.reading.index
           : state.currentScreen.index;
 
       if (pageController.page?.round() != targetPage) {
-        pageController.animateToPage(
+        await pageController.animateToPage(
           targetPage,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
