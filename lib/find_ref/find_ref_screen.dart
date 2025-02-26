@@ -133,7 +133,7 @@ class FindRefScreen extends StatelessWidget {
                                     book: PdfBook(
                                         title: state.refs[index].bookTitle,
                                         path: state.refs[index].pdfPath!),
-                                    initialPage: state.refs[index].index)));
+                                    pageNumber: state.refs[index].index)));
                               } else {
                                 tabsBloc.add(AddTab(TextBookTab(
                                     book: TextBook(

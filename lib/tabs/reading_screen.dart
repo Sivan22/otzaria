@@ -29,7 +29,28 @@ class ReadingScreen extends StatefulWidget {
 }
 
 class _ReadingScreenState extends State<ReadingScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      BlocProvider.of<TabsBloc>(context, listen: false).add(const SaveTabs());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TabsBloc, TabsState>(
@@ -225,8 +246,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     if (tab is PdfBookTab) {
       return PdfBookScreen(
         key: PageStorageKey(tab),
-        book: tab.book,
-        initialPage: tab.initialPage,
+        tab: tab,
       );
     } else if (tab is TextBookTab) {
       return BlocProvider(

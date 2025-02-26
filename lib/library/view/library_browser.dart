@@ -395,7 +395,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     if (book is PdfBook) {
       context
           .read<TabsBloc>()
-          .add(AddTab(PdfBookTab(book: book, initialPage: 1)));
+          .add(AddTab(PdfBookTab(book: book, pageNumber: 1)));
     } else if (book is TextBook) {
       context.read<TabsBloc>().add(
             AddTab(

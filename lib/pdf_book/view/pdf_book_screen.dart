@@ -8,6 +8,7 @@ import 'package:otzaria/pdf_book/bloc/pdf_book_bloc.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_event.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/utils/open_book.dart';
 import 'package:otzaria/utils/page_converter.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -20,13 +21,11 @@ import 'pdf_thumbnails_screen.dart';
 import 'package:printing/printing.dart';
 
 class PdfBookScreen extends StatefulWidget {
-  final PdfBook book;
-  final int initialPage;
+  final PdfBookTab tab;
 
   const PdfBookScreen({
     super.key,
-    required this.book,
-    this.initialPage = 1,
+    required this.tab,
   });
 
   @override
@@ -44,9 +43,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     super.initState();
     _bloc = PdfBookBloc();
     _bloc.add(LoadPdfBook(
-      path: widget.book.path,
-      initialPage: widget.initialPage,
-    ));
+        path: widget.tab.book.path,
+        initialPage: widget.tab.pageNumber,
+        tab: widget.tab));
   }
 
   @override
@@ -103,7 +102,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             onPressed: () => _bloc.add(const ToggleLeftPane()),
           ),
           actions: [
-            _buildTextButton(context, widget.book, state),
+            _buildTextButton(context, widget.tab.book, state),
             IconButton(
               icon: const Icon(
                 Icons.bookmark_add,
@@ -112,8 +111,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               onPressed: () {
                 int index = state.controller.pageNumber ?? 1;
                 bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
-                    ref: '${widget.book.title} עמוד $index',
-                    book: widget.book,
+                    ref: '${widget.tab.book.title} עמוד $index',
+                    book: widget.tab.book,
                     index: index);
                 // notify user
                 if (mounted) {
@@ -170,7 +169,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               tooltip: 'שיתוף',
               onPressed: () async {
                 await Printing.sharePdf(
-                  bytes: File(widget.book.path).readAsBytesSync(),
+                  bytes: File(widget.tab.book.path).readAsBytesSync(),
                 );
               },
             ),
@@ -179,8 +178,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         body: Stack(
           children: [
             PdfViewer.file(
-              widget.book.path,
-              initialPageNumber: widget.initialPage,
+              widget.tab.book.path,
+              initialPageNumber: widget.tab.pageNumber,
               passwordProvider: () => passwordDialog(context),
               controller: state.controller,
               params: PdfViewerParams(

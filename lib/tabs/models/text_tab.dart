@@ -52,6 +52,11 @@ class TextBookTab extends OpenedTab {
         commentators: commentators,
       ),
     );
+    bloc.state.positionsListener.itemPositions.addListener(() async {
+      if (bloc.state.positionsListener.itemPositions.value.isNotEmpty) {
+        index = bloc.state.positionsListener.itemPositions.value.first.index;
+      }
+    });
   }
 
   /// Creates a new instance of [TextBookTab] from a JSON map.

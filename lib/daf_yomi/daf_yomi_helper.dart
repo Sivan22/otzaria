@@ -26,7 +26,7 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
       index = outline?.dest?.pageNumber ?? 0;
       final tab = PdfBookTab(
         book: book,
-        initialPage: index,
+        pageNumber: index,
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     }
@@ -86,7 +86,7 @@ openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
     if (outline != null) {
       final tab = PdfBookTab(
         book: book,
-        initialPage: outline.dest?.pageNumber ?? 0,
+        pageNumber: outline.dest?.pageNumber ?? 0,
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {

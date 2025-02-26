@@ -17,6 +17,13 @@ class AddTab extends TabsEvent {
   List<Object?> get props => [tab];
 }
 
+class SaveTabs extends TabsEvent {
+  const SaveTabs();
+
+  @override
+  List<Object?> get props => [];
+}
+
 class RemoveTab extends TabsEvent {
   final OpenedTab tab;
 

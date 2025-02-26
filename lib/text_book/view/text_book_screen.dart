@@ -57,6 +57,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   void initState() {
     super.initState();
     tabController = TabController(length: 4, vsync: this);
+    context.read<TextBookBloc>().add(LoadContent());
   }
 
   @override

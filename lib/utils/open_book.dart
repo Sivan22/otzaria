@@ -16,7 +16,7 @@ void openBook(BuildContext context, Book book, int index, String searchQuery) {
   } else if (book is PdfBook) {
     context.read<TabsBloc>().add(AddTab(PdfBookTab(
           book: book,
-          initialPage: index,
+          pageNumber: index,
         )));
   }
   context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));

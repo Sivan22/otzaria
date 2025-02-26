@@ -17,7 +17,7 @@ class BookmarkView extends StatelessWidget {
   void _openBook(
       BuildContext context, Book book, int index, List<String>? commentators) {
     final tab = book is PdfBook
-        ? PdfBookTab(book: book, initialPage: index)
+        ? PdfBookTab(book: book, pageNumber: index)
         : TextBookTab(
             book: book as TextBook, index: index, commentators: commentators);
 

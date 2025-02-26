@@ -79,7 +79,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                   book: PdfBook(
                                       title: result.title,
                                       path: result.filePath),
-                                  initialPage: result.segment.toInt() + 1,
+                                  pageNumber: result.segment.toInt() + 1,
                                 ),
                               ));
                         } else {

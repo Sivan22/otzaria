@@ -1,6 +1,7 @@
 import 'package:otzaria/pdf_book/bloc/pdf_book_bloc.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_event.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 
@@ -8,14 +9,14 @@ import 'package:otzaria/utils/text_manipulation.dart';
 ///
 /// The [PdfBookTab] class contains:
 /// - The book itself ([book])
-/// - The initial page number ([initialPage])
+/// - The initial page number ([pageNumber])
 /// - A [PdfBookBloc] instance to manage the viewer state
 class PdfBookTab extends OpenedTab {
   /// The PDF book.
   final PdfBook book;
 
   /// The initial page number.
-  final int initialPage;
+  int pageNumber;
 
   /// The bloc that manages this tab's PDF viewer state.
   final PdfBookBloc bloc;
@@ -23,27 +24,28 @@ class PdfBookTab extends OpenedTab {
   /// Creates a new instance of [PdfBookTab].
   ///
   /// [book] The PDF book to display
-  /// [initialPage] The initial page number to show (defaults to 1)
+  /// [pageNumber] The initial page number to show (defaults to 1)
   PdfBookTab({
     required this.book,
-    this.initialPage = 1,
+    this.pageNumber = 1,
   })  : bloc = PdfBookBloc(),
         super(book.title) {
     // Initialize the bloc with the book
     bloc.add(LoadPdfBook(
       path: book.path,
-      initialPage: initialPage,
+      initialPage: pageNumber,
+      tab: this,
     ));
   }
 
   /// Creates a copy of this tab with optional parameter overrides
   PdfBookTab copyWith({
     PdfBook? book,
-    int? initialPage,
+    int? pageNumber,
   }) {
     return PdfBookTab(
       book: book ?? this.book,
-      initialPage: initialPage ?? this.initialPage,
+      pageNumber: pageNumber ?? this.pageNumber,
     );
   }
 
@@ -54,7 +56,7 @@ class PdfBookTab extends OpenedTab {
         title: getTitleFromPath(json['path']),
         path: json['path'],
       ),
-      initialPage: json['pageNumber'] ?? 1,
+      pageNumber: json['pageNumber'] ?? 1,
     );
   }
 
@@ -63,12 +65,12 @@ class PdfBookTab extends OpenedTab {
   Map<String, dynamic> toJson() {
     return {
       'path': book.path,
-      'pageNumber': initialPage,
+      'pageNumber': pageNumber,
       'type': 'PdfBookTab',
     };
   }
 
-  List<Object?> get props => [book, initialPage];
+  List<Object?> get props => [book, pageNumber];
 
   /// Clean up resources when the tab is closed
   void dispose() {

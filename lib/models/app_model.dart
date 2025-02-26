@@ -227,7 +227,7 @@ class AppModel with ChangeNotifier {
   /// [openLeftPane] Whether to open the left pane (for TextBooks only)
   void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
-      _addTab(PdfBookTab(book: book, initialPage: max(index, 1)));
+      _addTab(PdfBookTab(book: book, pageNumber: max(index, 1)));
     } else if (book is TextBook) {
       _addTab(
           TextBookTab(book: book, index: index, openLeftPane: openLeftPane));

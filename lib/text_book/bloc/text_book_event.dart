@@ -9,14 +9,8 @@ sealed class TextBookEvent extends Equatable {
 }
 
 class LoadContent extends TextBookEvent {
-  final TextBook book;
-
-  const LoadContent({
-    required this.book,
-  });
-
   @override
-  List<Object?> get props => [book];
+  List<Object?> get props => [];
 }
 
 class UpdateFontSize extends TextBookEvent {

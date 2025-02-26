@@ -23,7 +23,7 @@ abstract class OpenedTab {
     } else if (tab is PdfBookTab) {
       return PdfBookTab(
         book: tab.book,
-        initialPage: tab.initialPage,
+        pageNumber: tab.pageNumber,
       );
     }
     return tab;

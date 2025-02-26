@@ -25,6 +25,10 @@ class PdfBookBloc extends Bloc<PdfBookEvent, PdfBookState> {
     try {
       _controller = PdfViewerController();
 
+      _controller?.addListener(() {
+        event.tab.pageNumber = _controller?.pageNumber ?? 1;
+      });
+
       emit(PdfBookLoaded(
         currentPage: event.initialPage,
         totalPages: 0, // Will be updated when viewer is ready

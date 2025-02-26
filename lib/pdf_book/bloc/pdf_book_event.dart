@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 abstract class PdfBookEvent extends Equatable {
@@ -11,8 +12,10 @@ abstract class PdfBookEvent extends Equatable {
 class LoadPdfBook extends PdfBookEvent {
   final String path;
   final int initialPage;
+  final PdfBookTab tab;
 
   const LoadPdfBook({
+    required this.tab,
     required this.path,
     this.initialPage = 1,
   });

@@ -24,6 +24,7 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
     on<NavigateToNextTab>(_onNavigateToNextTab);
     on<NavigateToPreviousTab>(_onNavigateToPreviousTab);
     on<CloseCurrentTab>(_onCloseCurrentTab);
+    on<SaveTabs>(_onSaveTabs);
   }
 
   void _onLoadTabs(LoadTabs event, Emitter<TabsState> emit) {
@@ -33,6 +34,10 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
       tabs: tabs,
       currentTabIndex: currentTabIndex,
     ));
+  }
+
+  void _onSaveTabs(SaveTabs event, Emitter<TabsState> emit) {
+    _repository.saveTabs(state.tabs, state.currentTabIndex);
   }
 
   void _onAddTab(AddTab event, Emitter<TabsState> emit) {

@@ -22,10 +22,6 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     on<UpdateSelectedIndex>(_onUpdateSelectedIndex);
     on<TogglePinLeftPane>(_onTogglePinLeftPane);
     on<UpdateSearchText>(_onUpdateSearchText);
-
-    // Load initial content
-    add(LoadContent(book: initialState.book));
-
     //listen to index changes
     initialState.positionsListener.itemPositions.addListener(() {
       final visibleInecies = state.positionsListener.itemPositions.value
@@ -46,15 +42,14 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     try {
       emit(state.copyWith(status: TextBookStatus.loading));
 
-      final content = await _repository.getBookContent(event.book);
-      final links = await _repository.getBookLinks(event.book);
-      final tableOfContents = await _repository.getTableOfContents(event.book);
+      final content = await _repository.getBookContent(state.book);
+      final links = await _repository.getBookLinks(state.book);
+      final tableOfContents = await _repository.getTableOfContents(state.book);
 
       final availableCommentators =
           await _repository.getAvailableCommentators(links);
 
       emit(state.copyWith(
-        book: event.book,
         content: content.split('\n'),
         links: links,
         availableCommentators: availableCommentators,
