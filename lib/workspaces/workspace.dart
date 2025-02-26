@@ -1,4 +1,4 @@
-import 'package:otzaria/bookmarks/models/bookmark.dart';
+import 'package:otzaria/tabs/models/tab.dart';
 
 /// Represents a workspace in the application.
 ///
@@ -7,16 +7,16 @@ import 'package:otzaria/bookmarks/models/bookmark.dart';
 /// and a [currentTab] which is the index of the current tab.
 class Workspace {
   String name;
-  final List<Bookmark> bookmarks;
+  final List<OpenedTab> tabs;
   int currentTab;
 
-  Workspace({required this.name, required this.bookmarks, this.currentTab = 0});
+  Workspace({required this.name, required this.tabs, this.currentTab = 0});
 
   factory Workspace.fromJson(Map<String, dynamic> json) {
     return Workspace(
         name: json['name'],
-        bookmarks: List<Bookmark>.from(
-          json['bookmarks'].map((bookmark) => Bookmark.fromJson(bookmark)),
+        tabs: List<OpenedTab>.from(
+          json['tabs'].map((tab) => OpenedTab.fromJson(tab)),
         ),
         currentTab: json['currentTab']);
   }
@@ -24,7 +24,7 @@ class Workspace {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'bookmarks': bookmarks.map((bookmark) => bookmark.toJson()).toList(),
+      'tabs': tabs.map((tab) => tab.toJson()).toList(),
       'currentTab': currentTab
     };
   }

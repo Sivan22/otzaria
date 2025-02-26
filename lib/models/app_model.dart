@@ -404,14 +404,7 @@ class AppModel with ChangeNotifier {
   /// Switches to a different workspace, saving the current workspace first
   void switchWorkspace(Workspace workspace) {
     saveCurrentWorkspace(getHebrewTimeStamp());
-    tabs = workspace.bookmarks
-        .map((b) => b.book is PdfBook
-            ? PdfBookTab(book: b.book as PdfBook, initialPage: b.index)
-            : TextBookTab(
-                book: b.book as TextBook,
-                index: b.index,
-                commentators: b.commentatorsToShow))
-        .toList();
+    tabs = workspace.tabs;
     currentTab = workspace.currentTab;
     notifyListeners();
     saveTabsToDisk();

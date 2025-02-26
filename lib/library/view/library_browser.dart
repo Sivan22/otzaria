@@ -208,18 +208,23 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       "מדרש",
       "משנה",
       "תלמוד בבלי",
+      "תלמוד ירושלמי",
       "הלכה",
-      "חסידות"
-          "קבלה",
+      "משנה תורה",
+      "שולחן ערוך",
+      "חסידות",
+      "קבלה",
+      "ספרי מוסר",
       "שות",
       "ראשונים",
       "אחרונים",
       "מחברי זמננו"
     ];
 
-    final allTopics = _getAllTopics(state.searchResults!)
-        .where((element) => categoryTopics.contains(element))
-        .toList();
+    final allTopics = _getAllTopics(state.searchResults!);
+
+    final relevantTopics =
+        categoryTopics.where((element) => allTopics.contains(element)).toList();
 
     return FilterListWidget<String>(
       hideSearchField: true,
@@ -234,7 +239,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       },
       validateSelectedItem: (list, item) => list != null && list.contains(item),
       onItemSearch: (item, query) => item == query,
-      listData: allTopics,
+      listData: relevantTopics,
       selectedListData: state.selectedTopics ?? [],
       choiceChipLabel: (p0) => p0,
       hideSelectedTextCount: true,
