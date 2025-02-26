@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:otzaria/history/history_screen.dart';
 import 'package:otzaria/bookmarks/bookmark_screen.dart';
-import 'package:otzaria/workspaces/workspaces_screen.dart';
 
 class FavouritesScreen extends StatefulWidget {
   const FavouritesScreen({Key? key}) : super(key: key);
@@ -21,7 +20,7 @@ class _FavouritesScreenState extends State<FavouritesScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return const DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         appBar: TabBar(
           tabs: [
@@ -29,12 +28,6 @@ class _FavouritesScreenState extends State<FavouritesScreen>
               text: 'סימניות',
               icon: Icon(
                 Icons.bookmark,
-              ),
-            ),
-            Tab(
-              text: 'סביבות עבודה',
-              icon: Icon(
-                Icons.workspaces_outline,
               ),
             ),
             Tab(
@@ -48,7 +41,6 @@ class _FavouritesScreenState extends State<FavouritesScreen>
         body: TabBarView(
           children: [
             BookmarkView(),
-            WorkspacesView(),
             HistoryView(),
           ],
         ),
