@@ -1,9 +1,12 @@
+import 'dart:isolate';
+
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
-import 'package:otzaria/models/library.dart';
+import 'package:otzaria/library/models/library.dart';
 
 /// DataRepository acts as a centralized data access layer that coordinates between different
 /// data providers (file system, Isar database, and Tantivy search engine).
@@ -27,11 +30,22 @@ class DataRepository {
   /// Provides access to the singleton instance
   static DataRepository get instance => _singleton;
 
+  late Future<Library> library;
+
+  late Future<List<Book>> hebrewBooks;
+  late Future<List<ExternalBook>> otzarBooks;
+
+  DataRepository() {
+    library = _getLibrary();
+    hebrewBooks = getHebrewBooks();
+    otzarBooks = getOtzarBooks();
+  }
+
   /// Retrieves the complete library metadata including all available books
   ///
   /// Returns a [Future] that completes with a [Library] object containing
   /// the full library structure and metadata
-  Future<Library> getLibrary() async {
+  Future<Library> _getLibrary() async {
     return _fileSystemData.getLibrary();
   }
 
@@ -98,16 +112,6 @@ class DataRepository {
   ///   - [limit]: Maximum number of results to return (defaults to 10)
   ///
   /// Returns a [Future] that completes with a list of [Ref] objects sorted by relevance
-  Future<List<Ref>> findRefsByRelevance(String ref, {int limit = 10}) {
-    return _isarDataProvider.findRefsByRelevance(ref, limit: limit);
-  }
-
-  /// Gets the total count of books that have associated references
-  ///
-  /// Returns a [Future] that completes with the count of books with references
-  Future<int> getNumberOfBooksWithRefs() {
-    return _isarDataProvider.getNumberOfBooksWithRefs();
-  }
 
   /// Adds text content from the library to the Tantivy search index
   ///
@@ -119,5 +123,80 @@ class DataRepository {
     Library library,
   ) async {
     _tantivyDataProvider.addAllTBooksToTantivy(library);
+  }
+
+  /// Searches for books based on query text and optional filters
+  ///
+  /// Parameters:
+  ///   - [query]: The search text to match against book titles
+  ///   - [category]: Optional category to filter results
+  ///   - [topics]: Optional list of topics to filter results
+  ///   - [includeOtzar]: Whether to include Otzar HaChochma books
+  ///   - [includeHebrewBooks]: Whether to include HebrewBooks.org books
+  ///
+  /// Returns a [Future] that completes with a list of [Book] objects matching the criteria
+  Future<List<Book>> findBooks(
+    String query,
+    Category? category, {
+    List<String>? topics,
+    bool includeOtzar = false,
+    bool includeHebrewBooks = false,
+    bool sortByRatio = true,
+  }) async {
+    final queryWords = query.toLowerCase().split(RegExp(r'\s+'));
+    var allBooks = category?.getAllBooks() ?? (await library).getAllBooks();
+
+    if (includeOtzar) {
+      allBooks += await otzarBooks;
+    }
+    if (includeHebrewBooks) {
+      allBooks += await hebrewBooks;
+    }
+
+    // Filter books based on query and topics
+    final filteredBooks = allBooks.where((book) {
+      final title = book.title.toLowerCase();
+      final bookTopics = book.topics.split(', ');
+
+      bool matchesQuery = queryWords.every((word) => title.contains(word));
+      bool matchesTopics = topics == null ||
+          topics.isEmpty ||
+          topics.every((t) => bookTopics.contains(t));
+
+      return matchesQuery && matchesTopics;
+    }).toList();
+
+    //sort by levenstien distance - using an isolate
+    if (sortByRatio) {
+      Future<List<int>> getSortedIndices(
+          List<Map<String, dynamic>> data, String query) async {
+        return await Isolate.run(() {
+          List<int> indices = List<int>.generate(data.length, (i) => i);
+          indices.sort((a, b) {
+            final scoreA = ratio(query, data[a]['title'] as String);
+            final scoreB = ratio(query, data[b]['title'] as String);
+            return scoreB.compareTo(scoreA);
+          });
+          return indices;
+        });
+      }
+
+      final List<Map<String, dynamic>> sortData = filteredBooks
+          .asMap()
+          .map((i, book) => MapEntry(i, {
+                'index': i,
+                'title': book.title,
+              }))
+          .values
+          .toList();
+
+      // Sort results by relevance in isolate
+      final sortedIndices = getSortedIndices(sortData, query);
+
+      return (await sortedIndices)
+          .map((index) => filteredBooks[index])
+          .toList();
+    }
+    return filteredBooks;
   }
 }

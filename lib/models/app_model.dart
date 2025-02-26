@@ -19,16 +19,15 @@ import 'package:hive/hive.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
-import 'package:otzaria/models/bookmark.dart';
+import 'package:otzaria/bookmarks/models/bookmark.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/library.dart';
-import 'package:otzaria/models/tabs/pdf_tab.dart';
-import 'package:otzaria/models/tabs/searching_tab.dart';
-import 'package:otzaria/models/tabs/tab.dart';
-import 'package:otzaria/models/tabs/text_tab.dart';
-import 'package:otzaria/models/workspace.dart';
-import 'package:otzaria/utils/calendar.dart';
-import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/library/models/library.dart';
+import 'package:otzaria/tabs/models/pdf_tab.dart';
+import 'package:otzaria/tabs/models/searching_tab.dart';
+import 'package:otzaria/tabs/models/tab.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/daf_yomi/calendar.dart';
+import 'package:otzaria/workspaces/workspace.dart';
 
 class AppModel with ChangeNotifier {
   /// The singleton data repository instance for accessing application data
@@ -44,7 +43,7 @@ class AppModel with ChangeNotifier {
   set libraryPath(String path) {
     _libraryPath = path;
     Settings.setValue('key-library-path', path);
-    library = data.getLibrary();
+    library = data.library;
     notifyListeners();
   }
 
@@ -65,9 +64,6 @@ class AppModel with ChangeNotifier {
 
   /// The currently active view/screen in the application
   ValueNotifier<Screens> currentView = ValueNotifier(Screens.library);
-
-  /// List of user-created bookmarks
-  late List<Bookmark> bookmarks;
 
   /// Reading history tracking previously opened books and locations
   late List<Bookmark> history;
@@ -154,7 +150,7 @@ class AppModel with ChangeNotifier {
   /// * Sets up theme and UI preference listeners
   AppModel(String libraryPath) {
     _libraryPath = libraryPath;
-    library = data.getLibrary();
+    library = data.library;
     otzarBooks = data.getOtzarBooks();
     hebrewBooks = data.getHebrewBooks();
 
@@ -177,17 +173,6 @@ class AppModel with ChangeNotifier {
     // Set reading view if tabs exist
     if (tabs.isNotEmpty) {
       currentView.value = Screens.reading;
-    }
-
-    // Load bookmarks with error handling
-    try {
-      final List<dynamic> rawBookmarks =
-          Hive.box(name: 'bookmarks').get('key-bookmarks') ?? [];
-      bookmarks = rawBookmarks.map((e) => Bookmark.fromJson(e)).toList();
-    } catch (e) {
-      bookmarks = [];
-      print('error loading bookmarks from disk: $e');
-      Hive.box(name: 'bookmarks').put('key-bookmarks', []);
     }
 
     // Load reading history with error handling
@@ -242,7 +227,7 @@ class AppModel with ChangeNotifier {
   /// [openLeftPane] Whether to open the left pane (for TextBooks only)
   void openBook(Book book, int index, {bool openLeftPane = false}) {
     if (book is PdfBook) {
-      _addTab(PdfBookTab(book, max(index, 1)));
+      _addTab(PdfBookTab(book: book, initialPage: max(index, 1)));
     } else if (book is TextBook) {
       _addTab(
           TextBookTab(book: book, index: index, openLeftPane: openLeftPane));
@@ -320,23 +305,14 @@ class AppModel with ChangeNotifier {
   /// Handles both PDF and text books, saving their current page/position.
   void addTabToHistory(OpenedTab tab) {
     if (tab is PdfBookTab) {
-      int index = tab.pdfViewerController.isReady
-          ? tab.pdfViewerController.pageNumber!
-          : 1;
-      addHistory(
-        ref: '${tab.title} עמוד $index',
-        book: tab.book,
-        index: index,
-      );
-    }
-    if (tab is TextBookTab) {
-      final index = tab.positionsListener.itemPositions.value.isEmpty
-          ? 0
-          : tab.positionsListener.itemPositions.value.first.index;
-      (() async => addHistory(
-          ref: await utils.refFromIndex(index, tab.tableOfContents),
-          book: tab.book,
-          index: index))();
+      // int index = tab.pdfViewerController.isReady
+      //     ? tab.pdfViewerController.pageNumber!
+      //     : 1;
+      // addHistory(
+      //   ref: '${tab.title} עמוד $index',
+      //   book: tab.book,
+      //   index: index,
+      // );
     }
   }
 
@@ -406,36 +382,6 @@ class AppModel with ChangeNotifier {
     Hive.box(name: 'tabs').put("key-current-tab", currentTab);
   }
 
-  /// Adds a new bookmark if it doesn't already exist.
-  ///
-  /// Returns true if the bookmark was added, false if it already existed.
-  bool addBookmark(
-      {required String ref, required Book book, required int index}) {
-    bool bookmarkExists = bookmarks.any((bookmark) =>
-        bookmark.ref == ref &&
-        bookmark.book.title == book.title &&
-        bookmark.index == index);
-
-    if (!bookmarkExists) {
-      bookmarks.add(Bookmark(ref: ref, book: book, index: index));
-      Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-      return true;
-    }
-    return false;
-  }
-
-  /// Removes a bookmark at the specified index
-  void removeBookmark(int index) {
-    bookmarks.removeAt(index);
-    Hive.box(name: 'bookmarks').put('key-bookmarks', bookmarks);
-  }
-
-  /// Removes all bookmarks
-  void clearBookmarks() {
-    bookmarks.clear();
-    Hive.box(name: 'bookmarks').clear();
-  }
-
   /// Adds a new entry to the reading history
   void addHistory(
       {required String ref, required Book book, required int index}) {
@@ -458,14 +404,7 @@ class AppModel with ChangeNotifier {
   /// Switches to a different workspace, saving the current workspace first
   void switchWorkspace(Workspace workspace) {
     saveCurrentWorkspace(getHebrewTimeStamp());
-    tabs = workspace.bookmarks
-        .map((b) => b.book is PdfBook
-            ? PdfBookTab(b.book as PdfBook, b.index)
-            : TextBookTab(
-                book: b.book as TextBook,
-                index: b.index,
-                commentators: b.commentatorsToShow))
-        .toList();
+    tabs = workspace.tabs;
     currentTab = workspace.currentTab;
     notifyListeners();
     saveTabsToDisk();
@@ -473,25 +412,25 @@ class AppModel with ChangeNotifier {
 
   /// Saves the current set of tabs as a new workspace
   void saveCurrentWorkspace(String name) {
-    Workspace workspace = Workspace(
-      name: name,
-      currentTab: currentTab,
-      bookmarks: tabs
-          .where((t) => t is! SearchingTab)
-          .map((t) => Bookmark(
-                ref: '',
-                book: t is PdfBookTab ? (t).book : (t as TextBookTab).book,
-                index: t is PdfBookTab
-                    ? (t).pdfViewerController.isReady
-                        ? (t).pdfViewerController.pageNumber!
-                        : 1
-                    : (t as TextBookTab).index,
-                commentatorsToShow:
-                    t is TextBookTab ? t.commentatorsToShow.value : [],
-              ))
-          .toList(),
-    );
-    workspaces.add(workspace);
+    // Workspace workspace = Workspace(
+    //   name: name,
+    //   currentTab: currentTab,
+    //   bookmarks: tabs
+    //       .where((t) => t is! SearchingTab)
+    //       .map((t) => Bookmark(
+    //             ref: '',
+    //             book: t is PdfBookTab ? (t).book : (t as TextBookTab).book,
+    //             index: t is PdfBookTab
+    //                 ? (t).pdfViewerController.isReady
+    //                     ? (t).pdfViewerController.pageNumber!
+    //                     : 1
+    //                 : (t as TextBookTab).index,
+    //             commentatorsToShow:
+    //                 t is TextBookTab ? t.commentatorsToShow.value : [],
+    //           ))
+    //       .toList(),
+    // );
+    // workspaces.add(workspace);
     saveWorkspacesToDisk();
     notifyListeners();
   }
@@ -582,7 +521,7 @@ class AppModel with ChangeNotifier {
   Future<void> refreshLibrary() async {
     libraryPath = Settings.getValue<String>('key-library-path') ?? libraryPath;
     FileSystemData.instance.libraryPath = libraryPath;
-    library = data.getLibrary();
+    library = data.library;
     TantivyDataProvider.instance.reopenIndex();
     notifyListeners();
   }
