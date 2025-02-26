@@ -26,6 +26,9 @@ import 'package:otzaria/settings/settings_repository.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/tabs_repository.dart';
+import 'package:otzaria/workspaces/bloc/workspace_bloc.dart';
+import 'package:otzaria/workspaces/bloc/workspace_event.dart';
+import 'package:otzaria/workspaces/workspace_repository.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/app_bloc_observer.dart';
@@ -85,6 +88,12 @@ void main() async {
         ),
         BlocProvider<FocusBloc>(
           create: (context) => FocusBloc(),
+        ),
+        BlocProvider<WorkspaceBloc>(
+          create: (context) => WorkspaceBloc(
+            repository: WorkspaceRepository(),
+            tabsBloc: context.read<TabsBloc>(),
+          )..add(LoadWorkspaces()),
         ),
       ],
       child: const App(),

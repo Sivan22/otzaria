@@ -17,6 +17,7 @@ import 'package:otzaria/search/view/full_text_search_screen.dart';
 import 'package:otzaria/pdf_book/view/pdf_book_screen.dart';
 import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/daf_yomi/calendar.dart';
+import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -82,7 +83,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                   ),
                   leading: IconButton(
                     icon: const Icon(Icons.add_to_queue),
-                    tooltip: 'שמור סביבת עבודה',
+                    tooltip: 'החלף סביבת עבודה',
                     onPressed: () => _showSaveWorkspaceDialog(context),
                   ),
                 ),
@@ -249,35 +250,11 @@ class _ReadingScreenState extends State<ReadingScreen>
     return items;
   }
 
-  Future<void> _showSaveWorkspaceDialog(BuildContext context) async {
-    _textFieldController.text = getHebrewTimeStamp();
-    final result = await showDialog<bool>(
+  void _showSaveWorkspaceDialog(BuildContext context) {
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('הקלד את שם סביבת העבודה'),
-        content: TextField(
-          controller: _textFieldController,
-          decoration: const InputDecoration(),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('ביטול'),
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          TextButton(
-            child: const Text('אישור'),
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
+      builder: (context) => const WorkspaceSwitcherDialog(),
     );
-
-    if (result == true) {
-      // TODO: Save workspace using WorkspaceBloc
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('סביבת העבודה נוצרה בהצלחה')),
-      );
-    }
   }
 
   void closeTab(OpenedTab tab, BuildContext context) {
