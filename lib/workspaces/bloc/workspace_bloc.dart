@@ -29,11 +29,19 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     try {
       final workspaces = _repository.loadWorkspaces();
       if (workspaces.$1.isEmpty) {
-        add(AddWorkspace(
-            name: "ברירת מחדל",
-            tabs: _tabsBloc.state.tabs,
-            currentTabIndex: _tabsBloc.state.currentTabIndex));
+        workspaces.$1
+            .add(Workspace(name: "ברירת מחדל", tabs: [], currentTab: 0));
       }
+
+      final currentWorkSpace = workspaces.$2;
+
+      workspaces.$1[currentWorkSpace] = Workspace(
+          name: workspaces.$1[currentWorkSpace].name,
+          tabs: _tabsBloc.state.tabs,
+          currentTab: _tabsBloc.state.currentTabIndex);
+
+      _repository.saveWorkspaces(workspaces.$1, currentWorkSpace);
+
       emit(state.copyWith(
         workspaces: workspaces.$1,
         currentWorkspace: workspaces.$2,
@@ -73,21 +81,27 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
 
   void _onRemoveWorkspace(RemoveWorkspace event, Emitter<WorkspaceState> emit) {
     try {
+      int activeWorkspaceIndex = state.currentWorkspace ?? 0;
+      int indexOfWorkspaceToRemove = state.workspaces.indexOf(event.workspace);
+
+      // can't remove active workspace
+      if (activeWorkspaceIndex == indexOfWorkspaceToRemove) {
+        return;
+      }
+
       final updatedWorkspaces = List<Workspace>.from(state.workspaces)
         ..remove(event.workspace);
 
-      if (updatedWorkspaces.isEmpty) {
-        updatedWorkspaces.add(Workspace(
-            name: "ברירת מחדל",
-            tabs: _tabsBloc.state.tabs,
-            currentTab: _tabsBloc.state.currentTabIndex));
+      //update the active workspace
+      if (activeWorkspaceIndex > indexOfWorkspaceToRemove) {
+        activeWorkspaceIndex -= 1;
       }
 
-      _repository.saveWorkspaces(
-          updatedWorkspaces, state.currentWorkspace ?? 0);
+      _repository.saveWorkspaces(updatedWorkspaces, activeWorkspaceIndex);
 
       emit(state.copyWith(
         workspaces: updatedWorkspaces,
+        currentWorkspace: activeWorkspaceIndex,
       ));
     } catch (e) {
       emit(state.copyWith(

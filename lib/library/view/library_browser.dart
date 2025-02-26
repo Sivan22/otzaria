@@ -183,6 +183,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
                 ),
                 onChanged: (value) {
+                  context.read<LibraryBloc>().add(const SelectTopics([]));
                   _update(context, state, settingsState);
                 },
               ),
@@ -476,6 +477,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _update(
       BuildContext context, LibraryState state, SettingsState settingsState) {
     final focusBloc = context.read<FocusBloc>();
+
     context.read<LibraryBloc>().add(
           SearchBooks(
             focusBloc.state.librarySearchController.text,

@@ -47,7 +47,7 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'סביבות עבודה',
+                  'שולחנות עבודה',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -87,7 +87,9 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                       } else {
                         // Workspace tile
                         final workspace = state.workspaces[index];
-                        return _buildWorkspaceTile(context, workspace);
+                        final isActive = state.currentWorkspace == index;
+                        return _buildWorkspaceTile(
+                            context, workspace, isActive);
                       }
                     },
                   );
@@ -144,7 +146,8 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
     );
   }
 
-  Widget _buildWorkspaceTile(BuildContext context, Workspace workspace) {
+  Widget _buildWorkspaceTile(
+      BuildContext context, Workspace workspace, bool isActive) {
     return Card(
       child: Stack(
         children: [
@@ -160,7 +163,15 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.blue[100],
+                      color: isActive
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.5)
+                          : Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -171,15 +182,49 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    workspace.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                  child: Builder(builder: (context) {
+                    bool isEditing = false; // Flag to track editing
+                    return StatefulBuilder(builder: (context, setState) {
+                      return isEditing
+                          ? TextField(
+                              controller:
+                                  TextEditingController(text: workspace.name),
+                              onSubmitted: (newName) {
+                                setState(() {
+                                  context.read<WorkspaceBloc>().add(
+                                        RenameWorkspace(
+                                          workspace,
+                                          newName,
+                                        ),
+                                      );
+                                  isEditing = false;
+                                });
+                              },
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    workspace.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () {
+                                      setState(() {
+                                        isEditing = true;
+                                      });
+                                    })
+                              ],
+                            );
+                    });
+                  }),
+                )
               ],
             ),
           ),
@@ -189,9 +234,15 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
             child: IconButton(
               icon: const Icon(Icons.close, size: 16),
               onPressed: () {
+                // Remove the workspace
+                if (isActive) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('לא ניתן למחוק שולחן עבודה פעיל')));
+                  return;
+                }
                 context.read<WorkspaceBloc>().add(RemoveWorkspace(workspace));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('סביבת העבודה נמחקה')),
+                  const SnackBar(content: Text('שולחן העבודה נמחק')),
                 );
               },
             ),
@@ -214,7 +265,7 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),

@@ -4,8 +4,8 @@ import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
+// ignore: unused_import
 import 'package:otzaria/focus/focus_event.dart';
-import 'package:otzaria/focus/focus_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';

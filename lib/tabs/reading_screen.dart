@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -28,8 +30,6 @@ class ReadingScreen extends StatefulWidget {
 
 class _ReadingScreenState extends State<ReadingScreen>
     with TickerProviderStateMixin {
-  final TextEditingController _textFieldController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TabsBloc, TabsState>(
@@ -39,14 +39,29 @@ class _ReadingScreenState extends State<ReadingScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('לא נבחרו ספרים'),
-                TextButton(
-                  onPressed: () {
-                    context.read<NavigationBloc>().add(
-                          const NavigateToScreen(Screen.library),
-                        );
-                  },
-                  child: const Text('דפדף בספרייה'),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text('לא נבחרו ספרים'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextButton(
+                    onPressed: () {
+                      context.read<NavigationBloc>().add(
+                            const NavigateToScreen(Screen.library),
+                          );
+                    },
+                    child: const Text('דפדף בספרייה'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextButton(
+                    onPressed: () {
+                      _showSaveWorkspaceDialog(context);
+                    },
+                    child: const Text('החלף שולחן עבודה'),
+                  ),
                 )
               ],
             ),
@@ -83,7 +98,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                   ),
                   leading: IconButton(
                     icon: const Icon(Icons.add_to_queue),
-                    tooltip: 'החלף סביבת עבודה',
+                    tooltip: 'החלף שולחן עבודה',
                     onPressed: () => _showSaveWorkspaceDialog(context),
                   ),
                 ),

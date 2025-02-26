@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 /// A wrapper around the static Settings class to make it more testable.
