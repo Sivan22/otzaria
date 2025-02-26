@@ -1,52 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bookmarks/models/bookmark.dart';
+import 'package:otzaria/history/bloc/history_event.dart';
+import 'package:otzaria/history/bloc/history_state.dart';
 import 'package:otzaria/history/history_repository.dart';
 import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
-import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/utils/ref_helper.dart';
-
-// Events
-abstract class HistoryEvent {}
-
-class LoadHistory extends HistoryEvent {}
-
-class AddHistory extends HistoryEvent {
-  final OpenedTab tab;
-  AddHistory(this.tab);
-}
-
-class RemoveHistory extends HistoryEvent {
-  final int index;
-  RemoveHistory(this.index);
-}
-
-class ClearHistory extends HistoryEvent {}
-
-// States
-abstract class HistoryState {
-  final List<Bookmark> history;
-  HistoryState(this.history);
-}
-
-class HistoryInitial extends HistoryState {
-  HistoryInitial() : super([]);
-}
-
-class HistoryLoading extends HistoryState {
-  HistoryLoading(super.history);
-}
-
-class HistoryLoaded extends HistoryState {
-  HistoryLoaded(super.history);
-}
-
-class HistoryError extends HistoryState {
-  final String message;
-  HistoryError(super.history, this.message);
-}
 
 class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
   final HistoryRepository _repository;
@@ -92,6 +53,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
           index: state.controller.pageNumber ?? 1,
         );
       }
+      if (state.history.any((b) => b.ref == bookmark.ref)) return;
       final updatedHistory = [...state.history, bookmark];
       await _repository.saveHistory(updatedHistory);
       emit(HistoryLoaded(updatedHistory));
