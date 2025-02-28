@@ -31,7 +31,7 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
 
     emit(state.copyWith(
       status: FileSyncStatus.syncing,
-      message: 'מסנכרן קבצים...',
+      message: 'מסנכרן...',
     ));
 
     // Set up a timer to update progress periodically
@@ -78,7 +78,7 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
     emit(state.copyWith(
       currentProgress: event.current,
       totalFiles: event.total,
-      message: 'מסנכרן קבצים... ${event.current}/${event.total}',
+      message: 'מסנכרן... ${event.current}/${event.total}',
     ));
   }
 

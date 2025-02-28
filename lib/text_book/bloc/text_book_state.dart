@@ -126,13 +126,13 @@ class TextBookState extends Equatable {
 
   @override
   List<Object?> get props => [
-        book,
-        content,
+        book?.title,
+        content?.length,
         fontSize,
         showLeftPane,
         showSplitView,
-        activeCommentators,
-        links,
+        activeCommentators?.length,
+        links?.length,
         tableOfContents,
         removeNikud,
         visibleIndices,

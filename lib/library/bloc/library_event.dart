@@ -42,16 +42,22 @@ class NavigateToCategory extends LibraryEvent {
 class NavigateUp extends LibraryEvent {}
 
 class SearchBooks extends LibraryEvent {
-  final String query;
-  final List<String>? topics;
   final bool? showOtzarHachochma;
   final bool? showHebrewBooks;
 
-  const SearchBooks(this.query,
-      {this.topics, this.showOtzarHachochma, this.showHebrewBooks});
+  const SearchBooks({this.showOtzarHachochma, this.showHebrewBooks});
 
   @override
-  List<Object?> get props => [query, topics];
+  List<Object?> get props => [showOtzarHachochma, showHebrewBooks];
+}
+
+class UpdateSearchQuery extends LibraryEvent {
+  final String query;
+
+  const UpdateSearchQuery(this.query);
+
+  @override
+  List<Object?> get props => [query];
 }
 
 class SelectTopics extends LibraryEvent {

@@ -34,8 +34,6 @@ class SimpleBookView extends StatefulWidget {
 }
 
 class _SimpleBookViewState extends State<SimpleBookView> {
-  FocusNode focusNode = FocusNode();
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {

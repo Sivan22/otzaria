@@ -6,6 +6,10 @@ String stripHtmlIfNeeded(String text) {
   return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
 }
 
+String truncate(String text, int length) {
+  return text.length > length ? '${text.substring(0, length)}...' : text;
+}
+
 String removeVolwels(String s) {
   s = s.replaceAll('־', ' ').replaceAll(' ׀', '');
   return s.replaceAll(RegExp(r'[\u0591-\u05C7]'), '');

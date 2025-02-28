@@ -19,6 +19,7 @@ import 'package:otzaria/search/view/full_text_search_screen.dart';
 import 'package:otzaria/pdf_book/view/pdf_book_screen.dart';
 import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/daf_yomi/calendar.dart';
+import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
 
 class ReadingScreen extends StatefulWidget {
@@ -213,22 +214,31 @@ class _ReadingScreenState extends State<ReadingScreen>
                   if (tab is SearchingTab)
                     ValueListenableBuilder(
                       valueListenable: tab.queryController,
-                      builder: (context, value, child) => Text(
-                        '${tab.title}:  ${tab.queryController.text}',
+                      builder: (context, value, child) => Tooltip(
+                        message: '${tab.title}:  ${tab.queryController.text}',
+                        child: Text(
+                          truncate(
+                              '${tab.title}:  ${tab.queryController.text}', 12),
+                        ),
                       ),
                     )
                   else if (tab is PdfBookTab)
-                    Row(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Icon(Icons.picture_as_pdf, size: 16),
-                        ),
-                        Text(tab.title),
-                      ],
+                    Tooltip(
+                      message: tab.title,
+                      child: Row(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Icon(Icons.picture_as_pdf, size: 16),
+                          ),
+                          Text(truncate(tab.title, 12)),
+                        ],
+                      ),
                     )
                   else
-                    Text(tab.title),
+                    Tooltip(
+                        message: tab.title,
+                        child: Text(truncate(tab.title, 12))),
                   IconButton(
                     onPressed: () => closeTab(tab, context),
                     icon: const Icon(Icons.close, size: 10),

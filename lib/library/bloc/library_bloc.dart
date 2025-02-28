@@ -19,6 +19,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     on<NavigateUp>(_onNavigateUp);
     on<SearchBooks>(_onSearchBooks);
     on<SelectTopics>(_onSelectTopics);
+    on<UpdateSearchQuery>(_onUpdateSearchQuery);
   }
 
   Future<void> _onLoadLibrary(
@@ -136,32 +137,35 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     }
   }
 
+  void _onUpdateSearchQuery(
+    UpdateSearchQuery event,
+    Emitter<LibraryState> emit,
+  ) {
+    emit(state.copyWith(searchQuery: event.query));
+  }
+
   Future<void> _onSearchBooks(
     SearchBooks event,
     Emitter<LibraryState> emit,
   ) async {
-    if (event.query.length < 3) {
+    if (state.searchQuery == null || state.searchQuery!.length < 3) {
       emit(state.copyWith(
-        searchQuery: event.query,
         searchResults: null,
-        selectedTopics: event.topics,
       ));
       return;
     }
 
     try {
       final results = await _repository.findBooks(
-        event.query,
+        state.searchQuery!,
         state.currentCategory,
-        topics: event.topics,
+        topics: state.selectedTopics,
         includeOtzar: event.showOtzarHachochma ?? false,
         includeHebrewBooks: event.showHebrewBooks ?? false,
       );
 
       emit(state.copyWith(
-        searchQuery: event.query,
         searchResults: results,
-        selectedTopics: event.topics,
       ));
     } catch (e) {
       emit(state.copyWith(
@@ -176,10 +180,5 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     Emitter<LibraryState> emit,
   ) {
     emit(state.copyWith(selectedTopics: event.topics));
-
-    // Refresh search results if there's an active search
-    if (state.searchQuery != null && state.searchQuery!.length >= 3) {
-      add(SearchBooks(state.searchQuery!, topics: event.topics));
-    }
   }
 }

@@ -49,108 +49,110 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return BlocBuilder<LibraryBloc, LibraryState>(
-      builder: (context, state) {
-        if (state.isLoading) {
-          return const Center(
-              child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              Text('טוען ספרייה...'),
-            ],
-          ));
-        }
-
-        if (state.error != null) {
-          return Center(child: Text('Error: ${state.error}'));
-        }
-
-        if (state.library == null) {
-          return const Center(child: Text('No library data available'));
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Row(
+    return BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, settingsState) {
+      return BlocBuilder<LibraryBloc, LibraryState>(
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.home),
-                        tooltip: 'חזרה לתיקיה הראשית',
-                        onPressed: () {
-                          setState(() => _depth = 0);
-                          context.read<LibraryBloc>().add(LoadLibrary());
-                          context
-                              .read<LibraryBloc>()
-                              .add(const SearchBooks(""));
-                          _refocusSearchBar();
-                        },
-                      ),
-                      BlocProvider(
-                        create: (context) => FileSyncBloc(
-                          repository: FileSyncRepository(
-                            githubOwner: "zevisvei",
-                            repositoryName: "otzaria-library",
-                            branch: "main",
-                          ),
+                CircularProgressIndicator(),
+                Text('טוען ספרייה...'),
+              ],
+            ));
+          }
+
+          if (state.error != null) {
+            return Center(child: Text('Error: ${state.error}'));
+          }
+
+          if (state.library == null) {
+            return const Center(child: Text('No library data available'));
+          }
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.home),
+                          tooltip: 'חזרה לתיקיה הראשית',
+                          onPressed: () {
+                            setState(() => _depth = 0);
+                            context.read<LibraryBloc>().add(LoadLibrary());
+                            _update(context, state, settingsState);
+                            _refocusSearchBar();
+                          },
                         ),
-                        child: const SyncIconButton(),
-                      ),
-                    ],
+                        BlocProvider(
+                          create: (context) => FileSyncBloc(
+                            repository: FileSyncRepository(
+                              githubOwner: "zevisvei",
+                              repositoryName: "otzaria-library",
+                              branch: "main",
+                            ),
+                          ),
+                          child: const SyncIconButton(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: Center(
+                        child: Text(state.currentCategory?.title ?? '',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ))),
+                  ),
+                  DafYomi(
+                    onDafYomiTap: (tractate, daf) {
+                      openDafYomiBook(context, tractate, ' $daf.');
+                    },
+                  )
+                ],
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_upward),
+                tooltip: 'חזרה לתיקיה הקודמת',
+                onPressed: () {
+                  if (state.currentCategory?.parent != null) {
+                    setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
+                    context.read<LibraryBloc>().add(NavigateUp());
+                    context.read<LibraryBloc>().add(const SearchBooks());
+                    _refocusSearchBar();
+                  }
+                },
+              ),
+            ),
+            body: Column(
+              children: [
+                _buildSearchBar(state),
+                if (context
+                        .read<FocusBloc>()
+                        .state
+                        .librarySearchController
+                        .text
+                        .length >
+                    2)
+                  _buildTopicsSelection(context, state, settingsState),
                 Expanded(
-                  child: Center(
-                      child: Text(state.currentCategory?.title ?? '',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ))),
+                  child: _buildContent(state),
                 ),
-                DafYomi(
-                  onDafYomiTap: (tractate, daf) {
-                    openDafYomiBook(context, tractate, ' $daf.');
-                  },
-                )
               ],
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_upward),
-              tooltip: 'חזרה לתיקיה הקודמת',
-              onPressed: () {
-                if (state.currentCategory?.parent != null) {
-                  setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
-                  context.read<LibraryBloc>().add(NavigateUp());
-                  _refocusSearchBar();
-                }
-              },
-            ),
-          ),
-          body: Column(
-            children: [
-              _buildSearchBar(state),
-              if (context
-                      .read<FocusBloc>()
-                      .state
-                      .librarySearchController
-                      .text
-                      .length >
-                  2)
-                _buildTopicsSelection(context, state),
-              Expanded(
-                child: _buildContent(state),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    });
   }
 
   Widget _buildSearchBar(LibraryState state) {
@@ -173,7 +175,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     onPressed: () {
                       focusBloc.state.librarySearchController.clear();
                       _update(context, state, settingsState);
-                      focusBloc.state.librarySearchFocusNode.requestFocus();
+                      _refocusSearchBar();
                     },
                     icon: const Icon(Icons.cancel),
                   ),
@@ -199,7 +201,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     );
   }
 
-  Widget _buildTopicsSelection(BuildContext context, LibraryState state) {
+  Widget _buildTopicsSelection(
+      BuildContext context, LibraryState state, SettingsState settingsState) {
     if (state.searchResults == null) {
       return const SizedBox.shrink();
     }
@@ -236,6 +239,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ),
       onApplyButtonClick: (list) {
         context.read<LibraryBloc>().add(SelectTopics(list ?? []));
+        _update(context, state, settingsState);
         _refocusSearchBar();
       },
       validateSelectedItem: (list, item) => list != null && list.contains(item),
@@ -476,12 +480,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _update(
       BuildContext context, LibraryState state, SettingsState settingsState) {
-    final focusBloc = context.read<FocusBloc>();
-
+    context.read<LibraryBloc>().add(UpdateSearchQuery(
+        context.read<FocusBloc>().state.librarySearchController.text));
     context.read<LibraryBloc>().add(
           SearchBooks(
-            focusBloc.state.librarySearchController.text,
-            topics: state.selectedTopics,
             showHebrewBooks: settingsState.showHebrewBooks,
             showOtzarHachochma: settingsState.showOtzarHachochma,
           ),

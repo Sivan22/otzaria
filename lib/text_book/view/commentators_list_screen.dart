@@ -30,9 +30,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
         baseList.where((title) => title.contains(searchController.text));
 
     if (selectedTopics.isEmpty) {
-      setState(() {
-        commentatorsList = filteredByQuery.toList();
-      });
+      commentatorsList = filteredByQuery.toList();
+
       return;
     }
 
@@ -46,9 +45,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
       }
     }
 
-    setState(() {
-      commentatorsList = filtered;
-    });
+    commentatorsList = filtered;
   }
 
   @override
@@ -73,8 +70,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
             onApplyButtonClick: (list) {
               setState(() {
                 selectedTopics = list ?? [];
+                update(context, state);
               });
-              update(context, state);
             },
             validateSelectedItem: (list, item) =>
                 list != null && list.contains(item),
@@ -122,14 +119,18 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                       hintText: "סינון",
                       suffix: IconButton(
                           onPressed: () {
-                            searchController.clear();
-                            update(context, state);
+                            setState(() {
+                              searchController.clear();
+                              update(context, state);
+                            });
                           },
                           icon: Icon(Icons.close)),
                     ),
                     onChanged: (query) {
-                      searchController.text = query;
-                      update(context, state);
+                      setState(() {
+                        searchController.text = query;
+                        update(context, state);
+                      });
                     },
                   ),
                   if (commentatorsList.isNotEmpty)

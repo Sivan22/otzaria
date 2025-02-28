@@ -12,7 +12,7 @@ class FileSyncState {
     this.status = FileSyncStatus.initial,
     this.currentProgress = 0,
     this.totalFiles = 0,
-    this.message = 'לחץ לסנכרון קבצים',
+    this.message = 'לחץ לסנכרון',
     this.hasNewSync = false,
     this.errorMessage,
   });
