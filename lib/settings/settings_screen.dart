@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_event.dart';
+import 'package:otzaria/indexing/bloc/indexing_state.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_event.dart';
 import 'package:otzaria/settings/settings_state.dart';
@@ -297,98 +299,85 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
-                    ValueListenableBuilder(
-                        valueListenable:
-                            TantivyDataProvider.instance.isIndexing,
-                        builder: (context, isIndexing, child) {
-                          return ValueListenableBuilder(
-                              valueListenable:
-                                  TantivyDataProvider.instance.numOfbooksDone,
-                              builder: (context, numOfbooksDone, child) {
-                                return ValueListenableBuilder(
-                                    valueListenable: TantivyDataProvider
-                                        .instance.numOfbooksTotal,
-                                    builder: (context, numOfbooksTotal, child) {
-                                      return SimpleSettingsTile(
-                                        title: "אינדקס חיפוש",
-                                        subtitle: isIndexing
-                                            ? "בתהליך עדכון: $numOfbooksDone/$numOfbooksTotal"
-                                            : "האינדקס מעודכן",
-                                        leading: const Icon(Icons.table_chart),
-                                        onTap: () => () async {
-                                          if (isIndexing) {
-                                            final result = showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                      content: const Text(
-                                                          'האם לעצור את תהליך יצירת האינדקס?'),
-                                                      actions: <Widget>[
-                                                        TextButton(
-                                                          child: const Text(
-                                                              'ביטול'),
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context, false);
-                                                          },
-                                                        ),
-                                                        TextButton(
-                                                          child: const Text(
-                                                              'אישור'),
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context, true);
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ));
-                                            if (await result == true) {
-                                              TantivyDataProvider.instance
-                                                  .cancelIndexing();
-                                            }
-                                          } else {
-                                            final result = showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                      content: const Text(
-                                                          'האם לעדכן את האינדקס?'),
-                                                      actions: <Widget>[
-                                                        TextButton(
-                                                          child: const Text(
-                                                              'ביטול'),
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context, false);
-                                                          },
-                                                        ),
-                                                        TextButton(
-                                                          child: const Text(
-                                                              'אישור'),
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context, true);
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ));
-                                            if (await result == true) {
-                                              final library = context
-                                                  .read<LibraryBloc>()
-                                                  .state
-                                                  .library;
-                                              if (library != null) {
-                                                TantivyDataProvider.instance
-                                                    .addAllTBooksToTantivy(
-                                                        library);
-                                              }
-                                            }
-                                          }
-                                        }(),
-                                      );
-                                    });
-                              });
-                        }),
+                    BlocProvider(
+                      create: (context) => IndexingBloc.create(),
+                      child: BlocBuilder<IndexingBloc, IndexingState>(
+                        builder: (context, indexingState) {
+                          final bool isIndexing =
+                              indexingState is IndexingInProgress;
+                          final int? booksProcessed =
+                              indexingState.booksProcessed;
+                          final int? totalBooks = indexingState.totalBooks;
+
+                          return SimpleSettingsTile(
+                            title: "אינדקס חיפוש",
+                            subtitle: isIndexing
+                                ? "בתהליך עדכון: $booksProcessed/$totalBooks"
+                                : "האינדקס מעודכן",
+                            leading: const Icon(Icons.table_chart),
+                            onTap: () async {
+                              if (isIndexing) {
+                                final result = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                          content: const Text(
+                                              'האם לעצור את תהליך יצירת האינדקס?'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              child: const Text('ביטול'),
+                                              onPressed: () {
+                                                Navigator.pop(context, false);
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: const Text('אישור'),
+                                              onPressed: () {
+                                                Navigator.pop(context, true);
+                                              },
+                                            ),
+                                          ],
+                                        ));
+                                if (result == true) {
+                                  context
+                                      .read<IndexingBloc>()
+                                      .add(CancelIndexing());
+                                }
+                              } else {
+                                final result = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                          content: const Text(
+                                              'האם לעדכן את האינדקס?'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              child: const Text('ביטול'),
+                                              onPressed: () {
+                                                Navigator.pop(context, false);
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: const Text('אישור'),
+                                              onPressed: () {
+                                                Navigator.pop(context, true);
+                                              },
+                                            ),
+                                          ],
+                                        ));
+                                if (result == true) {
+                                  final library =
+                                      context.read<LibraryBloc>().state.library;
+                                  if (library != null) {
+                                    context
+                                        .read<IndexingBloc>()
+                                        .add(StartIndexing(library));
+                                  }
+                                }
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
                     SwitchSettingsTile(
                       title: 'עדכון אינדקס אוטומטי',
                       leading: const Icon(Icons.sync),

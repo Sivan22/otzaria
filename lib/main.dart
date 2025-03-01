@@ -16,6 +16,7 @@ import 'package:otzaria/find_ref/find_ref_repository.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/history_repository.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
@@ -36,6 +37,8 @@ import 'package:otzaria/app_bloc_observer.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'dart:io';
+
+import 'package:search_engine/search_engine.dart';
 
 /// Application entry point that initializes necessary components and launches the app.
 ///
@@ -94,6 +97,9 @@ void main() async {
             tabsBloc: context.read<TabsBloc>(),
           )..add(LoadWorkspaces()),
         ),
+        BlocProvider<IndexingBloc>(
+          create: (context) => IndexingBloc.create(),
+        ),
       ],
       child: const App(),
     ),
@@ -109,6 +115,7 @@ void main() async {
 /// 4. Hive storage boxes setup
 /// 5. Required directory structure creation
 Future<void> initialize() async {
+  await RustLib.init();
   await Settings.init(cacheProvider: HiveCache());
   await initLibraryPath();
   await initHive();

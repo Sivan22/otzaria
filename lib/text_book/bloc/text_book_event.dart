@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:otzaria/models/books.dart';
 
 sealed class TextBookEvent extends Equatable {
   const TextBookEvent();

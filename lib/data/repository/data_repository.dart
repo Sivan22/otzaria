@@ -4,6 +4,8 @@ import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:otzaria/library/models/library.dart';
@@ -117,12 +119,16 @@ class DataRepository {
   ///
   /// Parameters:
   ///   - [library]: The library containing books to index
-  ///   - [start]: Starting index for batch processing (defaults to 0)
-  ///   - [end]: Ending index for batch processing (defaults to 100000)
+  ///
+  /// This method now uses the IndexingBloc to handle the indexing process
   addAllTextsToTantivy(
     Library library,
   ) async {
-    _tantivyDataProvider.addAllTBooksToTantivy(library);
+    // Create an instance of IndexingBloc
+    final indexingBloc = IndexingBloc.create();
+
+    // Start the indexing process
+    indexingBloc.add(StartIndexing(library));
   }
 
   /// Searches for books based on query text and optional filters

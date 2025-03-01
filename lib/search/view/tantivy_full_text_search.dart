@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_state.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
-import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/search/view/full_text_settings_widgets.dart';
 import 'package:otzaria/search/view/tantivy_search_field.dart';
@@ -26,8 +27,9 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   @override
   void initState() {
     super.initState();
-    _showIndexWarning = TantivyDataProvider.instance.isIndexing.value;
-    () async {}();
+    // Check if indexing is in progress using the IndexingBloc
+    final indexingState = context.read<IndexingBloc>().state;
+    _showIndexWarning = indexingState is IndexingInProgress;
   }
 
   @override
