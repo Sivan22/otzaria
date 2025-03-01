@@ -144,12 +144,18 @@ Future<void> initLibraryPath() async {
   if (!Settings.isInitialized) {
     await Settings.init(cacheProvider: HiveCache());
   }
-  if (Platform.isAndroid || Platform.isIOS) {
+  if (Platform.isIOS) {
     // Mobile platforms use the app's documents directory
     await Settings.setValue(
         'key-library-path', (await getApplicationDocumentsDirectory()).path);
     return;
   }
+
+  if (Platform.isAndroid) {
+    // use the external storage directory on android
+    await Settings.setValue(
+        'key-library-path', (await getExternalStorageDirectory())!.path);
+    }
 
   // Check existing library path setting
   String? libraryPath = Settings.getValue('key-library-path');

@@ -10,6 +10,7 @@ import 'package:otzaria/find_ref/find_ref_repository.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/history_repository.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
@@ -74,6 +75,7 @@ class App extends StatelessWidget {
             tabsBloc: context.read<TabsBloc>(),
           )..add(LoadWorkspaces()),
         ),
+        BlocProvider<IndexingBloc>(create: (context) => IndexingBloc.create()),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
