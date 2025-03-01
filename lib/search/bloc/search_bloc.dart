@@ -3,9 +3,10 @@ import 'package:otzaria/search/bloc/search_event.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
+import 'package:otzaria/search/search_repository.dart';
 
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
-  final DataRepository _repository = DataRepository.instance;
+  final SearchRepository _repository = SearchRepository();
 
   SearchBloc() : super(const SearchState()) {
     on<UpdateSearchQuery>(_onUpdateSearchQuery);
@@ -56,7 +57,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         return;
       }
 
-      final results = await TantivyDataProvider.instance.searchTexts(
+      final results = await _repository.searchTexts(
         event.query.replaceAll('"', '\\"'),
         state.currentFacets,
         state.numResults,
@@ -92,8 +93,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
 
     try {
-      final results =
-          await _repository.findBooks(event.query, null, sortByRatio: false);
+      final results = await DataRepository.instance
+          .findBooks(event.query, null, sortByRatio: false);
 
       emit(state.copyWith(
         filterQuery: event.query,

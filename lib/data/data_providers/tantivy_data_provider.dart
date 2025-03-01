@@ -46,7 +46,24 @@ class TantivyDataProvider {
     engine = SearchEngine.newInstance(path: indexPath);
 
     //test the engine
-    searchTexts('בראשית', ['/'], 1);
+    engine.then((value) {
+      try {
+        value.search(
+            query: 'a',
+            limit: 10,
+            fuzzy: false,
+            facets: ["/"],
+            order: ResultsOrder.catalogue);
+      } catch (e) {
+        if (e.toString() ==
+            "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+          resetIndex(indexPath);
+          reopenIndex();
+        } else {
+          rethrow;
+        }
+      }
+    });
 
     try {
       booksDone = Hive.box(
@@ -82,46 +99,11 @@ class TantivyDataProvider {
     return index.count(query: query, facets: facets, fuzzy: fuzzy);
   }
 
-  /// Performs a synchronous search operation across indexed texts.
-  ///
-  /// [query] The search query string
-  /// [books] List of book identifiers to search within
-  /// [limit] Maximum number of results to return
-  /// [fuzzy] Whether to perform fuzzy matching
-  ///
-  /// Returns a Future containing a list of search results
-  Future<List<SearchResult>> searchTexts(
-      String query, List<String> facets, int limit,
-      {ResultsOrder order = ResultsOrder.relevance,
-      bool fuzzy = false,
-      int distance = 2}) async {
-    SearchEngine index;
-    try {
-      index = await engine;
-    }
-    // in case the schema has changed, reset the index
-    catch (e) {
-      String indexPath =
-          (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
-              Platform.pathSeparator +
-              'index';
-      if (e.toString() ==
-          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
-        Directory indexDirectory = Directory(indexPath);
-        Hive.box(name: 'books_indexed', directory: indexPath).close();
-        indexDirectory.deleteSync(recursive: true);
-        indexDirectory.createSync(recursive: true);
-        engine = SearchEngine.newInstance(path: indexPath);
-        index = await engine;
-      } else {
-        rethrow;
-      }
-    }
-    if (!fuzzy) {
-      query = distance > 0 ? '*"$query"~$distance' : '"$query"';
-    }
-    return await index.search(
-        query: query, facets: facets, limit: limit, fuzzy: fuzzy, order: order);
+  Future<void> resetIndex(String indexPath) async {
+    Directory indexDirectory = Directory(indexPath);
+    Hive.box(name: 'books_indexed', directory: indexPath).close();
+    indexDirectory.deleteSync(recursive: true);
+    indexDirectory.createSync(recursive: true);
   }
 
   /// Performs an asynchronous stream-based search operation across indexed texts.

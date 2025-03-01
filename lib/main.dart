@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'package:otzaria/app.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
@@ -32,9 +33,7 @@ import 'package:otzaria/workspaces/workspace_repository.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/app_bloc_observer.dart';
-import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-import 'package:otzaria/data/data_providers/cache_provider.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'dart:io';
 
@@ -99,8 +98,6 @@ void main() async {
       child: const App(),
     ),
   );
-
-  RustLib.dispose();
 }
 
 /// Initializes all required services and configurations for the application.
@@ -114,8 +111,7 @@ void main() async {
 Future<void> initialize() async {
   await Settings.init(cacheProvider: HiveCache());
   await initLibraryPath();
-  await RustLib.init();
-  await initHiveBoxes();
+  await initHive();
   await createDirs();
   await loadCerts();
 }
@@ -169,6 +165,10 @@ void createDirectoryIfNotExists(String path) {
   if (!directory.existsSync()) {
     directory.createSync(recursive: true);
   }
+}
+
+initHive() async {
+  Hive.defaultDirectory = (await getApplicationSupportDirectory()).path;
 }
 
 Future<void> loadCerts() async {

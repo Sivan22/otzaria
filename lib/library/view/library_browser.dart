@@ -88,7 +88,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             setState(() => _depth = 0);
                             context.read<LibraryBloc>().add(LoadLibrary());
                             _update(context, state, settingsState);
-                            _refocusSearchBar();
+                            _refocusSearchBar(selectAll: true);
                           },
                         ),
                         BlocProvider(
@@ -128,7 +128,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
                     context.read<LibraryBloc>().add(NavigateUp());
                     context.read<LibraryBloc>().add(const SearchBooks());
-                    _refocusSearchBar();
+                    _refocusSearchBar(selectAll: true);
                   }
                 },
               ),
