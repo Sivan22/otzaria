@@ -4,8 +4,6 @@ import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
-// ignore: unused_import
-import 'package:otzaria/focus/focus_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -79,18 +77,13 @@ class FindRefScreen extends StatelessWidget {
               decoration: InputDecoration(
                 hintText:
                     'הקלד מקור מדוייק, לדוגמה: בראשית פרק א או שוע אוח יב   ',
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        focusBloc.state.findRefSearchController.clear();
-                        BlocProvider.of<FindRefBloc>(context)
-                            .add(ClearSearchRequested());
-                      },
-                    ),
-                  ],
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    focusBloc.state.findRefSearchController.clear();
+                    BlocProvider.of<FindRefBloc>(context)
+                        .add(ClearSearchRequested());
+                  },
                 ),
               ),
               controller: focusBloc.state.findRefSearchController,

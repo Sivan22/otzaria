@@ -11,6 +11,7 @@ import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/history_repository.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
@@ -77,37 +78,44 @@ class App extends StatelessWidget {
         ),
         BlocProvider<IndexingBloc>(create: (context) => IndexingBloc.create()),
       ],
-      child: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settingsState) {
-          final state = settingsState;
-          return MaterialApp(
-            localizationsDelegates: const [
-              GlobalCupertinoLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale("he", "IL"),
-            ],
-            locale: const Locale("he", "IL"),
-            title: 'אוצריא',
-            theme: state.isDarkMode
-                ? ThemeData.dark(useMaterial3: true)
-                : ThemeData(
-                    visualDensity: VisualDensity.adaptivePlatformDensity,
-                    fontFamily: 'Roboto',
-                    colorScheme: ColorScheme.fromSeed(
-                      seedColor: state.seedColor,
+      child: Builder(builder: (context) {
+        // Auto start indexing
+        if (context.read<SettingsBloc>().state.autoUpdateIndex) {
+          DataRepository.instance.library.then((library) =>
+              context.read<IndexingBloc>().add(StartIndexing(library)));
+        }
+        return BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settingsState) {
+            final state = settingsState;
+            return MaterialApp(
+              localizationsDelegates: const [
+                GlobalCupertinoLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale("he", "IL"),
+              ],
+              locale: const Locale("he", "IL"),
+              title: 'אוצריא',
+              theme: state.isDarkMode
+                  ? ThemeData.dark(useMaterial3: true)
+                  : ThemeData(
+                      visualDensity: VisualDensity.adaptivePlatformDensity,
+                      fontFamily: 'Roboto',
+                      colorScheme: ColorScheme.fromSeed(
+                        seedColor: state.seedColor,
+                      ),
+                      textTheme: const TextTheme(
+                        bodyMedium:
+                            TextStyle(fontSize: 18.0, fontFamily: 'candara'),
+                      ),
                     ),
-                    textTheme: const TextTheme(
-                      bodyMedium:
-                          TextStyle(fontSize: 18.0, fontFamily: 'candara'),
-                    ),
-                  ),
-            home: const MainWindowScreen(),
-          );
-        },
-      ),
+              home: const MainWindowScreen(),
+            );
+          },
+        );
+      }),
     );
   }
 }
