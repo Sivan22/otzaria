@@ -1,12 +1,11 @@
 import 'package:isar/isar.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
-import 'package:otzaria/models/library.dart';
+import 'package:otzaria/library/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 Future<void> createRefsFromLibrary(
     Library library, Isar isar, int startIndex) async {
-  int i = 0;
   final allBooks = library.getAllBooks().whereType<TextBook>().skip(startIndex);
   for (TextBook book in allBooks) {
     List<Ref> refs = [];
@@ -66,4 +65,31 @@ Future<void> createRefsFromLibrary(
       isar.write((isar) => isar.refs.put(ref));
     }
   }
+}
+
+Future<String> refFromIndex(
+    int index, Future<List<TocEntry>> tableOfContents) async {
+  List<TocEntry> toc = await tableOfContents;
+  List<String> texts = [];
+
+  void searchToc(List<TocEntry> entries, int index) {
+    for (final TocEntry entry in entries) {
+      if (entry.index > index) {
+        return;
+      }
+      if (entry.level > texts.length) {
+        texts.add(entry.text);
+      } else {
+        texts[entry.level - 1] = entry.text;
+        texts = texts.getRange(0, entry.level).toList();
+      }
+
+      searchToc(entry.children, index);
+    }
+  }
+
+  searchToc(toc, index);
+
+  texts = texts.map((e) => e.trim()).toList();
+  return texts.join(', ');
 }

@@ -72,9 +72,9 @@ class Link {
 /// The sorted list of links is then returned as a [Future] of a list of [Link] objects.
 Future<List<Link>> getLinksforIndexs(
     {required List<int> indexes,
-    required Future<List<Link>> links,
+    required List<Link> links,
     required List<String> commentatorsToShow}) async {
-  List<Link> doneLinks = await links;
+  List<Link> doneLinks = links;
   List<Link> allLinks = [];
   allLinks = await Isolate.run(() {
     for (int i = 0; i < indexes.length; i++) {

@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
-import 'package:otzaria/models/books.dart';
 
 String stripHtmlIfNeeded(String text) {
   return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
+}
+
+String truncate(String text, int length) {
+  return text.length > length ? '${text.substring(0, length)}...' : text;
 }
 
 String removeVolwels(String s) {
@@ -24,33 +27,6 @@ String getTitleFromPath(String path) {
       .replaceAll('/', Platform.pathSeparator)
       .replaceAll('\\', Platform.pathSeparator);
   return path.split(Platform.pathSeparator).last.split('.').first;
-}
-
-Future<String> refFromIndex(
-    int index, Future<List<TocEntry>> tableOfContents) async {
-  List<TocEntry> toc = await tableOfContents;
-  List<String> texts = [];
-
-  void searchToc(List<TocEntry> entries, int index) {
-    for (final TocEntry entry in entries) {
-      if (entry.index > index) {
-        return;
-      }
-      if (entry.level > texts.length) {
-        texts.add(entry.text);
-      } else {
-        texts[entry.level - 1] = entry.text;
-        texts = texts.getRange(0, entry.level).toList();
-      }
-
-      searchToc(entry.children, index);
-    }
-  }
-
-  searchToc(toc, index);
-
-  texts = texts.map((e) => e.trim()).toList();
-  return texts.join(', ');
 }
 
 Future<bool> hasTopic(String title, String topic) async {
