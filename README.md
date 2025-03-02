@@ -136,13 +136,13 @@ In case you need only the app itself (for upgrading) you can download the .msix 
 * Llternatively, you can download the library manually from [here](https://github.com/Sivan22/otzaria-library/releases), extract it and provide its path to the app.
 
 ### android
-* Download the .apk file from the releases page, and install it.
+* The app is available on Google Play: [link](https://play.google.com/store/apps/details?id=com.mendelg.otzaria&pli=1)
+* Alternatively, you can download the .apk file from the releases page, and install it.
 * When first running the app, you will be asked to download the library.
 * Alternatively, you can download the library manually from [here](https://github.com/Sivan22/otzaria-library/releases) and provide the zip file to the app.
 
 ### iOS (iPhone/iPad)
-* You can try the beta version through TestFlight. 
-* Follow this [link](https://testflight.apple.com/join/yvNbmaX4).
+* The app is available on AppStore: [link](https://apps.apple.com/us/app/otzaria/id6738098031)
 * When first running the app, you will be asked to download the library.
 
 ### macos
