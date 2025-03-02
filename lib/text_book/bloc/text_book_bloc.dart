@@ -39,13 +39,11 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     LoadContent event,
     Emitter<TextBookState> emit,
   ) async {
+    emit(state.copyWith(status: TextBookStatus.loading));
     try {
-      emit(state.copyWith(status: TextBookStatus.loading));
-
       final content = await _repository.getBookContent(state.book);
       final links = await _repository.getBookLinks(state.book);
       final tableOfContents = await _repository.getTableOfContents(state.book);
-
       final availableCommentators =
           await _repository.getAvailableCommentators(links);
 

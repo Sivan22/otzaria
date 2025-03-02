@@ -56,25 +56,22 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 4, vsync: this);
     context.read<TextBookBloc>().add(LoadContent());
+    tabController = TabController(length: 4, vsync: this);
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(
-      bloc: widget.tab.bloc,
+      bloc: context.read<TextBookBloc>(),
       builder: (context, state) {
-        if (state.status == TextBookStatus.loading) {
+        if (state.status == TextBookStatus.initial ||
+            state.status == TextBookStatus.loading) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (state.status == TextBookStatus.error) {
           return Center(child: Text('Error: ${state.error}'));
-        }
-
-        if (state.content == null) {
-          return const Center(child: Text('No content available'));
         }
 
         return LayoutBuilder(builder: (context, constrains) {
