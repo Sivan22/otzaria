@@ -7,7 +7,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/isar_collections/line.dart';
 import 'package:otzaria/models/isar_collections/ref.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
-import 'package:otzaria/models/library.dart';
+import 'package:otzaria/library/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 /// IsarDataProvider manages all database operations using the Isar database.
