@@ -11,9 +11,9 @@ import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
 import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 
 class CommentatorsListView extends StatefulWidget {
-  final TextBookTab tab;
-
-  const CommentatorsListView({Key? key, required this.tab}) : super(key: key);
+  const CommentatorsListView({
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<CommentatorsListView> createState() => CommentatorsListViewState();
@@ -25,6 +25,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   List<String> commentatorsList = [];
 
   Future<void> update(BuildContext context, TextBookState state) async {
+    if (state is! TextBookLoaded) return;
     final List<String> baseList = state.availableCommentators ?? [];
     final filteredByQuery =
         baseList.where((title) => title.contains(searchController.text));
@@ -51,6 +52,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      if (state is! TextBookLoaded) return const Center();
       if (state.availableCommentators == null) {
         return const Center(
           child: CircularProgressIndicator(),
@@ -80,7 +82,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
               'ראשונים',
               'אחרונים',
               'מחברי זמננו',
-              'על ${widget.tab.book.title}'
+              'על ${state.book.title}'
             ],
             selectedListData: selectedTopics,
             choiceChipLabel: (p0) => p0,

@@ -32,7 +32,7 @@ class _LinksViewerState extends State<LinksViewer>
     with AutomaticKeepAliveClientMixin<LinksViewer> {
   late Future<List<Link>> visibleLinks;
 
-  Future<List<Link>> getLinks(TextBookState state) async {
+  Future<List<Link>> getLinks(TextBookLoaded state) async {
     List<Link> visibleLinks = state.links!
         .where((link) =>
             link.index1 ==
@@ -52,10 +52,10 @@ class _LinksViewerState extends State<LinksViewer>
   Widget build(BuildContext context) {
     super.build(context);
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
-      if (state.status == TextBookStatus.error) {
-        return Center(child: Text('Error: ${state.error}'));
+      if (state is TextBookError) {
+        return Center(child: Text('Error: ${state.message}'));
       }
-      if (state.status != TextBookStatus.loaded) {
+      if (state is! TextBookLoaded) {
         return const Center(child: CircularProgressIndicator());
       }
       return FutureBuilder(

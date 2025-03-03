@@ -16,7 +16,6 @@ import 'package:otzaria/utils/text_manipulation.dart';
 class SimpleBookView extends StatefulWidget {
   const SimpleBookView({
     super.key,
-    required this.tab,
     required this.data,
     required this.openBookCallback,
     required this.textSize,
@@ -26,7 +25,6 @@ class SimpleBookView extends StatefulWidget {
   final List<String> data;
   final Function(OpenedTab) openBookCallback;
   final bool showSplitedView;
-  final TextBookTab tab;
   final double textSize;
 
   @override
@@ -37,13 +35,13 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      if (state is! TextBookLoaded) return const Center();
       return ProgressiveScroll(
           scrollController: state.scrollOffsetController,
           maxSpeed: 10000.0,
           curve: 10.0,
           accelerationFactor: 5,
           child: SelectionArea(
-              key: PageStorageKey(widget.tab),
               child: ScrollablePositionedList.builder(
                   initialScrollIndex: state.visibleIndices?.first ?? 0,
                   itemPositionsListener: state.positionsListener,
@@ -61,26 +59,24 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                       if (settingsState.replaceHolyNames) {
                         data = replaceHolyNames(data);
                       }
-                      return BlocBuilder<TextBookBloc, TextBookState>(
-                        builder: (context, state) => InkWell(
-                          onTap: () => context
-                              .read<TextBookBloc>()
-                              .add(UpdateSelectedIndex(index)),
-                          child: Html(
-                              //remove nikud if needed
-                              data: state.removeNikud
-                                  ? highLight(
-                                      removeVolwels('${widget.data[index]}\n'),
-                                      state.searchText)
-                                  : highLight('${widget.data[index]}\n',
-                                      state.searchText),
-                              style: {
-                                'body': Style(
-                                    fontSize: FontSize(widget.textSize),
-                                    fontFamily: settingsState.fontFamily,
-                                    textAlign: TextAlign.justify),
-                              }),
-                        ),
+                      return InkWell(
+                        onTap: () => context
+                            .read<TextBookBloc>()
+                            .add(UpdateSelectedIndex(index)),
+                        child: Html(
+                            //remove nikud if needed
+                            data: state.removeNikud
+                                ? highLight(
+                                    removeVolwels('${widget.data[index]}\n'),
+                                    state.searchText)
+                                : highLight('${widget.data[index]}\n',
+                                    state.searchText),
+                            style: {
+                              'body': Style(
+                                  fontSize: FontSize(widget.textSize),
+                                  fontFamily: settingsState.fontFamily,
+                                  textAlign: TextAlign.justify),
+                            }),
                       );
                     });
                   })));

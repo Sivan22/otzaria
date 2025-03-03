@@ -4,6 +4,7 @@ import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 
 class HistoryRepository {
@@ -41,13 +42,15 @@ class HistoryRepository {
       ));
     }
     if (tab is TextBookTab) {
-      final index =
-          tab.bloc.state.positionsListener.itemPositions.value.first.index;
-      addHistoryItem(Bookmark(
-        ref: await refFromIndex(index, tab.book.tableOfContents),
-        book: tab.book,
-        index: index,
-      ));
+      final state = tab.bloc.state;
+      if (state is TextBookLoaded) {
+        final index = state.positionsListener.itemPositions.value.first.index;
+        addHistoryItem(Bookmark(
+          ref: await refFromIndex(index, tab.book.tableOfContents),
+          book: tab.book,
+          index: index,
+        ));
+      }
     }
   }
 

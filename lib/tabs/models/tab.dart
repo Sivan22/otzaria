@@ -18,7 +18,7 @@ abstract class OpenedTab {
       return TextBookTab(
         index: tab.index,
         book: tab.book,
-        commentators: tab.bloc.state.activeCommentators,
+        commentators: tab.commentators,
       );
     } else if (tab is PdfBookTab) {
       return PdfBookTab(

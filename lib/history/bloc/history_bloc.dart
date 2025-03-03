@@ -7,6 +7,7 @@ import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 
 class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
@@ -32,18 +33,22 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
 
   Future<void> _onAddHistory(
       AddHistory event, Emitter<HistoryState> emit) async {
-    Bookmark bookmark;
+    Bookmark? bookmark;
     try {
       if (event.tab is SearchingTab) return;
       if (event.tab is TextBookTab) {
         final tab = event.tab as TextBookTab;
-        bookmark = Bookmark(
-          ref: await refFromIndex(tab.bloc.state.visibleIndices?.first ?? 0,
-              tab.book.tableOfContents),
-          book: tab.book,
-          index: tab.bloc.state.visibleIndices?.first ?? 0,
-          commentatorsToShow: tab.bloc.state.activeCommentators,
-        );
+        final bloc = tab.bloc;
+        if (bloc.state is TextBookLoaded) {
+          final state = bloc.state as TextBookLoaded;
+          bookmark = Bookmark(
+            ref: await refFromIndex(state.visibleIndices.first,
+                Future.value(state.tableOfContents)),
+            book: state.book,
+            index: state.visibleIndices?.first ?? 0,
+            commentatorsToShow: state.activeCommentators,
+          );
+        }
       } else {
         final tab = event.tab as PdfBookTab;
         final state = tab.bloc.state as PdfBookLoaded;
@@ -53,7 +58,8 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
           index: state.controller.pageNumber ?? 1,
         );
       }
-      if (state.history.any((b) => b.ref == bookmark.ref)) return;
+      if (state.history.any((b) => b.ref == bookmark?.ref)) return;
+      if (bookmark == null) return;
       final updatedHistory = [...state.history, bookmark];
       await _repository.saveHistory(updatedHistory);
       emit(HistoryLoaded(updatedHistory));

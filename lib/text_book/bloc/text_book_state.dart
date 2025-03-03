@@ -3,25 +3,56 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-enum TextBookStatus { initial, loading, loaded, error }
+abstract class TextBookState extends Equatable {
+  const TextBookState();
 
-class TextBookState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
+
+class TextBookInitial extends TextBookState {
   final TextBook book;
-  final List<String>? content;
+
+  const TextBookInitial(this.book);
+
+  @override
+  List<Object?> get props => [book.title];
+}
+
+class TextBookLoading extends TextBookState {
+  final TextBook book;
+
+  const TextBookLoading(this.book);
+
+  @override
+  List<Object?> get props => [book.title];
+}
+
+class TextBookError extends TextBookState {
+  final String message;
+  final TextBook book;
+
+  const TextBookError(this.message, this.book);
+
+  @override
+  List<Object?> get props => [message, book.title];
+}
+
+class TextBookLoaded extends TextBookState {
+  final TextBook book;
+  final List<String> content;
   final double fontSize;
   final bool showLeftPane;
   final bool showSplitView;
   final List<String> activeCommentators;
-  final List<String>? availableCommentators;
-  final List<Link>? links;
-  final List<TocEntry>? tableOfContents;
+  final List<String> availableCommentators;
+  final List<Link> links;
+  final List<TocEntry> tableOfContents;
   final bool removeNikud;
-  final List<int>? visibleIndices;
+  final List<int> visibleIndices;
   final int? selectedIndex;
   final bool pinLeftPane;
   final String searchText;
-  final TextBookStatus status;
-  final String? error;
   final String? currentTitle;
 
   // Controllers
@@ -29,47 +60,47 @@ class TextBookState extends Equatable {
   final ScrollOffsetController scrollOffsetController;
   final ItemPositionsListener positionsListener;
 
-  const TextBookState(
-      {required this.book,
-      this.content,
-      required this.fontSize,
-      required this.showLeftPane,
-      required this.showSplitView,
-      required this.activeCommentators,
-      this.availableCommentators,
-      this.links,
-      this.tableOfContents,
-      required this.removeNikud,
-      this.visibleIndices,
-      this.selectedIndex,
-      required this.pinLeftPane,
-      required this.searchText,
-      required this.status,
-      this.error,
-      required this.scrollController,
-      required this.scrollOffsetController,
-      required this.positionsListener,
-      this.currentTitle});
+  const TextBookLoaded({
+    required this.book,
+    required this.content,
+    required this.fontSize,
+    required this.showLeftPane,
+    required this.showSplitView,
+    required this.activeCommentators,
+    required this.availableCommentators,
+    required this.links,
+    required this.tableOfContents,
+    required this.removeNikud,
+    required this.visibleIndices,
+    this.selectedIndex,
+    required this.pinLeftPane,
+    required this.searchText,
+    required this.scrollController,
+    required this.scrollOffsetController,
+    required this.positionsListener,
+    this.currentTitle,
+  });
 
-  factory TextBookState.initial({
+  factory TextBookLoaded.initial({
     required TextBook book,
     required int index,
     required bool showLeftPane,
     required bool splitView,
     List<String>? commentators,
   }) {
-    return TextBookState(
+    return TextBookLoaded(
       book: book,
+      content: const [],
       fontSize: 25.0, // Default font size
       showLeftPane: showLeftPane,
       showSplitView: splitView,
-      activeCommentators:
-          commentators ?? const [], // Use commentators for activeCommentators
-      availableCommentators: const [], // This will be populated later in the bloc
+      activeCommentators: commentators ?? const [],
+      availableCommentators: const [],
+      links: const [],
+      tableOfContents: const [],
       removeNikud: false,
       pinLeftPane: false,
       searchText: '',
-      status: TextBookStatus.initial,
       scrollController: ItemScrollController(),
       scrollOffsetController: ScrollOffsetController(),
       positionsListener: ItemPositionsListener.create(),
@@ -77,28 +108,27 @@ class TextBookState extends Equatable {
     );
   }
 
-  TextBookState copyWith(
-      {TextBook? book,
-      List<String>? content,
-      double? fontSize,
-      bool? showLeftPane,
-      bool? showSplitView,
-      List<String>? activeCommentators,
-      List<String>? availableCommentators,
-      List<Link>? links,
-      List<TocEntry>? tableOfContents,
-      bool? removeNikud,
-      int? selectedIndex,
-      List<int>? visibleIndices,
-      bool? pinLeftPane,
-      String? searchText,
-      TextBookStatus? status,
-      String? error,
-      ItemScrollController? scrollController,
-      ScrollOffsetController? scrollOffsetController,
-      ItemPositionsListener? positionsListener,
-      String? currentTitle}) {
-    return TextBookState(
+  TextBookLoaded copyWith({
+    TextBook? book,
+    List<String>? content,
+    double? fontSize,
+    bool? showLeftPane,
+    bool? showSplitView,
+    List<String>? activeCommentators,
+    List<String>? availableCommentators,
+    List<Link>? links,
+    List<TocEntry>? tableOfContents,
+    bool? removeNikud,
+    int? selectedIndex,
+    List<int>? visibleIndices,
+    bool? pinLeftPane,
+    String? searchText,
+    ItemScrollController? scrollController,
+    ScrollOffsetController? scrollOffsetController,
+    ItemPositionsListener? positionsListener,
+    String? currentTitle,
+  }) {
+    return TextBookLoaded(
       book: book ?? this.book,
       content: content ?? this.content,
       fontSize: fontSize ?? this.fontSize,
@@ -114,8 +144,6 @@ class TextBookState extends Equatable {
       selectedIndex: selectedIndex,
       pinLeftPane: pinLeftPane ?? this.pinLeftPane,
       searchText: searchText ?? this.searchText,
-      status: status ?? this.status,
-      error: error ?? this.error,
       scrollController: scrollController ?? this.scrollController,
       scrollOffsetController:
           scrollOffsetController ?? this.scrollOffsetController,
@@ -127,20 +155,19 @@ class TextBookState extends Equatable {
   @override
   List<Object?> get props => [
         book.title,
-        content?.length,
+        content.length,
         fontSize,
         showLeftPane,
         showSplitView,
         activeCommentators.length,
-        links?.length,
-        tableOfContents?.first,
+        availableCommentators.length,
+        links.length,
+        tableOfContents.length,
         removeNikud,
         visibleIndices,
         selectedIndex,
         pinLeftPane,
         searchText,
-        status,
-        error,
         currentTitle,
       ];
 }

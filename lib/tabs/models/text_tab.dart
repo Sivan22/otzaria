@@ -21,9 +21,7 @@ class TextBookTab extends OpenedTab {
   /// The bloc that manages the text book state and logic.
   late final TextBookBloc bloc;
 
-  /// The split controller.
-  final MultiSplitViewController splitController =
-      MultiSplitViewController(areas: Area.weights([0.4, 0.6]));
+  List<String>? commentators;
 
   /// Creates a new instance of [TextBookTab].
   ///
@@ -35,7 +33,7 @@ class TextBookTab extends OpenedTab {
     required this.book,
     required this.index,
     String searchText = '',
-    List<String>? commentators,
+    this.commentators,
     bool openLeftPane = false,
     bool splitedView = true,
   }) : super(book.title) {
@@ -44,19 +42,10 @@ class TextBookTab extends OpenedTab {
       repository: TextBookRepository(
         fileSystem: FileSystemData.instance,
       ),
-      initialState: TextBookState.initial(
-        book: book,
-        index: index,
-        showLeftPane: openLeftPane,
-        splitView: Settings.getValue('key-splited-view') ?? splitedView,
-        commentators: commentators,
+      initialState: TextBookInitial(
+        book,
       ),
     );
-    bloc.state.positionsListener.itemPositions.addListener(() async {
-      if (bloc.state.positionsListener.itemPositions.value.isNotEmpty) {
-        index = bloc.state.positionsListener.itemPositions.value.first.index;
-      }
-    });
   }
 
   /// Creates a new instance of [TextBookTab] from a JSON map.
@@ -80,11 +69,21 @@ class TextBookTab extends OpenedTab {
   /// and 'type' keys.
   @override
   Map<String, dynamic> toJson() {
+    List<String> commentators = [];
+    bool splitedView = false;
+    int index = 0;
+    if (bloc.state is TextBookLoaded) {
+      final loadedState = bloc.state as TextBookLoaded;
+      commentators = loadedState.activeCommentators;
+      splitedView = loadedState.showSplitView;
+      index = loadedState.visibleIndices.first;
+    }
+
     return {
       'title': title,
       'initalIndex': index,
-      'commentators': bloc.state.activeCommentators,
-      'splitedView': bloc.state.showSplitView,
+      'commentators': commentators,
+      'splitedView': splitedView,
       'type': 'TextBookTab'
     };
   }

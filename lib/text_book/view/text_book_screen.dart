@@ -28,12 +28,10 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:url_launcher/url_launcher.dart';
 
 class TextBookViewerBloc extends StatefulWidget {
-  final TextBookTab tab;
   final void Function(OpenedTab) openBookCallback;
 
   const TextBookViewerBloc({
     Key? key,
-    required this.tab,
     required this.openBookCallback,
   }) : super(key: key);
 
@@ -65,28 +63,33 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     return BlocBuilder<TextBookBloc, TextBookState>(
       bloc: context.read<TextBookBloc>(),
       builder: (context, state) {
-        if (state.status == TextBookStatus.initial ||
-            state.status == TextBookStatus.loading) {
+        if (state is TextBookInitial || state is TextBookLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state.status == TextBookStatus.error) {
-          return Center(child: Text('Error: ${state.error}'));
+        if (state is TextBookError) {
+          return Center(
+              child: Text('Error: ${(state as TextBookError).message}'));
         }
 
-        return LayoutBuilder(builder: (context, constrains) {
-          final wideScreen = (MediaQuery.of(context).size.width >= 600);
-          return Scaffold(
-            appBar: _buildAppBar(context, state, wideScreen),
-            body: _buildBody(context, state, wideScreen),
-          );
-        });
+        if (state is TextBookLoaded) {
+          return LayoutBuilder(builder: (context, constrains) {
+            final wideScreen = (MediaQuery.of(context).size.width >= 600);
+            return Scaffold(
+              appBar: _buildAppBar(context, state, wideScreen),
+              body: _buildBody(context, state, wideScreen),
+            );
+          });
+        }
+
+        // Fallback
+        return const Center(child: Text('Unknown state'));
       },
     );
   }
 
   PreferredSizeWidget _buildAppBar(
-      BuildContext context, TextBookState state, bool wideScreen) {
+      BuildContext context, TextBookLoaded state, bool wideScreen) {
     return AppBar(
       title: _buildTitle(state),
       leading: _buildMenuButton(state),
@@ -94,7 +97,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildTitle(TextBookState state) {
+  Widget _buildTitle(TextBookLoaded state) {
     return state.currentTitle != null
         ? Center(
             child: SelectionArea(
@@ -107,18 +110,18 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         : const SizedBox.shrink();
   }
 
-  Widget _buildMenuButton(TextBookState state) {
+  Widget _buildMenuButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.menu),
       tooltip: "ניווט וחיפוש",
-      onPressed: () => widget.tab.bloc.add(
-        ToggleLeftPane(!state.showLeftPane),
-      ),
+      onPressed: () => context.read<TextBookBloc>().add(
+            ToggleLeftPane(!state.showLeftPane),
+          ),
     );
   }
 
   List<Widget> _buildActions(
-      BuildContext context, TextBookState state, bool wideScreen) {
+      BuildContext context, TextBookLoaded state, bool wideScreen) {
     return [
       // PDF Button
       _buildPdfButton(context, state),
@@ -157,7 +160,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     ];
   }
 
-  Widget _buildPdfButton(BuildContext context, TextBookState state) {
+  Widget _buildPdfButton(BuildContext context, TextBookLoaded state) {
     return FutureBuilder(
       future: DataRepository.instance.library.then(
           (library) => library.findBookByTitle(state.book.title, PdfBook)),
@@ -182,11 +185,11 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildSplitViewButton(TextBookState state) {
+  Widget _buildSplitViewButton(TextBookLoaded state) {
     return IconButton(
-      onPressed: () => widget.tab.bloc.add(
-        ToggleSplitView(!state.showSplitView),
-      ),
+      onPressed: () => context.read<TextBookBloc>().add(
+            ToggleSplitView(!state.showSplitView),
+          ),
       icon: Icon(
         !state.showSplitView
             ? Icons.vertical_split_outlined
@@ -198,17 +201,17 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildNikudButton(TextBookState state) {
+  Widget _buildNikudButton(TextBookLoaded state) {
     return IconButton(
-      onPressed: () => widget.tab.bloc.add(
-        ToggleNikud(!state.removeNikud),
-      ),
+      onPressed: () => context.read<TextBookBloc>().add(
+            ToggleNikud(!state.removeNikud),
+          ),
       icon: const Icon(Icons.format_overline),
       tooltip: 'הצג או הסתר ניקוד',
     );
   }
 
-  Widget _buildBookmarkButton(BuildContext context, TextBookState state) {
+  Widget _buildBookmarkButton(BuildContext context, TextBookLoaded state) {
     return IconButton(
       onPressed: () async {
         int index = state.positionsListener.itemPositions.value.first.index;
@@ -233,10 +236,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildSearchButton(TextBookState state) {
+  Widget _buildSearchButton(TextBookLoaded state) {
     return IconButton(
       onPressed: () {
-        widget.tab.bloc.add(const ToggleLeftPane(true));
+        context.read<TextBookBloc>().add(const ToggleLeftPane(true));
         tabController.index = 1;
         textSearchFocusNode.requestFocus();
       },
@@ -245,27 +248,27 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildZoomInButton(TextBookState state) {
+  Widget _buildZoomInButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.zoom_in),
       tooltip: 'הגדלת טקסט',
-      onPressed: () => widget.tab.bloc.add(
-        UpdateFontSize(min(50.0, state.fontSize + 3)),
-      ),
+      onPressed: () => context.read<TextBookBloc>().add(
+            UpdateFontSize(min(50.0, state.fontSize + 3)),
+          ),
     );
   }
 
-  Widget _buildZoomOutButton(TextBookState state) {
+  Widget _buildZoomOutButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.zoom_out),
       tooltip: 'הקטנת טקסט',
-      onPressed: () => widget.tab.bloc.add(
-        UpdateFontSize(max(15.0, state.fontSize - 3)),
-      ),
+      onPressed: () => context.read<TextBookBloc>().add(
+            UpdateFontSize(max(15.0, state.fontSize - 3)),
+          ),
     );
   }
 
-  Widget _buildFirstPageButton(TextBookState state) {
+  Widget _buildFirstPageButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.first_page),
       tooltip: 'תחילת הספר',
@@ -278,7 +281,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildPreviousPageButton(TextBookState state) {
+  Widget _buildPreviousPageButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.navigate_before),
       tooltip: 'הקטע הקודם',
@@ -294,7 +297,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildNextPageButton(TextBookState state) {
+  Widget _buildNextPageButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.navigate_next),
       tooltip: 'הקטע הבא',
@@ -310,7 +313,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildLastPageButton(TextBookState state) {
+  Widget _buildLastPageButton(TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.last_page),
       tooltip: 'סוף הספר',
@@ -323,7 +326,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildPrintButton(BuildContext context, TextBookState state) {
+  Widget _buildPrintButton(BuildContext context, TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.print),
       tooltip: 'הדפסה',
@@ -339,7 +342,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Widget _buildReportBugButton(BuildContext context, TextBookState state) {
+  Widget _buildReportBugButton(BuildContext context, TextBookLoaded state) {
     return IconButton(
       icon: const Icon(Icons.error_outline),
       tooltip: 'דווח על טעות בספר',
@@ -348,7 +351,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   Future<void> _showReportBugDialog(
-      BuildContext context, TextBookState state) async {
+      BuildContext context, TextBookLoaded state) async {
     final currentRef = await refFromIndex(
       state.positionsListener.itemPositions.value.isNotEmpty
           ? state.positionsListener.itemPositions.value.first.index
@@ -576,7 +579,7 @@ $selectedText
   }
 
   Widget _buildBody(
-      BuildContext context, TextBookState state, bool wideScreen) {
+      BuildContext context, TextBookLoaded state, bool wideScreen) {
     return LayoutBuilder(
       builder: (context, constraints) => MediaQuery.of(context).size.width < 600
           ? Stack(
@@ -597,7 +600,7 @@ $selectedText
     );
   }
 
-  Widget _buildHTMLViewer(TextBookState state) {
+  Widget _buildHTMLViewer(TextBookLoaded state) {
     if (state.content == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -606,17 +609,17 @@ $selectedText
       padding: const EdgeInsets.fromLTRB(10, 0, 5, 5),
       child: GestureDetector(
         onScaleUpdate: (details) {
-          widget.tab.bloc.add(
-            UpdateFontSize(
-              (state.fontSize * details.scale).clamp(15, 60),
-            ),
-          );
+          context.read<TextBookBloc>().add(
+                UpdateFontSize(
+                  (state.fontSize * details.scale).clamp(15, 60),
+                ),
+              );
         },
         child: NotificationListener<UserScrollNotification>(
           onNotification: (scrollNotification) {
             if (!state.pinLeftPane) {
               Future.microtask(() {
-                widget.tab.bloc.add(const ToggleLeftPane(false));
+                context.read<TextBookBloc>().add(const ToggleLeftPane(false));
               });
             }
             return false;
@@ -625,7 +628,7 @@ $selectedText
             bindings: <ShortcutActivator, VoidCallback>{
               LogicalKeySet(
                   LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): () {
-                widget.tab.bloc.add(const ToggleLeftPane(true));
+                context.read<TextBookBloc>().add(const ToggleLeftPane(true));
                 tabController.index = 1;
                 textSearchFocusNode.requestFocus();
               },
@@ -641,10 +644,9 @@ $selectedText
     );
   }
 
-  Widget _buildSplitedOrCombinedView(TextBookState state) {
+  Widget _buildSplitedOrCombinedView(TextBookLoaded state) {
     if (state.showSplitView && state.activeCommentators.isNotEmpty) {
       return SplitedViewScreen(
-        tab: widget.tab,
         content: state.content!,
         openBookCallback: widget.openBookCallback,
         searchTextController: TextEditingValue(text: state.searchText),
@@ -663,9 +665,8 @@ $selectedText
     );
   }
 
-  Widget _buildCombinedView(TextBookState state) {
+  Widget _buildCombinedView(TextBookLoaded state) {
     return CombinedView(
-      tab: widget.tab,
       data: state.content!,
       textSize: state.fontSize,
       openBookCallback: widget.openBookCallback,
@@ -673,7 +674,7 @@ $selectedText
     );
   }
 
-  Widget _buildTabBar(TextBookState state) {
+  Widget _buildTabBar(TextBookLoaded state) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       child: SizedBox(
@@ -702,9 +703,9 @@ $selectedText
                   ),
                   if (MediaQuery.of(context).size.width >= 600)
                     IconButton(
-                      onPressed: () => widget.tab.bloc.add(
-                        TogglePinLeftPane(!state.pinLeftPane),
-                      ),
+                      onPressed: () => context.read<TextBookBloc>().add(
+                            TogglePinLeftPane(!state.pinLeftPane),
+                          ),
                       icon: const Icon(Icons.push_pin),
                       isSelected: state.pinLeftPane,
                     ),
@@ -719,7 +720,9 @@ $selectedText
                       bindings: <ShortcutActivator, VoidCallback>{
                         LogicalKeySet(LogicalKeyboardKey.control,
                             LogicalKeyboardKey.keyF): () {
-                          widget.tab.bloc.add(const ToggleLeftPane(true));
+                          context
+                              .read<TextBookBloc>()
+                              .add(const ToggleLeftPane(true));
                           tabController.index = 1;
                           textSearchFocusNode.requestFocus();
                         },
@@ -738,7 +741,7 @@ $selectedText
     );
   }
 
-  Widget _buildSearchView(TextBookState state) {
+  Widget _buildSearchView(TextBookLoaded state) {
     if (state.content == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -749,31 +752,28 @@ $selectedText
       scrollControler: state.scrollController,
       searchTextController: TextEditingController(text: state.searchText),
       closeLeftPaneCallback: () =>
-          widget.tab.bloc.add(const ToggleLeftPane(false)),
+          context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
     );
   }
 
-  Widget _buildTocViewer(TextBookState state) {
+  Widget _buildTocViewer(TextBookLoaded state) {
     return TocViewer(
-      toc: state.book.tableOfContents,
       scrollController: state.scrollController,
       closeLeftPaneCallback: () =>
-          widget.tab.bloc.add(const ToggleLeftPane(false)),
+          context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
     );
   }
 
-  Widget _buildLinkView(TextBookState state) {
+  Widget _buildLinkView(TextBookLoaded state) {
     return LinksViewer(
       openTabcallback: widget.openBookCallback,
       itemPositionsListener: state.positionsListener,
       closeLeftPanelCallback: () =>
-          widget.tab.bloc.add(const ToggleLeftPane(false)),
+          context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
     );
   }
 
   Widget _buildCommentaryView() {
-    return CommentatorsListView(
-      tab: widget.tab,
-    );
+    return CommentatorsListView();
   }
 }

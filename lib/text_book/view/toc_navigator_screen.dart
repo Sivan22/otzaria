@@ -1,19 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/books.dart';
 
 class TocViewer extends StatefulWidget {
   const TocViewer({
     super.key,
-    required this.toc,
     required this.scrollController,
     required this.closeLeftPaneCallback,
   });
 
   final void Function() closeLeftPaneCallback;
   final ItemScrollController scrollController;
-  final Future<List<TocEntry>> toc;
 
   @override
   State<TocViewer> createState() => _TocViewerState();
@@ -125,49 +126,47 @@ class _TocViewerState extends State<TocViewer>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return FutureBuilder(
-        future: widget.toc,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Column(
-              children: [
-                TextField(
-                  controller: searchController,
-                  onChanged: (value) => setState(() {}),
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'איתור כותרת...',
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            setState(() {
-                              searchController.clear();
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+    return BlocBuilder<TextBookBloc, TextBookState>(
+        bloc: context.read<TextBookBloc>(),
+        builder: (context, state) {
+          if (state is! TextBookLoaded) return const Center();
+          return Column(
+            children: [
+              TextField(
+                controller: searchController,
+                onChanged: (value) => setState(() {}),
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'איתור כותרת...',
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            searchController.clear();
+                          });
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: searchController.text.isEmpty
-                        ? ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) =>
-                                _buildTocItem(snapshot.data![index]))
-                        : _buildFilteredList(snapshot.data!, context),
-                  ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: searchController.text.isEmpty
+                      ? ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: state.tableOfContents.length,
+                          itemBuilder: (context, index) =>
+                              _buildTocItem(state.tableOfContents[index]))
+                      : _buildFilteredList(state.tableOfContents, context),
                 ),
-              ],
-            );
-          }
-          return const Center(child: CircularProgressIndicator());
+              ),
+            ],
+          );
         });
   }
 }

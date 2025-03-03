@@ -17,7 +17,6 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 class CombinedView extends StatefulWidget {
   const CombinedView({
     super.key,
-    required this.tab,
     required this.data,
     required this.openBookCallback,
     required this.textSize,
@@ -27,7 +26,6 @@ class CombinedView extends StatefulWidget {
   final List<String> data;
   final Function(OpenedTab) openBookCallback;
   final ValueNotifier<bool> showSplitedView;
-  final TextBookTab tab;
   final double textSize;
 
   @override
@@ -37,6 +35,8 @@ class CombinedView extends StatefulWidget {
 class _CombinedViewState extends State<CombinedView> {
   Widget buildKeyboardListener() {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      if (state is! TextBookLoaded)
+        return const Center(child: CircularProgressIndicator());
       return ProgressiveScroll(
           maxSpeed: 10000.0,
           curve: 10.0,
@@ -46,7 +46,7 @@ class _CombinedViewState extends State<CombinedView> {
     });
   }
 
-  Widget buildOuterList(TextBookState state) {
+  Widget buildOuterList(TextBookLoaded state) {
     return ScrollablePositionedList.builder(
         initialScrollIndex: state.visibleIndices?.first ?? 0,
         itemPositionsListener: state.positionsListener,
@@ -55,12 +55,12 @@ class _CombinedViewState extends State<CombinedView> {
         itemCount: widget.data.length,
         itemBuilder: (context, index) {
           ExpansionTileController controller = ExpansionTileController();
-          return buildExpansiomTile(controller, index);
+          return buildExpansiomTile(controller, index, state);
         });
   }
 
   ExpansionTile buildExpansiomTile(
-      ExpansionTileController controller, int index) {
+      ExpansionTileController controller, int index, TextBookLoaded state) {
     return ExpansionTile(
         shape: const Border(),
         //maintainState: true,
@@ -79,21 +79,18 @@ class _CombinedViewState extends State<CombinedView> {
           if (settingsState.replaceHolyNames) {
             data = utils.replaceHolyNames(data);
           }
-          return BlocBuilder<TextBookBloc, TextBookState>(
-            builder: (context, state) => Html(
-              //remove nikud if needed
-              data: state.removeNikud
-                  ? utils.highLight(
-                      utils.removeVolwels('$data\n'), state.searchText)
-                  : utils.highLight('$data\n', state.searchText),
-              style: {
-                'body': Style(
-                    fontSize: FontSize(widget.textSize),
-                    fontFamily:
-                        Settings.getValue('key-font-family') ?? 'candara',
-                    textAlign: TextAlign.justify),
-              },
-            ),
+          return Html(
+            //remove nikud if needed
+            data: state.removeNikud
+                ? utils.highLight(
+                    utils.removeVolwels('$data\n'), state.searchText)
+                : utils.highLight('$data\n', state.searchText),
+            style: {
+              'body': Style(
+                  fontSize: FontSize(widget.textSize),
+                  fontFamily: Settings.getValue('key-font-family') ?? 'candara',
+                  textAlign: TextAlign.justify),
+            },
           );
         }),
         children: [
@@ -102,7 +99,6 @@ class _CombinedViewState extends State<CombinedView> {
               : CommentaryListForCombinedView(
                   index: index,
                   fontSize: widget.textSize,
-                  textBookTab: widget.tab,
                   openBookCallback: widget.openBookCallback,
                   showSplitView: false,
                 )

@@ -10,7 +10,6 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class CommentaryList extends StatefulWidget {
   final Function(TextBookTab) openBookCallback;
-  final TextBookTab textBookTab;
   final double fontSize;
   final int index;
   final bool showSplitView;
@@ -18,7 +17,6 @@ class CommentaryList extends StatefulWidget {
   const CommentaryList({
     super.key,
     required this.openBookCallback,
-    required this.textBookTab,
     required this.fontSize,
     required this.index,
     required this.showSplitView,
@@ -36,6 +34,7 @@ class _CommentaryListState extends State<CommentaryList> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
+      if (state is! TextBookLoaded) return const Center();
       final indexes = state.selectedIndex != null
           ? [state.selectedIndex!]
           : state.visibleIndices ?? [];

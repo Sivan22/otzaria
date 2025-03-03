@@ -262,7 +262,6 @@ class _ReadingScreenState extends State<ReadingScreen>
       return BlocProvider(
         create: (context) => tab.bloc,
         child: TextBookViewerBloc(
-          tab: tab,
           openBookCallback: (tab, {int index = 1}) {
             context.read<TabsBloc>().add(AddTab(tab));
           },

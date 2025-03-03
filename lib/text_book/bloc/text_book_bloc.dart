@@ -3,13 +3,14 @@ import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/text_book_repository.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/ref_helper.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
 
   TextBookBloc({
     required TextBookRepository repository,
-    required TextBookState initialState,
+    required TextBookInitial initialState,
   })  : _repository = repository,
         super(initialState) {
     on<LoadContent>(_onLoadContent);
@@ -22,43 +23,68 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     on<UpdateSelectedIndex>(_onUpdateSelectedIndex);
     on<TogglePinLeftPane>(_onTogglePinLeftPane);
     on<UpdateSearchText>(_onUpdateSearchText);
-    //listen to index changes
-    initialState.positionsListener.itemPositions.addListener(() {
-      final visibleInecies = state.positionsListener.itemPositions.value
-          .map((e) => e.index)
-          .toList();
-      add(UpdateVisibleIndecies(visibleInecies));
-      if (state.selectedIndex != null &&
-          !visibleInecies.contains(state.selectedIndex)) {
-        add(const UpdateSelectedIndex(null));
-      }
-    });
   }
 
   Future<void> _onLoadContent(
     LoadContent event,
     Emitter<TextBookState> emit,
   ) async {
-    emit(state.copyWith(status: TextBookStatus.loading));
-    try {
-      final content = await _repository.getBookContent(state.book);
-      final links = await _repository.getBookLinks(state.book);
-      final tableOfContents = await _repository.getTableOfContents(state.book);
-      final availableCommentators =
-          await _repository.getAvailableCommentators(links);
+    if (state is TextBookInitial || state is TextBookLoaded) {
+      final book = state is TextBookInitial
+          ? (state as TextBookInitial).book
+          : (state as TextBookLoaded).book;
 
-      emit(state.copyWith(
-        content: content.split('\n'),
-        links: links,
-        availableCommentators: availableCommentators,
-        tableOfContents: tableOfContents,
-        status: TextBookStatus.loaded,
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-        status: TextBookStatus.error,
-        error: e.toString(),
-      ));
+      emit(TextBookLoading(book));
+
+      try {
+        final content = await _repository.getBookContent(book);
+        final links = await _repository.getBookLinks(book);
+        final tableOfContents = await _repository.getTableOfContents(book);
+        final availableCommentators =
+            await _repository.getAvailableCommentators(links);
+
+        if (state is TextBookLoading) {
+          final loadingState = state as TextBookLoading;
+
+          // Create controllers if this is the first load
+          final ItemScrollController scrollController = ItemScrollController();
+          final ScrollOffsetController scrollOffsetController =
+              ScrollOffsetController();
+          final ItemPositionsListener positionsListener =
+              ItemPositionsListener.create();
+
+          // Set up position listener
+          positionsListener.itemPositions.addListener(() {
+            final visibleInecies = positionsListener.itemPositions.value
+                .map((e) => e.index)
+                .toList();
+            if (visibleInecies.isNotEmpty) {
+              add(UpdateVisibleIndecies(visibleInecies));
+            }
+          });
+
+          emit(TextBookLoaded(
+            book: loadingState.book,
+            content: content.split('\n'),
+            links: links,
+            availableCommentators: availableCommentators,
+            tableOfContents: tableOfContents,
+            fontSize: 25.0, // Default font size
+            showLeftPane: false,
+            showSplitView: false,
+            activeCommentators: const [],
+            removeNikud: false,
+            visibleIndices: const [0],
+            pinLeftPane: false,
+            searchText: '',
+            scrollController: scrollController,
+            scrollOffsetController: scrollOffsetController,
+            positionsListener: positionsListener,
+          ));
+        }
+      } catch (e) {
+        emit(TextBookError(e.toString(), book));
+      }
     }
   }
 
@@ -66,88 +92,113 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     UpdateFontSize event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(
-      fontSize: event.fontSize,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        fontSize: event.fontSize,
+      ));
+    }
   }
 
   void _onToggleLeftPane(
     ToggleLeftPane event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(
-      showLeftPane: event.show,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        showLeftPane: event.show,
+      ));
+    }
   }
 
   void _onToggleSplitView(
     ToggleSplitView event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(
-      showSplitView: event.show,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        showSplitView: event.show,
+      ));
+    }
   }
 
   void _onUpdateCommentators(
     UpdateCommentators event,
     Emitter<TextBookState> emit,
   ) async {
-    emit(state.copyWith(
-      activeCommentators: event.commentators,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        activeCommentators: event.commentators,
+      ));
+    }
   }
 
   void _onToggleNikud(
     ToggleNikud event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(
-      removeNikud: event.remove,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        removeNikud: event.remove,
+      ));
+    }
   }
 
   void _onUpdateVisibleIndecies(
     UpdateVisibleIndecies event,
     Emitter<TextBookState> emit,
   ) async {
-    emit(state.copyWith(
-      visibleIndices: event.visibleIndecies,
-      selectedIndex: state.selectedIndex,
-      currentTitle: await refFromIndex(
-          event.visibleIndecies.first, Future.value(state.tableOfContents)),
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      String? newTitle;
+
+      if (event.visibleIndecies.isNotEmpty) {
+        newTitle = await refFromIndex(event.visibleIndecies.first,
+            Future.value(currentState.tableOfContents));
+      }
+
+      emit(currentState.copyWith(
+        visibleIndices: event.visibleIndecies,
+        currentTitle: newTitle,
+      ));
+    }
   }
 
   void _onUpdateSelectedIndex(
     UpdateSelectedIndex event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(selectedIndex: event.index));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(selectedIndex: event.index));
+    }
   }
 
   void _onTogglePinLeftPane(
     TogglePinLeftPane event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(
-      pinLeftPane: event.pin,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        pinLeftPane: event.pin,
+      ));
+    }
   }
 
   void _onUpdateSearchText(
     UpdateSearchText event,
     Emitter<TextBookState> emit,
   ) {
-    emit(state.copyWith(
-      searchText: event.text,
-      selectedIndex: state.selectedIndex,
-    ));
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        searchText: event.text,
+      ));
+    }
   }
 }
