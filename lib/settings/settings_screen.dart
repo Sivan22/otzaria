@@ -3,6 +3,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/indexing/bloc/indexing_state.dart';
@@ -32,6 +33,11 @@ class _MySettingsScreenState extends State<MySettingsScreen>
     super.initState();
     context.read<SettingsBloc>().add(LoadSettings());
     context.read<LibraryBloc>().add(LoadLibrary());
+    // Auto start indexing
+    if (context.read<SettingsBloc>().state.autoUpdateIndex) {
+      DataRepository.instance.library.then((library) =>
+          context.read<IndexingBloc>().add(StartIndexing(library)));
+    }
   }
 
   @override

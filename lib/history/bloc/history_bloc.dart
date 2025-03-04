@@ -18,6 +18,8 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
     on<AddHistory>(_onAddHistory);
     on<RemoveHistory>(_onRemoveHistory);
     on<ClearHistory>(_onClearHistory);
+
+    add(LoadHistory());
   }
 
   Future<void> _onLoadHistory(

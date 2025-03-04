@@ -1,14 +1,16 @@
 import 'dart:io';
+import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/models/text_book_searcher.dart';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'package:otzaria/text_book/models/search_results.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TextBookSearchView extends StatefulWidget {
   final String data;
   final ItemScrollController scrollControler;
-  final TextEditingController searchTextController;
   final FocusNode focusNode;
   final void Function() closeLeftPaneCallback;
 
@@ -16,7 +18,6 @@ class TextBookSearchView extends StatefulWidget {
       {Key? key,
       required this.data,
       required this.scrollControler,
-      required this.searchTextController,
       required this.focusNode,
       required this.closeLeftPaneCallback})
       : super(key: key);
@@ -27,6 +28,7 @@ class TextBookSearchView extends StatefulWidget {
 
 class TextBookSearchViewState extends State<TextBookSearchView>
     with AutomaticKeepAliveClientMixin<TextBookSearchView> {
+  TextEditingController searchTextController = TextEditingController();
   late final TextBookSearcher markdownTextSearcher;
   List<TextSearchResult> searchResults = [];
   late ItemScrollController scrollControler;
@@ -36,7 +38,9 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     super.initState();
     markdownTextSearcher = TextBookSearcher(widget.data);
     markdownTextSearcher.addListener(_searchResultUpdated);
-    widget.searchTextController.addListener(_searchTextUpdated);
+    searchTextController.text =
+        (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
+    searchTextController.addListener(_searchTextUpdated);
     scrollControler = widget.scrollControler;
     if (!Platform.isAndroid) {
       widget.focusNode.requestFocus();
@@ -44,7 +48,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
   }
 
   void _searchTextUpdated() {
-    markdownTextSearcher.startTextSearch(widget.searchTextController.text);
+    markdownTextSearcher.startTextSearch(searchTextController.text);
   }
 
   void _searchResultUpdated() {
@@ -62,7 +66,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     return Column(children: <Widget>[
       TextField(
         focusNode: widget.focusNode,
-        controller: widget.searchTextController,
+        controller: searchTextController,
         autofocus: true,
         decoration: InputDecoration(
           hintText: 'חפש כאן..',
@@ -72,7 +76,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
               IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
-                  widget.searchTextController.clear();
+                  searchTextController.clear();
                   widget.focusNode.requestFocus();
                 },
               ),

@@ -37,11 +37,11 @@ class _CommentaryListState extends State<CommentaryList> {
       if (state is! TextBookLoaded) return const Center();
       final indexes = state.selectedIndex != null
           ? [state.selectedIndex!]
-          : state.visibleIndices ?? [];
+          : state.visibleIndices;
       return FutureBuilder(
         future: getLinksforIndexs(
             indexes: indexes,
-            links: state.links ?? [],
+            links: state.links,
             commentatorsToShow: state.activeCommentators),
         builder: (context, thisLinksSnapshot) {
           if (thisLinksSnapshot.hasData) {

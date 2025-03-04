@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/search/models/legacy_full_text_searcher.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
@@ -18,8 +17,8 @@ class FullTextSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return context.read<SettingsBloc>().state.useFastSearch
-        ? BlocProvider<SearchBloc>(
-            create: (context) => SearchBloc(),
+        ? BlocProvider.value(
+            value: tab.searchBloc,
             child: TantivyFullTextSearch(
               tab: tab,
             ),

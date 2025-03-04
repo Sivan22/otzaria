@@ -7,7 +7,6 @@ import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
-import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/widgets/progressive_scrolling.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/tabs/models/tab.dart';
@@ -43,7 +42,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           accelerationFactor: 5,
           child: SelectionArea(
               child: ScrollablePositionedList.builder(
-                  initialScrollIndex: state.visibleIndices?.first ?? 0,
+                  initialScrollIndex: state.visibleIndices.first,
                   itemPositionsListener: state.positionsListener,
                   itemScrollController: state.scrollController,
                   scrollOffsetController: state.scrollOffsetController,

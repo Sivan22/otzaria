@@ -52,12 +52,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
       if (state is! TextBookLoaded) return const Center();
-      if (state.availableCommentators == null) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      }
-      if (state.availableCommentators!.isEmpty) {
+      if (state.availableCommentators.isEmpty) {
         return const Center(
           child: Text("אין פרשנים"),
         );
