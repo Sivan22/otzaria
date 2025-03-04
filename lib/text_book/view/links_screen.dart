@@ -77,7 +77,9 @@ class _LinksViewerState extends State<LinksViewer>
                           ),
                           index: snapshot.data![index].index2 - 1),
                     );
-                    widget.closeLeftPanelCallback();
+                    if (MediaQuery.of(context).size.width < 600) {
+                      widget.closeLeftPanelCallback();
+                    }
                   },
                 ),
               );
