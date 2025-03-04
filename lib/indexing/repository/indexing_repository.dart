@@ -62,6 +62,7 @@ class IndexingRepository {
         onProgress(processedBooks, totalBooks);
       } catch (e) {
         print('Error adding ${book.title} to index: $e');
+        processedBooks++;
       }
     }
 
