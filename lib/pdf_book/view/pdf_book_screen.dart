@@ -49,12 +49,6 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   }
 
   @override
-  void dispose() {
-    _bloc.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     return BlocBuilder<PdfBookBloc, PdfBookState>(

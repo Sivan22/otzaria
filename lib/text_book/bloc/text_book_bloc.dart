@@ -29,13 +29,17 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     LoadContent event,
     Emitter<TextBookState> emit,
   ) async {
-    if (state is TextBookInitial || state is TextBookLoaded) {
-      final book = state is TextBookInitial
-          ? (state as TextBookInitial).book
-          : (state as TextBookLoaded).book;
+    if (state is TextBookLoading) {
+      return;
+    }
+    if (state is TextBookLoaded) {
+      emit(state);
+    }
 
-      emit(TextBookLoading(book));
-
+    if (state is TextBookInitial) {
+      final book = state.book;
+      emit(TextBookLoading(
+          book, state.index, state.showLeftPane, state.commentators));
       try {
         final content = await _repository.getBookContent(book);
         final links = await _repository.getBookLinks(book);
@@ -43,47 +47,44 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         final availableCommentators =
             await _repository.getAvailableCommentators(links);
 
-        if (state is TextBookLoading) {
-          final loadingState = state as TextBookLoading;
+        // Create controllers if this is the first load
+        final ItemScrollController scrollController = ItemScrollController();
+        final ScrollOffsetController scrollOffsetController =
+            ScrollOffsetController();
+        final ItemPositionsListener positionsListener =
+            ItemPositionsListener.create();
 
-          // Create controllers if this is the first load
-          final ItemScrollController scrollController = ItemScrollController();
-          final ScrollOffsetController scrollOffsetController =
-              ScrollOffsetController();
-          final ItemPositionsListener positionsListener =
-              ItemPositionsListener.create();
+        // Set up position listener
+        positionsListener.itemPositions.addListener(() {
+          final visibleInecies = positionsListener.itemPositions.value
+              .map((e) => e.index)
+              .toList();
+          if (visibleInecies.isNotEmpty) {
+            add(UpdateVisibleIndecies(visibleInecies));
+          }
+        });
 
-          // Set up position listener
-          positionsListener.itemPositions.addListener(() {
-            final visibleInecies = positionsListener.itemPositions.value
-                .map((e) => e.index)
-                .toList();
-            if (visibleInecies.isNotEmpty) {
-              add(UpdateVisibleIndecies(visibleInecies));
-            }
-          });
-
-          emit(TextBookLoaded(
-            book: loadingState.book,
-            content: content.split('\n'),
-            links: links,
-            availableCommentators: availableCommentators,
-            tableOfContents: tableOfContents,
-            fontSize: 25.0, // Default font size
-            showLeftPane: false,
-            showSplitView: false,
-            activeCommentators: const [],
-            removeNikud: false,
-            visibleIndices: const [0],
-            pinLeftPane: false,
-            searchText: '',
-            scrollController: scrollController,
-            scrollOffsetController: scrollOffsetController,
-            positionsListener: positionsListener,
-          ));
-        }
+        emit(TextBookLoaded(
+          book: state.book,
+          content: content.split('\n'),
+          links: links,
+          availableCommentators: availableCommentators,
+          tableOfContents: tableOfContents,
+          fontSize: 25.0, // Default font size
+          showLeftPane: state.showLeftPane,
+          showSplitView: false,
+          activeCommentators: state.commentators,
+          removeNikud: false,
+          visibleIndices: [state.index],
+          pinLeftPane: false,
+          searchText: '',
+          scrollController: scrollController,
+          scrollOffsetController: scrollOffsetController,
+          positionsListener: positionsListener,
+        ));
       } catch (e) {
-        emit(TextBookError(e.toString(), book));
+        emit(TextBookError(e.toString(), book, state.index, state.showLeftPane,
+            state.commentators));
       }
     }
   }

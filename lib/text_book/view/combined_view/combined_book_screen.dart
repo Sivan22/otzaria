@@ -1,9 +1,13 @@
 // a widget that takes an html strings array and displays it as a widget
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_state.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
@@ -34,21 +38,23 @@ class CombinedView extends StatefulWidget {
 
 class _CombinedViewState extends State<CombinedView> {
   Widget buildKeyboardListener() {
-    return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
-      if (state is! TextBookLoaded)
-        return const Center(child: CircularProgressIndicator());
-      return ProgressiveScroll(
-          maxSpeed: 10000.0,
-          curve: 10.0,
-          accelerationFactor: 5,
-          scrollController: state.scrollOffsetController,
-          child: SelectionArea(child: buildOuterList(state)));
-    });
+    return BlocBuilder<TextBookBloc, TextBookState>(
+        bloc: context.read<TextBookBloc>(),
+        builder: (context, state) {
+          if (state is! TextBookLoaded)
+            return const Center(child: CircularProgressIndicator());
+          return ProgressiveScroll(
+              maxSpeed: 10000.0,
+              curve: 10.0,
+              accelerationFactor: 5,
+              scrollController: state.scrollOffsetController,
+              child: SelectionArea(child: buildOuterList(state)));
+        });
   }
 
   Widget buildOuterList(TextBookLoaded state) {
     return ScrollablePositionedList.builder(
-        initialScrollIndex: state.visibleIndices?.first ?? 0,
+        initialScrollIndex: state.visibleIndices.first,
         itemPositionsListener: state.positionsListener,
         itemScrollController: state.scrollController,
         scrollOffsetController: state.scrollOffsetController,

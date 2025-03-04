@@ -7,13 +7,13 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/tab.dart';
-import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/printing/printing_screen.dart';
 import 'package:otzaria/text_book/view/combined_view/combined_book_screen.dart';
 import 'package:otzaria/text_book/view/commentators_list_screen.dart';
@@ -29,10 +29,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 class TextBookViewerBloc extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
+  final TextBookTab tab;
 
   const TextBookViewerBloc({
     Key? key,
     required this.openBookCallback,
+    required this.tab,
   }) : super(key: key);
 
   @override
@@ -54,15 +56,17 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   @override
   void initState() {
     super.initState();
-    context.read<TextBookBloc>().add(LoadContent());
     tabController = TabController(length: 4, vsync: this);
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(
-      bloc: context.read<TextBookBloc>(),
+      bloc: widget.tab.bloc,
       builder: (context, state) {
+        if (state is TextBookInitial) {
+          widget.tab.bloc.add(LoadContent());
+        }
         if (state is TextBookInitial || state is TextBookLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -73,13 +77,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         }
 
         if (state is TextBookLoaded) {
-          return LayoutBuilder(builder: (context, constrains) {
-            final wideScreen = (MediaQuery.of(context).size.width >= 600);
-            return Scaffold(
-              appBar: _buildAppBar(context, state, wideScreen),
-              body: _buildBody(context, state, wideScreen),
-            );
-          });
+          return BlocProvider(
+            create: (context) => widget.tab.bloc,
+            child: LayoutBuilder(builder: (context, constrains) {
+              final wideScreen = (MediaQuery.of(context).size.width >= 600);
+              return Scaffold(
+                appBar: _buildAppBar(context, state, wideScreen),
+                body: _buildBody(context, state, wideScreen),
+              );
+            }),
+          );
         }
 
         // Fallback
@@ -319,7 +326,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       tooltip: 'סוף הספר',
       onPressed: () {
         state.scrollController.scrollTo(
-          index: state.content?.length ?? 0,
+          index: state.content.length,
           duration: const Duration(milliseconds: 300),
         );
       },
@@ -360,7 +367,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
 
     final bookDetails = await _getBookDetails(state.book.title);
-    final allText = state.content!;
+    final allText = state.content;
     final visiblePositions = state.positionsListener.itemPositions.value
         .toList()
       ..sort((a, b) => a.index.compareTo(b.index));
@@ -742,13 +749,9 @@ $selectedText
   }
 
   Widget _buildSearchView(TextBookLoaded state) {
-    if (state.content == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return TextBookSearchView(
       focusNode: textSearchFocusNode,
-      data: state.content!.join('\n'),
+      data: state.content.join('\n'),
       scrollControler: state.scrollController,
       searchTextController: TextEditingController(text: state.searchText),
       closeLeftPaneCallback: () =>
@@ -774,6 +777,6 @@ $selectedText
   }
 
   Widget _buildCommentaryView() {
-    return CommentatorsListView();
+    return const CommentatorsListView();
   }
 }

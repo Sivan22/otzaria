@@ -40,7 +40,7 @@ class _CommentaryListForCombinedViewState
       return FutureBuilder(
         future: getLinksforIndexs(
             indexes: [widget.index],
-            links: state.links ?? [],
+            links: state.links,
             commentatorsToShow: state.activeCommentators),
         builder: (context, thisLinksSnapshot) {
           if (thisLinksSnapshot.hasData) {

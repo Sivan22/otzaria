@@ -17,6 +17,7 @@ import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/search/view/full_text_search_screen.dart';
 import 'package:otzaria/pdf_book/view/pdf_book_screen.dart';
+import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/daf_yomi/calendar.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
@@ -259,13 +260,11 @@ class _ReadingScreenState extends State<ReadingScreen>
         tab: tab,
       );
     } else if (tab is TextBookTab) {
-      return BlocProvider(
-        create: (context) => tab.bloc,
-        child: TextBookViewerBloc(
-          openBookCallback: (tab, {int index = 1}) {
-            context.read<TabsBloc>().add(AddTab(tab));
-          },
-        ),
+      return TextBookViewerBloc(
+        openBookCallback: (tab, {int index = 1}) {
+          context.read<TabsBloc>().add(AddTab(tab));
+        },
+        tab: tab,
       );
     } else if (tab is SearchingTab) {
       return FullTextSearchScreen(

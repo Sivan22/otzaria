@@ -70,9 +70,4 @@ class PdfBookTab extends OpenedTab {
   }
 
   List<Object?> get props => [book, pageNumber];
-
-  /// Clean up resources when the tab is closed
-  void dispose() {
-    bloc.close();
-  }
 }

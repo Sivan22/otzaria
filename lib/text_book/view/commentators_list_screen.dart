@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
@@ -26,7 +25,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
 
   Future<void> update(BuildContext context, TextBookState state) async {
     if (state is! TextBookLoaded) return;
-    final List<String> baseList = state.availableCommentators ?? [];
+    final List<String> baseList = state.availableCommentators;
     final filteredByQuery =
         baseList.where((title) => title.contains(searchController.text));
 

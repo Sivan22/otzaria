@@ -3,7 +3,6 @@ import 'dart:isolate';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/data/data_providers/isar_data_provider.dart';
-import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/models/books.dart';
@@ -22,9 +21,6 @@ class DataRepository {
 
   /// Manages database operations using Isar for storing and retrieving references
   final IsarDataProvider _isarDataProvider = IsarDataProvider.instance;
-
-  /// Handles full-text search operations using Tantivy search engine
-  final TantivyDataProvider _tantivyDataProvider = TantivyDataProvider.instance;
 
   /// Singleton instance of the DataRepository
   static final DataRepository _singleton = DataRepository();

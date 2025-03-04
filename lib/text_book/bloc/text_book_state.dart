@@ -4,25 +4,28 @@ import 'package:otzaria/models/links.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 abstract class TextBookState extends Equatable {
-  const TextBookState();
+  final TextBook book;
+  final int index;
+  final bool showLeftPane;
+  final List<String> commentators;
+  const TextBookState(
+      this.book, this.index, this.showLeftPane, this.commentators);
 
   @override
   List<Object?> get props => [];
 }
 
 class TextBookInitial extends TextBookState {
-  final TextBook book;
-
-  const TextBookInitial(this.book);
+  const TextBookInitial(
+      super.book, super.index, super.showLeftPane, super.commentators);
 
   @override
   List<Object?> get props => [book.title];
 }
 
 class TextBookLoading extends TextBookState {
-  final TextBook book;
-
-  const TextBookLoading(this.book);
+  const TextBookLoading(
+      super.book, super.index, super.showLeftPane, super.commentators);
 
   @override
   List<Object?> get props => [book.title];
@@ -30,19 +33,17 @@ class TextBookLoading extends TextBookState {
 
 class TextBookError extends TextBookState {
   final String message;
-  final TextBook book;
 
-  const TextBookError(this.message, this.book);
+  const TextBookError(this.message, super.book, super.index, super.showLeftPane,
+      super.commentators);
 
   @override
   List<Object?> get props => [message, book.title];
 }
 
 class TextBookLoaded extends TextBookState {
-  final TextBook book;
   final List<String> content;
   final double fontSize;
-  final bool showLeftPane;
   final bool showSplitView;
   final List<String> activeCommentators;
   final List<String> availableCommentators;
@@ -61,10 +62,10 @@ class TextBookLoaded extends TextBookState {
   final ItemPositionsListener positionsListener;
 
   const TextBookLoaded({
-    required this.book,
+    required TextBook book,
+    required bool showLeftPane,
     required this.content,
     required this.fontSize,
-    required this.showLeftPane,
     required this.showSplitView,
     required this.activeCommentators,
     required this.availableCommentators,
@@ -79,7 +80,7 @@ class TextBookLoaded extends TextBookState {
     required this.scrollOffsetController,
     required this.positionsListener,
     this.currentTitle,
-  });
+  }) : super(book, selectedIndex ?? 0, showLeftPane, activeCommentators);
 
   factory TextBookLoaded.initial({
     required TextBook book,

@@ -45,7 +45,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
             ref: await refFromIndex(state.visibleIndices.first,
                 Future.value(state.tableOfContents)),
             book: state.book,
-            index: state.visibleIndices?.first ?? 0,
+            index: state.visibleIndices.first,
             commentatorsToShow: state.activeCommentators,
           );
         }
