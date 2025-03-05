@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/text_book_repository.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
@@ -70,7 +71,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           links: links,
           availableCommentators: availableCommentators,
           tableOfContents: tableOfContents,
-          fontSize: 25.0, // Default font size
+          fontSize: Settings.getValue<double>('key-font-size') ?? 25.0,
           showLeftPane: state.showLeftPane,
           showSplitView: false,
           activeCommentators: state.commentators,
@@ -162,10 +163,15 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
             Future.value(currentState.tableOfContents));
       }
 
+      int? index = currentState.selectedIndex;
+      if (!event.visibleIndecies.contains(index)) {
+        index = null;
+      }
+
       emit(currentState.copyWith(
-        visibleIndices: event.visibleIndecies,
-        currentTitle: newTitle,
-      ));
+          visibleIndices: event.visibleIndecies,
+          currentTitle: newTitle,
+          selectedIndex: index));
     }
   }
 

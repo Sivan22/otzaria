@@ -31,8 +31,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
   @override
   void initState() {
     super.initState();
-    context.read<SettingsBloc>().add(LoadSettings());
-    context.read<LibraryBloc>().add(LoadLibrary());
     // Auto start indexing
     if (context.read<SettingsBloc>().state.autoUpdateIndex) {
       DataRepository.instance.library.then((library) =>

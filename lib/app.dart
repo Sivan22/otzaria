@@ -43,7 +43,7 @@ class App extends StatelessWidget {
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(
             repository: SettingsRepository(),
-          )..add(LoadSettings()),
+          ),
         ),
         BlocProvider<HistoryBloc>(
             create: (context) => HistoryBloc(historyRepository)),
@@ -78,6 +78,7 @@ class App extends StatelessWidget {
         BlocProvider<IndexingBloc>(create: (context) => IndexingBloc.create()),
       ],
       child: Builder(builder: (context) {
+        context.read<SettingsBloc>().add(LoadSettings());
         return BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, settingsState) {
             final state = settingsState;

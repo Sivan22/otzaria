@@ -34,13 +34,15 @@ class PdfBookScreen extends StatefulWidget {
 
 class _PdfBookScreenState extends State<PdfBookScreen>
     with AutomaticKeepAliveClientMixin<PdfBookScreen> {
+  late final PdfBookBloc _bloc;
   late final TextEditingController searchController;
   PdfTextSearcher? textSearcher;
 
   @override
   void initState() {
     super.initState();
-    context.read<PdfBookBloc>().add(LoadPdfBook(
+    _bloc = PdfBookBloc();
+    _bloc.add(LoadPdfBook(
         path: widget.tab.book.path,
         initialPage: widget.tab.pageNumber,
         tab: widget.tab));
@@ -50,6 +52,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return BlocBuilder<PdfBookBloc, PdfBookState>(
+      bloc: _bloc,
       builder: (context, state) {
         if (state is PdfBookInitial || state is PdfBookLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -90,8 +93,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           leading: IconButton(
             icon: const Icon(Icons.menu),
             tooltip: 'חיפוש וניווט',
-            onPressed: () =>
-                context.read<PdfBookBloc>().add(const ToggleLeftPane()),
+            onPressed: () => _bloc.add(const ToggleLeftPane()),
           ),
           actions: [
             _buildTextButton(context, widget.tab.book, state),
@@ -121,33 +123,30 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             IconButton(
               icon: const Icon(Icons.zoom_in),
               tooltip: 'הגדל',
-              onPressed: () => context.read<PdfBookBloc>().add(const ZoomIn()),
+              onPressed: () => _bloc.add(const ZoomIn()),
             ),
             IconButton(
               icon: const Icon(Icons.zoom_out),
               tooltip: 'הקטן',
-              onPressed: () => context.read<PdfBookBloc>().add(const ZoomOut()),
+              onPressed: () => _bloc.add(const ZoomOut()),
             ),
             if (wideScreen)
               IconButton(
                 icon: const Icon(Icons.first_page),
                 tooltip: 'תחילת הספר',
-                onPressed: () =>
-                    context.read<PdfBookBloc>().add(const ChangePage(1)),
+                onPressed: () => _bloc.add(const ChangePage(1)),
               ),
             IconButton(
               icon: const Icon(Icons.chevron_left),
               tooltip: 'הקודם',
               onPressed: () => state.controller.isReady
-                  ? context
-                      .read<PdfBookBloc>()
-                      .add(ChangePage(max(state.currentPage - 1, 1)))
+                  ? _bloc.add(ChangePage(max(state.currentPage - 1, 1)))
                   : null,
             ),
             PageNumberDisplay(controller: state.controller),
             IconButton(
               onPressed: () => state.controller.isReady
-                  ? context.read<PdfBookBloc>().add(
+                  ? _bloc.add(
                       ChangePage(min(state.currentPage + 1, state.totalPages)))
                   : null,
               icon: const Icon(Icons.chevron_right),
@@ -157,9 +156,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               IconButton(
                 icon: const Icon(Icons.last_page),
                 tooltip: 'סוף הספר',
-                onPressed: () => context
-                    .read<PdfBookBloc>()
-                    .add(ChangePage(state.totalPages)),
+                onPressed: () => _bloc.add(ChangePage(state.totalPages)),
               ),
             IconButton(
               icon: const Icon(Icons.share),
@@ -192,11 +189,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 maxScale: 10,
                 onInteractionStart: (_) {
                   if (!state.isLeftPanePinned && state.isLeftPaneVisible) {
-                    context.read<PdfBookBloc>().add(const ToggleLeftPane());
+                    _bloc.add(const ToggleLeftPane());
                   }
                 },
-                onPageChanged: (page) =>
-                    context.read<PdfBookBloc>().add(const UpdateCurrentTitle()),
+                onPageChanged: (page) => _bloc.add(const UpdateCurrentTitle()),
                 viewerOverlayBuilder: (context, size, handleLinkTap) => [
                   PdfViewerScrollThumb(
                     controller: state.controller,
@@ -244,17 +240,13 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 ),
                 onDocumentChanged: (document) {
                   if (document == null) {
-                    context
-                        .read<PdfBookBloc>()
-                        .add(const UpdateDocumentRef(null));
+                    _bloc.add(const UpdateDocumentRef(null));
                   }
                 },
                 onViewerReady: (document, controller) {
                   textSearcher = PdfTextSearcher(controller);
                   searchController = TextEditingController();
-                  context
-                      .read<PdfBookBloc>()
-                      .add(OnViewerReady(document, controller));
+                  _bloc.add(OnViewerReady(document, controller));
                   controller.goTo(controller.calcMatrixFitWidthForPage(
                       pageNumber: controller.pageNumber ?? 1));
                 },
@@ -292,9 +284,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                       ),
                       if (MediaQuery.of(context).size.width >= 600)
                         IconButton(
-                          onPressed: () => context
-                              .read<PdfBookBloc>()
-                              .add(const TogglePinLeftPane()),
+                          onPressed: () => _bloc.add(const TogglePinLeftPane()),
                           icon: const Icon(Icons.push_pin),
                           isSelected: state.isLeftPanePinned,
                         ),

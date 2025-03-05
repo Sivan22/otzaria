@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
+import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/models/text_book_searcher.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,11 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     markdownTextSearcher.addListener(_searchResultUpdated);
     searchTextController.text =
         (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
+    searchTextController.addListener(() {
+      context
+          .read<TextBookBloc>()
+          .add(UpdateSearchText(searchTextController.text));
+    });
     searchTextController.addListener(_searchTextUpdated);
     scrollControler = widget.scrollControler;
     if (!Platform.isAndroid) {
@@ -55,7 +61,6 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     if (mounted) {
       setState(() {
         searchResults = markdownTextSearcher.searchResults;
-        // Trigger a rebuild to display the search results.
       });
     }
   }

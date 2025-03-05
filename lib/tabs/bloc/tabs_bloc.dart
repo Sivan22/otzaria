@@ -53,9 +53,11 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
   }
 
   void _onRemoveTab(RemoveTab event, Emitter<TabsState> emit) async {
+    final removedTabIndex = state.tabs.indexOf(event.tab);
     final newTabs = List<OpenedTab>.from(state.tabs)..remove(event.tab);
-    final newIndex = state.currentTabIndex > 0 ? state.currentTabIndex - 1 : 0;
-
+    final newIndex = removedTabIndex <= state.currentTabIndex
+        ? max(state.currentTabIndex - 1, 0)
+        : state.currentTabIndex;
     _repository.saveTabs(newTabs, newIndex);
     emit(state.copyWith(
       tabs: newTabs,
@@ -92,25 +94,18 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
   }
 
   void _onCloneTab(CloneTab event, Emitter<TabsState> emit) {
-    final newTabs = List<OpenedTab>.from(state.tabs);
-    final clonedTab = OpenedTab.from(event.tab);
-    final newIndex = state.currentTabIndex + 1;
-    newTabs.insert(newIndex, clonedTab);
-
-    _repository.saveTabs(newTabs, newIndex);
-    emit(state.copyWith(
-      tabs: newTabs,
-      currentTabIndex: newIndex,
-    ));
+    add(AddTab(OpenedTab.from(event.tab)));
   }
 
   void _onMoveTab(MoveTab event, Emitter<TabsState> emit) {
     final newTabs = List<OpenedTab>.from(state.tabs);
+    final currentTab = newTabs[state.currentTabIndex];
     newTabs.remove(event.tab);
     newTabs.insert(event.newIndex, event.tab);
+    final newIndex = newTabs.indexOf(currentTab);
 
     _repository.saveTabs(newTabs, state.currentTabIndex);
-    emit(state.copyWith(tabs: newTabs));
+    emit(state.copyWith(tabs: newTabs, currentTabIndex: newIndex));
   }
 
   void _onNavigateToNextTab(NavigateToNextTab event, Emitter<TabsState> emit) {

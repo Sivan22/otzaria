@@ -87,6 +87,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                           onPressed: () {
                             setState(() => _depth = 0);
                             context.read<LibraryBloc>().add(LoadLibrary());
+                            context
+                                .read<FocusBloc>()
+                                .state
+                                .librarySearchController
+                                .clear();
                             _update(context, state, settingsState);
                             _refocusSearchBar(selectAll: true);
                           },
@@ -311,6 +316,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           MyGridView(
             items: Future.value(
               books
+                  .take(100)
                   .map((book) => _buildBookItem(book, showTopics: true))
                   .toList(),
             ),
