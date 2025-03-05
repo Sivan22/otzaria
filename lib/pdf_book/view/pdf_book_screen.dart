@@ -41,7 +41,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   @override
   void initState() {
     super.initState();
-    _bloc = context.read<PdfBookBloc>();
+    _bloc = PdfBookBloc();
     _bloc.add(LoadPdfBook(
         path: widget.tab.book.path,
         initialPage: widget.tab.pageNumber,
