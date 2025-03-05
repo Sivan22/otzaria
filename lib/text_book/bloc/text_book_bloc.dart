@@ -98,6 +98,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         fontSize: event.fontSize,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
@@ -110,6 +111,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         showLeftPane: event.show,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
@@ -122,6 +124,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         showSplitView: event.show,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
@@ -134,6 +137,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         activeCommentators: event.commentators,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
@@ -146,6 +150,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         removeNikud: event.remove,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
@@ -193,6 +198,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         pinLeftPane: event.pin,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
@@ -205,6 +211,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final currentState = state as TextBookLoaded;
       emit(currentState.copyWith(
         searchText: event.text,
+        selectedIndex: currentState.selectedIndex,
       ));
     }
   }
