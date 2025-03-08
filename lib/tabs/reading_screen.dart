@@ -8,6 +8,7 @@ import 'package:otzaria/history/bloc/history_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart' show Screen;
+import 'package:otzaria/pdf_book/pdf_book_screen.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/bloc/tabs_state.dart';
@@ -16,7 +17,6 @@ import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/search/view/full_text_search_screen.dart';
-import 'package:otzaria/pdf_book/view/pdf_book_screen.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
@@ -257,12 +257,9 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   Widget _buildTabView(OpenedTab tab) {
     if (tab is PdfBookTab) {
-      return BlocProvider.value(
-        value: tab.bloc,
-        child: PdfBookScreen(
-          key: PageStorageKey(tab),
-          tab: tab,
-        ),
+      return PdfBookScreen(
+        key: PageStorageKey(tab),
+        tab: tab,
       );
     } else if (tab is TextBookTab) {
       return BlocProvider.value(

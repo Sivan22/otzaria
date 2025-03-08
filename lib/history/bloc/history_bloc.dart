@@ -3,7 +3,6 @@ import 'package:otzaria/bookmarks/models/bookmark.dart';
 import 'package:otzaria/history/bloc/history_event.dart';
 import 'package:otzaria/history/bloc/history_state.dart';
 import 'package:otzaria/history/history_repository.dart';
-import 'package:otzaria/pdf_book/bloc/pdf_book_state.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
@@ -53,11 +52,10 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
         }
       } else {
         final tab = event.tab as PdfBookTab;
-        final state = tab.bloc.state;
         bookmark = Bookmark(
-          ref: '${tab.title} עמוד ${state.controller?.pageNumber ?? 1}',
+          ref: '${tab.title} עמוד ${tab.pdfViewerController.pageNumber ?? 1}',
           book: tab.book,
-          index: state.controller?.pageNumber ?? 1,
+          index: tab.pdfViewerController.pageNumber ?? 1,
         );
       }
       if (state.history.any((b) => b.ref == bookmark?.ref)) return;

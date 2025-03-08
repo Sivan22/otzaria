@@ -46,7 +46,6 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
 
   void _searchTextUpdated() {
     widget.textSearcher.startTextSearch(searchTextController.text);
-    setState(() {});
   }
 
   int? _currentSearchSession;
