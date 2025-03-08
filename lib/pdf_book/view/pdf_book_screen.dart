@@ -34,44 +34,45 @@ class PdfBookScreen extends StatefulWidget {
 
 class _PdfBookScreenState extends State<PdfBookScreen>
     with AutomaticKeepAliveClientMixin<PdfBookScreen> {
-  late final PdfBookBloc _bloc;
-  late final TextEditingController searchController;
-  PdfTextSearcher? textSearcher;
+  PdfViewerController controller = PdfViewerController();
+  late final PdfTextSearcher textSearcher;
+
+  void _update() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _bloc = PdfBookBloc();
-    _bloc.add(LoadPdfBook(
-        path: widget.tab.book.path,
-        initialPage: widget.tab.pageNumber,
-        tab: widget.tab));
+    textSearcher = PdfTextSearcher(controller)..addListener(_update);
+    controller
+        .addListener(() => widget.tab.pageNumber = controller.pageNumber ?? 1);
+  }
+
+  @override
+  void dispose() {
+    textSearcher.removeListener(_update);
+    controller.removeListener(() {});
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return BlocBuilder<PdfBookBloc, PdfBookState>(
-      bloc: _bloc,
       builder: (context, state) {
-        if (state is PdfBookInitial || state is PdfBookLoading) {
-          return const Center(child: CircularProgressIndicator());
+        if (state.status == PdfBookStatus.error) {
+          return Center(child: Text('Error: ${state.errorMessage}'));
         }
 
-        if (state is PdfBookError) {
-          return Center(child: Text('Error: ${state.message}'));
-        }
-
-        if (state is PdfBookLoaded) {
-          return _buildLoadedState(state);
-        }
-
-        return const SizedBox.shrink();
+        return _buildLoadedState(state);
       },
     );
   }
 
-  Widget _buildTitle(PdfBookLoaded state) {
+  Widget _buildTitle(PdfBookState state) {
     return state.currentTitle != null
         ? Center(
             child: SelectionArea(
@@ -84,7 +85,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         : const SizedBox.shrink();
   }
 
-  Widget _buildLoadedState(PdfBookLoaded state) {
+  Widget _buildLoadedState(PdfBookState state) {
     return LayoutBuilder(builder: (context, constrains) {
       final wideScreen = (MediaQuery.of(context).size.width >= 600);
       return Scaffold(
@@ -93,7 +94,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           leading: IconButton(
             icon: const Icon(Icons.menu),
             tooltip: 'חיפוש וניווט',
-            onPressed: () => _bloc.add(const ToggleLeftPane()),
+            onPressed: () =>
+                context.read<PdfBookBloc>().add(const ToggleLeftPane()),
           ),
           actions: [
             _buildTextButton(context, widget.tab.book, state),
@@ -103,7 +105,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               ),
               tooltip: 'הוספת סימניה',
               onPressed: () {
-                int index = state.controller.pageNumber ?? 1;
+                int index = controller.pageNumber ?? 1;
                 bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
                     ref: '${widget.tab.book.title} עמוד $index',
                     book: widget.tab.book,
@@ -123,32 +125,31 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             IconButton(
               icon: const Icon(Icons.zoom_in),
               tooltip: 'הגדל',
-              onPressed: () => _bloc.add(const ZoomIn()),
+              onPressed: () => context.read<PdfBookBloc>().add(const ZoomIn()),
             ),
             IconButton(
               icon: const Icon(Icons.zoom_out),
               tooltip: 'הקטן',
-              onPressed: () => _bloc.add(const ZoomOut()),
+              onPressed: () => context.read<PdfBookBloc>().add(const ZoomOut()),
             ),
             if (wideScreen)
               IconButton(
                 icon: const Icon(Icons.first_page),
                 tooltip: 'תחילת הספר',
-                onPressed: () => _bloc.add(const ChangePage(1)),
+                onPressed: () =>
+                    context.read<PdfBookBloc>().add(const ChangePage(1)),
               ),
             IconButton(
               icon: const Icon(Icons.chevron_left),
               tooltip: 'הקודם',
-              onPressed: () => state.controller.isReady
-                  ? _bloc.add(ChangePage(max(state.currentPage - 1, 1)))
-                  : null,
+              onPressed: () => context
+                  .read<PdfBookBloc>()
+                  .add(ChangePage(max(state.currentPage - 1, 1))),
             ),
-            PageNumberDisplay(controller: state.controller),
+            if (controller.isReady) PageNumberDisplay(controller: controller),
             IconButton(
-              onPressed: () => state.controller.isReady
-                  ? _bloc.add(
-                      ChangePage(min(state.currentPage + 1, state.totalPages)))
-                  : null,
+              onPressed: () => context.read<PdfBookBloc>().add(ChangePage(
+                  min(state.currentPage + 1, state.totalPages ?? 1))),
               icon: const Icon(Icons.chevron_right),
               tooltip: 'הבא',
             ),
@@ -156,7 +157,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               IconButton(
                 icon: const Icon(Icons.last_page),
                 tooltip: 'סוף הספר',
-                onPressed: () => _bloc.add(ChangePage(state.totalPages)),
+                onPressed: () => context
+                    .read<PdfBookBloc>()
+                    .add(ChangePage(state.totalPages ?? 1)),
               ),
             IconButton(
               icon: const Icon(Icons.share),
@@ -172,85 +175,79 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         body: Stack(
           children: [
             PdfViewer.file(
+              controller: controller,
               widget.tab.book.path,
-              initialPageNumber: widget.tab.pageNumber,
+              initialPageNumber: state.currentPage,
               passwordProvider: () => passwordDialog(context),
-              controller: state.controller,
               params: PdfViewerParams(
-                pageAnchor: PdfPageAnchor.topLeft,
-                pageAnchorEnd: PdfPageAnchor.topRight,
-                loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
-                    Center(
-                  child: CircularProgressIndicator(
-                      value: totalBytes == null
-                          ? null
-                          : (bytesDownloaded / totalBytes)),
-                ),
-                maxScale: 10,
-                onInteractionStart: (_) {
-                  if (!state.isLeftPanePinned && state.isLeftPaneVisible) {
-                    _bloc.add(const ToggleLeftPane());
-                  }
-                },
-                onPageChanged: (page) => _bloc.add(const UpdateCurrentTitle()),
-                viewerOverlayBuilder: (context, size, handleLinkTap) => [
-                  PdfViewerScrollThumb(
-                    controller: state.controller,
-                    orientation: ScrollbarOrientation.right,
-                    thumbSize: const Size(40, 25),
-                    thumbBuilder:
-                        (context, thumbSize, pageNumber, controller) =>
-                            Container(
-                      color: Colors.black,
-                      child: Center(
-                        child: Text(
-                          pageNumber.toString(),
-                          style: const TextStyle(color: Colors.white),
+                  pageAnchor: PdfPageAnchor.topLeft,
+                  pageAnchorEnd: PdfPageAnchor.topRight,
+                  loadingBannerBuilder:
+                      (context, bytesDownloaded, totalBytes) => Center(
+                            child: CircularProgressIndicator(
+                                value: totalBytes == null
+                                    ? null
+                                    : (bytesDownloaded / totalBytes)),
+                          ),
+                  maxScale: 10,
+                  onInteractionStart: (_) {
+                    if (!state.isLeftPanePinned && state.isLeftPaneVisible) {
+                      context.read<PdfBookBloc>().add(const ToggleLeftPane());
+                    }
+                  },
+                  onPageChanged: (page) => context
+                      .read<PdfBookBloc>()
+                      .add(const UpdateCurrentTitle()),
+                  viewerOverlayBuilder: (context, size, handleLinkTap) => [
+                        PdfViewerScrollThumb(
+                          controller: controller,
+                          orientation: ScrollbarOrientation.right,
+                          thumbSize: const Size(40, 25),
+                          thumbBuilder:
+                              (context, thumbSize, pageNumber, controller) =>
+                                  Container(
+                            color: Colors.black,
+                            child: Center(
+                              child: Text(
+                                pageNumber.toString(),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ),
+                        PdfViewerScrollThumb(
+                          controller: controller,
+                          orientation: ScrollbarOrientation.bottom,
+                          thumbSize: const Size(80, 5),
+                          thumbBuilder:
+                              (context, thumbSize, pageNumber, controller) =>
+                                  Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                        _buildLeftPane(state),
+                      ],
+                  linkWidgetBuilder: (context, link, size) => Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            if (link.url != null) {
+                              await _navigateToUrl(link.url!);
+                            } else if (link.dest != null) {
+                              controller.goToDest(link.dest);
+                            }
+                          },
+                          hoverColor: Colors.blue.withOpacity(0.2),
                         ),
                       ),
-                    ),
-                  ),
-                  PdfViewerScrollThumb(
-                    controller: state.controller,
-                    orientation: ScrollbarOrientation.bottom,
-                    thumbSize: const Size(80, 5),
-                    thumbBuilder:
-                        (context, thumbSize, pageNumber, controller) =>
-                            Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-                  _buildLeftPane(state),
-                ],
-                linkWidgetBuilder: (context, link, size) => Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () async {
-                      if (link.url != null) {
-                        await _navigateToUrl(link.url!);
-                      } else if (link.dest != null) {
-                        state.controller.goToDest(link.dest);
-                      }
-                    },
-                    hoverColor: Colors.blue.withOpacity(0.2),
-                  ),
-                ),
-                onDocumentChanged: (document) {
-                  if (document == null) {
-                    _bloc.add(const UpdateDocumentRef(null));
-                  }
-                },
-                onViewerReady: (document, controller) {
-                  textSearcher = PdfTextSearcher(controller);
-                  searchController = TextEditingController();
-                  _bloc.add(OnViewerReady(document, controller));
-                  controller.goTo(controller.calcMatrixFitWidthForPage(
-                      pageNumber: controller.pageNumber ?? 1));
-                },
-              ),
+                  onViewerReady: (document, controller) {
+                    context
+                        .read<PdfBookBloc>()
+                        .add(OnViewerReady(document, controller));
+                  }),
             ),
           ],
         ),
@@ -258,7 +255,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     });
   }
 
-  Widget _buildLeftPane(PdfBookLoaded state) {
+  Widget _buildLeftPane(PdfBookState state) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       child: SizedBox(
@@ -284,7 +281,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                       ),
                       if (MediaQuery.of(context).size.width >= 600)
                         IconButton(
-                          onPressed: () => _bloc.add(const TogglePinLeftPane()),
+                          onPressed: () => context
+                              .read<PdfBookBloc>()
+                              .add(const TogglePinLeftPane()),
                           icon: const Icon(Icons.push_pin),
                           isSelected: state.isLeftPanePinned,
                         ),
@@ -295,18 +294,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                       children: [
                         OutlineView(
                           outline: state.outline,
-                          controller: state.controller,
+                          controller: controller,
                         ),
-                        textSearcher != null
-                            ? PdfBookSearchView(
-                                textSearcher: textSearcher!,
-                                searchTextController: searchController,
-                              )
-                            : const Center(
-                                child: CircularProgressIndicator(),
-                              ),
+                        PdfBookSearchView(
+                          textSearcher: textSearcher,
+                          searchTextController: state.searchController,
+                        ),
                         ThumbnailsView(
-                          controller: state.controller,
+                          controller: controller,
                         ),
                       ],
                     ),
@@ -372,9 +367,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               icon: const Icon(Icons.article),
               tooltip: 'פתח טקסט',
               onPressed: () async {
-                if (state is PdfBookLoaded && state.outline != null) {
+                if (state.outline != null) {
                   final index = await pdfToTextPage(book, state.outline!,
-                      state.controller.pageNumber ?? 1, context);
+                      controller.pageNumber ?? 1, context);
                   openBook(context, snapshot.data!, index ?? 0, '');
                 }
               })

@@ -67,14 +67,7 @@ class LoadOutline extends PdfBookEvent {
   const LoadOutline();
 }
 
-class UpdateDocumentRef extends PdfBookEvent {
-  final PdfDocumentRef? documentRef;
 
-  const UpdateDocumentRef(this.documentRef);
-
-  @override
-  List<Object?> get props => [documentRef];
-}
 
 class OnViewerReady extends PdfBookEvent {
   final PdfDocument document;

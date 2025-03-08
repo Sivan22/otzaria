@@ -53,11 +53,11 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
         }
       } else {
         final tab = event.tab as PdfBookTab;
-        final state = tab.bloc.state as PdfBookLoaded;
+        final state = tab.bloc.state;
         bookmark = Bookmark(
-          ref: '${tab.title} עמוד ${state.controller.pageNumber ?? 1}',
+          ref: '${tab.title} עמוד ${state.controller?.pageNumber ?? 1}',
           book: tab.book,
-          index: state.controller.pageNumber ?? 1,
+          index: state.controller?.pageNumber ?? 1,
         );
       }
       if (state.history.any((b) => b.ref == bookmark?.ref)) return;

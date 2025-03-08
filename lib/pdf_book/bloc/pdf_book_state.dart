@@ -1,55 +1,38 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 
-abstract class PdfBookState extends Equatable {
-  const PdfBookState();
+enum PdfBookStatus { initial, ready, error }
 
-  @override
-  List<Object?> get props => [];
-}
-
-class PdfBookInitial extends PdfBookState {
-  const PdfBookInitial();
-}
-
-class PdfBookLoading extends PdfBookState {
-  const PdfBookLoading();
-}
-
-class PdfBookError extends PdfBookState {
-  final String message;
-
-  const PdfBookError(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}
-
-class PdfBookLoaded extends PdfBookState {
+class PdfBookState extends Equatable {
   final int currentPage;
-  final int totalPages;
+  final int? totalPages;
   final bool isLeftPaneVisible;
   final bool isLeftPanePinned;
   final double zoomLevel;
   final List<PdfOutlineNode>? outline;
   final String searchText;
-  final PdfDocumentRef? documentRef;
-  final PdfViewerController controller;
+  final PdfViewerController controller = PdfViewerController();
+  late final PdfTextSearcher textSearcher;
+  final TextEditingController searchController = TextEditingController();
   final String? currentTitle;
-
-  const PdfBookLoaded(
+  final String? errorMessage;
+  final PdfBookStatus status;
+  PdfBookState(
       {required this.currentPage,
-      required this.totalPages,
-      required this.isLeftPaneVisible,
-      required this.isLeftPanePinned,
-      required this.zoomLevel,
-      required this.controller,
+      this.totalPages,
+      this.isLeftPaneVisible = true,
+      this.isLeftPanePinned = false,
+      this.zoomLevel = 1.0,
       this.outline,
       this.searchText = '',
-      this.documentRef,
-      this.currentTitle});
+      this.currentTitle,
+      this.errorMessage,
+      this.status = PdfBookStatus.initial}) {
+    textSearcher = PdfTextSearcher(controller);
+  }
 
-  PdfBookLoaded copyWith(
+  PdfBookState copyWith(
       {int? currentPage,
       int? totalPages,
       bool? isLeftPaneVisible,
@@ -57,10 +40,9 @@ class PdfBookLoaded extends PdfBookState {
       double? zoomLevel,
       List<PdfOutlineNode>? outline,
       String? searchText,
-      PdfDocumentRef? documentRef,
-      PdfViewerController? controller,
-      String? currentTitle}) {
-    return PdfBookLoaded(
+      String? currentTitle,
+      required PdfBookStatus status}) {
+    return PdfBookState(
         currentPage: currentPage ?? this.currentPage,
         totalPages: totalPages ?? this.totalPages,
         isLeftPaneVisible: isLeftPaneVisible ?? this.isLeftPaneVisible,
@@ -68,9 +50,8 @@ class PdfBookLoaded extends PdfBookState {
         zoomLevel: zoomLevel ?? this.zoomLevel,
         outline: outline ?? this.outline,
         searchText: searchText ?? this.searchText,
-        documentRef: documentRef ?? this.documentRef,
-        controller: controller ?? this.controller,
-        currentTitle: currentTitle);
+        currentTitle: currentTitle,
+        status: status);
   }
 
   @override
@@ -82,8 +63,10 @@ class PdfBookLoaded extends PdfBookState {
         zoomLevel,
         outline,
         searchText,
-        documentRef,
         controller,
-        currentTitle
+        textSearcher,
+        searchController,
+        currentTitle,
+        status
       ];
 }

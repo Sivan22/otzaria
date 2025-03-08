@@ -27,35 +27,39 @@ class _OutlineViewState extends State<OutlineView> {
       );
     }
 
-    return Column(
-      children: [
-        TextField(
-          controller: searchController,
-          onChanged: (value) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: 'חיפוש סימניה...',
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      searchController.clear();
-                    });
-                  },
+    return ListenableBuilder(
+        listenable: widget.controller,
+        builder: (context, snapshot) {
+          return Column(
+            children: [
+              TextField(
+                controller: searchController,
+                onChanged: (value) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: 'חיפוש סימניה...',
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            searchController.clear();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: searchController.text.isEmpty
-              ? _buildOutlineList(outline)
-              : _buildFilteredOutlineList(outline),
-        ),
-      ],
-    );
+              ),
+              Expanded(
+                child: searchController.text.isEmpty
+                    ? _buildOutlineList(outline)
+                    : _buildFilteredOutlineList(outline),
+              ),
+            ],
+          );
+        });
   }
 
   Widget _buildOutlineList(List<PdfOutlineNode>? outline) {

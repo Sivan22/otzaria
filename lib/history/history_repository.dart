@@ -32,9 +32,9 @@ class HistoryRepository {
   }
 
   Future<void> addHistoryFromTab(OpenedTab tab) async {
-    if (tab is PdfBookTab && tab.bloc.state is PdfBookLoaded) {
-      final state = tab.bloc.state as PdfBookLoaded;
-      int index = state.controller.pageNumber ?? 1;
+    if (tab is PdfBookTab) {
+      final state = tab.bloc.state;
+      int index = state.controller?.pageNumber ?? 1;
       addHistoryItem(Bookmark(
         ref: '${tab.title} עמוד $index',
         book: tab.book,

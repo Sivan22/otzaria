@@ -27,14 +27,9 @@ class PdfBookTab extends OpenedTab {
   PdfBookTab({
     required this.book,
     this.pageNumber = 1,
-  })  : bloc = PdfBookBloc(),
+  })  : bloc = PdfBookBloc(pageNumber),
         super(book.title) {
     // Initialize the bloc with the book
-    bloc.add(LoadPdfBook(
-      path: book.path,
-      initialPage: pageNumber,
-      tab: this,
-    ));
   }
 
   /// Creates a copy of this tab with optional parameter overrides
