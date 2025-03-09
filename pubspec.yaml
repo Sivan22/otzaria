@@ -8,7 +8,7 @@ msix_config:
   display_name: אוצריא
   publisher_display_name: sivan22
   identity_name: sivan22.Otzaria
-  msix_version: 0.2.5.10
+  msix_version: 0.2.6.1
   logo_path: assets/icon/icon.png
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: sivan22.pfx
@@ -33,7 +33,7 @@ msix_config:
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.5-dev.10
+version: 0.2.6-dev.1
 
 environment:
   sdk: ">=3.2.6 <4.0.0"
@@ -47,6 +47,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_bloc: ^9.0.0
+  bloc: ^9.0.0
+  equatable: ^2.0.5
   flutter_localizations:
     sdk: flutter
   flutter_settings_screens: ^0.3.4
@@ -117,6 +120,8 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   test: ^1.25.2
   build_runner: ^2.4.11
+  bloc_test: ^10.0.0
+  mockito: ^5.4.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

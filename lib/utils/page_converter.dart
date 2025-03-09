@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otzaria/models/app_model.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:provider/provider.dart';
 
 /// Represents a node in the hierarchy with its full path
 class HierarchyNode<T> {
@@ -17,20 +16,16 @@ class HierarchyNode<T> {
 /// [bookTitle] is the title of the book
 /// [textIndex] is the index in the text version
 /// Returns the corresponding page number in the PDF version, or null if not found
-Future<int?> textToPdfPage(
-    String bookTitle, int textIndex, BuildContext context) async {
-  final appModel = Provider.of<AppModel>(context, listen: false);
+Future<int?> textToPdfPage(TextBook textBook, int textIndex) async {
+  final library = await DataRepository.instance.library;
 
   // Get both text and PDF versions of the book
-  final textBook = (await appModel.library).findBookByTitle(bookTitle, TextBook)
-      as TextBook?;
-  final pdfBook =
-      (await appModel.library).findBookByTitle(bookTitle, PdfBook) as PdfBook?;
 
-  if (textBook == null || pdfBook == null) {
+  final pdfBook = library.findBookByTitle(textBook.title, PdfBook) as PdfBook?;
+
+  if (pdfBook == null) {
     return null;
   }
-
   // Find the closest TOC entry with its full hierarchy
   final toc = await textBook.tableOfContents;
   final hierarchyNode = _findClosestEntryWithHierarchy(toc, textIndex);
@@ -52,24 +47,21 @@ Future<int?> textToPdfPage(
 /// [bookTitle] is the title of the book
 /// [pdfPage] is the page number in the PDF version
 /// Returns the corresponding index in the text version, or null if not found
-Future<int?> pdfToTextPage(
-    String bookTitle, int pdfPage, BuildContext context) async {
-  final appModel = Provider.of<AppModel>(context, listen: false);
+Future<int?> pdfToTextPage(PdfBook pdfBook, List<PdfOutlineNode> outline,
+    int pdfPage, BuildContext context) async {
+  final library = await DataRepository.instance.library;
 
   // Get both text and PDF versions of the book
-  final textBook = (await appModel.library).findBookByTitle(bookTitle, TextBook)
-      as TextBook?;
-  final pdfBook =
-      (await appModel.library).findBookByTitle(bookTitle, PdfBook) as PdfBook?;
+  final textBook =
+      library.findBookByTitle(pdfBook.title, TextBook) as TextBook?;
 
-  if (textBook == null || pdfBook == null) {
+  if (textBook == null) {
     return null;
   }
 
   // Find the outline entry with its full hierarchy
-  final outlines =
-      await PdfDocument.openFile(pdfBook.path).then((doc) => doc.loadOutline());
-  final hierarchyNode = _findOutlineByPageWithHierarchy(outlines, pdfPage);
+
+  final hierarchyNode = _findOutlineByPageWithHierarchy(outline, pdfPage);
   if (hierarchyNode == null) {
     return null;
   }
