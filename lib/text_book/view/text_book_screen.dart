@@ -72,8 +72,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         }
 
         if (state is TextBookError) {
-          return Center(
-              child: Text('Error: ${(state as TextBookError).message}'));
+          return Center(child: Text('Error: ${(state).message}'));
         }
 
         if (state is TextBookLoaded) {

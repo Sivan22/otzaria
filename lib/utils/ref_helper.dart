@@ -93,3 +93,36 @@ Future<String> refFromIndex(
   texts = texts.map((e) => e.trim()).toList();
   return texts.join(', ');
 }
+
+Future<String> refFromPageNumber(
+  int pageNumber,
+  List<PdfOutlineNode>? outline,
+) async {
+  if (outline == null) return "";
+
+  List<String> texts = [];
+
+  void searchOutline(List<PdfOutlineNode> entries, {int level = 0}) {
+    for (final entry in entries) {
+      if (entry.dest?.pageNumber == null ||
+          entry.dest!.pageNumber > pageNumber) {
+        return;
+      }
+      if (level + 1 > texts.length) {
+        texts.add(entry.title);
+      } else {
+        texts[level] = entry.title;
+        texts = texts.getRange(0, level + 1).toList();
+      }
+
+      searchOutline(
+        entry.children,
+        level: level + 1,
+      );
+    }
+  }
+
+  searchOutline(outline);
+  texts = texts.map((e) => e.trim()).toList();
+  return texts.join(', ');
+}

@@ -8,11 +8,9 @@ import 'package:synchronized/extension.dart';
 //
 class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
-    super.key,
     required this.textSearcher,
-    required this.searchTextController,
+    super.key,
   });
-  final TextEditingController searchTextController;
 
   final PdfTextSearcher textSearcher;
 
@@ -22,14 +20,13 @@ class PdfBookSearchView extends StatefulWidget {
 
 class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   final focusNode = FocusNode();
-  late TextEditingController searchTextController;
+  final searchTextController = TextEditingController();
   late final pageTextStore =
       PdfPageTextCache(textSearcher: widget.textSearcher);
   final scrollController = ScrollController();
 
   @override
   void initState() {
-    searchTextController = widget.searchTextController;
     widget.textSearcher.addListener(_searchResultUpdated);
     searchTextController.addListener(_searchTextUpdated);
     super.initState();
@@ -40,6 +37,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     scrollController.dispose();
     widget.textSearcher.removeListener(_searchResultUpdated);
     searchTextController.removeListener(_searchTextUpdated);
+    searchTextController.dispose();
     focusNode.dispose();
     super.dispose();
   }
@@ -163,7 +161,8 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
             itemCount: _listIndexToMatchIndex.length,
             itemBuilder: (context, index) {
               final matchIndex = _listIndexToMatchIndex[index];
-              if (matchIndex >= 0) {
+              if (matchIndex >= 0 &&
+                  matchIndex < widget.textSearcher.matches.length) {
                 final match = widget.textSearcher.matches[matchIndex];
                 return SearchResultTile(
                   key: ValueKey(index),
@@ -182,7 +181,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   alignment: Alignment.bottomLeft,
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    'Page ${-matchIndex}',
+                    'עמוד ${-matchIndex}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -221,15 +220,15 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
 
 class SearchResultTile extends StatefulWidget {
   const SearchResultTile({
-    super.key,
     required this.match,
     required this.onTap,
     required this.pageTextStore,
     required this.height,
     required this.isCurrent,
+    super.key,
   });
 
-  final PdfTextMatch match;
+  final PdfTextRangeWithFragments match;
   final void Function() onTap;
   final PdfPageTextCache pageTextStore;
   final double height;
@@ -297,7 +296,8 @@ class _SearchResultTileState extends State<SearchResultTile> {
     );
   }
 
-  TextSpan createTextSpanForMatch(PdfPageText? pageText, PdfTextMatch match,
+  TextSpan createTextSpanForMatch(
+      PdfPageText? pageText, PdfTextRangeWithFragments match,
       {TextStyle? style}) {
     style ??= const TextStyle(
       fontSize: 14,

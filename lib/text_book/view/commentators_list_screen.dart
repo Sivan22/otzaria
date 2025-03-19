@@ -124,7 +124,6 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                     ),
                     onChanged: (query) {
                       setState(() {
-                        searchController.text = query;
                         update(context, state);
                       });
                     },

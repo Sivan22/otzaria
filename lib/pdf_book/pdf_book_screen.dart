@@ -8,6 +8,7 @@ import 'package:otzaria/pdf_book/pdf_page_number_dispaly.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/utils/open_book.dart';
+import 'package:otzaria/utils/ref_helper.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:provider/provider.dart';
 import 'pdf_search_screen.dart';
@@ -31,7 +32,9 @@ class PdfBookScreen extends StatefulWidget {
 }
 
 class _PdfBookScreenState extends State<PdfBookScreen>
-    with AutomaticKeepAliveClientMixin<PdfBookScreen> {
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
     ..addListener(_update);
 
@@ -42,44 +45,45 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   }
 
   @override
+  void initState() {
+    super.initState();
+    widget.tab.pdfViewerController.addListener(() {
+      if (widget.tab.pdfViewerController.isReady) {
+        widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
+        () async {
+          widget.tab.currentTitle.value = await refFromPageNumber(
+              widget.tab.pageNumber =
+                  widget.tab.pdfViewerController.pageNumber ?? 1,
+              widget.tab.outline.value);
+        }();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     textSearcher.removeListener(_update);
-    widget.tab.outline.dispose();
-    widget.tab.documentRef.dispose();
-    widget.tab.showLeftPane.dispose();
+    widget.tab.pdfViewerController.removeListener(() {});
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return LayoutBuilder(builder: (context, constrains) {
       final wideScreen = (MediaQuery.of(context).size.width >= 600);
       return Scaffold(
         appBar: AppBar(
-          title: ListenableBuilder(
-            listenable: Listenable.merge([
-              widget.tab.pdfViewerController,
-              widget.tab.outline,
-            ]),
-            builder: (context, _) => FutureBuilder(
-              future: widget.tab.currentSection(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return SizedBox.shrink();
-                }
-                return Center(
-                  child: SelectionArea(
-                    child: Text(
-                      snapshot.data!,
-                      style: const TextStyle(fontSize: 17),
-                      textAlign: TextAlign.center,
+          title: ValueListenableBuilder(
+              valueListenable: widget.tab.currentTitle,
+              builder: (context, value, child) => Center(
+                    child: SelectionArea(
+                      child: Text(
+                        value,
+                        style: const TextStyle(fontSize: 17),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
+                  )),
           leading: IconButton(
             icon: const Icon(Icons.menu),
             tooltip: 'חיפוש וניווט',
@@ -252,6 +256,12 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               onViewerReady: (document, controller) async {
                 widget.tab.documentRef.value = controller.documentRef;
                 widget.tab.outline.value = await document.loadOutline();
+                () async {
+                  widget.tab.currentTitle.value = await refFromPageNumber(
+                      widget.tab.pageNumber =
+                          widget.tab.pdfViewerController.pageNumber ?? 1,
+                      widget.tab.outline.value);
+                }();
                 if (mounted) {
                   widget.tab.showLeftPane.value = true;
                 }
@@ -272,23 +282,25 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-        child: Container(
-          color: Theme.of(context).colorScheme.surface,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-            child: DefaultTabController(
-              length: 3,
+        child: DefaultTabController(
+          length: 3,
+          child: Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
               child: Column(
                 children: [
                   Row(
                     children: [
                       const Expanded(
-                        child: TabBar(
-                          tabs: [
-                            Tab(text: 'ניווט'),
-                            Tab(text: 'חיפוש'),
-                            Tab(text: 'דפים'),
-                          ],
+                        child: ClipRect(
+                          child: TabBar(
+                            tabs: [
+                              Tab(text: 'ניווט'),
+                              Tab(text: 'חיפוש'),
+                              Tab(text: 'דפים'),
+                            ],
+                          ),
                         ),
                       ),
                       ValueListenableBuilder(
@@ -322,13 +334,13 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           builder: (context, documentRef, child) => child!,
                           child: PdfBookSearchView(
                             textSearcher: textSearcher,
-                            searchTextController: widget.tab.searchController,
                           ),
                         ),
                         ValueListenableBuilder(
                           valueListenable: widget.tab.documentRef,
                           builder: (context, documentRef, child) => child!,
                           child: ThumbnailsView(
+                              documentRef: widget.tab.documentRef.value,
                               controller: widget.tab.pdfViewerController),
                         ),
                       ],
@@ -402,7 +414,4 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           : const SizedBox.shrink(),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

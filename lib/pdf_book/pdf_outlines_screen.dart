@@ -58,14 +58,14 @@ class _OutlineViewState extends State<OutlineView> {
     );
   }
 
-  Widget _buildOutlineList(List<PdfOutlineNode>? outline) {
-    final list = _getOutlineList(outline, 0).toList();
+  Widget _buildOutlineList(List<PdfOutlineNode> outline) {
     return SingleChildScrollView(
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: list.length,
-        itemBuilder: (context, index) => _buildOutlineItem(list[index]),
+        itemCount: outline.length,
+        itemBuilder: (context, index) =>
+            _buildOutlineItem(outline[index], level: 0),
       ),
     );
   }
@@ -91,39 +91,40 @@ class _OutlineViewState extends State<OutlineView> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: filteredNodes.length,
-        itemBuilder: (context, index) =>
-            _buildOutlineItem(filteredNodes[index]),
+        itemBuilder: (context, index) => _buildOutlineItem(
+            filteredNodes[index].node,
+            level: filteredNodes[index].level),
       ),
     );
   }
 
-  Widget _buildOutlineItem(({PdfOutlineNode node, int level}) entry) {
+  Widget _buildOutlineItem(PdfOutlineNode node, {int level = 0}) {
     void navigateToEntry() {
-      if (entry.node.dest != null) {
-        widget.controller.goTo(widget.controller.calcMatrixFitWidthForPage(
-            pageNumber: entry.node.dest?.pageNumber ?? 1));
+      if (node.dest != null) {
+        widget.controller.goTo(widget.controller
+            .calcMatrixFitWidthForPage(pageNumber: node.dest?.pageNumber ?? 1));
       }
     }
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
+      padding: EdgeInsets.fromLTRB(0, 0, 10 * level.toDouble(), 0),
       child: Theme(
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent,
         ),
-        child: entry.node.children.isEmpty
+        child: node.children.isEmpty
             ? InkWell(
                 onTap: navigateToEntry,
                 child: ListTile(
-                  title: Text(entry.node.title),
+                  title: Text(node.title),
                 ),
               )
             : ExpansionTile(
-                key: PageStorageKey(entry),
-                initiallyExpanded: entry.level == 0,
+                key: PageStorageKey(node),
+                initiallyExpanded: level == 0,
                 title: InkWell(
                   onTap: navigateToEntry,
-                  child: Text(entry.node.title),
+                  child: Text(node.title),
                 ),
                 leading: const Icon(Icons.chevron_right_rounded),
                 trailing: const SizedBox.shrink(),
@@ -131,22 +132,12 @@ class _OutlineViewState extends State<OutlineView> {
                 childrenPadding: EdgeInsets.zero,
                 iconColor: Theme.of(context).colorScheme.primary,
                 collapsedIconColor: Theme.of(context).colorScheme.primary,
-                children: entry.node.children
-                    .map((childNode) => _buildOutlineItem(
-                        (node: childNode, level: entry.level + 1)))
+                children: node.children
+                    .map((childNode) =>
+                        _buildOutlineItem(childNode, level: level + 1))
                     .toList(),
               ),
       ),
     );
-  }
-
-  /// Recursively create outline indent structure
-  Iterable<({PdfOutlineNode node, int level})> _getOutlineList(
-      List<PdfOutlineNode>? outline, int level) sync* {
-    if (outline == null) return;
-    for (var node in outline) {
-      yield (node: node, level: level);
-      yield* _getOutlineList(node.children, level + 1);
-    }
   }
 }

@@ -27,6 +27,8 @@ class PdfBookTab extends OpenedTab {
 
   final String searchText;
 
+  final currentTitle = ValueNotifier<String>("");
+
   ///a flag that tells if the left pane should be shown
   late final ValueNotifier<bool> showLeftPane;
 
@@ -45,31 +47,6 @@ class PdfBookTab extends OpenedTab {
       : super(book.title) {
     showLeftPane = ValueNotifier<bool>(openLeftPane);
     searchController.text = searchText;
-  }
-
-  Future<String?> currentSection() async {
-    if (outline.value == null) return null;
-
-    final currentPage = pdfViewerController.pageNumber;
-    if (currentPage == null) return null;
-
-    // Find the current section by looking through the outline
-    PdfOutlineNode? currentSection;
-
-    void searchOutline(List<PdfOutlineNode> entries, List<String> path) {
-      for (var entry in entries) {
-        if (entry.dest?.pageNumber != null &&
-            entry.dest!.pageNumber <= currentPage) {
-          currentSection = entry;
-          // Continue searching children to find most specific match
-          searchOutline(entry.children, [...path, entry.title]);
-        }
-      }
-    }
-
-    searchOutline(outline.value!, []);
-
-    return currentSection?.title;
   }
 
   /// Creates a new instance of [PdfBookTab] from a JSON map.

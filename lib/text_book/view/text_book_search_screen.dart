@@ -41,12 +41,6 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     markdownTextSearcher.addListener(_searchResultUpdated);
     searchTextController.text =
         (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
-    searchTextController.addListener(() {
-      context
-          .read<TextBookBloc>()
-          .add(UpdateSearchText(searchTextController.text));
-    });
-    searchTextController.addListener(_searchTextUpdated);
     scrollControler = widget.scrollControler;
     if (!Platform.isAndroid) {
       widget.focusNode.requestFocus();
@@ -70,9 +64,11 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     super.build(context);
     return Column(children: <Widget>[
       TextField(
-        focusNode: widget.focusNode,
+        onChanged: (e) {
+          context.read<TextBookBloc>().add(UpdateSearchText(e));
+          _searchTextUpdated();
+        },
         controller: searchTextController,
-        autofocus: true,
         decoration: InputDecoration(
           hintText: 'חפש כאן..',
           suffixIcon: Row(
