@@ -35,6 +35,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
   late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
     ..addListener(_update);
 
@@ -47,6 +48,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   @override
   void initState() {
     super.initState();
+    widget.tab.pdfViewerController = PdfViewerController();
     widget.tab.pdfViewerController.addListener(() {
       if (widget.tab.pdfViewerController.isReady) {
         widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
@@ -182,10 +184,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
                   ? BlendMode.difference
                   : BlendMode.dst),
-          child: PdfViewer.file(
-            widget.tab.book.path,
+          child: PdfViewer(
+            widget.tab.documentRef.value ??
+                PdfDocumentRefFile(widget.tab.book.path),
             initialPageNumber: widget.tab.pageNumber,
-            passwordProvider: () => passwordDialog(context),
             controller: widget.tab.pdfViewerController,
             params: PdfViewerParams(
               //enableTextSelection: true,
