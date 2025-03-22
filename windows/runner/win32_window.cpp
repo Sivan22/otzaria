@@ -144,6 +144,9 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
+  // כותרת החלון תהיה מימין לשמאל
+  SetWindowLongPtr(window, GWL_EXSTYLE, WS_EX_LAYOUTRTL);
+
   UpdateTheme(window);
 
   return OnCreate();
