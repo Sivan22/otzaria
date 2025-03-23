@@ -42,6 +42,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           accelerationFactor: 5,
           child: SelectionArea(
               child: ScrollablePositionedList.builder(
+                  key: PageStorageKey(state),
                   initialScrollIndex: state.visibleIndices.first,
                   itemPositionsListener: state.positionsListener,
                   itemScrollController: state.scrollController,

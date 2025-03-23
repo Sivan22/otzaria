@@ -54,6 +54,7 @@ class _CombinedViewState extends State<CombinedView> {
 
   Widget buildOuterList(TextBookLoaded state) {
     return ScrollablePositionedList.builder(
+        key: PageStorageKey(state),
         initialScrollIndex: state.visibleIndices.first,
         itemPositionsListener: state.positionsListener,
         itemScrollController: state.scrollController,
