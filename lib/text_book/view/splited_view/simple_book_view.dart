@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
@@ -19,12 +20,14 @@ class SimpleBookView extends StatefulWidget {
     required this.openBookCallback,
     required this.textSize,
     required this.showSplitedView,
+    required this.tab,
   });
 
   final List<String> data;
   final Function(OpenedTab) openBookCallback;
   final bool showSplitedView;
   final double textSize;
+  final TextBookTab tab;
 
   @override
   State<SimpleBookView> createState() => _SimpleBookViewState();
@@ -42,7 +45,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           accelerationFactor: 5,
           child: SelectionArea(
               child: ScrollablePositionedList.builder(
-                  key: PageStorageKey(state),
+                  key: PageStorageKey(widget.tab),
                   initialScrollIndex: state.visibleIndices.first,
                   itemPositionsListener: state.positionsListener,
                   itemScrollController: state.scrollController,

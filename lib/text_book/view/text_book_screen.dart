@@ -649,6 +649,7 @@ $selectedText
         content: state.content,
         openBookCallback: widget.openBookCallback,
         searchTextController: TextEditingValue(text: state.searchText),
+        tab: widget.tab,
       );
     }
 
@@ -670,6 +671,7 @@ $selectedText
       textSize: state.fontSize,
       openBookCallback: widget.openBookCallback,
       showSplitedView: ValueNotifier(state.showSplitView),
+      tab: widget.tab,
     );
   }
 

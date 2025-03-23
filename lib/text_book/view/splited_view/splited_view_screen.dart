@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:otzaria/tabs/models/tab.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/view/splited_view/simple_book_view.dart';
@@ -13,10 +14,12 @@ class SplitedViewScreen extends StatelessWidget {
     required this.content,
     required this.openBookCallback,
     required this.searchTextController,
+    required this.tab,
   });
   final List<String> content;
   final void Function(OpenedTab) openBookCallback;
   final TextEditingValue searchTextController;
+  final TextBookTab tab;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +47,7 @@ class SplitedViewScreen extends StatelessWidget {
             textSize: state.fontSize,
             openBookCallback: openBookCallback,
             showSplitedView: state.showSplitView,
+            tab: tab,
           )
         ],
       ),

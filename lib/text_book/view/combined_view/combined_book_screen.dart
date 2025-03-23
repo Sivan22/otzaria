@@ -25,12 +25,14 @@ class CombinedView extends StatefulWidget {
     required this.openBookCallback,
     required this.textSize,
     required this.showSplitedView,
+    required this.tab,
   });
 
   final List<String> data;
   final Function(OpenedTab) openBookCallback;
   final ValueNotifier<bool> showSplitedView;
   final double textSize;
+  final TextBookTab tab;
 
   @override
   State<CombinedView> createState() => _CombinedViewState();
@@ -54,7 +56,7 @@ class _CombinedViewState extends State<CombinedView> {
 
   Widget buildOuterList(TextBookLoaded state) {
     return ScrollablePositionedList.builder(
-        key: PageStorageKey(state),
+        key: PageStorageKey(widget.tab),
         initialScrollIndex: state.visibleIndices.first,
         itemPositionsListener: state.positionsListener,
         itemScrollController: state.scrollController,
