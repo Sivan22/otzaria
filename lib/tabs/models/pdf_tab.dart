@@ -17,7 +17,7 @@ class PdfBookTab extends OpenedTab {
   int pageNumber;
 
   /// The pdf viewer controller.
-  final PdfViewerController pdfViewerController = PdfViewerController();
+  PdfViewerController pdfViewerController = PdfViewerController();
 
   final outline = ValueNotifier<List<PdfOutlineNode>?>(null);
 

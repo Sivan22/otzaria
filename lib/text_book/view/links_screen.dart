@@ -35,8 +35,7 @@ class _LinksViewerState extends State<LinksViewer>
   Future<List<Link>> getLinks(TextBookLoaded state) async {
     List<Link> visibleLinks = state.links
         .where((link) =>
-            link.index1 ==
-                state.positionsListener.itemPositions.value.first.index + 2 &&
+            link.index1 == state.visibleIndices.first + 2 &&
             link.connectionType != "commentary")
         .toList();
 
