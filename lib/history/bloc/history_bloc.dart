@@ -60,7 +60,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
       }
       if (state.history.any((b) => b.ref == bookmark?.ref)) return;
       if (bookmark == null) return;
-      final updatedHistory = [...state.history, bookmark];
+      final updatedHistory = [bookmark, ...state.history];
       await _repository.saveHistory(updatedHistory);
       emit(HistoryLoaded(updatedHistory));
     } catch (e) {

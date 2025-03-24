@@ -4,6 +4,7 @@ import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
+import 'package:otzaria/focus/focus_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -14,8 +15,32 @@ import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/ref_indexing/ref_indexing_screen.dart';
 
-class FindRefScreen extends StatelessWidget {
+class FindRefScreen extends StatefulWidget {
   const FindRefScreen({super.key});
+
+  @override
+  State<FindRefScreen> createState() => _FindRefScreenState();
+}
+
+class _FindRefScreenState extends State<FindRefScreen> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    context.read<FocusBloc>().stream.listen((focusState) {
+      if (focusState.focusTarget == FocusTarget.findRefSearch) {
+        _focusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   Widget _buildIndexingWarning() {
     return BlocBuilder<FindRefBloc, FindRefState>(
@@ -72,7 +97,7 @@ class FindRefScreen extends StatelessWidget {
           children: [
             _buildIndexingWarning(),
             TextField(
-              focusNode: focusBloc.state.findRefSearchFocusNode,
+              focusNode: _focusNode,
               autofocus: true,
               decoration: InputDecoration(
                 hintText:

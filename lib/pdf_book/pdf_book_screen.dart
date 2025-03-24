@@ -191,7 +191,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             passwordProvider: () => passwordDialog(context),
             controller: widget.tab.pdfViewerController,
             params: PdfViewerParams(
-              //enableTextSelection: true,
+              enableTextSelection: true,
               maxScale: 10,
               onInteractionStart: (_) {
                 if (!widget.tab.pinLeftPane.value) {

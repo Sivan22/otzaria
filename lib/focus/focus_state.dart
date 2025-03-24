@@ -6,9 +6,7 @@ enum FocusTarget { none, librarySearch, findRefSearch }
 class FocusState extends Equatable {
   final FocusTarget focusTarget;
   final TextEditingController librarySearchController = TextEditingController();
-  final FocusNode librarySearchFocusNode = FocusNode();
   final TextEditingController findRefSearchController = TextEditingController();
-  final FocusNode findRefSearchFocusNode = FocusNode();
 
   FocusState({this.focusTarget = FocusTarget.none});
 

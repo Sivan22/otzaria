@@ -114,6 +114,17 @@ class MainWindowScreenState extends State<MainWindowScreen>
           curve: Curves.easeInOut,
         );
       }
+      if (state.currentScreen == Screen.library) {
+        context
+            .read<FocusBloc>()
+            .add(const RequestLibrarySearchFocus(selectAll: true));
+      } else if (state.currentScreen == Screen.find) {
+        context
+            .read<FocusBloc>()
+            .add(const RequestFindRefSearchFocus(selectAll: true));
+      } else {
+        context.read<FocusBloc>().add(ClearFocus());
+      }
     }
   }
 

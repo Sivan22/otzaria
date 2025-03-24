@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/focus/focus_event.dart';
+import 'package:otzaria/focus/focus_state.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/library/bloc/library_state.dart';
@@ -39,11 +40,25 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   @override
   bool get wantKeepAlive => true;
 
+  late final FocusNode _searchFocusNode;
+
   int _depth = 0;
   @override
   void initState() {
     super.initState();
+    _searchFocusNode = FocusNode();
     context.read<LibraryBloc>().add(LoadLibrary());
+    context.read<FocusBloc>().stream.listen((focusState) {
+      if (focusState.focusTarget == FocusTarget.librarySearch) {
+        _searchFocusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -171,7 +186,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             Expanded(
               child: TextField(
                 controller: focusBloc.state.librarySearchController,
-                focusNode: focusBloc.state.librarySearchFocusNode,
+                focusNode: _searchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
                   constraints: const BoxConstraints(maxWidth: 400),
@@ -190,6 +205,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
                 ),
                 onChanged: (value) {
+                  context.read<LibraryBloc>().add(UpdateSearchQuery(value));
                   context.read<LibraryBloc>().add(const SelectTopics([]));
                   _update(context, state, settingsState);
                 },
@@ -487,7 +503,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _update(
       BuildContext context, LibraryState state, SettingsState settingsState) {
     context.read<LibraryBloc>().add(UpdateSearchQuery(
-        context.read<FocusBloc>().state.librarySearchController.text));
+        context.read<FocusBloc>().state.librarySearchController.text ?? ""));
     context.read<LibraryBloc>().add(
           SearchBooks(
             showHebrewBooks: settingsState.showHebrewBooks,

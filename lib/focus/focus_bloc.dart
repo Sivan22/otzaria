@@ -12,7 +12,6 @@ class FocusBloc extends Bloc<FocusEvent, FocusState> {
 
   void _onRequestLibrarySearchFocus(
       RequestLibrarySearchFocus event, Emitter<FocusState> emit) {
-    state.librarySearchFocusNode.requestFocus();
     if (event.selectAll) {
       state.librarySearchController.selection = TextSelection(
           baseOffset: 0,
@@ -23,7 +22,6 @@ class FocusBloc extends Bloc<FocusEvent, FocusState> {
 
   void _onRequestFindRefSearchFocus(
       RequestFindRefSearchFocus event, Emitter<FocusState> emit) {
-    state.findRefSearchFocusNode.requestFocus();
     if (event.selectAll) {
       state.findRefSearchController.selection = TextSelection(
           baseOffset: 0,
