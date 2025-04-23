@@ -516,6 +516,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _refocusSearchBar({bool selectAll = false}) {
     final focusBloc = context.read<FocusBloc>();
-    focusBloc.add(RequestLibrarySearchFocus(selectAll: selectAll));
+    if (selectAll) {
+      focusBloc.add(RequestLibrarySearchFocus(selectAll: selectAll));
+    } else {
+      _searchFocusNode.requestFocus();
+    }
   }
 }

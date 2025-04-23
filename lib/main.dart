@@ -3,10 +3,14 @@
 /// RTL (Right-to-Left) languages, particularly Hebrew.
 /// It includes features for dark mode, customizable themes, and local storage management.
 
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
+import 'package:logging/logging.dart';
 import 'package:otzaria/app.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
@@ -36,7 +40,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/app_bloc_observer.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
-import 'dart:io';
 
 import 'package:search_engine/search_engine.dart';
 
@@ -47,6 +50,29 @@ import 'package:search_engine/search_engine.dart';
 /// 2. Calls [initialize] to set up required services and configurations
 /// 3. Launches the main application widget
 void main() async {
+  // write errors to file
+  FlutterError.onError = (FlutterErrorDetails details) {
+    if (kDebugMode) {
+      FlutterError.dumpErrorToConsole(details);
+    } else {
+      File('errors.txt')
+          .writeAsStringSync(details.toString(), mode: FileMode.append);
+    }
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    if (kDebugMode) {
+      FlutterError.dumpErrorToConsole(FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+      ));
+    } else {
+      File('errors.txt')
+          .writeAsStringSync(error.toString(), mode: FileMode.append);
+    }
+    return true;
+  };
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize bloc observer for debugging
@@ -155,7 +181,7 @@ Future<void> initLibraryPath() async {
     // use the external storage directory on android
     await Settings.setValue(
         'key-library-path', (await getExternalStorageDirectory())!.path);
-    }
+  }
 
   // Check existing library path setting
   String? libraryPath = Settings.getValue('key-library-path');
