@@ -2,7 +2,6 @@ import 'dart:isolate';
 
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
-import 'package:otzaria/data/data_providers/isar_data_provider.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/models/books.dart';
@@ -18,9 +17,6 @@ import 'package:otzaria/library/models/library.dart';
 class DataRepository {
   /// Handles file system operations like reading book texts and metadata
   final FileSystemData _fileSystemData = FileSystemData.instance;
-
-  /// Manages database operations using Isar for storing and retrieving references
-  final IsarDataProvider _isarDataProvider = IsarDataProvider.instance;
 
   /// Singleton instance of the DataRepository
   static final DataRepository _singleton = DataRepository();
@@ -82,25 +78,6 @@ class DataRepository {
   /// representing the book's table of contents structure
   Future<List<TocEntry>> getBookToc(String title) async {
     return _fileSystemData.getBookToc(title);
-  }
-
-  /// Creates reference entries in the database from the library data
-  ///
-  /// Parameters:
-  ///   - [library]: The library containing books to create references from
-  ///   - [startIndex]: The index to start processing from, useful for batch processing
-  Future<void> createRefsFromLibrary(Library library, int startIndex) async {
-    _isarDataProvider.createRefsFromLibrary(library, startIndex);
-  }
-
-  /// Retrieves all references associated with a specific book
-  ///
-  /// Parameters:
-  ///   - [book]: The book whose references should be retrieved
-  ///
-  /// Returns a list of [Ref] objects containing all references to/from the specified book
-  List<Ref> getRefsForBook(TextBook book) {
-    return _isarDataProvider.getRefsForBook(book);
   }
 
   /// Searches for references by relevance to a given reference string

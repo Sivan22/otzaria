@@ -78,3 +78,14 @@ String removeTeamim(String s) => s
     .replaceAll('ֽ', '')
     .replaceAll('׀', '')
     .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
+
+String removeSectionNames(String s) => s
+    .replaceAll('פרק ', '')
+    .replaceAll('פסוק ', '')
+    .replaceAll('פסקה ', '')
+    .replaceAll('סעיף ', '')
+    .replaceAll('סימן ', '')
+    .replaceAll('הלכה ', '')
+    .replaceAll('מאמר ', '')
+    .replaceAll('קטן  ', '')
+    .replaceAll('משנה  ', '');

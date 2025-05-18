@@ -13,7 +13,6 @@ import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
-import 'package:otzaria/ref_indexing/ref_indexing_screen.dart';
 
 class FindRefScreen extends StatefulWidget {
   const FindRefScreen({super.key});
@@ -83,11 +82,6 @@ class _FindRefScreenState extends State<FindRefScreen> {
     final focusBloc = BlocProvider.of<FocusBloc>(context);
 
     return Scaffold(
-      drawer: const Drawer(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.zero)),
-          semanticLabel: 'הגדרות אינדקס',
-          child: RefIndexingScreen()),
       appBar: AppBar(
         title: const Center(child: Text('איתור מקורות')),
       ),
@@ -141,23 +135,24 @@ class _FindRefScreenState extends State<FindRefScreen> {
                       itemCount: state.refs.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                            title: Text(state.refs[index].ref),
+                            title: Text(state.refs[index].reference),
                             onTap: () {
                               TabsBloc tabsBloc = context.read<TabsBloc>();
                               NavigationBloc navigationBloc =
                                   context.read<NavigationBloc>();
-                              if (state.refs[index].pdfBook) {
+                              if (state.refs[index].isPdf) {
                                 tabsBloc.add(AddTab(PdfBookTab(
                                     book: PdfBook(
-                                        title: state.refs[index].bookTitle,
-                                        path: state.refs[index].pdfPath!),
-                                    pageNumber: state.refs[index].index)));
+                                        title: state.refs[index].title,
+                                        path: state.refs[index].filePath),
+                                    pageNumber:
+                                        state.refs[index].segment.toInt())));
                               } else {
                                 tabsBloc.add(AddTab(TextBookTab(
                                     book: TextBook(
-                                      title: state.refs[index].bookTitle,
+                                      title: state.refs[index].title,
                                     ),
-                                    index: state.refs[index].index)));
+                                    index: state.refs[index].segment.toInt())));
                               }
                               navigationBloc
                                   .add(const NavigateToScreen(Screen.reading));

@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
-import 'package:logging/logging.dart';
 import 'package:otzaria/app.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
@@ -159,6 +158,8 @@ Future<void> createDirs() async {
       '${Settings.getValue('key-library-path')}${Platform.pathSeparator}אוצריא');
   createDirectoryIfNotExists(
       '${Settings.getValue('key-library-path')}${Platform.pathSeparator}index');
+  createDirectoryIfNotExists(
+      '${Settings.getValue('key-library-path')}${Platform.pathSeparator}ref_index');
 }
 
 /// Initializes the library path based on the platform.

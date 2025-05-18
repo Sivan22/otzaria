@@ -11,6 +11,7 @@ import 'package:hive/hive.dart';
 class TantivyDataProvider {
   /// Instance of the search engine pointing to the index directory
   late Future<SearchEngine> engine;
+  late ReferenceSearchEngine refEngine;
 
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
@@ -35,8 +36,13 @@ class TantivyDataProvider {
     String indexPath = (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
         Platform.pathSeparator +
         'index';
+    String refIndexPath =
+        (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+            Platform.pathSeparator +
+            'ref_index';
 
     engine = SearchEngine.newInstance(path: indexPath);
+    refEngine = ReferenceSearchEngine(path: refIndexPath);
 
     //test the engine
     engine.then((value) {
@@ -58,6 +64,22 @@ class TantivyDataProvider {
       }
     });
 
+try{
+    //test the ref engine
+    refEngine.search(
+        query: 'a',
+        limit: 10,
+        fuzzy: false,
+        order: ResultsOrder.catalogue);
+}catch(e){
+  if (e.toString() ==
+      "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+    resetIndex(refIndexPath);
+    reopenIndex();
+  } else {
+    rethrow;
+  }
+}
     try {
       booksDone = Hive.box(
               name: 'books_indexed',
@@ -112,6 +134,12 @@ class TantivyDataProvider {
     final index = await engine;
     yield* index.searchStream(
         query: query, facets: facets, limit: limit, fuzzy: fuzzy);
+  }
+
+  Future<List<ReferenceSearchResult>> searchRefs(
+      String reference, int limit, bool fuzzy) async {
+
+    return refEngine.search(query: reference, limit: limit, fuzzy: fuzzy,order: ResultsOrder.relevance);
   }
 
   /// Clears the index and resets the list of indexed books.
