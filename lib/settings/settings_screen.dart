@@ -349,7 +349,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                   context: context,
                                   builder: (context) => AlertDialog(
                                         content:
-                                            const Text('האם לעדכן את האינדקס?'),
+                                            const Text('האם לאפס את האינדקס?'),
                                         actions: <Widget>[
                                           TextButton(
                                             child: const Text('ביטול'),
@@ -366,6 +366,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                         ],
                                       ));
                               if (result == true) {
+                                //reset the index
+                                context.read<IndexingBloc>().add(ClearIndex());
                                 final library =
                                     context.read<LibraryBloc>().state.library;
                                 if (library != null) {
@@ -380,16 +382,22 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       },
                     ),
                     SwitchSettingsTile(
-                      title: 'עדכון אינדקס אוטומטי',
+                      title: 'עדכון אינדקס',
                       leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-index-update',
                       defaultValue: state.autoUpdateIndex,
                       enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
                       disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
-                      onChange: (value) {
+                      onChange: (value) async {
                         context
                             .read<SettingsBloc>()
                             .add(UpdateAutoUpdateIndex(value));
+                        if (value) {
+                          final library = DataRepository.instance.library;
+                          context
+                              .read<IndexingBloc>()
+                              .add(StartIndexing(await library));
+                        }
                       },
                     ),
                     if (!(Platform.isAndroid || Platform.isIOS)) ...[

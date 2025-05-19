@@ -1038,8 +1038,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: ref_index
-      resolved-ref: b73ed97113370ac9d4d48e955256d4cf8fd49c36
+      ref: "479e57e"
+      resolved-ref: "479e57e727b98f1839b4746e2de6ca68c8293891"
       url: "https://github.com/Sivan22/otzaria_search_engine"
     source: git
     version: "0.0.1"

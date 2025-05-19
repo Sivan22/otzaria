@@ -102,12 +102,13 @@ class IndexingRepository {
         reference.add(line);
 
         // Index the header as a reference
-        String refText = stripHtmlIfNeeded(reference.sublist(1).join(" "));
-        refText = removeSectionNames(refText);
+        String refText = stripHtmlIfNeeded(reference.join(" "));
+        final shortref = removeSectionNames(refText);
         refIndex.addDocument(
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
             reference: refText,
+            shortRef: shortref,
             segment: BigInt.from(i),
             isPdf: false,
             filePath: '');
@@ -179,10 +180,7 @@ class IndexingRepository {
 
   /// Clears the index and resets the list of indexed books.
   Future<void> clearIndex() async {
-    final index = await _tantivyDataProvider.engine;
-    await index.clear();
-    _tantivyDataProvider.booksDone.clear();
-    saveIndexedBooks();
+    _tantivyDataProvider.clear();
   }
 
   /// Gets the list of books that have already been indexed.

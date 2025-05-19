@@ -64,22 +64,19 @@ class TantivyDataProvider {
       }
     });
 
-try{
-    //test the ref engine
-    refEngine.search(
-        query: 'a',
-        limit: 10,
-        fuzzy: false,
-        order: ResultsOrder.catalogue);
-}catch(e){
-  if (e.toString() ==
-      "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
-    resetIndex(refIndexPath);
-    reopenIndex();
-  } else {
-    rethrow;
-  }
-}
+    try {
+      //test the ref engine
+      refEngine.search(
+          query: 'a', limit: 10, fuzzy: false, order: ResultsOrder.catalogue);
+    } catch (e) {
+      if (e.toString() ==
+          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+        resetIndex(refIndexPath);
+        reopenIndex();
+      } else {
+        rethrow;
+      }
+    }
     try {
       booksDone = Hive.box(
               name: 'books_indexed',
@@ -138,14 +135,19 @@ try{
 
   Future<List<ReferenceSearchResult>> searchRefs(
       String reference, int limit, bool fuzzy) async {
-
-    return refEngine.search(query: reference, limit: limit, fuzzy: fuzzy,order: ResultsOrder.relevance);
+    return refEngine.search(
+        query: reference,
+        limit: limit,
+        fuzzy: fuzzy,
+        order: ResultsOrder.relevance);
   }
 
   /// Clears the index and resets the list of indexed books.
   Future<void> clear() async {
     final index = await engine;
     await index.clear();
+    final refIndex = refEngine;
+    await refIndex.clear();
     booksDone.clear();
     saveBooksDoneToDisk();
   }
