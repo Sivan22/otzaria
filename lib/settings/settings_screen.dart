@@ -29,16 +29,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
   bool get wantKeepAlive => true;
 
   @override
-  void initState() {
-    super.initState();
-    // Auto start indexing
-    if (context.read<SettingsBloc>().state.autoUpdateIndex) {
-      DataRepository.instance.library.then((library) =>
-          context.read<IndexingBloc>().add(StartIndexing(library)));
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     const Map<String, String> shortcuctsList = {

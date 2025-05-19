@@ -10,6 +10,6 @@ class FindRefRepository {
 
   Future<List<ReferenceSearchResult>> findRefs(String ref) async {
     return await TantivyDataProvider.instance
-        .searchRefs(removeSectionNames(ref), 100, false);
+        .searchRefs(replaceParaphrases(removeSectionNames(ref)), 100, false);
   }
 }

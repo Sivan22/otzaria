@@ -88,4 +88,28 @@ String removeSectionNames(String s) => s
     .replaceAll('הלכה ', '')
     .replaceAll('מאמר ', '')
     .replaceAll('קטן  ', '')
-    .replaceAll('משנה  ', '');
+    .replaceAll('משנה  ', '')
+    .replaceAll('"', '')
+    .replaceAll("'", '')
+    .replaceAll(',', '')
+    .replaceAll(':', ' ב')
+    .replaceAll('.', ' א');
+
+String replaceParaphrases(String s) => s
+    .replaceAll('שוע', 'שולחן ערוך')
+    .replaceAll('בב', 'בבא בתרא')
+    .replaceAll('ֽבק', 'בבא קמא')
+    .replaceAll('אוח', 'אורח חיים')
+    .replaceAll('יוד', 'יורה דעה')
+    .replaceAll('שך', 'שפתי כהן')
+    .replaceAll('חומ', 'חושן משפט')
+    .replaceAll('משנה תורה', 'רמבם')
+    .replaceAll('במ', 'בבא מציעא')
+    .replaceAll('אהעז', 'אבן העזר')
+    .replaceAll('שך', 'שפתי כהן')
+    .replaceAll('סמע', 'מאירת עינים')
+    .replaceAll('בש', 'בית שמואל')
+    .replaceAll('קצהח', 'קצות החושן')
+    .replaceAll('נתיהמ', 'נתיבות המשפט')
+    .replaceAll('פתש', 'פתחי תשובה')
+    .replaceAll('משנב', 'משנה ברורה');

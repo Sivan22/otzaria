@@ -42,8 +42,18 @@ class TantivyDataProvider {
             'ref_index';
 
     engine = SearchEngine.newInstance(path: indexPath);
-    refEngine = ReferenceSearchEngine(path: refIndexPath);
 
+    try {
+      refEngine = ReferenceSearchEngine(path: refIndexPath);
+    } catch (e) {
+      if (e.toString() ==
+          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+        resetIndex(indexPath);
+        reopenIndex();
+      } else {
+        rethrow;
+      }
+    }
     //test the engine
     engine.then((value) {
       try {
@@ -63,20 +73,6 @@ class TantivyDataProvider {
         }
       }
     });
-
-    try {
-      //test the ref engine
-      refEngine.search(
-          query: 'a', limit: 10, fuzzy: false, order: ResultsOrder.catalogue);
-    } catch (e) {
-      if (e.toString() ==
-          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
-        resetIndex(refIndexPath);
-        reopenIndex();
-      } else {
-        rethrow;
-      }
-    }
     try {
       booksDone = Hive.box(
               name: 'books_indexed',

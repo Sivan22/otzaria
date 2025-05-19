@@ -103,7 +103,8 @@ class IndexingRepository {
 
         // Index the header as a reference
         String refText = stripHtmlIfNeeded(reference.join(" "));
-        final shortref = removeSectionNames(refText);
+        final shortref = replaceParaphrases(removeSectionNames(refText));
+
         refIndex.addDocument(
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
