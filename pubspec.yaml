@@ -13,6 +13,7 @@ msix_config:
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: sivan22.pfx
   certificate_password: 1234
+  signtool_options: /debug
   app_installer: #<-- app installer configuration
     publish_folder_path: C:\dev\otzaria\build\windows\x64\runner\Release
     hours_between_update_checks: 24
