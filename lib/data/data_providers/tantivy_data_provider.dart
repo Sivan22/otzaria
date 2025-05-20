@@ -16,12 +16,6 @@ class TantivyDataProvider {
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
 
-  /// Notifies listeners about the number of books that have been processed during indexing
-  ValueNotifier<int?> numOfbooksDone = ValueNotifier(null);
-
-  /// Notifies listeners about the total number of books to be processed
-  ValueNotifier<int?> numOfbooksTotal = ValueNotifier(null);
-
   /// Indicates whether the indexing process is currently running
   ValueNotifier<bool> isIndexing = ValueNotifier(false);
 
@@ -140,6 +134,7 @@ class TantivyDataProvider {
 
   /// Clears the index and resets the list of indexed books.
   Future<void> clear() async {
+    isIndexing.value = false;
     final index = await engine;
     await index.clear();
     final refIndex = refEngine;

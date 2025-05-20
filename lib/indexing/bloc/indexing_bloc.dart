@@ -75,7 +75,9 @@ class IndexingBloc extends Bloc<IndexingEvent, IndexingState> {
   ) {
     // If indexing is complete
     if (event.processed >= event.total) {
-      emit(IndexingComplete());
+      emit(const IndexingComplete());
+    } else if (!_repository.isIndexing()) {
+      emit(IndexingInitial());
     } else {
       // Update progress state
       emit(IndexingInProgress(

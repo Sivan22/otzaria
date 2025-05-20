@@ -295,20 +295,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                     ),
                     BlocBuilder<IndexingBloc, IndexingState>(
                       builder: (context, indexingState) {
-                        final bool isIndexing =
-                            indexingState is IndexingInProgress;
-                        final int? booksProcessed =
-                            indexingState.booksProcessed;
-                        final int? totalBooks = indexingState.totalBooks;
-
                         return SimpleSettingsTile(
                           title: "אינדקס חיפוש",
-                          subtitle: isIndexing
-                              ? "בתהליך עדכון: $booksProcessed/$totalBooks"
+                          subtitle: indexingState is IndexingInProgress
+                              ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
                               : "האינדקס מעודכן",
                           leading: const Icon(Icons.table_chart),
                           onTap: () async {
-                            if (isIndexing) {
+                            if (indexingState is IndexingInProgress) {
                               final result = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
@@ -333,6 +327,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                 context
                                     .read<IndexingBloc>()
                                     .add(CancelIndexing());
+                                setState(() {});
                               }
                             } else {
                               final result = await showDialog<bool>(
