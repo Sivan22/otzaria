@@ -84,13 +84,16 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider<LibraryBloc>(
-          create: (context) => LibraryBloc()..add(LoadLibrary()),
-        ),
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(
             repository: SettingsRepository(),
           )..add(LoadSettings()),
+        ),
+        BlocProvider<LibraryBloc>(
+          create: (context) => LibraryBloc()..add(LoadLibrary()),
+        ),
+        BlocProvider<IndexingBloc>(
+          create: (context) => IndexingBloc.create(),
         ),
         BlocProvider<HistoryBloc>(
             create: (context) => HistoryBloc(historyRepository)),
@@ -107,9 +110,8 @@ void main() async {
         ),
         BlocProvider<FindRefBloc>(
             create: (context) => FindRefBloc(
-                findRefRepository:
-                    FindRefRepository(dataRepository: DataRepository.instance))
-              ..add(CheckIndexStatusRequested())),
+                findRefRepository: FindRefRepository(
+                    dataRepository: DataRepository.instance))),
         BlocProvider<BookmarkBloc>(
           create: (context) => BookmarkBloc(BookmarkRepository()),
         ),
@@ -121,9 +123,6 @@ void main() async {
             repository: WorkspaceRepository(),
             tabsBloc: context.read<TabsBloc>(),
           )..add(LoadWorkspaces()),
-        ),
-        BlocProvider<IndexingBloc>(
-          create: (context) => IndexingBloc.create(),
         ),
       ],
       child: const App(),

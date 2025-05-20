@@ -60,9 +60,8 @@ class App extends StatelessWidget {
         ),
         BlocProvider<FindRefBloc>(
             create: (context) => FindRefBloc(
-                findRefRepository:
-                    FindRefRepository(dataRepository: DataRepository.instance))
-              ..add(CheckIndexStatusRequested())),
+                findRefRepository: FindRefRepository(
+                    dataRepository: DataRepository.instance))),
         BlocProvider<BookmarkBloc>(
           create: (context) => BookmarkBloc(BookmarkRepository()),
         ),

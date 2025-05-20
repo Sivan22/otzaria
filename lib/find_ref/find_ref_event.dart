@@ -18,8 +18,6 @@ class SearchRefRequested extends FindRefEvent {
 
 class ClearSearchRequested extends FindRefEvent {}
 
-class CheckIndexStatusRequested extends FindRefEvent {}
-
 class OpenBookRequested extends FindRefEvent {
   final Book book;
   final int index;

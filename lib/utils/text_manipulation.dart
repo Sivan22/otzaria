@@ -95,21 +95,37 @@ String removeSectionNames(String s) => s
     .replaceAll(':', ' ב')
     .replaceAll('.', ' א');
 
-String replaceParaphrases(String s) => s
-    .replaceAll('שוע', 'שולחן ערוך')
-    .replaceAll('בב', 'בבא בתרא')
-    .replaceAll('ֽבק', 'בבא קמא')
-    .replaceAll('אוח', 'אורח חיים')
-    .replaceAll('יוד', 'יורה דעה')
-    .replaceAll('שך', 'שפתי כהן')
-    .replaceAll('חומ', 'חושן משפט')
-    .replaceAll('משנה תורה', 'רמבם')
-    .replaceAll('במ', 'בבא מציעא')
-    .replaceAll('אהעז', 'אבן העזר')
-    .replaceAll('שך', 'שפתי כהן')
-    .replaceAll('סמע', 'מאירת עינים')
-    .replaceAll('בש', 'בית שמואל')
-    .replaceAll('קצהח', 'קצות החושן')
-    .replaceAll('נתיהמ', 'נתיבות המשפט')
-    .replaceAll('פתש', 'פתחי תשובה')
-    .replaceAll('משנב', 'משנה ברורה');
+String replaceParaphrases(String s) {
+  s = s
+      .replaceAll('שוע', 'שולחן ערוך')
+      .replaceAll('בב', 'בבא בתרא')
+      .replaceAll('ֽבק', 'בבא קמא')
+      .replaceAll('אוח', 'אורח חיים')
+      .replaceAll('יוד', 'יורה דעה')
+      .replaceAll('חומ', 'חושן משפט')
+      .replaceAll('משנה תורה', 'רמבם')
+      .replaceAll('במ', 'בבא מציעא')
+      .replaceAll('אהעז', 'אבן העזר')
+      .replaceAll('שך', 'שפתי כהן')
+      .replaceAll('סמע', 'מאירת עינים')
+      .replaceAll('בש', 'בית שמואל')
+      .replaceAll('קצהח', 'קצות החושן')
+      .replaceAll('נתיהמ', 'נתיבות המשפט')
+      .replaceAll('פתש', 'פתחי תשובה')
+      .replaceAll('משנב', 'משנה ברורה')
+      .replaceAll('שטמק', 'שיטה מקובצת')
+      .replaceAll('פמג', 'פרי מגדים')
+      .replaceAll('פרמג', 'פרי מגדים')
+      .replaceAll('פרח', 'פרי חדש')
+      .replaceAll('שע', 'שולחן ערוך');
+
+  if (s.startsWith("טז")) {
+    s = s.replaceFirst("טז", "טורי זהב");
+  }
+
+  if (s.startsWith("מב")) {
+    s = s.replaceFirst("מב", "משנה ברורה");
+  }
+
+  return s;
+}

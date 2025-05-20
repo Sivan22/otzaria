@@ -5,6 +5,8 @@ import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/focus/focus_state.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -23,6 +25,7 @@ class FindRefScreen extends StatefulWidget {
 
 class _FindRefScreenState extends State<FindRefScreen> {
   late final FocusNode _focusNode;
+  bool showIndexWarning = false;
 
   @override
   void initState() {
@@ -33,6 +36,9 @@ class _FindRefScreenState extends State<FindRefScreen> {
         _focusNode.requestFocus();
       }
     });
+    if (context.read<IndexingBloc>().state is IndexingInProgress) {
+      showIndexWarning = true;
+    }
   }
 
   @override
@@ -42,39 +48,33 @@ class _FindRefScreenState extends State<FindRefScreen> {
   }
 
   Widget _buildIndexingWarning() {
-    return BlocBuilder<FindRefBloc, FindRefState>(
-      builder: (context, state) {
-        if (state is FindRefIndexingStatus) {
-          if (state.totalBooks == null ||
-              state.booksProcessed == null ||
-              state.booksProcessed! >= state.totalBooks!) {
-            return const SizedBox.shrink();
-          }
-          return Container(
-            padding: const EdgeInsets.all(8.0),
-            margin: const EdgeInsets.only(bottom: 8.0),
-            decoration: BoxDecoration(
-              color: Colors.yellow.shade100,
-              borderRadius: BorderRadius.circular(4),
+    if (showIndexWarning) {
+      return Container(
+        padding: const EdgeInsets.all(8.0),
+        margin: const EdgeInsets.only(bottom: 8.0),
+        decoration: BoxDecoration(
+          color: Colors.yellow.shade100,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.orange[700]),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'אינדקס המקורות בתהליך בנייה. תוצאות החיפוש עלולות להיות חלקיות.',
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.black87),
+              ),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber, color: Colors.orange[700]),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'אינדקס המקורות בתהליך בנייה. תוצאות החיפוש עלולות להיות חלקיות.',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(color: Colors.black87),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        return const SizedBox.shrink();
-      },
-    );
+            IconButton(
+                onPressed: () => setState(() => showIndexWarning = false),
+                icon: const Icon(Icons.close))
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   @override
