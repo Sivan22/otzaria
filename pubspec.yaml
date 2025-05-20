@@ -12,7 +12,7 @@ msix_config:
   logo_path: assets/icon/icon.png
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: sivan22.pfx
-  certificate_password: 1234
+  certificate_password: sivan22
   signtool_options: /debug
   app_installer: #<-- app installer configuration
     publish_folder_path: C:\dev\otzaria\build\windows\x64\runner\Release
@@ -57,7 +57,7 @@ dependencies:
   hive: ^4.0.0-dev.2
   isar_flutter_libs: ^4.0.0-dev.14
   isar: ^4.0.0-dev.14
-  msix: ^3.16.7
+  msix: ^3.16.9
   path_provider: ^2.0.15
   html: ^0.15.1
   pdfrx: ^1.1.11
