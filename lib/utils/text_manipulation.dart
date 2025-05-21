@@ -34,29 +34,6 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-String paraphrase(String text) {
-  Map<String, String> paraphrases = {
-    '־': ' ',
-    'שוע': 'שולחן ערוך',
-    'שך': 'שפתי כהן',
-    'טז': 'טורי זהב',
-    'חומ': 'חושן משפט',
-    'יוד': 'יורה דעה',
-    'אהעז': 'אבן העזר',
-    'אוח': 'אורח חיים',
-    'בק': 'בבא קמא',
-    'במ': 'בבא מציעא',
-    'בב': 'בבא בתרא',
-    'ראבד': 'ראב"ד',
-    'בח': 'ב"ח'
-  };
-  for (var key in paraphrases.keys) {
-    text = text.replaceAll(key, paraphrases[key] ?? key);
-  }
-
-  return text;
-}
-
 String replaceHolyNames(String s) {
   s = s
       .replaceAll("יהוה", "יקוק")
@@ -97,14 +74,14 @@ String removeSectionNames(String s) => s
 
 String replaceParaphrases(String s) {
   s = s
-      .replaceAll('שוע', 'שולחן ערוך')
-      .replaceAll('בב', 'בבא בתרא')
-      .replaceAll('ֽבק', 'בבא קמא')
+      .replaceAll(' שוע', ' שולחן ערוך')
+      .replaceAll(' בב', ' בבא בתרא')
+      .replaceAll(' בק', ' בבא קמא')
       .replaceAll('אוח', 'אורח חיים')
-      .replaceAll('יוד', 'יורה דעה')
-      .replaceAll('חומ', 'חושן משפט')
+      .replaceAll(' יוד', ' יורה דעה')
+      .replaceAll(' חומ', ' חושן משפט')
       .replaceAll('משנה תורה', 'רמבם')
-      .replaceAll('במ', 'בבא מציעא')
+      .replaceAll(' במ', 'בבא מציעא')
       .replaceAll('אהעז', 'אבן העזר')
       .replaceAll('שך', 'שפתי כהן')
       .replaceAll('סמע', 'מאירת עינים')
@@ -116,8 +93,8 @@ String replaceParaphrases(String s) {
       .replaceAll('שטמק', 'שיטה מקובצת')
       .replaceAll('פמג', 'פרי מגדים')
       .replaceAll('פרמג', 'פרי מגדים')
-      .replaceAll('פרח', 'פרי חדש')
-      .replaceAll('שע', 'שולחן ערוך');
+      .replaceAll(' פרח', ' פרי חדש')
+      .replaceAll(' שע', ' שולחן ערוך');
 
   if (s.startsWith("טז")) {
     s = s.replaceFirst("טז", "טורי זהב");
