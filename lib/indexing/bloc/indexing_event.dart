@@ -17,6 +17,8 @@ class StartIndexing extends IndexingEvent {
   List<Object?> get props => [library];
 }
 
+class ClearIndex extends IndexingEvent {}
+
 class CancelIndexing extends IndexingEvent {}
 
 class UpdateIndexingProgress extends IndexingEvent {

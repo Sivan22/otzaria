@@ -34,29 +34,6 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-String paraphrase(String text) {
-  Map<String, String> paraphrases = {
-    '־': ' ',
-    'שוע': 'שולחן ערוך',
-    'שך': 'שפתי כהן',
-    'טז': 'טורי זהב',
-    'חומ': 'חושן משפט',
-    'יוד': 'יורה דעה',
-    'אהעז': 'אבן העזר',
-    'אוח': 'אורח חיים',
-    'בק': 'בבא קמא',
-    'במ': 'בבא מציעא',
-    'בב': 'בבא בתרא',
-    'ראבד': 'ראב"ד',
-    'בח': 'ב"ח'
-  };
-  for (var key in paraphrases.keys) {
-    text = text.replaceAll(key, paraphrases[key] ?? key);
-  }
-
-  return text;
-}
-
 String replaceHolyNames(String s) {
   s = s
       .replaceAll("יהוה", "יקוק")
@@ -78,3 +55,54 @@ String removeTeamim(String s) => s
     .replaceAll('ֽ', '')
     .replaceAll('׀', '')
     .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
+
+String removeSectionNames(String s) => s
+    .replaceAll('פרק ', '')
+    .replaceAll('פסוק ', '')
+    .replaceAll('פסקה ', '')
+    .replaceAll('סעיף ', '')
+    .replaceAll('סימן ', '')
+    .replaceAll('הלכה ', '')
+    .replaceAll('מאמר ', '')
+    .replaceAll('קטן  ', '')
+    .replaceAll('משנה  ', '')
+    .replaceAll('"', '')
+    .replaceAll("'", '')
+    .replaceAll(',', '')
+    .replaceAll(':', ' ב')
+    .replaceAll('.', ' א');
+
+String replaceParaphrases(String s) {
+  s = s
+      .replaceAll(' שוע', ' שולחן ערוך')
+      .replaceAll(' בב', ' בבא בתרא')
+      .replaceAll(' בק', ' בבא קמא')
+      .replaceAll('אוח', 'אורח חיים')
+      .replaceAll(' יוד', ' יורה דעה')
+      .replaceAll(' חומ', ' חושן משפט')
+      .replaceAll('משנה תורה', 'רמבם')
+      .replaceAll(' במ', 'בבא מציעא')
+      .replaceAll('אהעז', 'אבן העזר')
+      .replaceAll('שך', 'שפתי כהן')
+      .replaceAll('סמע', 'מאירת עינים')
+      .replaceAll('בש', 'בית שמואל')
+      .replaceAll('קצהח', 'קצות החושן')
+      .replaceAll('נתיהמ', 'נתיבות המשפט')
+      .replaceAll('פתש', 'פתחי תשובה')
+      .replaceAll('משנב', 'משנה ברורה')
+      .replaceAll('שטמק', 'שיטה מקובצת')
+      .replaceAll('פמג', 'פרי מגדים')
+      .replaceAll('פרמג', 'פרי מגדים')
+      .replaceAll(' פרח', ' פרי חדש')
+      .replaceAll(' שע', ' שולחן ערוך');
+
+  if (s.startsWith("טז")) {
+    s = s.replaceFirst("טז", "טורי זהב");
+  }
+
+  if (s.startsWith("מב")) {
+    s = s.replaceFirst("מב", "משנה ברורה");
+  }
+
+  return s;
+}

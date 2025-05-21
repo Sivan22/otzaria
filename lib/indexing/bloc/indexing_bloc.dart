@@ -11,6 +11,7 @@ class IndexingBloc extends Bloc<IndexingEvent, IndexingState> {
     on<StartIndexing>(_onStartIndexing);
     on<CancelIndexing>(_onCancelIndexing);
     on<UpdateIndexingProgress>(_onUpdateProgress);
+    on<ClearIndex>(_onEraseIndex);
   }
 
   /// Factory constructor that creates an IndexingBloc with a default repository
@@ -61,6 +62,12 @@ class IndexingBloc extends Bloc<IndexingEvent, IndexingState> {
     emit(IndexingInitial());
   }
 
+  /// Handles the EraseIndex event
+  void _onEraseIndex(ClearIndex event, Emitter<IndexingState> emit) async {
+    await _repository.clearIndex();
+    emit(IndexingInitial());
+  }
+
   /// Handles the UpdateIndexingProgress event
   void _onUpdateProgress(
     UpdateIndexingProgress event,
@@ -68,7 +75,9 @@ class IndexingBloc extends Bloc<IndexingEvent, IndexingState> {
   ) {
     // If indexing is complete
     if (event.processed >= event.total) {
-      emit(IndexingComplete());
+      emit(const IndexingComplete());
+    } else if (!_repository.isIndexing()) {
+      emit(IndexingInitial());
     } else {
       // Update progress state
       emit(IndexingInProgress(

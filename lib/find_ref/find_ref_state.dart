@@ -1,6 +1,6 @@
 import 'package:otzaria/models/books.dart'; // Import Book model
 import 'package:equatable/equatable.dart';
-import 'package:otzaria/models/isar_collections/ref.dart';
+import 'package:search_engine/search_engine.dart';
 
 abstract class FindRefState extends Equatable {
   const FindRefState();
@@ -14,7 +14,7 @@ class FindRefInitial extends FindRefState {}
 class FindRefLoading extends FindRefState {}
 
 class FindRefSuccess extends FindRefState {
-  final List<Ref> refs;
+  final List<ReferenceSearchResult> refs;
   const FindRefSuccess(this.refs);
 
   @override
