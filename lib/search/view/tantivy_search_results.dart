@@ -80,6 +80,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                       title: result.title,
                                       path: result.filePath),
                                   pageNumber: result.segment.toInt() + 1,
+                                  searchText: widget.tab.queryController.text,
                                 ),
                               ));
                         } else {

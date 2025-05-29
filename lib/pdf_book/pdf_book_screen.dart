@@ -69,6 +69,34 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     super.dispose();
   }
 
+  Future<void> _performAutoSearch() async {
+    if (widget.tab.searchText.isNotEmpty && widget.tab.pdfViewerController.isReady) {
+      // Start the search
+      textSearcher.startTextSearch(widget.tab.searchText);
+      
+      // Wait for search to complete or find matches
+      while (textSearcher.isSearching && textSearcher.matches.isEmpty) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      
+      // Find the first match on or after the current page
+      final currentPage = widget.tab.pageNumber;
+      int? targetMatchIndex;
+      
+      for (int i = 0; i < textSearcher.matches.length; i++) {
+        if (textSearcher.matches[i].pageNumber >= currentPage) {
+          targetMatchIndex = i;
+          break;
+        }
+      }
+      
+      // If found a match on or after current page, go to it
+      if (targetMatchIndex != null) {
+        await textSearcher.goToMatchOfIndex(targetMatchIndex);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -267,6 +295,13 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }();
                 if (mounted) {
                   widget.tab.showLeftPane.value = true;
+                  // Perform auto search if searchText is provided
+                  if (widget.tab.searchText.isNotEmpty) {
+                    // Small delay to ensure everything is ready
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      _performAutoSearch();
+                    });
+                  }
                 }
               },
             ),
@@ -337,6 +372,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           builder: (context, documentRef, child) => child!,
                           child: PdfBookSearchView(
                             textSearcher: textSearcher,
+                            initialSearchText: widget.tab.searchText,
                           ),
                         ),
                         ValueListenableBuilder(

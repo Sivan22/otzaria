@@ -9,10 +9,12 @@ import 'package:synchronized/extension.dart';
 class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
+    this.initialSearchText = '',
     super.key,
   });
 
   final PdfTextSearcher textSearcher;
+  final String initialSearchText;
 
   @override
   State<PdfBookSearchView> createState() => _PdfBookSearchViewState();
@@ -29,6 +31,13 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   void initState() {
     widget.textSearcher.addListener(_searchResultUpdated);
     searchTextController.addListener(_searchTextUpdated);
+    
+    // Set initial search text if provided
+    if (widget.initialSearchText.isNotEmpty) {
+      searchTextController.text = widget.initialSearchText;
+      // Don't start search here, it will be handled by the parent
+    }
+    
     super.initState();
   }
 
