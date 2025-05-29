@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/focus/focus_bloc.dart';
 import 'package:otzaria/focus/focus_event.dart';
+import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
+import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/navigation/favoriets_screen.dart';
+import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
@@ -44,6 +48,11 @@ class MainWindowScreenState extends State<MainWindowScreen>
     pageController = PageController(
       initialPage: Screen.library.index,
     );
+    // Auto start indexing
+    if (context.read<SettingsBloc>().state.autoUpdateIndex) {
+      DataRepository.instance.library.then((library) =>
+          context.read<IndexingBloc>().add(StartIndexing(library)));
+    }
   }
 
   @override

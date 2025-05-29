@@ -3,8 +3,7 @@ import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_repository.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/models/isar_collections/ref.dart';
-import 'package:otzaria/data/data_providers/isar_data_provider.dart';
+import 'package:search_engine/search_engine.dart';
 
 class FindRefBloc extends Bloc<FindRefEvent, FindRefState> {
   final FindRefRepository findRefRepository;
@@ -12,7 +11,6 @@ class FindRefBloc extends Bloc<FindRefEvent, FindRefState> {
   FindRefBloc({required this.findRefRepository}) : super(FindRefInitial()) {
     on<SearchRefRequested>(_onSearchRefRequested);
     on<ClearSearchRequested>(_onClearSearchRequested);
-    on<CheckIndexStatusRequested>(_onCheckIndexStatusRequested);
     on<OpenBookRequested>(_onOpenBookRequested);
   }
 
@@ -24,7 +22,8 @@ class FindRefBloc extends Bloc<FindRefEvent, FindRefState> {
     }
     emit(FindRefLoading());
     try {
-      final List<Ref> refs = await findRefRepository.findRefs(event.refText);
+      final List<ReferenceSearchResult> refs =
+          await findRefRepository.findRefs(event.refText);
       emit(FindRefSuccess(refs));
     } catch (e) {
       emit(FindRefError(e.toString()));
@@ -34,20 +33,6 @@ class FindRefBloc extends Bloc<FindRefEvent, FindRefState> {
   void _onClearSearchRequested(
       ClearSearchRequested event, Emitter<FindRefState> emit) {
     emit(FindRefInitial());
-  }
-
-  Future<void> _onCheckIndexStatusRequested(
-      CheckIndexStatusRequested event, Emitter<FindRefState> emit) async {
-    final booksProcessed = IsarDataProvider.instance.refsNumOfbooksDone.value;
-    final totalBooks = IsarDataProvider.instance.refsNumOfbooksTotal.value;
-    emit(FindRefIndexingStatus(
-        booksProcessed: booksProcessed, totalBooks: totalBooks));
-
-    final booksWithRefs = await findRefRepository.getNumberOfBooksWithRefs();
-    if (booksWithRefs == 0) {
-      // TODO: move createRefsFromLibrary to bloc/repository if needed
-      // appModel.createRefsFromLibrary(0);
-    }
   }
 
   void _onOpenBookRequested(

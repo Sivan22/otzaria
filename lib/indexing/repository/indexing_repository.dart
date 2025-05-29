@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/library/models/library.dart';
 import 'package:otzaria/models/books.dart';
@@ -61,7 +62,7 @@ class IndexingRepository {
         // Report progress
         onProgress(processedBooks, totalBooks);
       } catch (e) {
-        print('Error adding ${book.title} to index: $e');
+        debugPrint('Error adding ${book.title} to index: $e');
         processedBooks++;
       }
     }
@@ -70,9 +71,10 @@ class IndexingRepository {
     _tantivyDataProvider.isIndexing.value = false;
   }
 
-  /// Indexes a text-based book by processing its content and adding it to the search index.
+  /// Indexes a text-based book by processing its content and adding it to the search index and reference index.
   Future<void> _indexTextBook(TextBook book) async {
     final index = await _tantivyDataProvider.engine;
+    final refIndex = _tantivyDataProvider.refEngine;
     var text = await book.text;
     final title = book.title;
     final topics = "/${book.topics.replaceAll(', ', '/')}";
@@ -98,9 +100,24 @@ class IndexingRepository {
               reference.length);
         }
         reference.add(line);
+
+        // Index the header as a reference
+        String refText = stripHtmlIfNeeded(reference.join(" "));
+        final shortref = replaceParaphrases(removeSectionNames(refText));
+
+        refIndex.addDocument(
+            id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
+            title: title,
+            reference: refText,
+            shortRef: shortref,
+            segment: BigInt.from(i),
+            isPdf: false,
+            filePath: '');
       } else {
         line = stripHtmlIfNeeded(line);
         line = removeVolwels(line);
+
+        // Add to search index
         index.addDocument(
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
@@ -114,6 +131,7 @@ class IndexingRepository {
     }
 
     await index.commit();
+    await refIndex.commit();
     saveIndexedBooks();
   }
 
@@ -163,10 +181,7 @@ class IndexingRepository {
 
   /// Clears the index and resets the list of indexed books.
   Future<void> clearIndex() async {
-    final index = await _tantivyDataProvider.engine;
-    await index.clear();
-    _tantivyDataProvider.booksDone.clear();
-    saveIndexedBooks();
+    _tantivyDataProvider.clear();
   }
 
   /// Gets the list of books that have already been indexed.

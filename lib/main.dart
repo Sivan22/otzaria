@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
-import 'package:logging/logging.dart';
 import 'package:otzaria/app.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
@@ -85,13 +84,16 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider<LibraryBloc>(
-          create: (context) => LibraryBloc()..add(LoadLibrary()),
-        ),
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(
             repository: SettingsRepository(),
           )..add(LoadSettings()),
+        ),
+        BlocProvider<LibraryBloc>(
+          create: (context) => LibraryBloc()..add(LoadLibrary()),
+        ),
+        BlocProvider<IndexingBloc>(
+          create: (context) => IndexingBloc.create(),
         ),
         BlocProvider<HistoryBloc>(
             create: (context) => HistoryBloc(historyRepository)),
@@ -108,9 +110,8 @@ void main() async {
         ),
         BlocProvider<FindRefBloc>(
             create: (context) => FindRefBloc(
-                findRefRepository:
-                    FindRefRepository(dataRepository: DataRepository.instance))
-              ..add(CheckIndexStatusRequested())),
+                findRefRepository: FindRefRepository(
+                    dataRepository: DataRepository.instance))),
         BlocProvider<BookmarkBloc>(
           create: (context) => BookmarkBloc(BookmarkRepository()),
         ),
@@ -122,9 +123,6 @@ void main() async {
             repository: WorkspaceRepository(),
             tabsBloc: context.read<TabsBloc>(),
           )..add(LoadWorkspaces()),
-        ),
-        BlocProvider<IndexingBloc>(
-          create: (context) => IndexingBloc.create(),
         ),
       ],
       child: const App(),
@@ -159,6 +157,8 @@ Future<void> createDirs() async {
       '${Settings.getValue('key-library-path')}${Platform.pathSeparator}אוצריא');
   createDirectoryIfNotExists(
       '${Settings.getValue('key-library-path')}${Platform.pathSeparator}index');
+  createDirectoryIfNotExists(
+      '${Settings.getValue('key-library-path')}${Platform.pathSeparator}ref_index');
 }
 
 /// Initializes the library path based on the platform.

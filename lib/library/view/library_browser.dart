@@ -503,7 +503,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _update(
       BuildContext context, LibraryState state, SettingsState settingsState) {
     context.read<LibraryBloc>().add(UpdateSearchQuery(
-        context.read<FocusBloc>().state.librarySearchController.text ?? ""));
+        context.read<FocusBloc>().state.librarySearchController.text));
     context.read<LibraryBloc>().add(
           SearchBooks(
             showHebrewBooks: settingsState.showHebrewBooks,

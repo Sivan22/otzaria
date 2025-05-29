@@ -8,11 +8,12 @@ msix_config:
   display_name: אוצריא
   publisher_display_name: sivan22
   identity_name: sivan22.Otzaria
-  msix_version: 0.2.6.2
+  msix_version: 0.2.7.0
   logo_path: assets/icon/icon.png
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: sivan22.pfx
-  certificate_password: 1234
+  certificate_password: sivan22
+  signtool_options: /debug
   app_installer: #<-- app installer configuration
     publish_folder_path: C:\dev\otzaria\build\windows\x64\runner\Release
     hours_between_update_checks: 24
@@ -33,7 +34,7 @@ msix_config:
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.6-dev.2
+version: 0.2.7-dev
 
 environment:
   sdk: ">=3.2.6 <4.0.0"
@@ -56,7 +57,7 @@ dependencies:
   hive: ^4.0.0-dev.2
   isar_flutter_libs: ^4.0.0-dev.14
   isar: ^4.0.0-dev.14
-  msix: ^3.16.7
+  msix: ^3.16.9
   path_provider: ^2.0.15
   html: ^0.15.1
   pdfrx: ^1.1.11
@@ -89,7 +90,7 @@ dependencies:
     #path: ../search_engine
     git:
       url: https://github.com/Sivan22/otzaria_search_engine
-      ref: add_topics_facet
+      ref: e27e50def242898ea6da12ac98892b064977f22a
   flutter_archive: ^6.0.3
   flutter_spinbox: ^0.13.1
   toggle_switch: ^2.3.0

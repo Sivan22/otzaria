@@ -11,15 +11,10 @@ import 'package:hive/hive.dart';
 class TantivyDataProvider {
   /// Instance of the search engine pointing to the index directory
   late Future<SearchEngine> engine;
+  late ReferenceSearchEngine refEngine;
 
   static final TantivyDataProvider _singleton = TantivyDataProvider();
   static TantivyDataProvider instance = _singleton;
-
-  /// Notifies listeners about the number of books that have been processed during indexing
-  ValueNotifier<int?> numOfbooksDone = ValueNotifier(null);
-
-  /// Notifies listeners about the total number of books to be processed
-  ValueNotifier<int?> numOfbooksTotal = ValueNotifier(null);
 
   /// Indicates whether the indexing process is currently running
   ValueNotifier<bool> isIndexing = ValueNotifier(false);
@@ -35,9 +30,24 @@ class TantivyDataProvider {
     String indexPath = (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
         Platform.pathSeparator +
         'index';
+    String refIndexPath =
+        (Settings.getValue('key-library-path') ?? 'C:/אוצריא') +
+            Platform.pathSeparator +
+            'ref_index';
 
     engine = SearchEngine.newInstance(path: indexPath);
 
+    try {
+      refEngine = ReferenceSearchEngine(path: refIndexPath);
+    } catch (e) {
+      if (e.toString() ==
+          "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
+        resetIndex(indexPath);
+        reopenIndex();
+      } else {
+        rethrow;
+      }
+    }
     //test the engine
     engine.then((value) {
       try {
@@ -57,7 +67,6 @@ class TantivyDataProvider {
         }
       }
     });
-
     try {
       booksDone = Hive.box(
               name: 'books_indexed',
@@ -114,10 +123,22 @@ class TantivyDataProvider {
         query: query, facets: facets, limit: limit, fuzzy: fuzzy);
   }
 
+  Future<List<ReferenceSearchResult>> searchRefs(
+      String reference, int limit, bool fuzzy) async {
+    return refEngine.search(
+        query: reference,
+        limit: limit,
+        fuzzy: fuzzy,
+        order: ResultsOrder.relevance);
+  }
+
   /// Clears the index and resets the list of indexed books.
   Future<void> clear() async {
+    isIndexing.value = false;
     final index = await engine;
     await index.clear();
+    final refIndex = refEngine;
+    await refIndex.clear();
     booksDone.clear();
     saveBooksDoneToDisk();
   }

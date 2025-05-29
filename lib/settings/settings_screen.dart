@@ -29,16 +29,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
   bool get wantKeepAlive => true;
 
   @override
-  void initState() {
-    super.initState();
-    // Auto start indexing
-    if (context.read<SettingsBloc>().state.autoUpdateIndex) {
-      DataRepository.instance.library.then((library) =>
-          context.read<IndexingBloc>().add(StartIndexing(library)));
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     const Map<String, String> shortcuctsList = {
@@ -305,20 +295,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                     ),
                     BlocBuilder<IndexingBloc, IndexingState>(
                       builder: (context, indexingState) {
-                        final bool isIndexing =
-                            indexingState is IndexingInProgress;
-                        final int? booksProcessed =
-                            indexingState.booksProcessed;
-                        final int? totalBooks = indexingState.totalBooks;
-
                         return SimpleSettingsTile(
                           title: "אינדקס חיפוש",
-                          subtitle: isIndexing
-                              ? "בתהליך עדכון: $booksProcessed/$totalBooks"
+                          subtitle: indexingState is IndexingInProgress
+                              ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
                               : "האינדקס מעודכן",
                           leading: const Icon(Icons.table_chart),
                           onTap: () async {
-                            if (isIndexing) {
+                            if (indexingState is IndexingInProgress) {
                               final result = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
@@ -343,13 +327,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                 context
                                     .read<IndexingBloc>()
                                     .add(CancelIndexing());
+                                setState(() {});
                               }
                             } else {
                               final result = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
                                         content:
-                                            const Text('האם לעדכן את האינדקס?'),
+                                            const Text('האם לאפס את האינדקס?'),
                                         actions: <Widget>[
                                           TextButton(
                                             child: const Text('ביטול'),
@@ -366,6 +351,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                         ],
                                       ));
                               if (result == true) {
+                                //reset the index
+                                context.read<IndexingBloc>().add(ClearIndex());
                                 final library =
                                     context.read<LibraryBloc>().state.library;
                                 if (library != null) {
@@ -380,16 +367,22 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       },
                     ),
                     SwitchSettingsTile(
-                      title: 'עדכון אינדקס אוטומטי',
+                      title: 'עדכון אינדקס',
                       leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-index-update',
                       defaultValue: state.autoUpdateIndex,
                       enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
                       disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
-                      onChange: (value) {
+                      onChange: (value) async {
                         context
                             .read<SettingsBloc>()
                             .add(UpdateAutoUpdateIndex(value));
+                        if (value) {
+                          final library = DataRepository.instance.library;
+                          context
+                              .read<IndexingBloc>()
+                              .add(StartIndexing(await library));
+                        }
                       },
                     ),
                     if (!(Platform.isAndroid || Platform.isIOS)) ...[
