@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:otzaria/focus/focus_bloc.dart';
-import 'package:otzaria/focus/focus_event.dart';
-import 'package:otzaria/focus/focus_state.dart';
+import 'package:otzaria/focus/focus_repository.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:otzaria/library/bloc/library_state.dart';
@@ -48,11 +46,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     super.initState();
     _searchFocusNode = FocusNode();
     context.read<LibraryBloc>().add(LoadLibrary());
-    context.read<FocusBloc>().stream.listen((focusState) {
-      if (focusState.focusTarget == FocusTarget.librarySearch) {
-        _searchFocusNode.requestFocus();
-      }
-    });
   }
 
   @override
@@ -103,8 +96,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             setState(() => _depth = 0);
                             context.read<LibraryBloc>().add(LoadLibrary());
                             context
-                                .read<FocusBloc>()
-                                .state
+                                .read<FocusRepository>()
                                 .librarySearchController
                                 .clear();
                             _update(context, state, settingsState);
@@ -157,8 +149,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
               children: [
                 _buildSearchBar(state),
                 if (context
-                        .read<FocusBloc>()
-                        .state
+                        .read<FocusRepository>()
                         .librarySearchController
                         .text
                         .length >
@@ -180,12 +171,12 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       padding: const EdgeInsets.all(8.0),
       child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, settingsState) {
-        final focusBloc = context.read<FocusBloc>();
+        final focusRepository = context.read<FocusRepository>();
         return Row(
           children: [
             Expanded(
               child: TextField(
-                controller: focusBloc.state.librarySearchController,
+                controller: focusRepository.librarySearchController,
                 focusNode: _searchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
@@ -193,7 +184,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      focusBloc.state.librarySearchController.clear();
+                      focusRepository.librarySearchController.clear();
                       _update(context, state, settingsState);
                       _refocusSearchBar();
                     },
@@ -304,11 +295,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           return Center(child: Text('Error: ${snapshot.error}'));
         }
         if (snapshot.hasData && snapshot.data!.isEmpty) {
-          final focusBloc = context.read<FocusBloc>();
+          final focusRepository = context.read<FocusRepository>();
           return Center(
             child: Text(
-              focusBloc.state.librarySearchController.text.isNotEmpty
-                  ? 'אין תוצאות עבור "${focusBloc.state.librarySearchController.text}"'
+              focusRepository.librarySearchController.text.isNotEmpty
+                  ? 'אין תוצאות עבור "${focusRepository.librarySearchController.text}"'
                   : 'אין פריטים להצגה בתיקייה זו',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
@@ -503,7 +494,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _update(
       BuildContext context, LibraryState state, SettingsState settingsState) {
     context.read<LibraryBloc>().add(UpdateSearchQuery(
-        context.read<FocusBloc>().state.librarySearchController.text));
+        context.read<FocusRepository>().librarySearchController.text));
     context.read<LibraryBloc>().add(
           SearchBooks(
             showHebrewBooks: settingsState.showHebrewBooks,
@@ -515,11 +506,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   }
 
   void _refocusSearchBar({bool selectAll = false}) {
-    final focusBloc = context.read<FocusBloc>();
+    final focusRepository = context.read<FocusRepository>();
     if (selectAll) {
-      focusBloc.add(RequestLibrarySearchFocus(selectAll: selectAll));
-    } else {
-      _searchFocusNode.requestFocus();
+      focusRepository.requestLibrarySearchFocus(selectAll: selectAll);
     }
+    _searchFocusNode.requestFocus();
   }
 }

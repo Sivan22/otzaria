@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_state.dart';
-import 'package:otzaria/focus/focus_bloc.dart';
-import 'package:otzaria/focus/focus_state.dart';
+import 'package:otzaria/focus/focus_repository.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
@@ -31,11 +30,6 @@ class _FindRefScreenState extends State<FindRefScreen> {
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-    context.read<FocusBloc>().stream.listen((focusState) {
-      if (focusState.focusTarget == FocusTarget.findRefSearch) {
-        _focusNode.requestFocus();
-      }
-    });
     if (context.read<IndexingBloc>().state is IndexingInProgress) {
       showIndexWarning = true;
     }
@@ -79,7 +73,7 @@ class _FindRefScreenState extends State<FindRefScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final focusBloc = BlocProvider.of<FocusBloc>(context);
+    final focusRepository = context.read<FocusRepository>();
 
     return Scaffold(
       appBar: AppBar(
@@ -99,13 +93,13 @@ class _FindRefScreenState extends State<FindRefScreen> {
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
-                    focusBloc.state.findRefSearchController.clear();
+                    focusRepository.findRefSearchController.clear();
                     BlocProvider.of<FindRefBloc>(context)
                         .add(ClearSearchRequested());
                   },
                 ),
               ),
-              controller: focusBloc.state.findRefSearchController,
+              controller: focusRepository.findRefSearchController,
               onChanged: (ref) {
                 BlocProvider.of<FindRefBloc>(context)
                     .add(SearchRefRequested(ref));
@@ -119,7 +113,7 @@ class _FindRefScreenState extends State<FindRefScreen> {
                   } else if (state is FindRefError) {
                     return Text('Error: ${state.message}');
                   } else if (state is FindRefSuccess && state.refs.isEmpty) {
-                    if (focusBloc.state.findRefSearchController.text.length >=
+                    if (focusRepository.findRefSearchController.text.length >=
                         3) {
                       return const Center(
                         child: Text(

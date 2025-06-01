@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/focus/focus_repository.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
@@ -103,16 +104,16 @@ class KeyboardShortcuts extends StatelessWidget {
           context
               .read<NavigationBloc>()
               .add(const NavigateToScreen(Screen.library));
-          //TODO: replace with a focus bloc
-          //appModel.bookLocatorFocusNode.requestFocus();
+          //set focus
+          context.read<FocusRepository>().requestLibrarySearchFocus(selectAll: true);
         },
         shortcuts[Settings.getValue<String>('key-shortcut-open-find-ref') ??
             'ctrl+o']!: () {
           context
               .read<NavigationBloc>()
               .add(const NavigateToScreen(Screen.find));
-          //TODO: replace with a focus bloc
-          //appModel.findReferenceFocusNode.requestFocus();
+          //set focus
+          context.read<FocusRepository>().requestFindRefSearchFocus(selectAll: true);
         },
         shortcuts[Settings.getValue<String>('key-shortcut-close-tab') ??
             'ctrl+w']!: () {
