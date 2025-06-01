@@ -38,19 +38,15 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   @override
   bool get wantKeepAlive => true;
 
-  late final FocusNode _searchFocusNode;
-
   int _depth = 0;
   @override
   void initState() {
     super.initState();
-    _searchFocusNode = FocusNode();
     context.read<LibraryBloc>().add(LoadLibrary());
   }
 
   @override
   void dispose() {
-    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -177,7 +173,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             Expanded(
               child: TextField(
                 controller: focusRepository.librarySearchController,
-                focusNode: _searchFocusNode,
+                focusNode: context.read<FocusRepository>().librarySearchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
                   constraints: const BoxConstraints(maxWidth: 400),
@@ -507,9 +503,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _refocusSearchBar({bool selectAll = false}) {
     final focusRepository = context.read<FocusRepository>();
-    if (selectAll) {
-      focusRepository.requestLibrarySearchFocus(selectAll: selectAll);
-    }
-    _searchFocusNode.requestFocus();
+    focusRepository.requestLibrarySearchFocus(selectAll: selectAll);
   }
 }

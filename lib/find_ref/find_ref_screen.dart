@@ -23,23 +23,16 @@ class FindRefScreen extends StatefulWidget {
 }
 
 class _FindRefScreenState extends State<FindRefScreen> {
-  late final FocusNode _focusNode;
   bool showIndexWarning = false;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
     if (context.read<IndexingBloc>().state is IndexingInProgress) {
       showIndexWarning = true;
     }
   }
 
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
 
   Widget _buildIndexingWarning() {
     if (showIndexWarning) {
@@ -85,7 +78,7 @@ class _FindRefScreenState extends State<FindRefScreen> {
           children: [
             _buildIndexingWarning(),
             TextField(
-              focusNode: _focusNode,
+              focusNode: focusRepository.findRefSearchFocusNode,
               autofocus: true,
               decoration: InputDecoration(
                 hintText:
