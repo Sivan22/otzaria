@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
-import 'package:otzaria/focus/focus_bloc.dart';
-import 'package:otzaria/focus/focus_event.dart';
+import 'package:otzaria/focus/focus_repository.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
@@ -124,16 +123,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
         );
       }
       if (state.currentScreen == Screen.library) {
-        context
-            .read<FocusBloc>()
-            .add(const RequestLibrarySearchFocus(selectAll: true));
+        context.read<FocusRepository>().requestLibrarySearchFocus(selectAll: true);
       } else if (state.currentScreen == Screen.find) {
-        context
-            .read<FocusBloc>()
-            .add(const RequestFindRefSearchFocus(selectAll: true));
-      } else {
-        context.read<FocusBloc>().add(ClearFocus());
-      }
+        context.read<FocusRepository>().requestFindRefSearchFocus(selectAll: true);
+      } 
     }
   }
 
@@ -203,14 +196,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                               Screen.values[index]));
                                     }
                                     if (index == Screen.library.index) {
-                                      context.read<FocusBloc>().add(
-                                          const RequestLibrarySearchFocus(
-                                              selectAll: true));
+                                      context.read<FocusRepository>().requestLibrarySearchFocus(selectAll: true);
                                     }
                                     if (index == Screen.find.index) {
-                                      context.read<FocusBloc>().add(
-                                          const RequestFindRefSearchFocus(
-                                              selectAll: true));
+                                      context.read<FocusRepository>().requestFindRefSearchFocus(selectAll: true);
                                     }
                                   },
                                 ),
@@ -234,14 +223,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                       NavigateToScreen(Screen.values[index]));
                                 }
                                 if (index == Screen.library.index) {
-                                  context.read<FocusBloc>().add(
-                                      const RequestLibrarySearchFocus(
-                                          selectAll: true));
+                                  context.read<FocusRepository>().requestLibrarySearchFocus(selectAll: true);
                                 }
                                 if (index == Screen.find.index) {
-                                  context.read<FocusBloc>().add(
-                                      const RequestFindRefSearchFocus(
-                                          selectAll: true));
+                                  context.read<FocusRepository>().requestFindRefSearchFocus(selectAll: true);
                                 }
                               },
                             ),

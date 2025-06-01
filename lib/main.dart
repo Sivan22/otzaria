@@ -16,7 +16,7 @@ import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
 import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_repository.dart';
-import 'package:otzaria/focus/focus_bloc.dart';
+import 'package:otzaria/focus/focus_repository.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/history_repository.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
@@ -82,50 +82,54 @@ void main() async {
   final historyRepository = HistoryRepository();
 
   runApp(
-    MultiBlocProvider(
+    MultiRepositoryProvider(
       providers: [
-        BlocProvider<SettingsBloc>(
-          create: (context) => SettingsBloc(
-            repository: SettingsRepository(),
-          )..add(LoadSettings()),
-        ),
-        BlocProvider<LibraryBloc>(
-          create: (context) => LibraryBloc()..add(LoadLibrary()),
-        ),
-        BlocProvider<IndexingBloc>(
-          create: (context) => IndexingBloc.create(),
-        ),
-        BlocProvider<HistoryBloc>(
-            create: (context) => HistoryBloc(historyRepository)),
-        BlocProvider<TabsBloc>(
-          create: (context) => TabsBloc(
-            repository: TabsRepository(),
-          )..add(LoadTabs()),
-        ),
-        BlocProvider<NavigationBloc>(
-          create: (context) => NavigationBloc(
-            repository: NavigationRepository(),
-            tabsRepository: TabsRepository(),
-          )..add(const CheckLibrary()),
-        ),
-        BlocProvider<FindRefBloc>(
-            create: (context) => FindRefBloc(
-                findRefRepository: FindRefRepository(
-                    dataRepository: DataRepository.instance))),
-        BlocProvider<BookmarkBloc>(
-          create: (context) => BookmarkBloc(BookmarkRepository()),
-        ),
-        BlocProvider<FocusBloc>(
-          create: (context) => FocusBloc(),
-        ),
-        BlocProvider<WorkspaceBloc>(
-          create: (context) => WorkspaceBloc(
-            repository: WorkspaceRepository(),
-            tabsBloc: context.read<TabsBloc>(),
-          )..add(LoadWorkspaces()),
+        RepositoryProvider<FocusRepository>(
+          create: (context) => FocusRepository(),
         ),
       ],
-      child: const App(),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<SettingsBloc>(
+            create: (context) => SettingsBloc(
+              repository: SettingsRepository(),
+            )..add(LoadSettings()),
+          ),
+          BlocProvider<LibraryBloc>(
+            create: (context) => LibraryBloc()..add(LoadLibrary()),
+          ),
+          BlocProvider<IndexingBloc>(
+            create: (context) => IndexingBloc.create(),
+          ),
+          BlocProvider<HistoryBloc>(
+              create: (context) => HistoryBloc(historyRepository)),
+          BlocProvider<TabsBloc>(
+            create: (context) => TabsBloc(
+              repository: TabsRepository(),
+            )..add(LoadTabs()),
+          ),
+          BlocProvider<NavigationBloc>(
+            create: (context) => NavigationBloc(
+              repository: NavigationRepository(),
+              tabsRepository: TabsRepository(),
+            )..add(const CheckLibrary()),
+          ),
+          BlocProvider<FindRefBloc>(
+              create: (context) => FindRefBloc(
+                  findRefRepository: FindRefRepository(
+                      dataRepository: DataRepository.instance))),
+          BlocProvider<BookmarkBloc>(
+            create: (context) => BookmarkBloc(BookmarkRepository()),
+          ),
+          BlocProvider<WorkspaceBloc>(
+            create: (context) => WorkspaceBloc(
+              repository: WorkspaceRepository(),
+              tabsBloc: context.read<TabsBloc>(),
+            )..add(LoadWorkspaces()),
+          ),
+        ],
+        child: const App(),
+      ),
     ),
   );
 }
