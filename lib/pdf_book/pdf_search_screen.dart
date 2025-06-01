@@ -10,11 +10,13 @@ class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
     this.initialSearchText = '',
+    this.shouldNavigateOnInitialSearch = false, // New parameter to control initial navigation
     super.key,
   });
 
   final PdfTextSearcher textSearcher;
   final String initialSearchText;
+  final bool shouldNavigateOnInitialSearch; // Flag to prevent initial navigation
 
   @override
   State<PdfBookSearchView> createState() => _PdfBookSearchViewState();
@@ -26,7 +28,6 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   late final pageTextStore =
       PdfPageTextCache(textSearcher: widget.textSearcher);
   final scrollController = ScrollController();
-
   @override
   void initState() {
     widget.textSearcher.addListener(_searchResultUpdated);
@@ -35,7 +36,8 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     // Set initial search text if provided
     if (widget.initialSearchText.isNotEmpty) {
       searchTextController.text = widget.initialSearchText;
-      // Don't start search here, it will be handled by the parent
+      // Start the search but don't navigate if shouldNavigateOnInitialSearch is false
+
     }
     
     super.initState();
@@ -52,7 +54,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   }
 
   void _searchTextUpdated() {
-    widget.textSearcher.startTextSearch(searchTextController.text);
+    widget.textSearcher.startTextSearch(searchTextController.text, goToFirstMatch: false);
   }
 
   int? _currentSearchSession;
@@ -79,6 +81,14 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     }
 
     if (mounted) setState(() {});
+  }
+
+  // Public method to scroll to current match - can be called from parent
+  void scrollToCurrentMatch() {
+    if (widget.textSearcher.currentIndex != null && 
+        widget.textSearcher.currentIndex! < _matchIndexToListIndex.length) {
+      _conditionScrollPosition();
+    }
   }
 
   static const double itemHeight = 50;
@@ -134,6 +144,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   ? () async {
                       await widget.textSearcher.goToNextMatch();
                       _conditionScrollPosition();
+
                     }
                   : null,
               icon: const Icon(Icons.arrow_downward),
@@ -144,6 +155,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   ? () async {
                       await widget.textSearcher.goToPrevMatch();
                       _conditionScrollPosition();
+
                     }
                   : null,
               icon: const Icon(Icons.arrow_upward),

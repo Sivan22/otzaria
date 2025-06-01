@@ -32,12 +32,15 @@ class PdfBookScreen extends StatefulWidget {
 }
 
 class _PdfBookScreenState extends State<PdfBookScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
   late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
     ..addListener(_update);
+
+  late TabController _tabController;
+  final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
 
   void _update() {
     if (mounted) {
@@ -48,6 +51,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   @override
   void initState() {
     super.initState();
+    
+    // Initialize tab controller with the search tab selected if there's search text
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.tab.searchText.isNotEmpty ? 1 : 0,
+    );
+    
     widget.tab.pdfViewerController = PdfViewerController();
     widget.tab.pdfViewerController.addListener(() {
       if (widget.tab.pdfViewerController.isReady) {
@@ -66,35 +77,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   void dispose() {
     textSearcher.removeListener(_update);
     widget.tab.pdfViewerController.removeListener(() {});
+    _tabController.dispose();
     super.dispose();
-  }
-
-  Future<void> _performAutoSearch() async {
-    if (widget.tab.searchText.isNotEmpty && widget.tab.pdfViewerController.isReady) {
-      // Start the search
-      textSearcher.startTextSearch(widget.tab.searchText);
-      
-      // Wait for search to complete or find matches
-      while (textSearcher.isSearching && textSearcher.matches.isEmpty) {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-      
-      // Find the first match on or after the current page
-      final currentPage = widget.tab.pageNumber;
-      int? targetMatchIndex;
-      
-      for (int i = 0; i < textSearcher.matches.length; i++) {
-        if (textSearcher.matches[i].pageNumber >= currentPage) {
-          targetMatchIndex = i;
-          break;
-        }
-      }
-      
-      // If found a match on or after current page, go to it
-      if (targetMatchIndex != null) {
-        await textSearcher.goToMatchOfIndex(targetMatchIndex);
-      }
-    }
   }
 
   @override
@@ -295,13 +279,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }();
                 if (mounted) {
                   widget.tab.showLeftPane.value = true;
-                  // Perform auto search if searchText is provided
-                  if (widget.tab.searchText.isNotEmpty) {
-                    // Small delay to ensure everything is ready
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      _performAutoSearch();
-                    });
-                  }
+                  // No need for _performAutoSearch anymore - the PdfBookSearchView handles it
                 }
               },
             ),
@@ -320,73 +298,74 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-        child: DefaultTabController(
-          length: 3,
-          child: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-              child: Column(
-                children: [
-                  Row(
+        child: Container(
+          color: Theme.of(context).colorScheme.surface,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRect(
+                        child: TabBar(
+                          controller: _tabController,
+                          tabs: const [
+                            Tab(text: 'ניווט'),
+                            Tab(text: 'חיפוש'),
+                            Tab(text: 'דפים'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: widget.tab.pinLeftPane,
+                      builder: (context, pinLeftPanel, child) =>
+                          MediaQuery.of(context).size.width < 600
+                              ? const SizedBox.shrink()
+                              : IconButton(
+                                  onPressed: () {
+                                    widget.tab.pinLeftPane.value =
+                                        !widget.tab.pinLeftPane.value;
+                                  },
+                                  icon: const Icon(Icons.push_pin),
+                                  isSelected: pinLeftPanel,
+                                ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
                     children: [
-                      const Expanded(
-                        child: ClipRect(
-                          child: TabBar(
-                            tabs: [
-                              Tab(text: 'ניווט'),
-                              Tab(text: 'חיפוש'),
-                              Tab(text: 'דפים'),
-                            ],
-                          ),
+                      ValueListenableBuilder(
+                        valueListenable: widget.tab.outline,
+                        builder: (context, outline, child) => OutlineView(
+                          outline: outline,
+                          controller: widget.tab.pdfViewerController,
                         ),
                       ),
                       ValueListenableBuilder(
-                        valueListenable: widget.tab.pinLeftPane,
-                        builder: (context, pinLeftPanel, child) =>
-                            MediaQuery.of(context).size.width < 600
-                                ? const SizedBox.shrink()
-                                : IconButton(
-                                    onPressed: () {
-                                      widget.tab.pinLeftPane.value =
-                                          !widget.tab.pinLeftPane.value;
-                                    },
-                                    icon: const Icon(Icons.push_pin),
-                                    isSelected: pinLeftPanel,
-                                  ),
+                        valueListenable: widget.tab.documentRef,
+                        builder: (context, documentRef, child) => child!,
+                        child: PdfBookSearchView(
+                          key: _searchViewKey,
+                          textSearcher: textSearcher,
+                          initialSearchText: widget.tab.searchText,
+                          shouldNavigateOnInitialSearch: false, // Prevent jumping to beginning
+                        ),
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: widget.tab.documentRef,
+                        builder: (context, documentRef, child) => child!,
+                        child: ThumbnailsView(
+                            documentRef: widget.tab.documentRef.value,
+                            controller: widget.tab.pdfViewerController),
                       ),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.outline,
-                          builder: (context, outline, child) => OutlineView(
-                            outline: outline,
-                            controller: widget.tab.pdfViewerController,
-                          ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.documentRef,
-                          builder: (context, documentRef, child) => child!,
-                          child: PdfBookSearchView(
-                            textSearcher: textSearcher,
-                            initialSearchText: widget.tab.searchText,
-                          ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.documentRef,
-                          builder: (context, documentRef, child) => child!,
-                          child: ThumbnailsView(
-                              documentRef: widget.tab.documentRef.value,
-                              controller: widget.tab.pdfViewerController),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
