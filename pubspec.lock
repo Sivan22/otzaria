@@ -390,10 +390,11 @@ packages:
   flutter_document_picker:
     dependency: "direct main"
     description:
-      name: flutter_document_picker
-      sha256: "5229e22fb9ac7939c516b56736714bb92305762cf4027f34aaf9edda229c5004"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: master
+      resolved-ref: fc283629b2229ad99b8734f21dbdbc6be61e9933
+      url: "https://github.com/sidlatau/flutter_document_picker"
+    source: git
     version: "5.2.3"
   flutter_html:
     dependency: "direct main"
@@ -1038,8 +1039,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: e27e50def242898ea6da12ac98892b064977f22a
-      resolved-ref: e27e50def242898ea6da12ac98892b064977f22a
+      ref: "01b49f69b8475f673cd1db13128a482963d4bf7d"
+      resolved-ref: "01b49f69b8475f673cd1db13128a482963d4bf7d"
       url: "https://github.com/Sivan22/otzaria_search_engine"
     source: git
     version: "0.0.1"
