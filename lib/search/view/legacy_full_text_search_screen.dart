@@ -1,8 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_state.dart';
+import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:search_highlight_text/search_highlight_text.dart';
 import 'book_tree_checklist.dart';
 import '../models/legacy_full_text_searcher.dart';
@@ -29,12 +34,52 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   final showLeftPane = ValueNotifier<bool>(true);
   final FocusNode focusNode = FocusNode();
 
+  @override
+  void initState() {
+    super.initState();
+    // Request focus on search field when the widget is first created
+    _requestSearchFieldFocus();
+  }
+
+  @override
+  void didUpdateWidget(TextFileSearchScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Request focus when switching back to this tab
+    _requestSearchFieldFocus();
+  }
+
+  void _requestSearchFieldFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && focusNode.canRequestFocus) {
+        // Check if this is a legacy search by checking if current tab contains this searcher
+        final tabsState = context.read<TabsBloc>().state;
+        if (tabsState.hasOpenTabs && 
+            tabsState.currentTabIndex < tabsState.tabs.length) {
+          // For legacy search, we need to check if we're in the active tab differently
+          // since legacy search doesn't have a direct tab reference
+          final currentTab = tabsState.tabs[tabsState.currentTabIndex];
+          // Only request focus if current tab is a searching tab 
+          // (legacy search is only used when not using fast search)
+          if (currentTab.runtimeType.toString().contains('SearchingTab')) {
+            focusNode.requestFocus();
+          }
+        }
+      }
+    });
+  }
+
+  void _onNavigationChanged(NavigationState state) {
+    // Request focus when navigating to search screen
+    if (state.currentScreen == Screen.search) {
+      _requestSearchFieldFocus();
+    }
+  }
+
   Widget buildSearchField(bool isSearching) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(60, 30, 60, 10),
       child: TextField(
         focusNode: focusNode,
-        autofocus: true,
         controller: widget.searcher.queryController,
         onSubmitted: (e) => widget.searcher.search(),
         decoration: buildSearchDecoration(isSearching),
@@ -212,14 +257,17 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          children: [
-            buildIsSearchingBuilder(),
-            buildSearchResultsBuilder(),
-          ],
+    return BlocListener<NavigationBloc, NavigationState>(
+      listener: (context, state) => _onNavigationChanged(state),
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              buildIsSearchingBuilder(),
+              buildSearchResultsBuilder(),
+            ],
+          ),
         ),
       ),
     );
