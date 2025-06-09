@@ -5,8 +5,6 @@
 #define MyAppVersion "0.2.7"
 #define MyAppPublisher "sivan22"
 #define MyAppURL "https://github.com/Sivan22/otzaria"
-#define MyAppExeName "otzaria.exe"
-
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -25,7 +23,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir="C:\dev\otzaria\installer"
-OutputBaseFilename=otzaria-{#MyAppVersion}-windows
+OutputBaseFilename=otzaria-{#MyAppVersion}-windows-full
 SetupIconFile="C:\dev\otzaria\installer\white_sketch128x128.ico"
 Compression=lzma
 SolidCompression=yes
@@ -3309,6 +3307,9 @@ Type: filesandordirs; Name: "{app}\אוצריא\תנך\ראשונים\מנחת �
 Type: filesandordirs; Name: "{app}\index";
 Type: filesandordirs; Name: "{app}\default.isar";
 
+[Run]
+Filename: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"; WorkingDir: "{app}"; Parameters: " -sta -WindowStyle Hidden -noprofile -executionpolicy bypass -file uninstall_msix.ps1"; 
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
@@ -3316,12 +3317,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
-[Run]
-Filename: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"; WorkingDir: "{app}"; Parameters: " -sta -WindowStyle Hidden -noprofile -executionpolicy bypass -file uninstall_msix.ps1"; 
 
 [Languages]
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 
 [Files]
 Source: "..\build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\otzaria-library\אוצריא\*"; DestDir: "{app}\אוצריא"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\otzaria-library\links\*"; DestDir: "{app}\links"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\otzaria-library\files_manifest.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\otzaria-library\metadata.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "uninstall_msix.ps1"; DestDir: "{app}"; Flags: ignoreversion

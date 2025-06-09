@@ -1,6 +1,6 @@
 # Uninstall the MSIX package with the specified package name
 
-$packageName = "com.example.otzaria"
+$packageName = "sivan22.Otzaria"
 
 # Get the package
 $package = Get-AppxPackage -Name $packageName
