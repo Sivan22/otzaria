@@ -32,12 +32,14 @@ class PdfBookScreen extends StatefulWidget {
 }
 
 class _PdfBookScreenState extends State<PdfBookScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
   late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
     ..addListener(_update);
+  TabController? _leftPaneTabController;
+  int _currentLeftPaneTabIndex = 0;
 
   void _update() {
     if (mounted) {
@@ -49,23 +51,46 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   void initState() {
     super.initState();
     widget.tab.pdfViewerController = PdfViewerController();
-    widget.tab.pdfViewerController.addListener(() {
-      if (widget.tab.pdfViewerController.isReady) {
-        widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
-        () async {
-          widget.tab.currentTitle.value = await refFromPageNumber(
-              widget.tab.pageNumber =
-                  widget.tab.pdfViewerController.pageNumber ?? 1,
-              widget.tab.outline.value);
-        }();
+    widget.tab.pdfViewerController.addListener(_onPdfViewerControllerUpdate);
+
+    if (widget.tab.searchText.isNotEmpty) {
+      _currentLeftPaneTabIndex = 1; // Index for "Search" tab
+    } else {
+      _currentLeftPaneTabIndex = 0; // Default to "Navigation"
+    }
+
+    _leftPaneTabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: _currentLeftPaneTabIndex,
+    );
+    _leftPaneTabController!.addListener(() {
+      if (_currentLeftPaneTabIndex != _leftPaneTabController!.index) {
+        setState(() {
+          _currentLeftPaneTabIndex = _leftPaneTabController!.index;
+        });
       }
     });
+  }
+
+  void _onPdfViewerControllerUpdate() {
+    if (widget.tab.pdfViewerController.isReady) {
+      widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
+      () async {
+        widget.tab.currentTitle.value = await refFromPageNumber(
+            widget.tab.pageNumber =
+                widget.tab.pdfViewerController.pageNumber ?? 1,
+            widget.tab.outline.value);
+      }();
+    }
   }
 
   @override
   void dispose() {
     textSearcher.removeListener(_update);
-    widget.tab.pdfViewerController.removeListener(() {});
+    widget.tab.pdfViewerController
+        .removeListener(_onPdfViewerControllerUpdate);
+    _leftPaneTabController?.dispose();
     super.dispose();
   }
 
@@ -325,73 +350,72 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-        child: DefaultTabController(
-          length: 3,
-          child: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-              child: Column(
-                children: [
-                  Row(
+        child: Container( // Removed DefaultTabController
+          color: Theme.of(context).colorScheme.surface,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRect(
+                        child: TabBar(
+                          controller: _leftPaneTabController, // Use the managed controller
+                          tabs: const [
+                            Tab(text: 'ניווט'),
+                            Tab(text: 'חיפוש'),
+                            Tab(text: 'דפים'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: widget.tab.pinLeftPane,
+                      builder: (context, pinLeftPanel, child) =>
+                          MediaQuery.of(context).size.width < 600
+                              ? const SizedBox.shrink()
+                              : IconButton(
+                                  onPressed: () {
+                                    widget.tab.pinLeftPane.value =
+                                        !widget.tab.pinLeftPane.value;
+                                  },
+                                  icon: const Icon(Icons.push_pin),
+                                  isSelected: pinLeftPanel,
+                                ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _leftPaneTabController, // Use the managed controller
                     children: [
-                      const Expanded(
-                        child: ClipRect(
-                          child: TabBar(
-                            tabs: [
-                              Tab(text: 'ניווט'),
-                              Tab(text: 'חיפוש'),
-                              Tab(text: 'דפים'),
-                            ],
-                          ),
+                      ValueListenableBuilder(
+                        valueListenable: widget.tab.outline,
+                        builder: (context, outline, child) => OutlineView(
+                          outline: outline,
+                          controller: widget.tab.pdfViewerController,
                         ),
                       ),
                       ValueListenableBuilder(
-                        valueListenable: widget.tab.pinLeftPane,
-                        builder: (context, pinLeftPanel, child) =>
-                            MediaQuery.of(context).size.width < 600
-                                ? const SizedBox.shrink()
-                                : IconButton(
-                                    onPressed: () {
-                                      widget.tab.pinLeftPane.value =
-                                          !widget.tab.pinLeftPane.value;
-                                    },
-                                    icon: const Icon(Icons.push_pin),
-                                    isSelected: pinLeftPanel,
-                                  ),
+                        valueListenable: widget.tab.documentRef,
+                        builder: (context, documentRef, child) => child!,
+                        child: PdfBookSearchView(
+                          textSearcher: textSearcher,
+                          initialSearchText: widget.tab.searchText,
+                        ),
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: widget.tab.documentRef,
+                        builder: (context, documentRef, child) => child!,
+                        child: ThumbnailsView(
+                            documentRef: widget.tab.documentRef.value,
+                            controller: widget.tab.pdfViewerController),
                       ),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.outline,
-                          builder: (context, outline, child) => OutlineView(
-                            outline: outline,
-                            controller: widget.tab.pdfViewerController,
-                          ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.documentRef,
-                          builder: (context, documentRef, child) => child!,
-                          child: PdfBookSearchView(
-                            textSearcher: textSearcher,
-                            initialSearchText: widget.tab.searchText,
-                          ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.documentRef,
-                          builder: (context, documentRef, child) => child!,
-                          child: ThumbnailsView(
-                              documentRef: widget.tab.documentRef.value,
-                              controller: widget.tab.pdfViewerController),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
