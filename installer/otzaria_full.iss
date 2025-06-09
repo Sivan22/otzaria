@@ -5,6 +5,7 @@
 #define MyAppVersion "0.2.7"
 #define MyAppPublisher "sivan22"
 #define MyAppURL "https://github.com/Sivan22/otzaria"
+#define MyAppExeName "otzaria.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.

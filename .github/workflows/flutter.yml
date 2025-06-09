@@ -1,6 +1,11 @@
 name: "Build for all platforms"
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
 
 jobs:
   build_windows:
@@ -8,77 +13,206 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          path: otzaria
+      
+      - name: Clone otzaria-library repository
+        uses: actions/checkout@v4
+        with:
+          repository: zevisvei/otzaria-library
+          path: otzaria-library
+      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      - run: dart run msix:create --install-certificate false
-      - name: Upload windows build
+      
+      - name: Build Flutter Windows app
+        run: |
+          cd otzaria
+          flutter build windows --release
+      
+      - name: Copy otzaria-library to Flutter build
+        run: |
+          xcopy /E /I otzaria-library otzaria\build\windows\x64\runner\release\otzaria-library
+      
+      - name: Install Inno Setup
+        run: |
+          Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
+          Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+      
+      - name: Build Inno Setup installer
+        run: |
+          cd otzaria
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\otzaria.iss
+      
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria.msix
-          path: build/windows/x64/runner/release/otzaria.msix
+          name: otzaria-windows-installer
+          path: otzaria/installer/otzaria-*-windows.exe
 
   build_linux:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          path: otzaria
+      
+      - name: Clone otzaria-library repository
+        uses: actions/checkout@v4
+        with:
+          repository: zevisvei/otzaria-library
+          path: otzaria-library
+      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      
       - run: |
           sudo apt-get update -y
           sudo apt-get install -y ninja-build libgtk-3-dev libblkid1 liblzma5
-      - run: flutter build linux
+      
+      - name: Build Flutter Linux app
+        run: |
+          cd otzaria
+          flutter build linux
+      
+      - name: Copy otzaria-library to Flutter build
+        run: |
+          cp -r otzaria-library otzaria/build/linux/x64/release/bundle/
+      
       - name: zip the bundle
-        run: cd build/linux/x64/release/bundle/ && zip -r otzaria-linux.zip ./
+        run: cd otzaria/build/linux/x64/release/bundle/ && zip -r otzaria-linux.zip ./
+      
       - name: Upload linux build
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: build/linux/x64/release/bundle/otzaria-linux.zip
+          path: otzaria/build/linux/x64/release/bundle/otzaria-linux.zip
 
   build_android:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          path: otzaria
+      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      
       - run: sudo apt install ninja-build
-      - run: flutter pub get
-      - run: flutter build apk
+      
+      - name: Build Android APK
+        run: |
+          cd otzaria
+          flutter pub get
+          flutter build apk
+      
       - name: Upload apk
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-android.apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: otzaria/build/app/outputs/flutter-apk/app-release.apk
 
   build_macos:
     runs-on: macos-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          path: otzaria
+      
+      - name: Clone otzaria-library repository
+        uses: actions/checkout@v4
+        with:
+          repository: zevisvei/otzaria-library
+          path: otzaria-library
+      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      - run: flutter build macos
+      
+      - name: Build Flutter macOS app
+        run: |
+          cd otzaria
+          flutter build macos
+      
+      - name: Copy otzaria-library to Flutter build
+        run: |
+          cp -r otzaria-library otzaria/build/macos/Build/Products/Release/
+      
       - name: Zip the app bundle
-        run: cd build/macos/Build/Products/Release && zip -r otzaria-macos.zip otzaria.app
+        run: cd otzaria/build/macos/Build/Products/Release && zip -r otzaria-macos.zip otzaria.app otzaria-library
+      
       - name: Upload macos build
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-macos.zip
-          path: build/macos/Build/Products/Release/otzaria-macos.zip
+          path: otzaria/build/macos/Build/Products/Release/otzaria-macos.zip
 
-
-     
+  create_release:
+    needs: [build_windows, build_linux, build_android, build_macos]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Get version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            echo "tag=v$VERSION-dev-${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "title=Otzaria v$VERSION Development Build #${{ github.run_number }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.title }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          files: |
+            artifacts/otzaria-windows-installer/*.exe
+            artifacts/otzaria-linux.zip/*.zip
+            artifacts/otzaria-android.apk/*.apk
+            artifacts/otzaria-macos.zip/*.zip
+          body: |
+            ## Changes in this release
+            
+            Built from commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+            
+            ### Downloads:
+            - **Windows**: Download the `.exe` installer
+            - **Linux**: Download and extract the `.zip` file
+            - **Android**: Install the `.apk` file
+            - **macOS**: Download and extract the `.zip` file
+            
+            ${{ github.ref_name == 'dev' && '⚠️ **This is a development build** - Use at your own risk!' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
