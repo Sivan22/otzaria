@@ -207,15 +207,19 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }),
           ],
         ),
-        body: ColorFiltered(
-          colorFilter: ColorFilter.mode(
-              Colors.white,
-              Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
-                  ? BlendMode.difference
-                  : BlendMode.dst),
-          child: PdfViewer.file(
-            widget.tab.book.path,
-            initialPageNumber: widget.tab.pageNumber,
+        body: Row(
+          children: [
+            _buildLeftPane(),
+            Expanded(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                    Colors.white,
+                    Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
+                        ? BlendMode.difference
+                        : BlendMode.dst),
+                child: PdfViewer.file(
+                  widget.tab.book.path,
+                  initialPageNumber: widget.tab.pageNumber,
             passwordProvider: () => passwordDialog(context),
             controller: widget.tab.pdfViewerController,
             params: PdfViewerParams(
@@ -254,7 +258,6 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     ),
                   ),
                 ),
-                _buildLeftPane(),
               ],
               loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
                   Center(
@@ -306,6 +309,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               },
             ),
           ),
+        ),
+        )],
         ),
       );
     });
