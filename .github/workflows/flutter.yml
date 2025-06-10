@@ -65,7 +65,7 @@ jobs:
       - name: Upload linux build
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria-linux.zip
+          name: otzaria-linux
           path: build/linux/x64/release/bundle/*
 
   build_android:
@@ -113,7 +113,7 @@ jobs:
       - name: Upload macos build
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria-macos.zip
+          name: otzaria-macos.app
           path: build/macos/Build/Products/Release/Otzaria.app
 
   create_release:
@@ -153,9 +153,9 @@ jobs:
           prerelease: ${{ steps.version.outputs.prerelease }}
           files: |
             artifacts/otzaria-windows-installer/*.exe
-            artifacts/otzaria-linux.zip/*.zip
+            artifacts/otzaria-linux
             artifacts/otzaria-android.apk/*.apk
-            artifacts/otzaria-macos.zip/*.zip
+            artifacts/otzaria-macos.app
           body: |
             ## Changes in this release
             
