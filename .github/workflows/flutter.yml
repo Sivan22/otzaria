@@ -26,9 +26,10 @@ jobs:
       
       - name: Install Inno Setup
         run: |
-          Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
-          Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
-      
+          Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile winget.msixbundle
+          Add-AppxPackage winget.msixbundle
+          winget install --id JRSoftware.InnoSetup -e -s winget -i   
+             
       - name: Build Inno Setup installer
         run: |
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\otzaria.iss
