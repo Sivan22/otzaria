@@ -95,7 +95,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
               'נמצאו ${searchResults.length} תוצאות',
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).textTheme.caption?.color ?? Colors.grey[700],
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey[700],
               ),
             ),
           ),
