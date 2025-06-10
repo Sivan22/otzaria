@@ -19,14 +19,16 @@ jobs:
         with:
           channel: stable
           cache: true
+
+      - name: Install Inno Setup
+        run: |
+          ./installer/install_inno_setup.ps1
       
       - name: Build Flutter Windows app
         run: |
           flutter build windows --release
       
-      - name: Install Inno Setup
-        run: |
-          ./installer/install_inno_setup.ps1
+    
              
       - name: Build Inno Setup installer
         run: |
