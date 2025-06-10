@@ -12,16 +12,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
-        with:
-          path: otzaria
-      
-      - name: Clone otzaria-library repository
-        uses: actions/checkout@v4
-        with:
-          repository: zevisvei/otzaria-library
-          path: otzaria-library
-      
+        uses: actions/checkout@v4      
+     
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -30,12 +22,7 @@ jobs:
       
       - name: Build Flutter Windows app
         run: |
-          cd otzaria
           flutter build windows --release
-      
-      - name: Copy otzaria-library to Flutter build
-        run: |
-          xcopy /E /I otzaria-library otzaria\build\windows\x64\runner\release\otzaria-library
       
       - name: Install Inno Setup
         run: |
@@ -44,8 +31,7 @@ jobs:
       
       - name: Build Inno Setup installer
         run: |
-          cd otzaria
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\otzaria.iss
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\otzaria.iss
       
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
@@ -61,12 +47,6 @@ jobs:
         with:
           path: otzaria
       
-      - name: Clone otzaria-library repository
-        uses: actions/checkout@v4
-        with:
-          repository: zevisvei/otzaria-library
-          path: otzaria-library
-      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -79,21 +59,14 @@ jobs:
       
       - name: Build Flutter Linux app
         run: |
-          cd otzaria
           flutter build linux
       
-      - name: Copy otzaria-library to Flutter build
-        run: |
-          cp -r otzaria-library otzaria/build/linux/x64/release/bundle/
-      
-      - name: zip the bundle
-        run: cd otzaria/build/linux/x64/release/bundle/ && zip -r otzaria-linux.zip ./
-      
+       
       - name: Upload linux build
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: otzaria/build/linux/x64/release/bundle/otzaria-linux.zip
+          path: otzaria/build/linux/x64/release/bundle/*
 
   build_android:
     runs-on: ubuntu-latest
@@ -113,7 +86,6 @@ jobs:
       
       - name: Build Android APK
         run: |
-          cd otzaria
           flutter pub get
           flutter build apk
       
@@ -131,12 +103,6 @@ jobs:
         with:
           path: otzaria
       
-      - name: Clone otzaria-library repository
-        uses: actions/checkout@v4
-        with:
-          repository: zevisvei/otzaria-library
-          path: otzaria-library
-      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -145,21 +111,13 @@ jobs:
       
       - name: Build Flutter macOS app
         run: |
-          cd otzaria
           flutter build macos
-      
-      - name: Copy otzaria-library to Flutter build
-        run: |
-          cp -r otzaria-library otzaria/build/macos/Build/Products/Release/
-      
-      - name: Zip the app bundle
-        run: cd otzaria/build/macos/Build/Products/Release && zip -r otzaria-macos.zip otzaria.app otzaria-library
-      
+     
       - name: Upload macos build
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-macos.zip
-          path: otzaria/build/macos/Build/Products/Release/otzaria-macos.zip
+          path: otzaria/build/macos/Build/Products/Release/Otzaria.app
 
   create_release:
     needs: [build_windows, build_linux, build_android, build_macos]
