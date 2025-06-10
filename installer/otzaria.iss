@@ -51,5 +51,4 @@ Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 
 [Files]
 Source: "build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "build\windows\x64\runner\release\otzaria-library\*"; DestDir: "{app}\otzaria-library"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "installer\uninstall_msix.ps1"; DestDir: "{app}"; Flags: ignoreversion
