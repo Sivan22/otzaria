@@ -42,7 +42,7 @@ class StateProvider<T extends ListenableState> extends StatelessWidget {
   final Key? key;
   final T value;
   final Widget child;
-  const StateProvider({this.key, required this.child, required this.value});
+  const StateProvider({super.key, this.key, required this.child, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +76,7 @@ class StateProvider<T extends ListenableState> extends StatelessWidget {
 class ChangeNotifierProvider<T extends ListenableState>
     extends StatelessWidget {
   const ChangeNotifierProvider(
-      {required this.builder, this.child, this.rebuildOnChange = true});
+      {super.key, required this.builder, this.child, this.rebuildOnChange = true});
   final Widget? child;
   final ValueWidgetBuilder<T> builder;
 

@@ -31,7 +31,7 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     }
     BlocProvider.of<NavigationBloc>(context)
-        .add(NavigateToScreen(Screen.reading));
+        .add(const NavigateToScreen(Screen.reading));
   }
 }
 

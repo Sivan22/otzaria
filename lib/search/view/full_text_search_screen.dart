@@ -6,7 +6,6 @@ import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
 import 'package:otzaria/search/view/legacy_full_text_search_screen.dart';
-import 'package:provider/provider.dart';
 
 class FullTextSearchScreen extends StatelessWidget {
   final void Function(OpenedTab) openBookCallback;

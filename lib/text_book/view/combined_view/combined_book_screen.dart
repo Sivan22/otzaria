@@ -43,8 +43,9 @@ class _CombinedViewState extends State<CombinedView> {
     return BlocBuilder<TextBookBloc, TextBookState>(
         bloc: context.read<TextBookBloc>(),
         builder: (context, state) {
-          if (state is! TextBookLoaded)
+          if (state is! TextBookLoaded) {
             return const Center(child: CircularProgressIndicator());
+          }
           return ProgressiveScroll(
               maxSpeed: 10000.0,
               curve: 10.0,
@@ -63,13 +64,13 @@ class _CombinedViewState extends State<CombinedView> {
         scrollOffsetController: state.scrollOffsetController,
         itemCount: widget.data.length,
         itemBuilder: (context, index) {
-          ExpansionTileController controller = ExpansionTileController();
+          ExpansibleController controller = ExpansibleController();
           return buildExpansiomTile(controller, index, state);
         });
   }
 
   ExpansionTile buildExpansiomTile(
-      ExpansionTileController controller, int index, TextBookLoaded state) {
+      ExpansibleController controller, int index, TextBookLoaded state) {
     return ExpansionTile(
         shape: const Border(),
         //maintainState: true,

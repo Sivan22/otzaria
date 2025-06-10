@@ -86,7 +86,7 @@ void main() {
     });
 
     group('UpdateSeedColor', () {
-      final newColor = Colors.red;
+      const newColor = Colors.red;
 
       blocTest<SettingsBloc, SettingsState>(
         'emits updated state when UpdateSeedColor is added',

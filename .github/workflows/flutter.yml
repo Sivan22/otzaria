@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-windows-installer
-          path: otzaria/installer/otzaria-*-windows.exe
+          path: installer/otzaria-*-windows.exe
 
   build_linux:
     runs-on: ubuntu-latest
@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-linux.zip
-          path: otzaria/build/linux/x64/release/bundle/*
+          path: build/linux/x64/release/bundle/*
 
   build_android:
     runs-on: ubuntu-latest
@@ -91,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-android.apk
-          path: otzaria/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
   build_macos:
     runs-on: macos-latest
@@ -113,7 +113,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-macos.zip
-          path: otzaria/build/macos/Build/Products/Release/Otzaria.app
+          path: build/macos/Build/Products/Release/Otzaria.app
 
   create_release:
     needs: [build_windows, build_linux, build_android, build_macos]
