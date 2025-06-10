@@ -26,13 +26,11 @@ jobs:
       
       - name: Install Inno Setup
         run: |
-          Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile winget.msixbundle
-          Add-AppxPackage winget.msixbundle
-          winget install --id JRSoftware.InnoSetup -e -s winget -i   
+          ./installer/install_inno_setup.ps1
              
       - name: Build Inno Setup installer
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\otzaria.iss
+          iscc installer\otzaria.iss
       
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
