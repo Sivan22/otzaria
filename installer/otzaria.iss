@@ -23,16 +23,15 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=installer
+OutputDir=.\
 OutputBaseFilename=otzaria-{#MyAppVersion}-windows
-SetupIconFile=installer\white_sketch128x128.ico
+SetupIconFile=white_sketch128x128.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 DisableDirPage=auto
 
 [InstallDelete]
-Type: filesandordirs; Name: "{app}\אוצריא\תנך\ראשונים\מנחת שי\כתובים\מנחת שי על אסתר.txt";
 Type: filesandordirs; Name: "{app}\index";
 Type: filesandordirs; Name: "{app}\default.isar";
 
@@ -50,5 +49,5 @@ Filename: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"; WorkingDi
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 
 [Files]
-Source: "build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "installer\uninstall_msix.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "uninstall_msix.ps1"; DestDir: "{app}"; Flags: ignoreversion
