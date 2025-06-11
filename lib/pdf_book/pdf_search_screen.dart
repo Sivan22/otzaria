@@ -219,7 +219,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               } else {
                 return Container(
                   height: itemHeight,
-                  alignment: Alignment.bottomLeft,
+                  alignment: Alignment.bottomRight, // Changed from bottomLeft
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     'עמוד ${-matchIndex}',
@@ -227,6 +227,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
+                    textDirection: TextDirection.rtl, // Added this
                   ),
                 );
               }
