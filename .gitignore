@@ -32,9 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 build/
-/windows/
-android/
-linux/
+windows
 macos/
 ios/
 .dart_tool
