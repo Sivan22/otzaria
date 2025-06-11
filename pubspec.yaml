@@ -93,7 +93,7 @@ dependencies:
     #path: ../search_engine
     git:
       url: https://github.com/Sivan22/otzaria_search_engine
-      ref: e27e50def242898ea6da12ac98892b064977f22a
+      ref: 01b49f69b8475f673cd1db13128a482963d4bf7d
   flutter_archive: ^6.0.3
   flutter_spinbox: ^0.13.1
   toggle_switch: ^2.3.0
