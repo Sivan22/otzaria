@@ -38,6 +38,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
 
   late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
     ..addListener(_update);
+  TabController? _leftPaneTabController;
+  int _currentLeftPaneTabIndex = 0;
+
+  void _ensureSearchTabIsActive() {
+    if (_leftPaneTabController != null && _leftPaneTabController!.index != 1) {
+      _leftPaneTabController!.animateTo(1);
+    }
+  }
 
   late TabController _tabController;
   final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
@@ -60,24 +68,48 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     );
     
     widget.tab.pdfViewerController = PdfViewerController();
-    widget.tab.pdfViewerController.addListener(() {
-      if (widget.tab.pdfViewerController.isReady) {
-        widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
-        () async {
-          widget.tab.currentTitle.value = await refFromPageNumber(
-              widget.tab.pageNumber =
-                  widget.tab.pdfViewerController.pageNumber ?? 1,
-              widget.tab.outline.value);
-        }();
+    widget.tab.pdfViewerController.addListener(_onPdfViewerControllerUpdate);
+
+    if (widget.tab.searchText.isNotEmpty) {
+      _currentLeftPaneTabIndex = 1; // Index for "Search" tab
+    } else {
+      _currentLeftPaneTabIndex = 0; // Default to "Navigation"
+    }
+
+    _leftPaneTabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: _currentLeftPaneTabIndex,
+    );
+    _leftPaneTabController!.addListener(() {
+      if (_currentLeftPaneTabIndex != _leftPaneTabController!.index) {
+        setState(() {
+          _currentLeftPaneTabIndex = _leftPaneTabController!.index;
+        });
       }
     });
+  }
+
+  void _onPdfViewerControllerUpdate() {
+    if (widget.tab.pdfViewerController.isReady) {
+      widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
+      () async {
+        widget.tab.currentTitle.value = await refFromPageNumber(
+            widget.tab.pageNumber =
+                widget.tab.pdfViewerController.pageNumber ?? 1,
+            widget.tab.outline.value);
+      }();
+    }
   }
 
   @override
   void dispose() {
     textSearcher.removeListener(_update);
-    widget.tab.pdfViewerController.removeListener(() {});
-    _tabController.dispose();
+
+    widget.tab.pdfViewerController
+        .removeListener(_onPdfViewerControllerUpdate);
+    _leftPaneTabController?.dispose();
+
     super.dispose();
   }
 
@@ -191,15 +223,19 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }),
           ],
         ),
-        body: ColorFiltered(
-          colorFilter: ColorFilter.mode(
-              Colors.white,
-              Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
-                  ? BlendMode.difference
-                  : BlendMode.dst),
-          child: PdfViewer.file(
-            widget.tab.book.path,
-            initialPageNumber: widget.tab.pageNumber,
+        body: Row(
+          children: [
+            _buildLeftPane(),
+            Expanded(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                    Colors.white,
+                    Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
+                        ? BlendMode.difference
+                        : BlendMode.dst),
+                child: PdfViewer.file(
+                  widget.tab.book.path,
+                  initialPageNumber: widget.tab.pageNumber,
             passwordProvider: () => passwordDialog(context),
             controller: widget.tab.pdfViewerController,
             params: PdfViewerParams(
@@ -238,7 +274,6 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     ),
                   ),
                 ),
-                _buildLeftPane(),
               ],
               loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
                   Center(
@@ -285,6 +320,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             ),
           ),
         ),
+        )],
+        ),
       );
     });
   }
@@ -298,7 +335,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-        child: Container(
+
+        child: Container( 
+
           color: Theme.of(context).colorScheme.surface,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
@@ -309,7 +348,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     Expanded(
                       child: ClipRect(
                         child: TabBar(
-                          controller: _tabController,
+
+                          controller: _leftPaneTabController, // Use the managed controller
+
                           tabs: const [
                             Tab(text: 'ניווט'),
                             Tab(text: 'חיפוש'),
@@ -336,7 +377,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 ),
                 Expanded(
                   child: TabBarView(
-                    controller: _tabController,
+
+                    controller: _leftPaneTabController, // Use the managed controller
+
                     children: [
                       ValueListenableBuilder(
                         valueListenable: widget.tab.outline,
@@ -349,10 +392,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         valueListenable: widget.tab.documentRef,
                         builder: (context, documentRef, child) => child!,
                         child: PdfBookSearchView(
-                          key: _searchViewKey,
+
                           textSearcher: textSearcher,
                           initialSearchText: widget.tab.searchText,
-                          shouldNavigateOnInitialSearch: false, // Prevent jumping to beginning
+                          onSearchResultNavigated: _ensureSearchTabIsActive,
+
                         ),
                       ),
                       ValueListenableBuilder(

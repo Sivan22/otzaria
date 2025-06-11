@@ -10,13 +10,17 @@ class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
     this.initialSearchText = '',
-    this.shouldNavigateOnInitialSearch = false, // New parameter to control initial navigation
+
+    this.onSearchResultNavigated, // Add this
+
     super.key,
   });
 
   final PdfTextSearcher textSearcher;
   final String initialSearchText;
-  final bool shouldNavigateOnInitialSearch; // Flag to prevent initial navigation
+
+  final VoidCallback? onSearchResultNavigated; // Add this
+
 
   @override
   State<PdfBookSearchView> createState() => _PdfBookSearchViewState();
@@ -62,25 +66,52 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   final _listIndexToMatchIndex = <int>[];
 
   void _searchResultUpdated() {
-    if (_currentSearchSession != widget.textSearcher.searchSession) {
+    final previousListCount = _listIndexToMatchIndex.length;
+
+    // Force a full rebuild of the internal lists if:
+    // 1. The search session ID from the textSearcher has changed.
+    // 2. Or, our internal list for ListView (_listIndexToMatchIndex) is empty,
+    //    but the textSearcher actually has matches. This covers cases where
+    //    the view might be reconstructed/refreshed and lost its local list state,
+    //    but the underlying searcher still holds valid results.
+    if (_currentSearchSession != widget.textSearcher.searchSession ||
+        (_listIndexToMatchIndex.isEmpty && widget.textSearcher.hasMatches)) {
       _currentSearchSession = widget.textSearcher.searchSession;
       _matchIndexToListIndex.clear();
       _listIndexToMatchIndex.clear();
     }
-    for (int i = _matchIndexToListIndex.length;
+
+    // Populate _listIndexToMatchIndex and _matchIndexToListIndex.
+    // This loop will either:
+    //  - Fully rebuild the lists if they were cleared above.
+    //  - Or, append new matches if the session is the same and lists weren't cleared
+    //    (e.g., during an incremental search update).
+    for (int i = _matchIndexToListIndex.length; // Start from the current end of _matchIndexToListIndex
         i < widget.textSearcher.matches.length;
         i++) {
       if (i == 0 ||
           widget.textSearcher.matches[i - 1].pageNumber !=
               widget.textSearcher.matches[i].pageNumber) {
-        _listIndexToMatchIndex.add(-widget.textSearcher.matches[i]
-            .pageNumber); // negative index to indicate page header
+        // Add a negative page number to indicate a page header in the list
+        _listIndexToMatchIndex.add(-widget.textSearcher.matches[i].pageNumber);
       }
-      _matchIndexToListIndex.add(_listIndexToMatchIndex.length);
-      _listIndexToMatchIndex.add(i);
+      _matchIndexToListIndex.add(_listIndexToMatchIndex.length); // Store mapping for scrolling
+      _listIndexToMatchIndex.add(i); // Add actual match index
     }
 
-    if (mounted) setState(() {});
+    // Call setState to rebuild the UI if:
+    // - The component is still mounted.
+    // - And, either the new list has items (implying a change or initial population)
+    // - Or, the previous list had items (implying a potential clear or change).
+    // This avoids unnecessary rebuilds if the list was and remains empty.
+    if (mounted && (_listIndexToMatchIndex.isNotEmpty || previousListCount > 0)) {
+      setState(() {});
+    }
+    // _conditionScrollPosition(); // Consider if this is needed here or if current item highlighting handles it.
+    // The original code had setState({}) and then _conditionScrollPosition() was called from button presses.
+    // The highlighting of the current search item is based on `widget.textSearcher.currentIndex`
+    // which is managed by the `PdfTextSearcher` itself when `goToMatchOfIndex` or arrow buttons are used.
+    // So, simply ensuring the list is correctly built should be sufficient.
   }
 
   // Public method to scroll to current match - can be called from parent
@@ -143,6 +174,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                       widget.textSearcher.matches.length
                   ? () async {
                       await widget.textSearcher.goToNextMatch();
+                      widget.onSearchResultNavigated?.call(); // Add this line
                       _conditionScrollPosition();
 
                     }
@@ -154,6 +186,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               onPressed: (widget.textSearcher.currentIndex ?? 0) > 0
                   ? () async {
                       await widget.textSearcher.goToPrevMatch();
+                      widget.onSearchResultNavigated?.call(); // Add this line
                       _conditionScrollPosition();
 
                     }
@@ -190,6 +223,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   match: match,
                   onTap: () async {
                     await widget.textSearcher.goToMatchOfIndex(matchIndex);
+                    widget.onSearchResultNavigated?.call(); // Add this line
                     if (mounted) setState(() {});
                   },
                   pageTextStore: pageTextStore,
@@ -199,7 +233,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               } else {
                 return Container(
                   height: itemHeight,
-                  alignment: Alignment.bottomLeft,
+                  alignment: Alignment.bottomRight, // Changed from bottomLeft
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     'עמוד ${-matchIndex}',
@@ -207,6 +241,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
+                    textDirection: TextDirection.rtl, // Added this
                   ),
                 );
               }
