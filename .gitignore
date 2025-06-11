@@ -32,9 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 build/
-/windows/
-android/
-linux/
+windows
 macos/
 ios/
 .dart_tool
@@ -62,3 +60,6 @@ android/
 build/
 fonts/
 
+installer/otzaria-0.2.7-windows.exe
+installer/otzaria-0.2.7-windows-full.exe
+pubspec.lock

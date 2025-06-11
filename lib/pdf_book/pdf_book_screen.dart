@@ -47,6 +47,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     }
   }
 
+  late TabController _tabController;
+  final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
+
   void _update() {
     if (mounted) {
       setState(() {});
@@ -56,6 +59,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   @override
   void initState() {
     super.initState();
+    
+    // Initialize tab controller with the search tab selected if there's search text
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.tab.searchText.isNotEmpty ? 1 : 0,
+    );
+    
     widget.tab.pdfViewerController = PdfViewerController();
     widget.tab.pdfViewerController.addListener(_onPdfViewerControllerUpdate);
 
@@ -94,38 +105,12 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   @override
   void dispose() {
     textSearcher.removeListener(_update);
+
     widget.tab.pdfViewerController
         .removeListener(_onPdfViewerControllerUpdate);
     _leftPaneTabController?.dispose();
-    super.dispose();
-  }
 
-  Future<void> _performAutoSearch() async {
-    if (widget.tab.searchText.isNotEmpty && widget.tab.pdfViewerController.isReady) {
-      // Start the search
-      textSearcher.startTextSearch(widget.tab.searchText);
-      
-      // Wait for search to complete or find matches
-      while (textSearcher.isSearching && textSearcher.matches.isEmpty) {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-      
-      // Find the first match on or after the current page
-      final currentPage = widget.tab.pageNumber;
-      int? targetMatchIndex;
-      
-      for (int i = 0; i < textSearcher.matches.length; i++) {
-        if (textSearcher.matches[i].pageNumber >= currentPage) {
-          targetMatchIndex = i;
-          break;
-        }
-      }
-      
-      // If found a match on or after current page, go to it
-      if (targetMatchIndex != null) {
-        await textSearcher.goToMatchOfIndex(targetMatchIndex);
-      }
-    }
+    super.dispose();
   }
 
   @override
@@ -254,7 +239,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             passwordProvider: () => passwordDialog(context),
             controller: widget.tab.pdfViewerController,
             params: PdfViewerParams(
-              enableTextSelection: true,
+              //enableTextSelection: true,
               maxScale: 10,
               onInteractionStart: (_) {
                 if (!widget.tab.pinLeftPane.value) {
@@ -329,13 +314,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }();
                 if (mounted) {
                   widget.tab.showLeftPane.value = true;
-                  // Perform auto search if searchText is provided
-                  if (widget.tab.searchText.isNotEmpty) {
-                    // Small delay to ensure everything is ready
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      _performAutoSearch();
-                    });
-                  }
+                  // No need for _performAutoSearch anymore - the PdfBookSearchView handles it
                 }
               },
             ),
@@ -356,7 +335,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-        child: Container( // Removed DefaultTabController
+
+        child: Container( 
+
           color: Theme.of(context).colorScheme.surface,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
@@ -367,7 +348,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     Expanded(
                       child: ClipRect(
                         child: TabBar(
+
                           controller: _leftPaneTabController, // Use the managed controller
+
                           tabs: const [
                             Tab(text: 'ניווט'),
                             Tab(text: 'חיפוש'),
@@ -394,7 +377,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 ),
                 Expanded(
                   child: TabBarView(
+
                     controller: _leftPaneTabController, // Use the managed controller
+
                     children: [
                       ValueListenableBuilder(
                         valueListenable: widget.tab.outline,
@@ -407,9 +392,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         valueListenable: widget.tab.documentRef,
                         builder: (context, documentRef, child) => child!,
                         child: PdfBookSearchView(
+
                           textSearcher: textSearcher,
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
+
                         ),
                       ),
                       ValueListenableBuilder(

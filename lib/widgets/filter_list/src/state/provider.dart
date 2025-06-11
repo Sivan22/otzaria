@@ -76,7 +76,7 @@ class StateProvider<T extends ListenableState> extends StatelessWidget {
 class ChangeNotifierProvider<T extends ListenableState>
     extends StatelessWidget {
   const ChangeNotifierProvider(
-      {required this.builder, this.child, this.rebuildOnChange = true});
+      {super.key, required this.builder, this.child, this.rebuildOnChange = true});
   final Widget? child;
   final ValueWidgetBuilder<T> builder;
 

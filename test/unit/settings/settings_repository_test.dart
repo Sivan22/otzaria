@@ -153,7 +153,7 @@ void main() {
     });
 
     test('updateSeedColor calls setValue on settings wrapper', () async {
-      final color = Colors.red;
+      const color = Colors.red;
       await repository.updateSeedColor(color);
       verify(mockSettingsWrapper.setValue(SettingsRepository.keySwatchColor,
               ColorUtils.colorToString(color)))
