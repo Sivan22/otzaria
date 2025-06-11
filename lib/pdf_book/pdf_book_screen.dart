@@ -41,6 +41,12 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   TabController? _leftPaneTabController;
   int _currentLeftPaneTabIndex = 0;
 
+  void _ensureSearchTabIsActive() {
+    if (_leftPaneTabController != null && _leftPaneTabController!.index != 1) {
+      _leftPaneTabController!.animateTo(1);
+    }
+  }
+
   void _update() {
     if (mounted) {
       setState(() {});
@@ -403,6 +409,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         child: PdfBookSearchView(
                           textSearcher: textSearcher,
                           initialSearchText: widget.tab.searchText,
+                          onSearchResultNavigated: _ensureSearchTabIsActive,
                         ),
                       ),
                       ValueListenableBuilder(

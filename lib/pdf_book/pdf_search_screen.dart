@@ -10,11 +10,13 @@ class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
     this.initialSearchText = '',
+    this.onSearchResultNavigated, // Add this
     super.key,
   });
 
   final PdfTextSearcher textSearcher;
   final String initialSearchText;
+  final VoidCallback? onSearchResultNavigated; // Add this
 
   @override
   State<PdfBookSearchView> createState() => _PdfBookSearchViewState();
@@ -160,6 +162,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                       widget.textSearcher.matches.length
                   ? () async {
                       await widget.textSearcher.goToNextMatch();
+                      widget.onSearchResultNavigated?.call(); // Add this line
                       _conditionScrollPosition();
                     }
                   : null,
@@ -170,6 +173,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               onPressed: (widget.textSearcher.currentIndex ?? 0) > 0
                   ? () async {
                       await widget.textSearcher.goToPrevMatch();
+                      widget.onSearchResultNavigated?.call(); // Add this line
                       _conditionScrollPosition();
                     }
                   : null,
@@ -205,6 +209,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   match: match,
                   onTap: () async {
                     await widget.textSearcher.goToMatchOfIndex(matchIndex);
+                    widget.onSearchResultNavigated?.call(); // Add this line
                     if (mounted) setState(() {});
                   },
                   pageTextStore: pageTextStore,
