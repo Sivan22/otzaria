@@ -49,29 +49,43 @@ class _PdfBookScreenState extends State<PdfBookScreen>
 
   late TabController _tabController;
   final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
+  int? _lastProcessedSearchSessionId;
 
   void _onTextSearcherUpdated() {
+    // Get the current search term from the controller
     String currentSearchTerm = widget.tab.searchController.text;
-    // Capture the potentially persisted index BEFORE updating the tab's state
-    int? previousPersistedIndex = widget.tab.pdfSearchCurrentMatchIndex;
 
-    // Update the tab's state from the textSearcher
+    // Capture the persisted index from the tab *before* any updates from the current textSearcher state
+    int? persistedIndexFromTab = widget.tab.pdfSearchCurrentMatchIndex;
+
+    // Update the tab's state with the latest from the textSearcher
     widget.tab.searchText = currentSearchTerm;
-    widget.tab.pdfSearchMatches = List.from(textSearcher.matches);
+    widget.tab.pdfSearchMatches = List.from(textSearcher.matches); // Ensure matches are saved
     widget.tab.pdfSearchCurrentMatchIndex = textSearcher.currentIndex;
 
+    // Standard UI update
     if (mounted) {
       setState(() {});
     }
 
-    // Logic to restore currentIndex using previousPersistedIndex
-    if (currentSearchTerm.isNotEmpty &&
+    // Determine if this is a new search execution vs. just a navigation within existing results
+    bool isNewSearchExecution = (_lastProcessedSearchSessionId != textSearcher.searchSession);
+    if (isNewSearchExecution) {
+      _lastProcessedSearchSessionId = textSearcher.searchSession;
+    }
+
+    // Logic to restore currentIndex only on a new search execution, if applicable
+    if (isNewSearchExecution &&
+        currentSearchTerm.isNotEmpty &&
         textSearcher.matches.isNotEmpty &&
-        previousPersistedIndex != null &&
-        previousPersistedIndex >= 0 &&
-        previousPersistedIndex < textSearcher.matches.length &&
-        textSearcher.currentIndex != previousPersistedIndex) {
-      textSearcher.goToMatchOfIndex(previousPersistedIndex);
+        persistedIndexFromTab != null &&
+        persistedIndexFromTab >= 0 &&
+        persistedIndexFromTab < textSearcher.matches.length &&
+        textSearcher.currentIndex != persistedIndexFromTab) {
+      textSearcher.goToMatchOfIndex(persistedIndexFromTab);
+      // This call to goToMatchOfIndex will trigger _onTextSearcherUpdated again.
+      // In that subsequent call, isNewSearchExecution will be false (as _lastProcessedSearchSessionId
+      // will match textSearcher.searchSession), preventing an infinite loop.
     }
   }
 
