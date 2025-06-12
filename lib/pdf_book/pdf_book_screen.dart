@@ -51,36 +51,27 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
 
   void _onTextSearcherUpdated() {
-    // Store current search term from textSearcher to compare later
-    String? previousSearchTextInTab = widget.tab.searchText;
-    int? previousMatchIndexInTab = widget.tab.pdfSearchCurrentMatchIndex;
+    String currentSearchTerm = widget.tab.searchController.text;
+    // Capture the potentially persisted index BEFORE updating the tab's state
+    int? previousPersistedIndex = widget.tab.pdfSearchCurrentMatchIndex;
 
-    // Update tab with current state from textSearcher
-    widget.tab.searchText = textSearcher.searchText ?? "";
-    widget.tab.pdfSearchMatches = List.from(textSearcher.matches); // Important: store a copy
+    // Update the tab's state from the textSearcher
+    widget.tab.searchText = currentSearchTerm;
+    widget.tab.pdfSearchMatches = List.from(textSearcher.matches);
     widget.tab.pdfSearchCurrentMatchIndex = textSearcher.currentIndex;
 
     if (mounted) {
-      setState(() {}); // Original purpose of _update
+      setState(() {});
     }
 
-    // Logic to restore current index if this update is for the persisted search term
-    // This executes after textSearcher has finished a search (e.g., from PdfBookSearchView's initState)
-    // and notified its listeners (which calls this function).
-    if (textSearcher.searchText.isNotEmpty &&
-        textSearcher.searchText == previousSearchTextInTab && // check if search text is same as what was in tab
+    // Logic to restore currentIndex using previousPersistedIndex
+    if (currentSearchTerm.isNotEmpty &&
         textSearcher.matches.isNotEmpty &&
-        previousMatchIndexInTab != null &&
-        previousMatchIndexInTab >= 0 &&
-        previousMatchIndexInTab < textSearcher.matches.length &&
-        textSearcher.currentIndex != previousMatchIndexInTab) {
-      // Prevent re-entry or ensure it's safe if goToMatchOfIndex notifies synchronously
-      // For pdfrx, goToMatchOfIndex might update currentIndex and notify.
-      // The condition `textSearcher.currentIndex != previousMatchIndexInTab` should make this safe.
-      textSearcher.goToMatchOfIndex(previousMatchIndexInTab);
-      // After this, _onTextSearcherUpdated will be called again.
-      // On the next call, previousMatchIndexInTab (from widget.tab) will be equal to textSearcher.currentIndex,
-      // so this block won't re-execute, preventing a loop.
+        previousPersistedIndex != null &&
+        previousPersistedIndex >= 0 &&
+        previousPersistedIndex < textSearcher.matches.length &&
+        textSearcher.currentIndex != previousPersistedIndex) {
+      textSearcher.goToMatchOfIndex(previousPersistedIndex);
     }
   }
 
@@ -420,11 +411,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         valueListenable: widget.tab.documentRef,
                         builder: (context, documentRef, child) => child!,
                         child: PdfBookSearchView(
-
                           textSearcher: textSearcher,
+                          searchController: widget.tab.searchController, // Added
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
-
                         ),
                       ),
                       ValueListenableBuilder(

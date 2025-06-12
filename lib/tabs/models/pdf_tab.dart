@@ -25,7 +25,7 @@ class PdfBookTab extends OpenedTab {
 
   final TextEditingController searchController = TextEditingController();
 
-  final String searchText;
+  String searchText;
 
   List<PdfTextRangeWithFragments>? pdfSearchMatches;
   int? pdfSearchCurrentMatchIndex;
