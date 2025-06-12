@@ -223,12 +223,21 @@ class FileSystemData {
           // Check if the ID is numeric
           final bookId = row[0].toString().trim();
           if (!RegExp(r'^\d+$').hasMatch(bookId)) continue;
+          String? localPath;
 
-          final localPath = hebrewBooksPath != null
-              ? '$hebrewBooksPath${Platform.pathSeparator}Hebrewbooks_org_$bookId.pdf'
-              : null;
+          if (hebrewBooksPath != null ) {
+            localPath =
+                '$hebrewBooksPath${Platform.pathSeparator}Hebrewbooks_org_$bookId.pdf';
+            if (! File(localPath).existsSync()) {
+              localPath =   '$hebrewBooksPath${Platform.pathSeparator}$bookId.pdf';    
+              if (! File(localPath).existsSync()) {
+                localPath = null;
+              }          
+            }
+              
+          }
 
-          if (localPath != null && File(localPath).existsSync()) {
+          if (localPath != null ) {
             // If local file exists, add as PdfBook
             books.add(PdfBook(
               title: row[1].toString(),

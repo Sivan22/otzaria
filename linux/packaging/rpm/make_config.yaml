@@ -1,0 +1,28 @@
+display_name: Otzaria
+icon: assets/icon/icon.png
+summary: A Hebrew library application for studying Jewish texts
+group: Applications/Education
+vendor: Sivan22
+packager: Sivan22
+packagerEmail: sivan.ratson@gmail.com
+license: UNLICENSE
+url: https://github.com/sivan22/otzaria
+
+build_arch: x86_64
+
+requires: []
+
+keywords:
+  - Hebrew
+  - Books
+  - Library
+  - Jewish
+  - Text
+
+generic_name: Hebrew Library
+
+categories:
+  - Education
+  - Utility
+
+startup_notify: true

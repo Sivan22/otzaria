@@ -85,33 +85,46 @@ class TextBookSearchViewState extends State<TextBookSearchView>
           ),
         ),
       ),
+      // START --- Added Code for Result Count
+      if (searchResults.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              'נמצאו ${searchResults.length} תוצאות',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey[700],
+              ),
+            ),
+          ),
+        ),
+      // END --- Added Code for Result Count
       Expanded(
         child: ListView.builder(
             shrinkWrap: true,
             itemCount: searchResults.length,
             itemBuilder: (context, index) {
-              if (searchResults.isNotEmpty) {
-                final result = searchResults[index];
-                return ListTile(
-                    title: Text(
-                      result.address,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: SearchHighlightText(result.snippet,
-                        searchText: result.query),
-                    onTap: () {
-                      widget.scrollControler.scrollTo(
-                        index: result.index,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.ease,
-                      );
-                      if (Platform.isAndroid) {
-                        widget.closeLeftPaneCallback();
-                      }
-                    });
-              } else {
-                return const SizedBox.shrink();
-              }
+              // Original itemBuilder content:
+              final result = searchResults[index]; // Safe if itemCount > 0
+              return ListTile(
+                  title: Text(
+                    result.address,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: SearchHighlightText(result.snippet,
+                      searchText: result.query),
+                  onTap: () {
+                    widget.scrollControler.scrollTo(
+                      index: result.index,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.ease,
+                    );
+                    if (Platform.isAndroid) {
+                      widget.closeLeftPaneCallback();
+                    }
+                  });
             }),
       )
     ]);

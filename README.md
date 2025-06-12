@@ -96,8 +96,7 @@ Key features of the project:
 
 I hope that my work will help the Torah community to learn easily and effectively anytime and anywhere.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 ### Built With
@@ -111,8 +110,7 @@ I Chose to use Dart and Flutter. I think that is the most efficient and most mod
 
 Also, it is a multiplatform framework.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- GETTING STARTED -->
@@ -153,8 +151,7 @@ In case you need only the app itself (for upgrading) you can download the .msix 
 
 
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- USAGE EXAMPLES -->
@@ -162,8 +159,7 @@ In case you need only the app itself (for upgrading) you can download the .msix 
 
 See the Wiki section for documentation.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- ROADMAP -->
@@ -178,8 +174,7 @@ See the Wiki section for documentation.
 
 See the [open issues](https://github.com/sivan22/otzaria/issues) for a full list of proposed features (and known issues).
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- CONTRIBUTING -->
@@ -196,8 +191,7 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- LICENSE -->
@@ -207,8 +201,7 @@ The code is totally open-sourced under the [Unlicense](https://unlicense.org/) l
 
 The texts have different open licenses. You may check Sefaria's site for more info on that.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- CONTACT -->
@@ -218,8 +211,7 @@ Sivan Ratson-  - sivan.ratson@gmail.com
 
 Project Link: [https://github.com/sivan22/otzaria](https://github.com/sivan22/otzaria)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- ACKNOWLEDGMENTS -->
@@ -241,8 +233,7 @@ The PDF viewer is powered by [pdfrx](https://pub.dev/packages/pdfrx).
 
 For automatic updates, I used [updat](https://pub.dev/packages/updat).
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+<p align="right">(<a href="#readme-top">&#8679;</a>)</p>
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
