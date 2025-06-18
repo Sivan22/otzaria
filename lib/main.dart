@@ -189,6 +189,12 @@ Future<void> initLibraryPath() async {
   // Check existing library path setting
   String? libraryPath = Settings.getValue('key-library-path');
 
+    if (libraryPath == null && (Platform.isLinux || Platform.isMacOS)) {
+    // Use the working directory for Linux and macOS
+    await Settings.setValue(
+        'key-library-path', '.');
+  }
+
   // Set default Windows path if not configured
   if (Platform.isWindows && libraryPath == null) {
     libraryPath = 'C:/אוצריא';

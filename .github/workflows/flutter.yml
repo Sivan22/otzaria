@@ -221,9 +221,7 @@ jobs:
           
           # macOS app - create zip
           if [ -d "artifacts/otzaria-macos.app" ]; then
-            cd artifacts/otzaria-macos.app
-            zip -r ../../release-files/otzaria-macos.zip Otzaria.app
-            cd ../..
+          cp -r artifacts/otzaria-macos.app/*.app release-files/ || true
           fi
           
           # List files for debugging
