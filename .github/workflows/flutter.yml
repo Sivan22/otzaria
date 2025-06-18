@@ -64,11 +64,11 @@ jobs:
         run: |
           flutter build linux
       
-      - name: Build Linux DEB package
-        run: flutter_distributor release --name=production --jobs=release-linux-deb
+      # - name: Build Linux DEB package
+      #   run: flutter_distributor release --name=production --jobs=release-linux-deb
         
-      - name: Build Linux RPM package  
-        run: flutter_distributor release --name=production --jobs=release-linux-rpm
+      # - name: Build Linux RPM package  
+      #   run: flutter_distributor release --name=production --jobs=release-linux-rpm
       
       - name: Find and prepare Linux packages
         id: find_packages
