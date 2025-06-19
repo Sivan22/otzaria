@@ -1,7 +1,7 @@
 name: "Build for all platforms"
 
 on:
-  push:
+  push: 
     branches:
       - main
       - dev
@@ -221,7 +221,7 @@ jobs:
           
           # macOS app - create zip
           if [ -d "artifacts/otzaria-macos.app" ]; then
-          cp -r artifacts/otzaria-macos.app/*.app release-files/ || true
+          cp -r artifacts/otzaria-macos.app release-files/ || true
           fi
           
           # List files for debugging
