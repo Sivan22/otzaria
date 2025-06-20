@@ -423,10 +423,21 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                       ),
                       ValueListenableBuilder(
                         valueListenable: widget.tab.documentRef,
-                        builder: (context, documentRef, child) => child!,
+                        builder: (context, documentRef, child) {
+                          // Check if PdfBookSearchView will trigger an initial search
+                          if (widget.tab.searchController.text.isNotEmpty) {
+                            // If there's text in the search controller, it implies that
+                            // PdfBookSearchView.initState will trigger an initial search.
+                            // We reset _lastProcessedSearchSessionId here
+                            // to ensure that the completion of this initial search is unequivocally
+                            // treated as a new search session by the _onTextSearcherUpdated listener.
+                            _lastProcessedSearchSessionId = null;
+                          }
+                          return child!;
+                        },
                         child: PdfBookSearchView(
                           textSearcher: textSearcher,
-                          searchController: widget.tab.searchController, // Added
+                          searchController: widget.tab.searchController,
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
                         ),
