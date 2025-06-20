@@ -115,12 +115,15 @@ class _OutlineViewState extends State<OutlineView> {
         child: node.children.isEmpty
             ? Material(
                 color: Colors.transparent,
-                child: InkWell(
-                  hoverColor: Theme.of(context).hoverColor,
+                child: ListTile(
+                  title: Text(node.title),
+                  // === מה שהיה ב-InkWell עובר לפה ===
                   onTap: navigateToEntry,
-                  child: ListTile(
-                    title: Text(node.title),
-                  ),
+                  hoverColor: Theme.of(context).hoverColor,
+                  mouseCursor: SystemMouseCursors.click,
+                  // אפשרויות נוספות אם צריך:
+                  // dense: true,
+                  // visualDensity: VisualDensity.compact,
                 ),
               )
             : Material(
@@ -128,9 +131,13 @@ class _OutlineViewState extends State<OutlineView> {
                 child: ExpansionTile(
                   key: PageStorageKey(node),
                   initiallyExpanded: level == 0,
-                  title: InkWell(
+                  // גם לכותרת של הצומת המורחב נוסיף ListTile
+                  title: ListTile(
+                    title: Text(node.title),
                     onTap: navigateToEntry,
-                    child: Text(node.title),
+                    hoverColor: Theme.of(context).hoverColor,
+                    mouseCursor: SystemMouseCursors.click,
+                    contentPadding: EdgeInsets.zero, // שלא יזיז ימינה
                   ),
                   leading: const Icon(Icons.chevron_right_rounded),
                   trailing: const SizedBox.shrink(),
@@ -139,8 +146,7 @@ class _OutlineViewState extends State<OutlineView> {
                   iconColor: Theme.of(context).colorScheme.primary,
                   collapsedIconColor: Theme.of(context).colorScheme.primary,
                   children: node.children
-                      .map((childNode) =>
-                          _buildOutlineItem(childNode, level: level + 1))
+                      .map((c) => _buildOutlineItem(c, level: level + 1))
                       .toList(),
                 ),
               ),
