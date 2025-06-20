@@ -40,11 +40,13 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     ..addListener(_onTextSearcherUpdated);
   TabController? _leftPaneTabController;
   int _currentLeftPaneTabIndex = 0;
+  final FocusNode _searchFieldFocusNode = FocusNode();
 
   void _ensureSearchTabIsActive() {
     if (_leftPaneTabController != null && _leftPaneTabController!.index != 1) {
       _leftPaneTabController!.animateTo(1);
     }
+    _searchFieldFocusNode.requestFocus();
   }
 
   late TabController _tabController;
@@ -114,11 +116,17 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       vsync: this,
       initialIndex: _currentLeftPaneTabIndex,
     );
+    if (_currentLeftPaneTabIndex == 1) {
+      _searchFieldFocusNode.requestFocus();
+    }
     _leftPaneTabController!.addListener(() {
       if (_currentLeftPaneTabIndex != _leftPaneTabController!.index) {
         setState(() {
           _currentLeftPaneTabIndex = _leftPaneTabController!.index;
         });
+        if (_leftPaneTabController!.index == 1) {
+          _searchFieldFocusNode.requestFocus();
+        }
       }
     });
   }
@@ -142,6 +150,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     widget.tab.pdfViewerController
         .removeListener(_onPdfViewerControllerUpdate);
     _leftPaneTabController?.dispose();
+    _searchFieldFocusNode.dispose();
 
     super.dispose();
   }
@@ -438,6 +447,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         child: PdfBookSearchView(
                           textSearcher: textSearcher,
                           searchController: widget.tab.searchController,
+                          focusNode: _searchFieldFocusNode,
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
                         ),
