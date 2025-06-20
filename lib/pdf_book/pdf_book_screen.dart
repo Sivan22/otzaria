@@ -379,16 +379,17 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 Row(
                   children: [
                     Expanded(
-                      child: ClipRect(
-                        child: TabBar(
-
-                          controller: _leftPaneTabController, // Use the managed controller
-
-                          tabs: const [
-                            Tab(text: 'ניווט'),
-                            Tab(text: 'חיפוש'),
-                            Tab(text: 'דפים'),
-                          ],
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ClipRect(
+                          child: TabBar(
+                            controller: _leftPaneTabController, // Use the managed controller
+                            tabs: const [
+                              Tab(text: 'ניווט'),
+                              Tab(text: 'חיפוש'),
+                              Tab(text: 'דפים'),
+                            ],
+                          ),
                         ),
                       ),
                     ),
