@@ -168,10 +168,9 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
             Future.value(currentState.tableOfContents));
       }
 
-      int? index = currentState.selectedIndex;
-      if (!event.visibleIndecies.contains(index)) {
-        index = null;
-      }
+      int? index = event.visibleIndecies.isNotEmpty
+          ? event.visibleIndecies.first
+          : currentState.selectedIndex;
 
       emit(currentState.copyWith(
           visibleIndices: event.visibleIndecies,

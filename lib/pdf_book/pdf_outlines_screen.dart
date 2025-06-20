@@ -19,6 +19,32 @@ class _OutlineViewState extends State<OutlineView> {
   TextEditingController searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant OutlineView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final outline = widget.outline;
     if (outline == null || outline.isEmpty) {
@@ -117,13 +143,15 @@ class _OutlineViewState extends State<OutlineView> {
                 color: Colors.transparent,
                 child: ListTile(
                   title: Text(node.title),
-                  // === מה שהיה ב-InkWell עובר לפה ===
+                  selected: widget.controller.isReady &&
+                      node.dest?.pageNumber ==
+                          widget.controller.pageNumber,
+                  selectedColor: Theme.of(context).colorScheme.onSecondary,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
                   onTap: navigateToEntry,
                   hoverColor: Theme.of(context).hoverColor,
                   mouseCursor: SystemMouseCursors.click,
-                  // אפשרויות נוספות אם צריך:
-                  // dense: true,
-                  // visualDensity: VisualDensity.compact,
                 ),
               )
             : Material(
@@ -134,6 +162,15 @@ class _OutlineViewState extends State<OutlineView> {
                   // גם לכותרת של הצומת המורחב נוסיף ListTile
                   title: ListTile(
                     title: Text(node.title),
+                    selected: widget.controller.isReady &&
+                        node.dest?.pageNumber ==
+                            widget.controller.pageNumber,
+                    selectedColor:
+                        Theme.of(context).colorScheme.onSecondary,
+                    selectedTileColor: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.2),
                     onTap: navigateToEntry,
                     hoverColor: Theme.of(context).hoverColor,
                     mouseCursor: SystemMouseCursors.click,
