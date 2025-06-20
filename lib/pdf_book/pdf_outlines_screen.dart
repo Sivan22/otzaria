@@ -19,6 +19,32 @@ class _OutlineViewState extends State<OutlineView> {
   TextEditingController searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant OutlineView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final outline = widget.outline;
     if (outline == null || outline.isEmpty) {
@@ -113,30 +139,53 @@ class _OutlineViewState extends State<OutlineView> {
           dividerColor: Colors.transparent,
         ),
         child: node.children.isEmpty
-            ? InkWell(
-              hoverColor: Theme.of(context).hoverColor,
-              child: ListTile(
-                title: Text(node.title),
-                onTap: navigateToEntry,
-              ),
-            )
-            : ExpansionTile(
-                key: PageStorageKey(node),
-                initiallyExpanded: level == 0,
-                title: InkWell(
+            ? Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  title: Text(node.title),
+                  selected: widget.controller.isReady &&
+                      node.dest?.pageNumber ==
+                          widget.controller.pageNumber,
+                  selectedColor: Theme.of(context).colorScheme.onSecondary,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
                   onTap: navigateToEntry,
-                  child: Text(node.title),
+                  hoverColor: Theme.of(context).hoverColor,
+                  mouseCursor: SystemMouseCursors.click,
                 ),
-                leading: const Icon(Icons.chevron_right_rounded),
-                trailing: const SizedBox.shrink(),
-                tilePadding: EdgeInsets.zero,
-                childrenPadding: EdgeInsets.zero,
-                iconColor: Theme.of(context).colorScheme.primary,
-                collapsedIconColor: Theme.of(context).colorScheme.primary,
-                children: node.children
-                    .map((childNode) =>
-                        _buildOutlineItem(childNode, level: level + 1))
-                    .toList(),
+              )
+            : Material(
+                color: Colors.transparent,
+                child: ExpansionTile(
+                  key: PageStorageKey(node),
+                  initiallyExpanded: level == 0,
+                  // גם לכותרת של הצומת המורחב נוסיף ListTile
+                  title: ListTile(
+                    title: Text(node.title),
+                    selected: widget.controller.isReady &&
+                        node.dest?.pageNumber ==
+                            widget.controller.pageNumber,
+                    selectedColor:
+                        Theme.of(context).colorScheme.onSecondary,
+                    selectedTileColor: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.2),
+                    onTap: navigateToEntry,
+                    hoverColor: Theme.of(context).hoverColor,
+                    mouseCursor: SystemMouseCursors.click,
+                    contentPadding: EdgeInsets.zero, // שלא יזיז ימינה
+                  ),
+                  leading: const Icon(Icons.chevron_right_rounded),
+                  trailing: const SizedBox.shrink(),
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: EdgeInsets.zero,
+                  iconColor: Theme.of(context).colorScheme.primary,
+                  collapsedIconColor: Theme.of(context).colorScheme.primary,
+                  children: node.children
+                      .map((c) => _buildOutlineItem(c, level: level + 1))
+                      .toList(),
+                ),
               ),
       ),
     );

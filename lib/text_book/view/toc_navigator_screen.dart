@@ -83,9 +83,19 @@ class _TocViewerState extends State<TocViewer>
     if (entry.children.isEmpty) {
       return Padding(
         padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
-        child: ListTile(
-          title: Text(entry.text),
-          onTap: navigateToEntry,
+        child: BlocBuilder<TextBookBloc, TextBookState>(
+          builder: (context, state) {
+            final bool selected = state is TextBookLoaded &&
+                state.selectedIndex == entry.index;
+            return ListTile(
+              title: Text(entry.text),
+              selected: selected,
+              selectedColor: Theme.of(context).colorScheme.onSecondary,
+              selectedTileColor:
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+              onTap: navigateToEntry,
+            );
+          },
         ),
       );
     } else {
@@ -97,9 +107,23 @@ class _TocViewerState extends State<TocViewer>
           ),
           child: ExpansionTile(
             initiallyExpanded: entry.level == 1,
-            title: GestureDetector(
-              onTap: navigateToEntry,
-              child: Text(showFullText ? entry.fullText : entry.text),
+            title: BlocBuilder<TextBookBloc, TextBookState>(
+              builder: (context, state) {
+                final bool selected = state is TextBookLoaded &&
+                    state.selectedIndex == entry.index;
+                return ListTile(
+                  title: Text(showFullText ? entry.fullText : entry.text),
+                  selected: selected,
+                  selectedColor:
+                      Theme.of(context).colorScheme.onSecondary,
+                  selectedTileColor: Theme.of(context)
+                      .colorScheme
+                      .secondary
+                      .withOpacity(0.2),
+                  onTap: navigateToEntry,
+                  contentPadding: EdgeInsets.zero,
+                );
+              },
             ),
             leading: const Icon(Icons.chevron_right_rounded),
             trailing: const SizedBox.shrink(),
