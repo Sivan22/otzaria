@@ -420,7 +420,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             ),
           );
     }
-    context.read<NavigationBloc>().add(NavigateToScreen(Screen.reading));
+    context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
   }
 
   void _openCategory(Category category) {

@@ -1,0 +1,33 @@
+display_name: Otzaria
+package_name: otzaria
+
+maintainer:
+  name: Sivan22
+  email: sivan.ratson@gmail.com
+
+priority: optional
+
+section: x11
+
+installed_size: 50000
+
+dependencies: []
+
+essential: false
+
+icon: assets/icon/icon.png
+
+keywords:
+  - Hebrew
+  - Books
+  - Library
+  - Jewish
+  - Text
+
+generic_name: Hebrew Library
+
+categories:
+  - Education
+  - Utility
+
+startup_notify: true

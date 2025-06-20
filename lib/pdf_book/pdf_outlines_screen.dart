@@ -114,11 +114,12 @@ class _OutlineViewState extends State<OutlineView> {
         ),
         child: node.children.isEmpty
             ? InkWell(
+              hoverColor: Theme.of(context).hoverColor,
+              child: ListTile(
+                title: Text(node.title),
                 onTap: navigateToEntry,
-                child: ListTile(
-                  title: Text(node.title),
-                ),
-              )
+              ),
+            )
             : ExpansionTile(
                 key: PageStorageKey(node),
                 initiallyExpanded: level == 0,

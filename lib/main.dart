@@ -14,7 +14,6 @@ import 'package:otzaria/app.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/bookmarks/repository/bookmark_repository.dart';
 import 'package:otzaria/find_ref/find_ref_bloc.dart';
-import 'package:otzaria/find_ref/find_ref_event.dart';
 import 'package:otzaria/find_ref/find_ref_repository.dart';
 import 'package:otzaria/focus/focus_repository.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
@@ -189,6 +188,12 @@ Future<void> initLibraryPath() async {
 
   // Check existing library path setting
   String? libraryPath = Settings.getValue('key-library-path');
+
+    if (libraryPath == null && (Platform.isLinux || Platform.isMacOS)) {
+    // Use the working directory for Linux and macOS
+    await Settings.setValue(
+        'key-library-path', '.');
+  }
 
   // Set default Windows path if not configured
   if (Platform.isWindows && libraryPath == null) {
