@@ -113,30 +113,36 @@ class _OutlineViewState extends State<OutlineView> {
           dividerColor: Colors.transparent,
         ),
         child: node.children.isEmpty
-            ? InkWell(
-              hoverColor: Theme.of(context).hoverColor,
-              child: ListTile(
-                title: Text(node.title),
-                onTap: navigateToEntry,
-              ),
-            )
-            : ExpansionTile(
-                key: PageStorageKey(node),
-                initiallyExpanded: level == 0,
-                title: InkWell(
+            ? Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  hoverColor: Theme.of(context).hoverColor,
                   onTap: navigateToEntry,
-                  child: Text(node.title),
+                  child: ListTile(
+                    title: Text(node.title),
+                  ),
                 ),
-                leading: const Icon(Icons.chevron_right_rounded),
-                trailing: const SizedBox.shrink(),
-                tilePadding: EdgeInsets.zero,
-                childrenPadding: EdgeInsets.zero,
-                iconColor: Theme.of(context).colorScheme.primary,
-                collapsedIconColor: Theme.of(context).colorScheme.primary,
-                children: node.children
-                    .map((childNode) =>
-                        _buildOutlineItem(childNode, level: level + 1))
-                    .toList(),
+              )
+            : Material(
+                color: Colors.transparent,
+                child: ExpansionTile(
+                  key: PageStorageKey(node),
+                  initiallyExpanded: level == 0,
+                  title: InkWell(
+                    onTap: navigateToEntry,
+                    child: Text(node.title),
+                  ),
+                  leading: const Icon(Icons.chevron_right_rounded),
+                  trailing: const SizedBox.shrink(),
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: EdgeInsets.zero,
+                  iconColor: Theme.of(context).colorScheme.primary,
+                  collapsedIconColor: Theme.of(context).colorScheme.primary,
+                  children: node.children
+                      .map((childNode) =>
+                          _buildOutlineItem(childNode, level: level + 1))
+                      .toList(),
+                ),
               ),
       ),
     );
