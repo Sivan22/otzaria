@@ -45,6 +45,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
       // We pass goToFirstMatch: false because the _onTextSearcherUpdated listener
       // in _PdfBookScreenState is responsible for restoring the specific currentIndex later.
       widget.textSearcher.startTextSearch(widget.searchController.text, goToFirstMatch: false);
+      _searchResultUpdated();
     }
   }
 
