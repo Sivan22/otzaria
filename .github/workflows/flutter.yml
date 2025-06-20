@@ -157,7 +157,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: otzaria-macos.app
-          path: build/macos/Build/Products/Release/Otzaria.app
+          path: build/macos/Build/Products/Release
 
   create_release:
     needs: [build_windows, build_linux, build_android, build_macos]
@@ -219,9 +219,11 @@ jobs:
             cp artifacts/otzaria-android.apk/*.apk release-files/ || true
           fi
           
-          # macOS app - create zip
+          # macOS app 
           if [ -d "artifacts/otzaria-macos.app" ]; then
-          cp -r artifacts/otzaria-macos.app release-files/ || true
+          cd artifacts/otzaria-macos.app
+          zip -r ../../release-files/otzaria-macos.zip *
+          cd ../..
           fi
           
           # List files for debugging
