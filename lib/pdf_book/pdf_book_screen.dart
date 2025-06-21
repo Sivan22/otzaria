@@ -44,6 +44,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   final FocusNode _searchFieldFocusNode = FocusNode();
 
   void _ensureSearchTabIsActive() {
+    widget.tab.showLeftPane.value = true;
     if (_leftPaneTabController != null && _leftPaneTabController!.index != 1) {
       _leftPaneTabController!.animateTo(1);
     }
@@ -167,7 +168,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
               _ensureSearchTabIsActive,
         },
-        child: Scaffold(
+        child: Focus(
+          focusNode: FocusNode(),
+          autofocus: !Platform.isAndroid,
+          child: Scaffold(
           appBar: AppBar(
             title: ValueListenableBuilder(
                 valueListenable: widget.tab.currentTitle,
@@ -393,8 +397,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             ],
           ),
         ),
-      );
-    });
+      ),
+    );
+  });
   }
 
   AnimatedSize _buildLeftPane() {
