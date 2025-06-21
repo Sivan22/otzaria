@@ -9,15 +9,15 @@ import 'package:synchronized/extension.dart';
 class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
+    required this.searchController,
     this.initialSearchText = '',
-
     this.onSearchResultNavigated, // Add this
-
     super.key,
   });
 
   final PdfTextSearcher textSearcher;
-  final String initialSearchText;
+  final TextEditingController searchController;
+  final String initialSearchText; // Remains for now, parent will provide tab.searchText
 
   final VoidCallback? onSearchResultNavigated; // Add this
 
@@ -28,37 +28,39 @@ class PdfBookSearchView extends StatefulWidget {
 
 class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   final focusNode = FocusNode();
-  final searchTextController = TextEditingController();
+  // final searchTextController = TextEditingController(); // Removed
   late final pageTextStore =
       PdfPageTextCache(textSearcher: widget.textSearcher);
   final scrollController = ScrollController();
   @override
   void initState() {
+    super.initState(); // Moved to the top
     widget.textSearcher.addListener(_searchResultUpdated);
-    searchTextController.addListener(_searchTextUpdated);
-    
-    // Set initial search text if provided
-    if (widget.initialSearchText.isNotEmpty) {
-      searchTextController.text = widget.initialSearchText;
-      // Start the search but don't navigate if shouldNavigateOnInitialSearch is false
+    widget.searchController.addListener(_searchTextUpdated);
 
+    // If the controller (from PdfBookTab) already has text when view is initialized,
+    // start the search. This ensures that if the sidebar is reopened with existing
+    // search text, the search is re-executed and results are displayed.
+    if (widget.searchController.text.isNotEmpty) {
+      // We pass goToFirstMatch: false because the _onTextSearcherUpdated listener
+      // in _PdfBookScreenState is responsible for restoring the specific currentIndex later.
+      widget.textSearcher.startTextSearch(widget.searchController.text, goToFirstMatch: false);
+      _searchResultUpdated();
     }
-    
-    super.initState();
   }
 
   @override
   void dispose() {
     scrollController.dispose();
     widget.textSearcher.removeListener(_searchResultUpdated);
-    searchTextController.removeListener(_searchTextUpdated);
-    searchTextController.dispose();
+    widget.searchController.removeListener(_searchTextUpdated); // Changed
+    // searchTextController.dispose(); // Removed
     focusNode.dispose();
     super.dispose();
   }
 
   void _searchTextUpdated() {
-    widget.textSearcher.startTextSearch(searchTextController.text, goToFirstMatch: false);
+    widget.textSearcher.startTextSearch(widget.searchController.text, goToFirstMatch: false); // Changed
   }
 
   int? _currentSearchSession;
@@ -144,7 +146,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   TextField(
                     autofocus: true,
                     focusNode: focusNode,
-                    controller: searchTextController,
+                    controller: widget.searchController, // Changed
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.only(right: 50),
                     ),
@@ -195,9 +197,9 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               iconSize: 20,
             ),
             IconButton(
-              onPressed: searchTextController.text.isNotEmpty
+              onPressed: widget.searchController.text.isNotEmpty // Changed
                   ? () {
-                      searchTextController.text = '';
+                      widget.searchController.text = ''; // Changed
                       widget.textSearcher.resetTextSearch();
                       focusNode.requestFocus();
                     }
@@ -210,7 +212,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
         const SizedBox(height: 4),
         Expanded(
           child: ListView.builder(
-            key: Key(searchTextController.text),
+            key: Key(widget.searchController.text), // Changed
             controller: scrollController,
             itemCount: _listIndexToMatchIndex.length,
             itemBuilder: (context, index) {
