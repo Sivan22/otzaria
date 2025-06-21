@@ -60,7 +60,10 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   }
 
   void _searchTextUpdated() {
-    widget.textSearcher.startTextSearch(widget.searchController.text, goToFirstMatch: false); // Changed
+    widget.textSearcher
+      .startTextSearch(widget.searchController.text, goToFirstMatch: false);
+    _searchResultUpdated();
+
   }
 
   int? _currentSearchSession;
