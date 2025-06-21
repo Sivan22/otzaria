@@ -10,6 +10,7 @@ class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
     required this.searchController,
+    required this.focusNode,
     this.initialSearchText = '',
     this.onSearchResultNavigated, // Add this
     super.key,
@@ -17,6 +18,7 @@ class PdfBookSearchView extends StatefulWidget {
 
   final PdfTextSearcher textSearcher;
   final TextEditingController searchController;
+  final FocusNode focusNode;
   final String initialSearchText; // Remains for now, parent will provide tab.searchText
 
   final VoidCallback? onSearchResultNavigated; // Add this
@@ -27,7 +29,6 @@ class PdfBookSearchView extends StatefulWidget {
 }
 
 class _PdfBookSearchViewState extends State<PdfBookSearchView> {
-  final focusNode = FocusNode();
   // final searchTextController = TextEditingController(); // Removed
   late final pageTextStore =
       PdfPageTextCache(textSearcher: widget.textSearcher);
@@ -55,7 +56,6 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     widget.textSearcher.removeListener(_searchResultUpdated);
     widget.searchController.removeListener(_searchTextUpdated); // Changed
     // searchTextController.dispose(); // Removed
-    focusNode.dispose();
     super.dispose();
   }
 
@@ -145,10 +145,20 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                 children: [
                   TextField(
                     autofocus: true,
-                    focusNode: focusNode,
-                    controller: widget.searchController, // Changed
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.only(right: 50),
+                    focusNode: widget.focusNode,
+                    controller: widget.searchController,
+                    textAlign: TextAlign.right,
+                    decoration: InputDecoration(
+                      suffixIcon: IconButton(
+                        onPressed: widget.searchController.text.isNotEmpty
+                            ? () {
+                                widget.searchController.text = '';
+                                widget.textSearcher.resetTextSearch();
+                                widget.focusNode.requestFocus();
+                              }
+                            : null,
+                        icon: const Icon(Icons.close),
+                      ),
                     ),
                     textInputAction: TextInputAction.search,
                     // onSubmitted: (value) {
@@ -156,59 +166,27 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                     //   focusNode.requestFocus();
                     // },
                   ),
-                  if (widget.textSearcher.hasMatches)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        '${widget.textSearcher.currentIndex! + 1} / ${widget.textSearcher.matches.length}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
+                  // Result count moved below
                 ],
               ),
             ),
-            const SizedBox(width: 4),
-            IconButton(
-              onPressed: (widget.textSearcher.currentIndex ?? 0) <
-                      widget.textSearcher.matches.length
-                  ? () async {
-                      await widget.textSearcher.goToNextMatch();
-                      widget.onSearchResultNavigated?.call(); // Add this line
-                      _conditionScrollPosition();
-
-                    }
-                  : null,
-              icon: const Icon(Icons.arrow_downward),
-              iconSize: 20,
-            ),
-            IconButton(
-              onPressed: (widget.textSearcher.currentIndex ?? 0) > 0
-                  ? () async {
-                      await widget.textSearcher.goToPrevMatch();
-                      widget.onSearchResultNavigated?.call(); // Add this line
-                      _conditionScrollPosition();
-
-                    }
-                  : null,
-              icon: const Icon(Icons.arrow_upward),
-              iconSize: 20,
-            ),
-            IconButton(
-              onPressed: widget.searchController.text.isNotEmpty // Changed
-                  ? () {
-                      widget.searchController.text = ''; // Changed
-                      widget.textSearcher.resetTextSearch();
-                      focusNode.requestFocus();
-                    }
-                  : null,
-              icon: const Icon(Icons.close),
-              iconSize: 20,
-            ),
+            // Icons removed for cleaner UI
           ],
         ),
+        if (widget.textSearcher.hasMatches)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                '${widget.textSearcher.currentIndex! + 1} / ${widget.textSearcher.matches.length}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
         const SizedBox(height: 4),
         Expanded(
           child: ListView.builder(
