@@ -179,7 +179,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
             child: Align(
               alignment: AlignmentDirectional.centerStart,
               child: Text(
-                '${widget.textSearcher.currentIndex! + 1} / ${widget.textSearcher.matches.length}',
+                 'נמצאו ${widget.textSearcher.matches.length} תוצאות',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
