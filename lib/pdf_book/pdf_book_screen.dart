@@ -449,6 +449,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           textSearcher: textSearcher,
                           searchController: widget.tab.searchController,
                           focusNode: _searchFieldFocusNode,
+                          outline: widget.tab.outline.value,
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
                         ),
