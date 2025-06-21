@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:synchronized/extension.dart';
+import 'package:otzaria/utils/ref_helper.dart';
 
 //
 // Simple Text Search View
@@ -11,6 +12,7 @@ class PdfBookSearchView extends StatefulWidget {
     required this.textSearcher,
     required this.searchController,
     required this.focusNode,
+    this.outline,
     this.initialSearchText = '',
     this.onSearchResultNavigated, // Add this
     super.key,
@@ -19,6 +21,7 @@ class PdfBookSearchView extends StatefulWidget {
   final PdfTextSearcher textSearcher;
   final TextEditingController searchController;
   final FocusNode focusNode;
+  final List<PdfOutlineNode>? outline;
   final String initialSearchText; // Remains for now, parent will provide tab.searchText
 
   final VoidCallback? onSearchResultNavigated; // Add this
@@ -66,6 +69,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
   int? _currentSearchSession;
   final _matchIndexToListIndex = <int>[];
   final _listIndexToMatchIndex = <int>[];
+  final _pageTitles = <int, String>{};
 
   void _searchResultUpdated() {
     final previousListCount = _listIndexToMatchIndex.length;
@@ -81,6 +85,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
       _currentSearchSession = widget.textSearcher.searchSession;
       _matchIndexToListIndex.clear();
       _listIndexToMatchIndex.clear();
+      _pageTitles.clear();
     }
 
     // Populate _listIndexToMatchIndex and _matchIndexToListIndex.
@@ -91,12 +96,25 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     for (int i = _matchIndexToListIndex.length; // Start from the current end of _matchIndexToListIndex
         i < widget.textSearcher.matches.length;
         i++) {
-      if (i == 0 ||
-          widget.textSearcher.matches[i - 1].pageNumber !=
-              widget.textSearcher.matches[i].pageNumber) {
-        // Add a negative page number to indicate a page header in the list
-        _listIndexToMatchIndex.add(-widget.textSearcher.matches[i].pageNumber);
-      }
+        if (i == 0 ||
+            widget.textSearcher.matches[i - 1].pageNumber !=
+                widget.textSearcher.matches[i].pageNumber) {
+          final pageNumber = widget.textSearcher.matches[i].pageNumber;
+          // Add a negative page number to indicate a page header in the list
+          _listIndexToMatchIndex.add(-pageNumber);
+          if (!_pageTitles.containsKey(pageNumber)) {
+            () async {
+              final title = await refFromPageNumber(pageNumber, widget.outline);
+              if (mounted) {
+                setState(() {
+                  _pageTitles[pageNumber] = title;
+                });
+              } else {
+                _pageTitles[pageNumber] = title;
+              }
+            }();
+          }
+        }
       _matchIndexToListIndex.add(_listIndexToMatchIndex.length); // Store mapping for scrolling
       _listIndexToMatchIndex.add(i); // Add actual match index
     }
@@ -217,7 +235,9 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   alignment: Alignment.bottomRight, // Changed from bottomLeft
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    'עמוד ${-matchIndex}',
+                    _pageTitles[-matchIndex]?.isNotEmpty == true
+                        ? _pageTitles[-matchIndex]!
+                        : 'עמוד ${-matchIndex}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
