@@ -77,6 +77,8 @@ class TextBookSearchViewState extends State<TextBookSearchView>
         textAlign: TextAlign.right,
         textDirection: TextDirection.rtl,
         controller: searchTextController,
+        focusNode: widget.focusNode,
+        autofocus: true,
         decoration: InputDecoration(
           hintText: 'חפש כאן..',
           suffixIcon: Row(
