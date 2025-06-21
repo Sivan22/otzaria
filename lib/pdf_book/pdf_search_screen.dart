@@ -180,9 +180,10 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               alignment: AlignmentDirectional.centerStart,
               child: Text(
                  'נמצאו ${widget.textSearcher.matches.length} תוצאות',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: Theme.of(context).textTheme.bodySmall?.color ??
+                      Colors.grey[700],
                 ),
               ),
             ),
@@ -374,7 +375,7 @@ class _SearchResultTileState extends State<SearchResultTile> {
         TextSpan(
           text: body,
           style: const TextStyle(
-            backgroundColor: Colors.yellow,
+            color: Colors.red,
           ),
         ),
         TextSpan(text: footer),
