@@ -194,7 +194,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
             // Icons removed for cleaner UI
           ],
         ),
-        if (widget.textSearcher.hasMatches)
+        if (widget.textSearcher.matches.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
             child: Align(
