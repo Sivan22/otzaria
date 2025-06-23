@@ -123,6 +123,10 @@ class TextBookSearchViewState extends State<TextBookSearchView>
             items.add(_GroupedResultItem.result(r));
           }
 
+          if (items.isEmpty && searchTextController.text.isNotEmpty) {
+            return const Center(child: Text('אין תוצאות'));
+          }
+
           return ListView.builder(
             shrinkWrap: true,
             itemCount: items.length,

@@ -84,6 +84,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     //    the view might be reconstructed/refreshed and lost its local list state,
     //    but the underlying searcher still holds valid results.
     if (_currentSearchSession != widget.textSearcher.searchSession ||
+        (_listIndexToMatchIndex.isNotEmpty && !widget.textSearcher.hasMatches) ||
         (_listIndexToMatchIndex.isEmpty && widget.textSearcher.hasMatches)) {
       _currentSearchSession = widget.textSearcher.searchSession;
       _matchIndexToListIndex.clear();
@@ -211,17 +212,20 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
           ),
         const SizedBox(height: 4),
         Expanded(
-          child: ListView.builder(
-            key: Key(widget.searchController.text), // Changed
-            controller: scrollController,
-            itemCount: _listIndexToMatchIndex.length,
-            itemBuilder: (context, index) {
-              final matchIndex = _listIndexToMatchIndex[index];
-              if (matchIndex >= 0 &&
-                  matchIndex < widget.textSearcher.matches.length) {
-                final match = widget.textSearcher.matches[matchIndex];
-                return SearchResultTile(
-                  key: ValueKey(index),
+          child: widget.searchController.text.isNotEmpty &&
+                  widget.textSearcher.matches.isEmpty
+              ? const Center(child: Text('אין תוצאות'))
+              : ListView.builder(
+                  key: Key(widget.searchController.text), // Changed
+                  controller: scrollController,
+                  itemCount: _listIndexToMatchIndex.length,
+                  itemBuilder: (context, index) {
+                  final matchIndex = _listIndexToMatchIndex[index];
+                  if (matchIndex >= 0 &&
+                      matchIndex < widget.textSearcher.matches.length) {
+                        final match = widget.textSearcher.matches[matchIndex];
+                        return SearchResultTile(
+                          key: ValueKey(index),
                   match: match,
                   onTap: () async {
                     await widget.textSearcher.goToMatchOfIndex(matchIndex);
