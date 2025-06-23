@@ -11,10 +11,12 @@ class TocViewer extends StatefulWidget {
     super.key,
     required this.scrollController,
     required this.closeLeftPaneCallback,
+    required this.focusNode,
   });
 
   final void Function() closeLeftPaneCallback;
   final ItemScrollController scrollController;
+  final FocusNode focusNode;
 
   @override
   State<TocViewer> createState() => _TocViewerState();
@@ -159,7 +161,11 @@ class _TocViewerState extends State<TocViewer>
               TextField(
                 controller: searchController,
                 onChanged: (value) => setState(() {}),
+                focusNode: widget.focusNode,
                 autofocus: true,
+                onSubmitted: (_) {
+                  widget.focusNode.requestFocus();
+                },
                 decoration: InputDecoration(
                   hintText: 'איתור כותרת...',
                   suffixIcon: Row(

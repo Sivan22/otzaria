@@ -42,6 +42,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   TabController? _leftPaneTabController;
   int _currentLeftPaneTabIndex = 0;
   final FocusNode _searchFieldFocusNode = FocusNode();
+  final FocusNode _navigationFieldFocusNode = FocusNode();
 
   void _ensureSearchTabIsActive() {
     widget.tab.showLeftPane.value = true;
@@ -122,6 +123,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     );
     if (_currentLeftPaneTabIndex == 1) {
       _searchFieldFocusNode.requestFocus();
+    } else {
+      _navigationFieldFocusNode.requestFocus();
     }
     _leftPaneTabController!.addListener(() {
       if (_currentLeftPaneTabIndex != _leftPaneTabController!.index) {
@@ -130,6 +133,17 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         });
         if (_leftPaneTabController!.index == 1) {
           _searchFieldFocusNode.requestFocus();
+        } else if (_leftPaneTabController!.index == 0) {
+          _navigationFieldFocusNode.requestFocus();
+        }
+      }
+    });
+    widget.tab.showLeftPane.addListener(() {
+      if (widget.tab.showLeftPane.value) {
+        if (_leftPaneTabController!.index == 1) {
+          _searchFieldFocusNode.requestFocus();
+        } else if (_leftPaneTabController!.index == 0) {
+          _navigationFieldFocusNode.requestFocus();
         }
       }
     });
@@ -154,6 +168,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     widget.tab.pdfViewerController.removeListener(_onPdfViewerControllerUpdate);
     _leftPaneTabController?.dispose();
     _searchFieldFocusNode.dispose();
+    _navigationFieldFocusNode.dispose();
 
     super.dispose();
   }
@@ -462,6 +477,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         builder: (context, outline, child) => OutlineView(
                           outline: outline,
                           controller: widget.tab.pdfViewerController,
+                          focusNode: _navigationFieldFocusNode,
                         ),
                       ),
                       ValueListenableBuilder(
