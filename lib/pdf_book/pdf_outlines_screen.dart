@@ -17,8 +17,13 @@ class OutlineView extends StatefulWidget {
   State<OutlineView> createState() => _OutlineViewState();
 }
 
-class _OutlineViewState extends State<OutlineView> {
+class _OutlineViewState extends State<OutlineView>
+    with AutomaticKeepAliveClientMixin {
   TextEditingController searchController = TextEditingController();
+  final ScrollController scrollController = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -38,6 +43,7 @@ class _OutlineViewState extends State<OutlineView> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
+    scrollController.dispose();
     searchController.dispose();
     super.dispose();
   }
@@ -48,6 +54,7 @@ class _OutlineViewState extends State<OutlineView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final outline = widget.outline;
     if (outline == null || outline.isEmpty) {
       return const Center(
@@ -93,6 +100,7 @@ class _OutlineViewState extends State<OutlineView> {
 
   Widget _buildOutlineList(List<PdfOutlineNode> outline) {
     return SingleChildScrollView(
+      controller: scrollController,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -120,6 +128,7 @@ class _OutlineViewState extends State<OutlineView> {
         .toList();
 
     return SingleChildScrollView(
+      controller: scrollController,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
