@@ -6,10 +6,12 @@ class OutlineView extends StatefulWidget {
     super.key,
     required this.outline,
     required this.controller,
+    required this.focusNode,
   });
 
   final List<PdfOutlineNode>? outline;
   final PdfViewerController controller;
+  final FocusNode focusNode;
 
   @override
   State<OutlineView> createState() => _OutlineViewState();
@@ -57,7 +59,12 @@ class _OutlineViewState extends State<OutlineView> {
       children: [
         TextField(
           controller: searchController,
+          focusNode: widget.focusNode,
+          autofocus: true,
           onChanged: (value) => setState(() {}),
+          onSubmitted: (_) {
+            widget.focusNode.requestFocus();
+          },
           decoration: InputDecoration(
             hintText: 'חיפוש סימניה...',
             suffixIcon: Row(

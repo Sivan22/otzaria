@@ -74,6 +74,9 @@ class TextBookSearchViewState extends State<TextBookSearchView>
           context.read<TextBookBloc>().add(UpdateSearchText(e));
           _searchTextUpdated();
         },
+        onSubmitted: (_) {
+          widget.focusNode.requestFocus();
+        },
         textAlign: TextAlign.right,
         textDirection: TextDirection.rtl,
         controller: searchTextController,

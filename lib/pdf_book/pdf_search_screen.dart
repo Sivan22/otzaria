@@ -170,6 +170,9 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                     focusNode: widget.focusNode,
                     controller: widget.searchController,
                     textAlign: TextAlign.right,
+                    onSubmitted: (_) {
+                      widget.focusNode.requestFocus();
+                    },
                     decoration: InputDecoration(
                       suffixIcon: IconButton(
                         onPressed: widget.searchController.text.isNotEmpty
