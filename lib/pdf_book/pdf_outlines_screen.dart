@@ -162,10 +162,8 @@ class _OutlineViewState extends State<OutlineView>
                   selected: widget.controller.isReady &&
                       node.dest?.pageNumber ==
                           widget.controller.pageNumber,
-                  selectedColor: Theme.of(context).colorScheme.onSecondary,
-                  selectedTileColor:
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                  onTap: navigateToEntry,
+                  selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                  selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,                  onTap: navigateToEntry,
                   hoverColor: Theme.of(context).hoverColor,
                   mouseCursor: SystemMouseCursors.click,
                 ),

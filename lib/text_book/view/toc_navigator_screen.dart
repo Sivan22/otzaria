@@ -92,10 +92,8 @@ class _TocViewerState extends State<TocViewer>
             return ListTile(
               title: Text(entry.text),
               selected: selected,
-              selectedColor: Theme.of(context).colorScheme.onSecondary,
-              selectedTileColor:
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-              onTap: navigateToEntry,
+              selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
+              selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,              onTap: navigateToEntry,
             );
           },
         ),
