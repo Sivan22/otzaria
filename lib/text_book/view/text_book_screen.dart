@@ -103,6 +103,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   PreferredSizeWidget _buildAppBar(
       BuildContext context, TextBookLoaded state, bool wideScreen) {
     return AppBar(
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+      shape: Border(
+        bottom: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          width: 0.3,
+        ),
+      ),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+
       title: _buildTitle(state),
       leading: _buildMenuButton(context, state),
       actions: _buildActions(context, state, wideScreen),

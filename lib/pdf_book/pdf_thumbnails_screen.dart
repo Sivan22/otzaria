@@ -20,6 +20,7 @@ class ThumbnailsView extends StatelessWidget {
           : PdfDocumentViewBuilder(
               documentRef: documentRef!,
               builder: (context, document) => ListView.builder(
+                key: const PageStorageKey('pdfThumbnails'),
                 itemCount: document?.pages.length ?? 0,
                 itemBuilder: (context, index) {
                   return Container(

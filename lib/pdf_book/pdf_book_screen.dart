@@ -188,6 +188,15 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           autofocus: !Platform.isAndroid,
           child: Scaffold(
           appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+            shape: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                width: 0.3,
+              ),
+            ),
+            elevation: 0,
+            scrolledUnderElevation: 0,
             title: ValueListenableBuilder(
                 valueListenable: widget.tab.currentTitle,
                 builder: (context, value, child) => Center(
