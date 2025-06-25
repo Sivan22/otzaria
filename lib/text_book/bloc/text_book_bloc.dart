@@ -75,7 +75,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           showLeftPane: state.showLeftPane,
           showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
           activeCommentators: state.commentators,
-          removeNikud: false,
+          removeNikud:
+              Settings.getValue<bool>('key-default-nikud') ?? false,
           visibleIndices: [state.index],
           pinLeftPane: false,
           searchText: '',
