@@ -162,15 +162,15 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     if (state is TextBookLoaded) {
       final currentState = state as TextBookLoaded;
       String? newTitle;
-      int? index;
 
       if (event.visibleIndecies.isNotEmpty) {
-        final first = event.visibleIndecies.first;
-        newTitle = await refFromIndex(
-            first, Future.value(currentState.tableOfContents));
-        index = closestTocEntryIndex(currentState.tableOfContents, first);
-      } else {
-        index = currentState.selectedIndex;
+        newTitle = await refFromIndex(event.visibleIndecies.first,
+            Future.value(currentState.tableOfContents));
+      }
+
+      int? index = currentState.selectedIndex;
+      if (!event.visibleIndecies.contains(index)) {
+        index = null;
       }
 
       emit(currentState.copyWith(
