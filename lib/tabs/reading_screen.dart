@@ -24,6 +24,7 @@ import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/daf_yomi/calendar.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -245,6 +246,9 @@ class _ReadingScreenState extends State<ReadingScreen>
                   IconButton(
                     onPressed: () => closeTab(tab, context),
                     icon: const Icon(Icons.close, size: 10),
+                    tooltip: (Settings.getValue<String>('key-shortcut-close-tab') ??
+                            'ctrl+w')
+                        .toUpperCase(),
                   ),
                 ],
               ),

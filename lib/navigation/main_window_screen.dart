@@ -9,6 +9,7 @@ import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/navigation/favoriets_screen.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
@@ -80,28 +81,45 @@ class MainWindowScreenState extends State<MainWindowScreen>
   }
 
   List<NavigationDestination> _buildNavigationDestinations() {
-    return const [
+    String formatShortcut(String shortcut) => shortcut.toUpperCase();
+
+    final libraryShortcut =
+        Settings.getValue<String>('key-shortcut-open-library-browser') ??
+            'ctrl+l';
+    final findShortcut =
+        Settings.getValue<String>('key-shortcut-open-find-ref') ?? 'ctrl+o';
+    final browseShortcut =
+        Settings.getValue<String>('key-shortcut-open-reading-screen') ??
+            'ctrl+r';
+    final searchShortcut =
+        Settings.getValue<String>('key-shortcut-open-new-search') ?? 'ctrl+q';
+
+    return [
       NavigationDestination(
-        icon: Icon(Icons.library_books),
+        icon: const Icon(Icons.library_books),
         label: 'ספרייה',
+        tooltip: formatShortcut(libraryShortcut),
       ),
       NavigationDestination(
-        icon: Icon(Icons.auto_stories_rounded),
+        icon: const Icon(Icons.auto_stories_rounded),
         label: 'איתור',
+        tooltip: formatShortcut(findShortcut),
       ),
       NavigationDestination(
-        icon: Icon(Icons.menu_book),
+        icon: const Icon(Icons.menu_book),
         label: 'עיון',
+        tooltip: formatShortcut(browseShortcut),
       ),
       NavigationDestination(
-        icon: Icon(Icons.search),
+        icon: const Icon(Icons.search),
         label: 'חיפוש',
+        tooltip: formatShortcut(searchShortcut),
       ),
-      NavigationDestination(
+      const NavigationDestination(
         icon: Icon(Icons.star),
         label: 'מועדפים',
       ),
-      NavigationDestination(
+      const NavigationDestination(
         icon: Icon(Icons.settings),
         label: 'הגדרות',
       ),
@@ -177,7 +195,10 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                     for (var destination
                                         in _buildNavigationDestinations())
                                       NavigationRailDestination(
-                                        icon: destination.icon,
+                                        icon: Tooltip(
+                                          message: destination.tooltip ?? '',
+                                          child: destination.icon,
+                                        ),
                                         label: Text(destination.label),
                                         padding: destination.label == 'הגדרות'
                                             ? EdgeInsets.only(
