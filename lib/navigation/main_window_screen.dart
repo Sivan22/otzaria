@@ -96,24 +96,40 @@ class MainWindowScreenState extends State<MainWindowScreen>
 
     return [
       NavigationDestination(
-        icon: const Icon(Icons.library_books),
+        tooltip: '',
+        icon: Tooltip(
+          preferBelow: false,
+          message: formatShortcut(libraryShortcut),
+          child: const Icon(Icons.library_books),
+        ),
         label: 'ספרייה',
-        tooltip: formatShortcut(libraryShortcut),
       ),
       NavigationDestination(
-        icon: const Icon(Icons.auto_stories_rounded),
+        tooltip: '',
+        icon: Tooltip(
+          preferBelow: false,
+          message: formatShortcut(findShortcut),
+          child: const Icon(Icons.auto_stories_rounded),
+        ),
         label: 'איתור',
-        tooltip: formatShortcut(findShortcut),
       ),
       NavigationDestination(
-        icon: const Icon(Icons.menu_book),
+        tooltip: '',
+        icon: Tooltip(
+          preferBelow: false,
+          message: formatShortcut(browseShortcut),
+          child: const Icon(Icons.menu_book),
+        ),
         label: 'עיון',
-        tooltip: formatShortcut(browseShortcut),
       ),
       NavigationDestination(
-        icon: const Icon(Icons.search),
+        tooltip: '',
+        icon: Tooltip(
+          preferBelow: false,
+          message: formatShortcut(searchShortcut),
+          child: const Icon(Icons.search),
+        ),
         label: 'חיפוש',
-        tooltip: formatShortcut(searchShortcut),
       ),
       const NavigationDestination(
         icon: Icon(Icons.star),
@@ -196,6 +212,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                         in _buildNavigationDestinations())
                                       NavigationRailDestination(
                                         icon: Tooltip(
+                                          preferBelow: false,
                                           message: destination.tooltip ?? '',
                                           child: destination.icon,
                                         ),

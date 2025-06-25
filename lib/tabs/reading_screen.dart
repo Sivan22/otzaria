@@ -243,12 +243,15 @@ class _ReadingScreenState extends State<ReadingScreen>
                     Tooltip(
                         message: tab.title,
                         child: Text(truncate(tab.title, 12))),
-                  IconButton(
-                    onPressed: () => closeTab(tab, context),
-                    icon: const Icon(Icons.close, size: 10),
-                    tooltip: (Settings.getValue<String>('key-shortcut-close-tab') ??
+                  Tooltip(
+                    preferBelow: false,
+                    message: (Settings.getValue<String>('key-shortcut-close-tab') ??
                             'ctrl+w')
                         .toUpperCase(),
+                    child: IconButton(
+                      onPressed: () => closeTab(tab, context),
+                      icon: const Icon(Icons.close, size: 10),
+                    ),
                   ),
                 ],
               ),
