@@ -32,69 +32,118 @@ class PdfBookScreen extends StatefulWidget {
 }
 
 class _PdfBookScreenState extends State<PdfBookScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
   late final textSearcher = PdfTextSearcher(widget.tab.pdfViewerController)
-    ..addListener(_update);
+    ..addListener(_onTextSearcherUpdated);
+  TabController? _leftPaneTabController;
+  int _currentLeftPaneTabIndex = 0;
 
-  void _update() {
+  void _ensureSearchTabIsActive() {
+    if (_leftPaneTabController != null && _leftPaneTabController!.index != 1) {
+      _leftPaneTabController!.animateTo(1);
+    }
+  }
+
+  late TabController _tabController;
+  final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
+  int? _lastProcessedSearchSessionId;
+
+  void _onTextSearcherUpdated() {
+    // Get the current search term from the controller
+    String currentSearchTerm = widget.tab.searchController.text;
+
+    // Capture the persisted index from the tab *before* any updates from the current textSearcher state
+    int? persistedIndexFromTab = widget.tab.pdfSearchCurrentMatchIndex;
+
+    // Update the tab's state with the latest from the textSearcher
+    widget.tab.searchText = currentSearchTerm;
+    widget.tab.pdfSearchMatches = List.from(textSearcher.matches); // Ensure matches are saved
+    widget.tab.pdfSearchCurrentMatchIndex = textSearcher.currentIndex;
+
+    // Standard UI update
     if (mounted) {
       setState(() {});
+    }
+
+    // Determine if this is a new search execution vs. just a navigation within existing results
+    bool isNewSearchExecution = (_lastProcessedSearchSessionId != textSearcher.searchSession);
+    if (isNewSearchExecution) {
+      _lastProcessedSearchSessionId = textSearcher.searchSession;
+    }
+
+    // Logic to restore currentIndex only on a new search execution, if applicable
+    if (isNewSearchExecution &&
+        currentSearchTerm.isNotEmpty &&
+        textSearcher.matches.isNotEmpty &&
+        persistedIndexFromTab != null &&
+        persistedIndexFromTab >= 0 &&
+        persistedIndexFromTab < textSearcher.matches.length &&
+        textSearcher.currentIndex != persistedIndexFromTab) {
+      textSearcher.goToMatchOfIndex(persistedIndexFromTab);
+      // This call to goToMatchOfIndex will trigger _onTextSearcherUpdated again.
+      // In that subsequent call, isNewSearchExecution will be false (as _lastProcessedSearchSessionId
+      // will match textSearcher.searchSession), preventing an infinite loop.
     }
   }
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize tab controller with the search tab selected if there's search text
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.tab.searchText.isNotEmpty ? 1 : 0,
+    );
+    
     widget.tab.pdfViewerController = PdfViewerController();
-    widget.tab.pdfViewerController.addListener(() {
-      if (widget.tab.pdfViewerController.isReady) {
-        widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
-        () async {
-          widget.tab.currentTitle.value = await refFromPageNumber(
-              widget.tab.pageNumber =
-                  widget.tab.pdfViewerController.pageNumber ?? 1,
-              widget.tab.outline.value);
-        }();
+    widget.tab.pdfViewerController.addListener(_onPdfViewerControllerUpdate);
+
+    if (widget.tab.searchText.isNotEmpty) {
+      _currentLeftPaneTabIndex = 1; // Index for "Search" tab
+    } else {
+      _currentLeftPaneTabIndex = 0; // Default to "Navigation"
+    }
+
+    _leftPaneTabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: _currentLeftPaneTabIndex,
+    );
+    _leftPaneTabController!.addListener(() {
+      if (_currentLeftPaneTabIndex != _leftPaneTabController!.index) {
+        setState(() {
+          _currentLeftPaneTabIndex = _leftPaneTabController!.index;
+        });
       }
     });
   }
 
-  @override
-  void dispose() {
-    textSearcher.removeListener(_update);
-    widget.tab.pdfViewerController.removeListener(() {});
-    super.dispose();
+  void _onPdfViewerControllerUpdate() {
+    if (widget.tab.pdfViewerController.isReady) {
+      widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber!;
+      () async {
+        widget.tab.currentTitle.value = await refFromPageNumber(
+            widget.tab.pageNumber =
+                widget.tab.pdfViewerController.pageNumber ?? 1,
+            widget.tab.outline.value);
+      }();
+    }
   }
 
-  Future<void> _performAutoSearch() async {
-    if (widget.tab.searchText.isNotEmpty && widget.tab.pdfViewerController.isReady) {
-      // Start the search
-      textSearcher.startTextSearch(widget.tab.searchText);
-      
-      // Wait for search to complete or find matches
-      while (textSearcher.isSearching && textSearcher.matches.isEmpty) {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-      
-      // Find the first match on or after the current page
-      final currentPage = widget.tab.pageNumber;
-      int? targetMatchIndex;
-      
-      for (int i = 0; i < textSearcher.matches.length; i++) {
-        if (textSearcher.matches[i].pageNumber >= currentPage) {
-          targetMatchIndex = i;
-          break;
-        }
-      }
-      
-      // If found a match on or after current page, go to it
-      if (targetMatchIndex != null) {
-        await textSearcher.goToMatchOfIndex(targetMatchIndex);
-      }
-    }
+  @override
+  void dispose() {
+    textSearcher.removeListener(_onTextSearcherUpdated);
+
+    widget.tab.pdfViewerController
+        .removeListener(_onPdfViewerControllerUpdate);
+    _leftPaneTabController?.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -207,19 +256,23 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }),
           ],
         ),
-        body: ColorFiltered(
-          colorFilter: ColorFilter.mode(
-              Colors.white,
-              Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
-                  ? BlendMode.difference
-                  : BlendMode.dst),
-          child: PdfViewer.file(
-            widget.tab.book.path,
-            initialPageNumber: widget.tab.pageNumber,
+        body: Row(
+          children: [
+            _buildLeftPane(),
+            Expanded(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                    Colors.white,
+                    Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
+                        ? BlendMode.difference
+                        : BlendMode.dst),
+                child: PdfViewer.file(
+                  widget.tab.book.path,
+                  initialPageNumber: widget.tab.pageNumber,
             passwordProvider: () => passwordDialog(context),
             controller: widget.tab.pdfViewerController,
             params: PdfViewerParams(
-              enableTextSelection: true,
+              //enableTextSelection: true,
               maxScale: 10,
               onInteractionStart: (_) {
                 if (!widget.tab.pinLeftPane.value) {
@@ -254,7 +307,6 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     ),
                   ),
                 ),
-                _buildLeftPane(),
               ],
               loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
                   Center(
@@ -295,17 +347,13 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 }();
                 if (mounted) {
                   widget.tab.showLeftPane.value = true;
-                  // Perform auto search if searchText is provided
-                  if (widget.tab.searchText.isNotEmpty) {
-                    // Small delay to ensure everything is ready
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      _performAutoSearch();
-                    });
-                  }
+                  // No need for _performAutoSearch anymore - the PdfBookSearchView handles it
                 }
               },
             ),
           ),
+        ),
+        )],
         ),
       );
     });
@@ -320,20 +368,23 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-        child: DefaultTabController(
-          length: 3,
-          child: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
+
+        child: Container( 
+
+          color: Theme.of(context).colorScheme.surface,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
                         child: ClipRect(
                           child: TabBar(
-                            tabs: [
+                            controller: _leftPaneTabController, // Use the managed controller
+                            tabs: const [
                               Tab(text: 'ניווט'),
                               Tab(text: 'חיפוש'),
                               Tab(text: 'דפים'),
@@ -341,52 +392,68 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           ),
                         ),
                       ),
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: widget.tab.pinLeftPane,
+                      builder: (context, pinLeftPanel, child) =>
+                          MediaQuery.of(context).size.width < 600
+                              ? const SizedBox.shrink()
+                              : IconButton(
+                                  onPressed: () {
+                                    widget.tab.pinLeftPane.value =
+                                        !widget.tab.pinLeftPane.value;
+                                  },
+                                  icon: const Icon(Icons.push_pin),
+                                  isSelected: pinLeftPanel,
+                                ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+
+                    controller: _leftPaneTabController, // Use the managed controller
+
+                    children: [
                       ValueListenableBuilder(
-                        valueListenable: widget.tab.pinLeftPane,
-                        builder: (context, pinLeftPanel, child) =>
-                            MediaQuery.of(context).size.width < 600
-                                ? const SizedBox.shrink()
-                                : IconButton(
-                                    onPressed: () {
-                                      widget.tab.pinLeftPane.value =
-                                          !widget.tab.pinLeftPane.value;
-                                    },
-                                    icon: const Icon(Icons.push_pin),
-                                    isSelected: pinLeftPanel,
-                                  ),
+                        valueListenable: widget.tab.outline,
+                        builder: (context, outline, child) => OutlineView(
+                          outline: outline,
+                          controller: widget.tab.pdfViewerController,
+                        ),
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: widget.tab.documentRef,
+                        builder: (context, documentRef, child) {
+                          // Check if PdfBookSearchView will trigger an initial search
+                          if (widget.tab.searchController.text.isNotEmpty) {
+                            // If there's text in the search controller, it implies that
+                            // PdfBookSearchView.initState will trigger an initial search.
+                            // We reset _lastProcessedSearchSessionId here
+                            // to ensure that the completion of this initial search is unequivocally
+                            // treated as a new search session by the _onTextSearcherUpdated listener.
+                            _lastProcessedSearchSessionId = null;
+                          }
+                          return child!;
+                        },
+                        child: PdfBookSearchView(
+                          textSearcher: textSearcher,
+                          searchController: widget.tab.searchController,
+                          initialSearchText: widget.tab.searchText,
+                          onSearchResultNavigated: _ensureSearchTabIsActive,
+                        ),
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: widget.tab.documentRef,
+                        builder: (context, documentRef, child) => child!,
+                        child: ThumbnailsView(
+                            documentRef: widget.tab.documentRef.value,
+                            controller: widget.tab.pdfViewerController),
                       ),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.outline,
-                          builder: (context, outline, child) => OutlineView(
-                            outline: outline,
-                            controller: widget.tab.pdfViewerController,
-                          ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.documentRef,
-                          builder: (context, documentRef, child) => child!,
-                          child: PdfBookSearchView(
-                            textSearcher: textSearcher,
-                            initialSearchText: widget.tab.searchText,
-                          ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: widget.tab.documentRef,
-                          builder: (context, documentRef, child) => child!,
-                          child: ThumbnailsView(
-                              documentRef: widget.tab.documentRef.value,
-                              controller: widget.tab.pdfViewerController),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

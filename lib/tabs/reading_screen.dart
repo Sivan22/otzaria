@@ -64,9 +64,9 @@ class _ReadingScreenState extends State<ReadingScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text('לא נבחרו ספרים'),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('לא נבחרו ספרים'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
