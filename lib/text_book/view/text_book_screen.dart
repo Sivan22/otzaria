@@ -44,7 +44,6 @@ class TextBookViewerBloc extends StatefulWidget {
 class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     with TickerProviderStateMixin {
   final FocusNode textSearchFocusNode = FocusNode();
-  final FocusNode navigationSearchFocusNode = FocusNode();
   late TabController tabController;
 
   String? encodeQueryParameters(Map<String, String> params) {
@@ -58,14 +57,6 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   void initState() {
     super.initState();
     tabController = TabController(length: 4, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    tabController.dispose();
-    textSearchFocusNode.dispose();
-    navigationSearchFocusNode.dispose();
-    super.dispose();
   }
 
   @override
@@ -103,16 +94,6 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   PreferredSizeWidget _buildAppBar(
       BuildContext context, TextBookLoaded state, bool wideScreen) {
     return AppBar(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      shape: Border(
-        bottom: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 0.3,
-        ),
-      ),
-      elevation: 0,
-      scrolledUnderElevation: 0,
-
       title: _buildTitle(state),
       leading: _buildMenuButton(context, state),
       actions: _buildActions(context, state, wideScreen),
@@ -695,15 +676,6 @@ $selectedText
   }
 
   Widget _buildTabBar(TextBookLoaded state) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (state.showLeftPane && !Platform.isAndroid) {
-        if (tabController.index == 1) {
-          textSearchFocusNode.requestFocus();
-        } else if (tabController.index == 0) {
-          navigationSearchFocusNode.requestFocus();
-        }
-      }
-    });
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       child: SizedBox(
@@ -726,8 +698,6 @@ $selectedText
                       onTap: (value) {
                         if (value == 1 && !Platform.isAndroid) {
                           textSearchFocusNode.requestFocus();
-                        } else if (value == 0 && !Platform.isAndroid) {
-                          navigationSearchFocusNode.requestFocus();
                         }
                       },
                     ),
@@ -785,7 +755,6 @@ $selectedText
   Widget _buildTocViewer(BuildContext context, TextBookLoaded state) {
     return TocViewer(
       scrollController: state.scrollController,
-      focusNode: navigationSearchFocusNode,
       closeLeftPaneCallback: () =>
           context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
     );

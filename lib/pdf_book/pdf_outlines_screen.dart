@@ -1,38 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class OutlineView extends StatefulWidget {
   const OutlineView({
     super.key,
     required this.outline,
     required this.controller,
-    required this.focusNode,
   });
 
   final List<PdfOutlineNode>? outline;
   final PdfViewerController controller;
-  final FocusNode focusNode;
 
   @override
   State<OutlineView> createState() => _OutlineViewState();
 }
 
-class _OutlineViewState extends State<OutlineView>
-    with AutomaticKeepAliveClientMixin {
-  final _searchController = TextEditingController();
-  final _itemScrollController = ItemScrollController();
-  List<({PdfOutlineNode node, int level})>? _flattenedOutline;
-  bool _isManuallyScrolling = false;
-
-  @override
-  bool get wantKeepAlive => true;
+class _OutlineViewState extends State<OutlineView> {
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _flattenedOutline = _flattenOutline(widget.outline, 0);
     widget.controller.addListener(_onControllerChanged);
   }
 
@@ -40,64 +28,24 @@ class _OutlineViewState extends State<OutlineView>
   void didUpdateWidget(covariant OutlineView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
-      _flattenedOutline = _flattenOutline(widget.outline, 0);
       oldWidget.controller.removeListener(_onControllerChanged);
       widget.controller.addListener(_onControllerChanged);
-    }
-    if (widget.outline != oldWidget.outline) {
-      _flattenedOutline = _flattenOutline(widget.outline, 0);
     }
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
-    _searchController.dispose();
+    searchController.dispose();
     super.dispose();
   }
 
   void _onControllerChanged() {
     if (mounted) setState(() {});
-    _scrollToCurrent();
-  }
-
-  void _scrollToCurrent() {
-    if (!mounted ||
-        !widget.controller.isReady ||
-        _isManuallyScrolling ||
-        _flattenedOutline == null ||
-        !_itemScrollController.isAttached) return;
-
-    final currentPage = widget.controller.pageNumber;
-    if (currentPage == null) return;
-
-    int targetIndex = -1;
-    for (int i = 0; i < _flattenedOutline!.length; i++) {
-      final page = _flattenedOutline![i].node.dest?.pageNumber;
-      if (page != null && page <= currentPage) {
-        targetIndex = i;
-      } else if (page != null && page > currentPage) {
-        break;
-      }
-    }
-
-    if (targetIndex != -1) {
-      // Use SchedulerBinding to ensure the scroll happens after the build phase
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _itemScrollController.isAttached) {
-          _itemScrollController.scrollTo(
-              index: targetIndex,
-              duration: const Duration(milliseconds: 300),
-              alignment: 0.5,
-              curve: Curves.ease);
-        }
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final outline = widget.outline;
     if (outline == null || outline.isEmpty) {
       return const Center(
@@ -106,18 +54,12 @@ class _OutlineViewState extends State<OutlineView>
     }
 
     return Column(
-      key: PageStorageKey(widget.key),
       children: [
         TextField(
-          controller: _searchController,
-          focusNode: widget.focusNode,
-          autofocus: true,
+          controller: searchController,
           onChanged: (value) => setState(() {}),
-          onSubmitted: (_) {
-            widget.focusNode.requestFocus();
-          },
           decoration: InputDecoration(
-            hintText: 'איתור כותרת...',
+            hintText: 'חיפוש סימניה...',
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -125,7 +67,7 @@ class _OutlineViewState extends State<OutlineView>
                   icon: const Icon(Icons.clear),
                   onPressed: () {
                     setState(() {
-                      _searchController.clear();
+                      searchController.clear();
                     });
                   },
                 ),
@@ -134,83 +76,118 @@ class _OutlineViewState extends State<OutlineView>
           ),
         ),
         Expanded(
-          child: NotificationListener<ScrollStartNotification>(
-            onNotification: (notification) {
-              if (notification.dragDetails != null) {
-                setState(() {
-                  _isManuallyScrolling = true;
-                });
-              }
-              return false;
-            },
-            child: _buildList(),
-          ),
+          child: searchController.text.isEmpty
+              ? _buildOutlineList(outline)
+              : _buildFilteredOutlineList(outline),
         ),
       ],
     );
   }
 
-  List<({PdfOutlineNode node, int level})> _flattenOutline(
-      List<PdfOutlineNode>? outline, int level) {
-    if (outline == null) return [];
-    final List<({PdfOutlineNode node, int level})> list = [];
-    for (final node in outline) {
-      list.add((node: node, level: level));
-      if (node.children.isNotEmpty) {
-        list.addAll(_flattenOutline(node.children, level + 1));
-      }
-    }
-    return list;
+  Widget _buildOutlineList(List<PdfOutlineNode> outline) {
+    return SingleChildScrollView(
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: outline.length,
+        itemBuilder: (context, index) =>
+            _buildOutlineItem(outline[index], level: 0),
+      ),
+    );
   }
 
-  Widget _buildList() {
-    final items = _flattenedOutline;
-    if (items == null) return const SizedBox.shrink();
+  Widget _buildFilteredOutlineList(List<PdfOutlineNode>? outline) {
+    List<({PdfOutlineNode node, int level})> allNodes = [];
+    void getAllNodes(List<PdfOutlineNode>? outline, int level) {
+      if (outline == null) return;
+      for (var node in outline) {
+        allNodes.add((node: node, level: level));
+        getAllNodes(node.children, level + 1);
+      }
+    }
 
-    final filteredNodes = _searchController.text.isEmpty
-        ? items
-        : items
-            .where((item) => item.node.title
-                .toLowerCase()
-                .contains(_searchController.text.toLowerCase()))
-            .toList();
+    getAllNodes(widget.outline, 0);
 
-    return ScrollablePositionedList.builder(
-        itemScrollController: _itemScrollController,
+    final filteredNodes = allNodes
+        .where((item) => item.node.title.contains(searchController.text))
+        .toList();
+
+    return SingleChildScrollView(
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: filteredNodes.length,
         itemBuilder: (context, index) => _buildOutlineItem(
             filteredNodes[index].node,
-            level: filteredNodes[index].level));
+            level: filteredNodes[index].level),
+      ),
+    );
   }
 
   Widget _buildOutlineItem(PdfOutlineNode node, {int level = 0}) {
-    void navigateToEntry(bool isTap) {
-      if (isTap) {
-        setState(() {
-          _isManuallyScrolling = false;
-        });
-      }
+    void navigateToEntry() {
       if (node.dest != null) {
-        // --- FIX IS HERE ---
-        widget.controller.goToDest(node.dest!);
-        // --- END OF FIX ---
+        widget.controller.goTo(widget.controller
+            .calcMatrixFitWidthForPage(pageNumber: node.dest?.pageNumber ?? 1));
       }
     }
 
     return Padding(
-        padding: EdgeInsets.fromLTRB(0, 0, 10 * level.toDouble(), 0),
-        child: Material(
-          color: Colors.transparent,
-          child: ListTile(
-            title: Text(node.title, overflow: TextOverflow.ellipsis),
-            selected: widget.controller.isReady &&
-                node.dest?.pageNumber == widget.controller.pageNumber,
-            selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
-            onTap: () => navigateToEntry(true),
-            hoverColor: Theme.of(context).hoverColor,
-            mouseCursor: SystemMouseCursors.click,
-          ),
-        ));
+      padding: EdgeInsets.fromLTRB(0, 0, 10 * level.toDouble(), 0),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+        ),
+        child: node.children.isEmpty
+            ? Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  title: Text(node.title),
+                  selected: widget.controller.isReady &&
+                      node.dest?.pageNumber ==
+                          widget.controller.pageNumber,
+                  selectedColor: Theme.of(context).colorScheme.onSecondary,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                  onTap: navigateToEntry,
+                  hoverColor: Theme.of(context).hoverColor,
+                  mouseCursor: SystemMouseCursors.click,
+                ),
+              )
+            : Material(
+                color: Colors.transparent,
+                child: ExpansionTile(
+                  key: PageStorageKey(node),
+                  initiallyExpanded: level == 0,
+                  // גם לכותרת של הצומת המורחב נוסיף ListTile
+                  title: ListTile(
+                    title: Text(node.title),
+                    selected: widget.controller.isReady &&
+                        node.dest?.pageNumber ==
+                            widget.controller.pageNumber,
+                    selectedColor:
+                        Theme.of(context).colorScheme.onSecondary,
+                    selectedTileColor: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.2),
+                    onTap: navigateToEntry,
+                    hoverColor: Theme.of(context).hoverColor,
+                    mouseCursor: SystemMouseCursors.click,
+                    contentPadding: EdgeInsets.zero, // שלא יזיז ימינה
+                  ),
+                  leading: const Icon(Icons.chevron_right_rounded),
+                  trailing: const SizedBox.shrink(),
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: EdgeInsets.zero,
+                  iconColor: Theme.of(context).colorScheme.primary,
+                  collapsedIconColor: Theme.of(context).colorScheme.primary,
+                  children: node.children
+                      .map((c) => _buildOutlineItem(c, level: level + 1))
+                      .toList(),
+                ),
+              ),
+      ),
+    );
   }
 }

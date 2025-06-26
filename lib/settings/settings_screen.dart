@@ -238,19 +238,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .add(UpdateShowTeamim(value));
                         },
                       ),
-                      SwitchSettingsTile(
-                        settingKey: 'key-default-nikud',
-                        title: 'הסרת ניקוד כברירת מחדל',
-                        enabledLabel: 'הניקוד יוסר כברירת מחדל',
-                        disabledLabel: 'הניקוד יוצג כברירת מחדל',
-                        leading: const Icon(Icons.text_fields),
-                        defaultValue: state.defaultRemoveNikud,
-                        onChange: (value) {
-                          context
-                              .read<SettingsBloc>()
-                              .add(UpdateDefaultRemoveNikud(value));
-                        },
-                      ),
                       const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',

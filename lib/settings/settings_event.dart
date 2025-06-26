@@ -117,12 +117,3 @@ class UpdateAutoUpdateIndex extends SettingsEvent {
   @override
   List<Object?> get props => [autoUpdateIndex];
 }
-
-class UpdateDefaultRemoveNikud extends SettingsEvent {
-  final bool defaultRemoveNikud;
-
-  const UpdateDefaultRemoveNikud(this.defaultRemoveNikud);
-
-  @override
-  List<Object?> get props => [defaultRemoveNikud];
-}
