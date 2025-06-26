@@ -39,7 +39,6 @@ void main() {
         'useFastSearch': false,
         'replaceHolyNames': false,
         'autoUpdateIndex': false,
-        'defaultRemoveNikud': true,
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -64,7 +63,6 @@ void main() {
             useFastSearch: mockSettings['useFastSearch'] as bool,
             replaceHolyNames: mockSettings['replaceHolyNames'] as bool,
             autoUpdateIndex: mockSettings['autoUpdateIndex'] as bool,
-            defaultRemoveNikud: mockSettings['defaultRemoveNikud'] as bool,
           ),
         ],
         verify: (_) {
@@ -131,20 +129,6 @@ void main() {
         ],
         verify: (_) {
           verify(mockRepository.updateFontFamily(newFontFamily)).called(1);
-        },
-      );
-    });
-
-    group('UpdateDefaultRemoveNikud', () {
-      blocTest<SettingsBloc, SettingsState>(
-        'emits updated state when UpdateDefaultRemoveNikud is added',
-        build: () => settingsBloc,
-        act: (bloc) => bloc.add(const UpdateDefaultRemoveNikud(true)),
-        expect: () => [
-          settingsBloc.state.copyWith(defaultRemoveNikud: true),
-        ],
-        verify: (_) {
-          verify(mockRepository.updateDefaultRemoveNikud(true)).called(1);
         },
       );
     });

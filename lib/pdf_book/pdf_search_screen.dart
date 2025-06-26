@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:synchronized/extension.dart';
-import 'package:otzaria/utils/ref_helper.dart';
 
 //
 // Simple Text Search View
@@ -11,8 +10,6 @@ class PdfBookSearchView extends StatefulWidget {
   const PdfBookSearchView({
     required this.textSearcher,
     required this.searchController,
-    required this.focusNode,
-    this.outline,
     this.initialSearchText = '',
     this.onSearchResultNavigated, // Add this
     super.key,
@@ -20,8 +17,6 @@ class PdfBookSearchView extends StatefulWidget {
 
   final PdfTextSearcher textSearcher;
   final TextEditingController searchController;
-  final FocusNode focusNode;
-  final List<PdfOutlineNode>? outline;
   final String initialSearchText; // Remains for now, parent will provide tab.searchText
 
   final VoidCallback? onSearchResultNavigated; // Add this
@@ -32,6 +27,7 @@ class PdfBookSearchView extends StatefulWidget {
 }
 
 class _PdfBookSearchViewState extends State<PdfBookSearchView> {
+  final focusNode = FocusNode();
   // final searchTextController = TextEditingController(); // Removed
   late final pageTextStore =
       PdfPageTextCache(textSearcher: widget.textSearcher);
@@ -59,20 +55,17 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     widget.textSearcher.removeListener(_searchResultUpdated);
     widget.searchController.removeListener(_searchTextUpdated); // Changed
     // searchTextController.dispose(); // Removed
+    focusNode.dispose();
     super.dispose();
   }
 
   void _searchTextUpdated() {
-    widget.textSearcher
-      .startTextSearch(widget.searchController.text, goToFirstMatch: false);
-    _searchResultUpdated();
-
+    widget.textSearcher.startTextSearch(widget.searchController.text, goToFirstMatch: false); // Changed
   }
 
   int? _currentSearchSession;
   final _matchIndexToListIndex = <int>[];
   final _listIndexToMatchIndex = <int>[];
-  final _pageTitles = <int, String>{};
 
   void _searchResultUpdated() {
     final previousListCount = _listIndexToMatchIndex.length;
@@ -84,12 +77,10 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     //    the view might be reconstructed/refreshed and lost its local list state,
     //    but the underlying searcher still holds valid results.
     if (_currentSearchSession != widget.textSearcher.searchSession ||
-        (_listIndexToMatchIndex.isNotEmpty && !widget.textSearcher.hasMatches) ||
         (_listIndexToMatchIndex.isEmpty && widget.textSearcher.hasMatches)) {
       _currentSearchSession = widget.textSearcher.searchSession;
       _matchIndexToListIndex.clear();
       _listIndexToMatchIndex.clear();
-      _pageTitles.clear();
     }
 
     // Populate _listIndexToMatchIndex and _matchIndexToListIndex.
@@ -100,25 +91,12 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
     for (int i = _matchIndexToListIndex.length; // Start from the current end of _matchIndexToListIndex
         i < widget.textSearcher.matches.length;
         i++) {
-        if (i == 0 ||
-            widget.textSearcher.matches[i - 1].pageNumber !=
-                widget.textSearcher.matches[i].pageNumber) {
-          final pageNumber = widget.textSearcher.matches[i].pageNumber;
-          // Add a negative page number to indicate a page header in the list
-          _listIndexToMatchIndex.add(-pageNumber);
-          if (!_pageTitles.containsKey(pageNumber)) {
-            () async {
-              final title = await refFromPageNumber(pageNumber, widget.outline);
-              if (mounted) {
-                setState(() {
-                  _pageTitles[pageNumber] = title;
-                });
-              } else {
-                _pageTitles[pageNumber] = title;
-              }
-            }();
-          }
-        }
+      if (i == 0 ||
+          widget.textSearcher.matches[i - 1].pageNumber !=
+              widget.textSearcher.matches[i].pageNumber) {
+        // Add a negative page number to indicate a page header in the list
+        _listIndexToMatchIndex.add(-widget.textSearcher.matches[i].pageNumber);
+      }
       _matchIndexToListIndex.add(_listIndexToMatchIndex.length); // Store mapping for scrolling
       _listIndexToMatchIndex.add(i); // Add actual match index
     }
@@ -167,23 +145,10 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                 children: [
                   TextField(
                     autofocus: true,
-                    focusNode: widget.focusNode,
-                    controller: widget.searchController,
-                    textAlign: TextAlign.right,
-                    onSubmitted: (_) {
-                      widget.focusNode.requestFocus();
-                    },
-                    decoration: InputDecoration(
-                      suffixIcon: IconButton(
-                        onPressed: widget.searchController.text.isNotEmpty
-                            ? () {
-                                widget.searchController.text = '';
-                                widget.textSearcher.resetTextSearch();
-                                widget.focusNode.requestFocus();
-                              }
-                            : null,
-                        icon: const Icon(Icons.close),
-                      ),
+                    focusNode: focusNode,
+                    controller: widget.searchController, // Changed
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.only(right: 50),
                     ),
                     textInputAction: TextInputAction.search,
                     // onSubmitted: (value) {
@@ -191,44 +156,72 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                     //   focusNode.requestFocus();
                     // },
                   ),
-                  // Result count moved below
+                  if (widget.textSearcher.hasMatches)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '${widget.textSearcher.currentIndex! + 1} / ${widget.textSearcher.matches.length}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-            // Icons removed for cleaner UI
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: (widget.textSearcher.currentIndex ?? 0) <
+                      widget.textSearcher.matches.length
+                  ? () async {
+                      await widget.textSearcher.goToNextMatch();
+                      widget.onSearchResultNavigated?.call(); // Add this line
+                      _conditionScrollPosition();
+
+                    }
+                  : null,
+              icon: const Icon(Icons.arrow_downward),
+              iconSize: 20,
+            ),
+            IconButton(
+              onPressed: (widget.textSearcher.currentIndex ?? 0) > 0
+                  ? () async {
+                      await widget.textSearcher.goToPrevMatch();
+                      widget.onSearchResultNavigated?.call(); // Add this line
+                      _conditionScrollPosition();
+
+                    }
+                  : null,
+              icon: const Icon(Icons.arrow_upward),
+              iconSize: 20,
+            ),
+            IconButton(
+              onPressed: widget.searchController.text.isNotEmpty // Changed
+                  ? () {
+                      widget.searchController.text = ''; // Changed
+                      widget.textSearcher.resetTextSearch();
+                      focusNode.requestFocus();
+                    }
+                  : null,
+              icon: const Icon(Icons.close),
+              iconSize: 20,
+            ),
           ],
         ),
-        if (widget.textSearcher.matches.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                 'נמצאו ${widget.textSearcher.matches.length} תוצאות',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).textTheme.bodySmall?.color ??
-                      Colors.grey[700],
-                ),
-              ),
-            ),
-          ),
         const SizedBox(height: 4),
         Expanded(
-          child: widget.searchController.text.isNotEmpty &&
-                  widget.textSearcher.matches.isEmpty
-              ? const Center(child: Text('אין תוצאות'))
-              : ListView.builder(
-                  key: Key(widget.searchController.text), // Changed
-                  controller: scrollController,
-                  itemCount: _listIndexToMatchIndex.length,
-                  itemBuilder: (context, index) {
-                  final matchIndex = _listIndexToMatchIndex[index];
-                  if (matchIndex >= 0 &&
-                      matchIndex < widget.textSearcher.matches.length) {
-                        final match = widget.textSearcher.matches[matchIndex];
-                        return SearchResultTile(
-                          key: ValueKey(index),
+          child: ListView.builder(
+            key: Key(widget.searchController.text), // Changed
+            controller: scrollController,
+            itemCount: _listIndexToMatchIndex.length,
+            itemBuilder: (context, index) {
+              final matchIndex = _listIndexToMatchIndex[index];
+              if (matchIndex >= 0 &&
+                  matchIndex < widget.textSearcher.matches.length) {
+                final match = widget.textSearcher.matches[matchIndex];
+                return SearchResultTile(
+                  key: ValueKey(index),
                   match: match,
                   onTap: () async {
                     await widget.textSearcher.goToMatchOfIndex(matchIndex);
@@ -245,9 +238,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                   alignment: Alignment.bottomRight, // Changed from bottomLeft
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    _pageTitles[-matchIndex]?.isNotEmpty == true
-                        ? _pageTitles[-matchIndex]!
-                        : 'עמוד ${-matchIndex}',
+                    'עמוד ${-matchIndex}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -405,7 +396,7 @@ class _SearchResultTileState extends State<SearchResultTile> {
         TextSpan(
           text: body,
           style: const TextStyle(
-            color: Colors.red,
+            backgroundColor: Colors.yellow,
           ),
         ),
         TextSpan(text: footer),

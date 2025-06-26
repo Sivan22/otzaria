@@ -22,7 +22,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateUseFastSearch>(_onUpdateUseFastSearch);
     on<UpdateReplaceHolyNames>(_onUpdateReplaceHolyNames);
     on<UpdateAutoUpdateIndex>(_onUpdateAutoUpdateIndex);
-    on<UpdateDefaultRemoveNikud>(_onUpdateDefaultRemoveNikud);
   }
 
   Future<void> _onLoadSettings(
@@ -43,7 +42,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       useFastSearch: settings['useFastSearch'],
       replaceHolyNames: settings['replaceHolyNames'],
       autoUpdateIndex: settings['autoUpdateIndex'],
-      defaultRemoveNikud: settings['defaultRemoveNikud'],
     ));
   }
 
@@ -141,13 +139,5 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _repository.updateAutoUpdateIndex(event.autoUpdateIndex);
     emit(state.copyWith(autoUpdateIndex: event.autoUpdateIndex));
-  }
-
-  Future<void> _onUpdateDefaultRemoveNikud(
-    UpdateDefaultRemoveNikud event,
-    Emitter<SettingsState> emit,
-  ) async {
-    await _repository.updateDefaultRemoveNikud(event.defaultRemoveNikud);
-    emit(state.copyWith(defaultRemoveNikud: event.defaultRemoveNikud));
   }
 }
