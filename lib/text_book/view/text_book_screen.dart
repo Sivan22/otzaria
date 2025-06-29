@@ -592,7 +592,6 @@ $selectedText
             if (fileName == bookTitle) {
               return {
                 'שם הקובץ': fileNameRaw,  // <-- מחזיר את השם המלא עם .txt
-                // 'שם הקובץ': fileName,  // <-- מחזיר את השם בלי הסיומת .txt
                 'נתיב הקובץ': filePath,
                 'תיקיית המקור': sourceFolder,
               };
