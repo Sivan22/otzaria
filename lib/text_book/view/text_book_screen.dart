@@ -565,6 +565,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 $selectedText
 
 פירוט הטעות:
+
 ''';
   }
 
