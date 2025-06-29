@@ -63,6 +63,10 @@ void main() {
               SettingsRepository.keyAutoUpdateIndex,
               defaultValue: true))
           .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultNikud,
+              defaultValue: false))
+          .thenReturn(false);
 
       final settings = await repository.loadSettings();
 
@@ -79,6 +83,7 @@ void main() {
       expect(settings['useFastSearch'], true);
       expect(settings['replaceHolyNames'], true);
       expect(settings['autoUpdateIndex'], true);
+      expect(settings['defaultRemoveNikud'], false);
     });
 
     test('loadSettings returns custom values when settings are set', () async {
@@ -128,6 +133,10 @@ void main() {
               SettingsRepository.keyAutoUpdateIndex,
               defaultValue: true))
           .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultNikud,
+              defaultValue: false))
+          .thenReturn(true);
 
       final settings = await repository.loadSettings();
 
@@ -144,6 +153,7 @@ void main() {
       expect(settings['useFastSearch'], false);
       expect(settings['replaceHolyNames'], false);
       expect(settings['autoUpdateIndex'], false);
+      expect(settings['defaultRemoveNikud'], true);
     });
 
     test('updateDarkMode calls setValue on settings wrapper', () async {
@@ -163,6 +173,14 @@ void main() {
     test('updateFontSize calls setValue on settings wrapper', () async {
       await repository.updateFontSize(20.0);
       verify(mockSettingsWrapper.setValue(SettingsRepository.keyFontSize, 20.0))
+          .called(1);
+    });
+
+    test('updateDefaultRemoveNikud calls setValue on settings wrapper',
+        () async {
+      await repository.updateDefaultRemoveNikud(true);
+      verify(mockSettingsWrapper.setValue(
+              SettingsRepository.keyDefaultNikud, true))
           .called(1);
     });
   });
