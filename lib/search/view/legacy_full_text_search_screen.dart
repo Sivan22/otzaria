@@ -243,9 +243,12 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
           onTap: () {
             widget.openBookCallback(
               TextBookTab(
-                  book: TextBook(title: utils.getTitleFromPath(result.path)),
-                  index: result.index,
-                  searchText: result.query),
+                book: TextBook(title: utils.getTitleFromPath(result.path)),
+                index: result.index,
+                searchText: result.query,
+                openLeftPane:
+                    Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+              ),
             );
           },
         );

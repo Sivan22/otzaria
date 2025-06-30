@@ -126,3 +126,12 @@ class UpdateDefaultRemoveNikud extends SettingsEvent {
   @override
   List<Object?> get props => [defaultRemoveNikud];
 }
+
+class UpdateDefaultSidebarOpen extends SettingsEvent {
+  final bool defaultSidebarOpen;
+
+  const UpdateDefaultSidebarOpen(this.defaultSidebarOpen);
+
+  @override
+  List<Object?> get props => [defaultSidebarOpen];
+}

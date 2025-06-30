@@ -10,6 +10,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 void openDafYomiBook(BuildContext context, String tractate, String daf) async {
   final libraryBlocState = BlocProvider.of<LibraryBloc>(context).state;
@@ -19,7 +20,12 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
     if (book is TextBook) {
       final tocEntry = await _findDafInToc(book, 'דף ${daf.trim()}');
       index = tocEntry?.index ?? 0;
-      final tab = TextBookTab(book: book, index: index, openLeftPane: true);
+      final tab = TextBookTab(
+        book: book,
+        index: index,
+        openLeftPane:
+            Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+      );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else if (book is PdfBook) {
       final outline = await getDafYomiOutline(book, 'דף ${daf.trim()}');
@@ -27,6 +33,8 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
       final tab = PdfBookTab(
         book: book,
         pageNumber: index,
+        openLeftPane:
+            Settings.getValue<bool>('key-default-sidebar-open') ?? false,        
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     }
@@ -87,6 +95,8 @@ openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
       final tab = PdfBookTab(
         book: book,
         pageNumber: outline.dest?.pageNumber ?? 0,
+        openLeftPane:
+            Settings.getValue<bool>('key-default-sidebar-open') ?? false,        
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {
@@ -113,8 +123,12 @@ openTextBookFromRef(String bookname, String ref, BuildContext context) async {
   if (book != null) {
     final tocEntry = await _findDafInToc(book, ref);
     if (tocEntry != null) {
-      final tab =
-          TextBookTab(book: book, index: tocEntry.index, openLeftPane: true);
+      final tab = TextBookTab(
+        book: book,
+        index: tocEntry.index,
+        openLeftPane:
+            Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+      );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
