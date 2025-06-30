@@ -8,6 +8,7 @@ import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'dart:io';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/models/links.dart';
@@ -70,11 +71,15 @@ class _LinksViewerState extends State<LinksViewer>
                   onTap: () {
                     widget.openTabcallback(
                       TextBookTab(
-                          book: TextBook(
-                            title: utils
-                                .getTitleFromPath(snapshot.data![index].path2),
-                          ),
-                          index: snapshot.data![index].index2 - 1),
+                        book: TextBook(
+                          title: utils
+                              .getTitleFromPath(snapshot.data![index].path2),
+                        ),
+                        index: snapshot.data![index].index2 - 1,
+                        openLeftPane:
+                            Settings.getValue<bool>('key-default-sidebar-open') ??
+                                false,
+                      ),
                     );
                     if (MediaQuery.of(context).size.width < 600) {
                       widget.closeLeftPanelCallback();

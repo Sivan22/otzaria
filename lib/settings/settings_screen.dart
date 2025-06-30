@@ -260,6 +260,19 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         defaultValue: false,
                       ),
                       SwitchSettingsTile(
+                        settingKey: 'key-default-sidebar-open',
+                        title: 'פתיחת סרגל צד כברירת מחדל',
+                        enabledLabel: 'סרגל הצד יפתח אוטומטית',
+                        disabledLabel: 'סרגל הצד ישאר סגור',
+                        leading: const Icon(Icons.menu_open),
+                        defaultValue: state.defaultSidebarOpen,
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateDefaultSidebarOpen(value));
+                        },
+                      ),
+                      SwitchSettingsTile(
                         settingKey: 'key-use-fast-search',
                         title: 'חיפוש מהיר באמצעות אינדקס',
                         enabledLabel:

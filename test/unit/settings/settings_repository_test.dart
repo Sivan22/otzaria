@@ -67,6 +67,10 @@ void main() {
               SettingsRepository.keyDefaultNikud,
               defaultValue: false))
           .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultSidebarOpen,
+              defaultValue: false))
+          .thenReturn(false);
 
       final settings = await repository.loadSettings();
 
@@ -84,6 +88,7 @@ void main() {
       expect(settings['replaceHolyNames'], true);
       expect(settings['autoUpdateIndex'], true);
       expect(settings['defaultRemoveNikud'], false);
+      expect(settings['defaultSidebarOpen'], false);
     });
 
     test('loadSettings returns custom values when settings are set', () async {
@@ -137,6 +142,10 @@ void main() {
               SettingsRepository.keyDefaultNikud,
               defaultValue: false))
           .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultSidebarOpen,
+              defaultValue: false))
+          .thenReturn(true);
 
       final settings = await repository.loadSettings();
 
@@ -154,6 +163,7 @@ void main() {
       expect(settings['replaceHolyNames'], false);
       expect(settings['autoUpdateIndex'], false);
       expect(settings['defaultRemoveNikud'], true);
+      expect(settings['defaultSidebarOpen'], true);
     });
 
     test('updateDarkMode calls setValue on settings wrapper', () async {
@@ -181,6 +191,14 @@ void main() {
       await repository.updateDefaultRemoveNikud(true);
       verify(mockSettingsWrapper.setValue(
               SettingsRepository.keyDefaultNikud, true))
+          .called(1);
+    });
+
+    test('updateDefaultSidebarOpen calls setValue on settings wrapper',
+        () async {
+      await repository.updateDefaultSidebarOpen(true);
+      verify(mockSettingsWrapper.setValue(
+              SettingsRepository.keyDefaultSidebarOpen, true))
           .called(1);
     });
   });

@@ -14,6 +14,7 @@ import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 class FindRefScreen extends StatefulWidget {
   const FindRefScreen({super.key});
@@ -133,13 +134,19 @@ class _FindRefScreenState extends State<FindRefScreen> {
                                         title: state.refs[index].title,
                                         path: state.refs[index].filePath),
                                     pageNumber:
-                                        state.refs[index].segment.toInt())));
+                                        state.refs[index].segment.toInt(),
+                                    openLeftPane: Settings.getValue<bool>(
+                                            'key-default-sidebar-open') ??
+                                        false)));
                               } else {
                                 tabsBloc.add(AddTab(TextBookTab(
                                     book: TextBook(
                                       title: state.refs[index].title,
                                     ),
-                                    index: state.refs[index].segment.toInt())));
+                                    index: state.refs[index].segment.toInt(),
+                                    openLeftPane: Settings.getValue<bool>(
+                                            'key-default-sidebar-open') ??
+                                        false)));
                               }
                               navigationBloc
                                   .add(const NavigateToScreen(Screen.reading));

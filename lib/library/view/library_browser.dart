@@ -19,6 +19,7 @@ import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/daf_yomi/daf_yomi_helper.dart';
 import 'package:otzaria/file_sync/file_sync_bloc.dart';
 import 'package:otzaria/file_sync/file_sync_repository.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/daf_yomi/daf_yomi.dart';
 import 'package:otzaria/file_sync/file_sync_widget.dart';
 import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
@@ -406,19 +407,19 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _openBook(Book book) {
     if (book is PdfBook) {
-      context
-          .read<TabsBloc>()
-          .add(AddTab(PdfBookTab(book: book, pageNumber: 1)));
+      context.read<TabsBloc>().add(AddTab(PdfBookTab(
+            book: book,
+            pageNumber: 1,
+            openLeftPane:
+                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+          )));
     } else if (book is TextBook) {
-      context.read<TabsBloc>().add(
-            AddTab(
-              TextBookTab(
-                book: book,
-                index: 0,
-                openLeftPane: true,
-              ),
-            ),
-          );
+      context.read<TabsBloc>().add(AddTab(TextBookTab(
+            book: book,
+            index: 0,
+            openLeftPane:
+                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+          )));
     }
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
   }
