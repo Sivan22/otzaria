@@ -27,9 +27,16 @@ jobs:
           flutter build windows --release
  
       - name: Zip Windows build
+        id: zip_win
         shell: pwsh
         run: |
-          Compress-Archive -Path build\windows\runner\Release\* -DestinationPath otzaria-windows.zip
+          # מאתרים את תיקיית ה-Release שמתחת לארכיטקטורה (x64 / arm64)
+          $relDir = Get-ChildItem -Directory build\windows |
+                    Where-Object { Test-Path "$($_.FullName)\runner\Release" } |
+                    Select-Object -First 1 -ExpandProperty FullName
+          if (-not $relDir) { throw "Release directory not found"; }
+          Compress-Archive -Path "$relDir\runner\Release\*" `
+                           -DestinationPath otzaria-windows.zip
  
       - name: Upload Windows ZIP
         uses: actions/upload-artifact@v4
