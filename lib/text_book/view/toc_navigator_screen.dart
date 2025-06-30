@@ -88,7 +88,11 @@ class _TocViewerState extends State<TocViewer>
         child: BlocBuilder<TextBookBloc, TextBookState>(
           builder: (context, state) {
             final bool selected = state is TextBookLoaded &&
-                state.selectedIndex == entry.index;
+                ((state.selectedIndex != null &&
+                        state.selectedIndex == entry.index) ||
+                    (state.selectedIndex == null &&
+                        state.visibleIndices.isNotEmpty &&
+                        state.visibleIndices.first == entry.index));
             return ListTile(
               title: Text(entry.text),
               selected: selected,
@@ -110,7 +114,11 @@ class _TocViewerState extends State<TocViewer>
             title: BlocBuilder<TextBookBloc, TextBookState>(
               builder: (context, state) {
                 final bool selected = state is TextBookLoaded &&
-                    state.selectedIndex == entry.index;
+                    ((state.selectedIndex != null &&
+                            state.selectedIndex == entry.index) ||
+                        (state.selectedIndex == null &&
+                            state.visibleIndices.isNotEmpty &&
+                            state.visibleIndices.first == entry.index));
                 return ListTile(
                   title: Text(showFullText ? entry.fullText : entry.text),
                   selected: selected,
