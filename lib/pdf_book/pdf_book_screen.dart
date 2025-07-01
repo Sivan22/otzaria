@@ -19,6 +19,7 @@ import 'package:otzaria/widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:printing/printing.dart';
 import 'package:otzaria/utils/page_converter.dart';
+import 'package:flutter/gestures.dart';
 
 class PdfBookScreen extends StatefulWidget {
   final PdfBookTab tab;
@@ -315,28 +316,44 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             children: [
               _buildLeftPane(),
               Expanded(
-                child: ColorFiltered(
-                  colorFilter: ColorFilter.mode(
-                      Colors.white,
-                      Provider.of<SettingsBloc>(context, listen: true)
-                              .state
-                              .isDarkMode
-                          ? BlendMode.difference
-                          : BlendMode.dst),
-                  child: PdfViewer.file(
-                    widget.tab.book.path,
-                    initialPageNumber: widget.tab.pageNumber,
-                    passwordProvider: () => passwordDialog(context),
-                    controller: widget.tab.pdfViewerController,
-                    params: PdfViewerParams(
-                      //enableTextSelection: true,
-                      maxScale: 10,
-                      onInteractionStart: (_) {
-                        if (!widget.tab.pinLeftPane.value) {
-                          widget.tab.showLeftPane.value = false;
-                        }
-                      },
-                      viewerOverlayBuilder: (context, size, handleLinkTap) => [
+                child: NotificationListener<UserScrollNotification>(
+                  onNotification: (notification) {
+                    if (!widget.tab.pinLeftPane.value) {
+                      Future.microtask(() {
+                        widget.tab.showLeftPane.value = false;
+                      });
+                    }
+                    return false;
+                  },
+                  child: Listener(
+                    onPointerSignal: (event) {
+                      if (event is PointerScrollEvent &&
+                          !widget.tab.pinLeftPane.value) {
+                        widget.tab.showLeftPane.value = false;
+                      }
+                    },
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                          Colors.white,
+                          Provider.of<SettingsBloc>(context, listen: true)
+                                  .state
+                                  .isDarkMode
+                              ? BlendMode.difference
+                              : BlendMode.dst),
+                      child: PdfViewer.file(
+                        widget.tab.book.path,
+                        initialPageNumber: widget.tab.pageNumber,
+                        passwordProvider: () => passwordDialog(context),
+                        controller: widget.tab.pdfViewerController,
+                        params: PdfViewerParams(
+                          //enableTextSelection: true,
+                          maxScale: 10,
+                          onInteractionStart: (_) {
+                            if (!widget.tab.pinLeftPane.value) {
+                              widget.tab.showLeftPane.value = false;
+                            }
+                          },
+                          viewerOverlayBuilder: (context, size, handleLinkTap) => [
                         PdfViewerScrollThumb(
                           controller: widget.tab.pdfViewerController,
                           orientation: ScrollbarOrientation.right,
@@ -420,9 +437,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
+      ),
+      ),
       ),
     );
   });
