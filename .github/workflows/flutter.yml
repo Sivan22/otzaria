@@ -64,9 +64,10 @@ jobs:
  
       - name: Zip macOS app
         run: |
-          cd build/macos/Build/Products/Release
-          zip -r ../../../../otzaria-macos.zip *.app
- 
+          APP_PATH=$(find build -name "*.app" | head -n 1)
+          echo "Zipping: $APP_PATH"
+          zip -r otzaria-macos.zip "$APP_PATH"
+
       - name: Upload macOS ZIP
         uses: actions/upload-artifact@v4
         with:
