@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
@@ -27,6 +28,26 @@ class _MySettingsScreenState extends State<MySettingsScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  Widget _buildColumns(int maxColumns, List<Widget> children) {
+    const spacing = 8.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        int columns = (width / 300).floor();
+        columns = math.min(math.max(columns, 1), maxColumns);
+        final itemWidth = (width - (columns - 1) * spacing) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final child in children)
+              SizedBox(width: itemWidth, child: child),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,26 +103,30 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   title: 'הגדרות עיצוב',
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: <Widget>[
-                    SwitchSettingsTile(
-                      settingKey: 'key-dark-mode',
-                      title: 'מצב כהה',
-                      enabledLabel: 'מופעל',
-                      disabledLabel: 'לא מופעל',
-                      leading: const Icon(Icons.nightlight_round_outlined),
-                      onChange: (value) {
-                        context.read<SettingsBloc>().add(UpdateDarkMode(value));
-                      },
-                    ),
-                    ColorPickerSettingsTile(
-                      title: 'צבע בסיס',
-                      leading: const Icon(Icons.color_lens),
-                      settingKey: 'key-swatch-color',
-                      onChange: (color) {
-                        context
-                            .read<SettingsBloc>()
-                            .add(UpdateSeedColor(color));
-                      },
-                    ),
+                    _buildColumns(2, [
+                      SwitchSettingsTile(
+                        settingKey: 'key-dark-mode',
+                        title: 'מצב כהה',
+                        enabledLabel: 'מופעל',
+                        disabledLabel: 'לא מופעל',
+                        leading: const Icon(Icons.nightlight_round_outlined),
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateDarkMode(value));
+                        },
+                      ),
+                      ColorPickerSettingsTile(
+                        title: 'צבע בסיס',
+                        leading: const Icon(Icons.color_lens),
+                        settingKey: 'key-swatch-color',
+                        onChange: (color) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateSeedColor(color));
+                        },
+                      ),
+                    ]),
                     SliderSettingsTile(
                       title: 'גודל גופן התחלתי בספרים',
                       settingKey: 'key-font-size',
@@ -159,24 +184,25 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                 ),
                 Platform.isAndroid
                     ? const SizedBox.shrink()
-                    : const SettingsGroup(
+                    : SettingsGroup(
                         titleAlignment: Alignment.centerRight,
                         title: "קיצורי מקשים",
-                        titleTextStyle: TextStyle(fontSize: 25),
+                        titleTextStyle: const TextStyle(fontSize: 25),
                         children: [
+                          _buildColumns(3, [
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+l',
                               settingKey: 'key-shortcut-open-library-browser',
                               title: 'ספרייה',
                               values: shortcuctsList,
-                              leading: Icon(Icons.library_books),
+                              leading: const Icon(Icons.library_books),
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+o',
                               settingKey: 'key-shortcut-open-find-ref',
                               title: 'איתור',
                               values: shortcuctsList,
-                              leading: Icon(Icons.auto_stories_rounded),
+                              leading: const Icon(Icons.auto_stories_rounded),
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+r',
@@ -189,30 +215,33 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               selected: 'ctrl+q',
                               settingKey: 'key-shortcut-open-new-search',
                               title: 'חלון חיפוש חדש',
-                              leading: Icon(Icons.search),
+                              leading: const Icon(Icons.search),
                               values: shortcuctsList,
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+w',
                               settingKey: 'key-shortcut-close-tab',
                               title: 'סגור ספר נוכחי',
-                              leading: Icon(Icons.cancel),
+                              leading: const Icon(Icons.cancel),
                               values: shortcuctsList,
                             ),
                             DropDownSettingsTile<String>(
                               selected: 'ctrl+x',
                               settingKey: 'key-shortcut-close-all-tabs',
                               title: 'סגור כל הספרים',
-                              leading: Icon(Icons.close),
+                              leading: const Icon(Icons.close),
                               values: shortcuctsList,
                             ),
                           ]),
+                        ],
+                      ),
                 SettingsGroup(
                     title: 'הגדרות ממשק',
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
-                      SwitchSettingsTile(
+                      _buildColumns(2, [
+                        SwitchSettingsTile(
                         settingKey: 'key-replace-holy-names',
                         title: 'הסתרת שמות הקודש',
                         enabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
@@ -250,7 +279,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateDefaultRemoveNikud(value));
                         },
-                      ),                      
+                      ),
                       const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',
@@ -303,9 +332,11 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           context
                               .read<SettingsBloc>()
                               .add(UpdateShowOtzarHachochma(value));
-                        },
+                        }
                       ),
                     ]),
+                  ],
+                ),
                 SettingsGroup(
                   title: 'כללי',
                   titleAlignment: Alignment.centerRight,
@@ -319,21 +350,22 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
-                    BlocBuilder<IndexingBloc, IndexingState>(
-                      builder: (context, indexingState) {
-                        return SimpleSettingsTile(
-                          title: "אינדקס חיפוש",
-                          subtitle: indexingState is IndexingInProgress
-                              ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
-                              : "האינדקס מעודכן",
-                          leading: const Icon(Icons.table_chart),
-                          onTap: () async {
-                            if (indexingState is IndexingInProgress) {
-                              final result = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                        content: const Text(
-                                            'האם לעצור את תהליך יצירת האינדקס?'),
+                    _buildColumns(2, [
+                      BlocBuilder<IndexingBloc, IndexingState>(
+                        builder: (context, indexingState) {
+                          return SimpleSettingsTile(
+                            title: "אינדקס חיפוש",
+                            subtitle: indexingState is IndexingInProgress
+                                ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
+                                : "האינדקס מעודכן",
+                            leading: const Icon(Icons.table_chart),
+                            onTap: () async {
+                              if (indexingState is IndexingInProgress) {
+                                final result = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                          content: const Text(
+                                              'האם לעצור את תהליך יצירת האינדקס?'),
                                         actions: <Widget>[
                                           TextButton(
                                             child: const Text('ביטול'),
@@ -349,14 +381,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                           ),
                                         ],
                                       ));
-                              if (result == true) {
-                                context
-                                    .read<IndexingBloc>()
-                                    .add(CancelIndexing());
-                                setState(() {});
-                              }
-                            } else {
-                              final result = await showDialog<bool>(
+                                if (result == true) {
+                                  context
+                                      .read<IndexingBloc>()
+                                      .add(CancelIndexing());
+                                  setState(() {});
+                                }
+                              } else {
+                                final result = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
                                         content:
@@ -376,23 +408,23 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                           ),
                                         ],
                                       ));
-                              if (result == true) {
-                                //reset the index
-                                context.read<IndexingBloc>().add(ClearIndex());
-                                final library =
-                                    context.read<LibraryBloc>().state.library;
-                                if (library != null) {
-                                  context
-                                      .read<IndexingBloc>()
-                                      .add(StartIndexing(library));
+                                if (result == true) {
+                                  //reset the index
+                                  context.read<IndexingBloc>().add(ClearIndex());
+                                  final library =
+                                      context.read<LibraryBloc>().state.library;
+                                  if (library != null) {
+                                    context
+                                        .read<IndexingBloc>()
+                                        .add(StartIndexing(library));
+                                  }
                                 }
                               }
-                            }
-                          },
-                        );
-                      },
-                    ),
-                    SwitchSettingsTile(
+                            },
+                          );
+                        },
+                      ),
+                      SwitchSettingsTile(
                       title: 'עדכון אינדקס',
                       leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-index-update',
@@ -411,40 +443,42 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         }
                       },
                     ),
-                    if (!(Platform.isAndroid || Platform.isIOS)) ...[
-                      SimpleSettingsTile(
-                        title: 'מיקום הספרייה',
-                        subtitle:
-                            Settings.getValue<String>('key-library-path') ??
-                                'לא קיים',
-                        leading: const Icon(Icons.folder),
-                        onTap: () async {
-                          String? path =
-                              await FilePicker.platform.getDirectoryPath();
-                          if (path != null) {
-                            context
-                                .read<LibraryBloc>()
-                                .add(UpdateLibraryPath(path));
-                          }
-                        },
-                      ),
-                      SimpleSettingsTile(
-                        title: 'מיקום ספרי HebrewBooks',
-                        subtitle: Settings.getValue<String>(
-                                'key-hebrew-books-path') ??
-                            'לא קיים',
-                        leading: const Icon(Icons.folder),
-                        onTap: () async {
-                          String? path =
-                              await FilePicker.platform.getDirectoryPath();
-                          if (path != null) {
-                            context
-                                .read<LibraryBloc>()
-                                .add(UpdateHebrewBooksPath(path));
-                          }
-                        },
-                      ),
-                    ],
+                    ]),
+                    if (!(Platform.isAndroid || Platform.isIOS))
+                      _buildColumns(2, [
+                        SimpleSettingsTile(
+                          title: 'מיקום הספרייה',
+                          subtitle:
+                              Settings.getValue<String>('key-library-path') ??
+                                  'לא קיים',
+                          leading: const Icon(Icons.folder),
+                          onTap: () async {
+                            String? path =
+                                await FilePicker.platform.getDirectoryPath();
+                            if (path != null) {
+                              context
+                                  .read<LibraryBloc>()
+                                  .add(UpdateLibraryPath(path));
+                            }
+                          },
+                        ),
+                        SimpleSettingsTile(
+                          title: 'מיקום ספרי HebrewBooks',
+                          subtitle: Settings.getValue<String>(
+                                  'key-hebrew-books-path') ??
+                              'לא קיים',
+                          leading: const Icon(Icons.folder),
+                          onTap: () async {
+                            String? path =
+                                await FilePicker.platform.getDirectoryPath();
+                            if (path != null) {
+                              context
+                                  .read<LibraryBloc>()
+                                  .add(UpdateHebrewBooksPath(path));
+                            }
+                          },
+                        ),
+                      ]),
                     const SwitchSettingsTile(
                       settingKey: 'key-dev-channel',
                       title: 'עדכון לגרסאות מפתחים',
