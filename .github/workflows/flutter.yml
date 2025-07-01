@@ -110,6 +110,14 @@ jobs:
           find artifacts -name '*.apk' -exec mv {} release-files/ \;
           echo "Release files:"
           ls -la release-files/
+
+      - name: Get commit message
+        id: commit
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "message<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
  
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -126,9 +134,7 @@ jobs:
  
             ### הורדות
             - **Windows**: חלצו את קובץ `otzaria-windows.zip` והפעילו את קובץ ה-`.exe` שבתוכו.
-            - **Linux**: חלצו את קובץ `otzaria-linux.zip` והפעילו את קובץ ההרצה שבתוכו.
             - **macOS**: חלצו את קובץ `otzaria-macos.zip` והעבירו את האפליקציה לתיקיית היישומים.
-            - **Android**: התקינו את קובץ ה-`app-release.apk`.
  
             ${{ (github.ref_name == 'dev' || github.ref_name == 'dev2') && '⚠️ **זוהי גרסת פיתוח** - היא עלולה להיות לא יציבה. השתמשו בזהירות!' || '' }}
         env:
