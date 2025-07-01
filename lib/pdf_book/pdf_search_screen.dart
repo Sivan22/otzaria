@@ -13,6 +13,7 @@ class PdfBookSearchView extends StatefulWidget {
     required this.searchController,
     required this.focusNode,
     this.outline,
+    this.bookTitle,
     this.initialSearchText = '',
     this.onSearchResultNavigated, // Add this
     super.key,
@@ -22,6 +23,7 @@ class PdfBookSearchView extends StatefulWidget {
   final TextEditingController searchController;
   final FocusNode focusNode;
   final List<PdfOutlineNode>? outline;
+  final String? bookTitle;
   final String initialSearchText; // Remains for now, parent will provide tab.searchText
 
   final VoidCallback? onSearchResultNavigated; // Add this
@@ -108,7 +110,8 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
           _listIndexToMatchIndex.add(-pageNumber);
           if (!_pageTitles.containsKey(pageNumber)) {
             () async {
-              final title = await refFromPageNumber(pageNumber, widget.outline);
+              final title = await refFromPageNumber(
+                  pageNumber, widget.outline, widget.bookTitle);
               if (mounted) {
                 setState(() {
                   _pageTitles[pageNumber] = title;

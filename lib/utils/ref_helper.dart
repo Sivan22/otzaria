@@ -97,7 +97,8 @@ Future<String> refFromIndex(
 Future<String> refFromPageNumber(
   int pageNumber,
   List<PdfOutlineNode>? outline,
-) async {
+  [String? bookTitle,
+  ]) async {
   if (outline == null) return "";
 
   List<String> texts = [];
@@ -124,6 +125,9 @@ Future<String> refFromPageNumber(
 
   searchOutline(outline);
   texts = texts.map((e) => e.trim()).toList();
+  if (bookTitle != null && texts.isNotEmpty && texts.first == bookTitle) {
+    texts = texts.sublist(1);
+  }
   return texts.join(', ');
 }
 

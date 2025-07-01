@@ -156,7 +156,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         widget.tab.currentTitle.value = await refFromPageNumber(
             widget.tab.pageNumber =
                 widget.tab.pdfViewerController.pageNumber ?? 1,
-            widget.tab.outline.value);
+            widget.tab.outline.value,
+            widget.tab.book.title);
       }();
     }
   }
@@ -407,7 +408,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                                   widget.tab.pageNumber = widget
                                           .tab.pdfViewerController.pageNumber ??
                                       1,
-                                  widget.tab.outline.value);
+                                  widget.tab.outline.value,
+                                  widget.tab.book.title);
                         }();
                         if (mounted) {
                           widget.tab.showLeftPane.value = true;
@@ -508,6 +510,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           searchController: widget.tab.searchController,
                           focusNode: _searchFieldFocusNode,
                           outline: widget.tab.outline.value,
+                          bookTitle: widget.tab.book.title,
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
                         ),

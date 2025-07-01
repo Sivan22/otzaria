@@ -7,6 +7,7 @@ import 'package:otzaria/library/models/library.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:otzaria/utils/ref_helper.dart';
 
 class IndexingRepository {
   final TantivyDataProvider _tantivyDataProvider;
@@ -140,8 +141,9 @@ class IndexingRepository {
     final index = await _tantivyDataProvider.engine;
 
     // Extract text from each page
-    final pages =
-        await PdfDocument.openFile(book.path).then((value) => value.pages);
+    final document = await PdfDocument.openFile(book.path);
+    final pages = document.pages;
+    final outline = await document.loadOutline();
     final title = book.title;
     final topics = "/${book.topics.replaceAll(', ', '/')}";
 
@@ -153,10 +155,14 @@ class IndexingRepository {
         if (!_tantivyDataProvider.isIndexing.value) {
           return;
         }
+        final bookmark = await refFromPageNumber(i + 1, outline, title);
+        final ref = bookmark.isNotEmpty
+            ? '$title, $bookmark, עמוד ${i + 1}'
+            : '$title, עמוד ${i + 1}';
         index.addDocument(
             id: BigInt.from(DateTime.now().microsecondsSinceEpoch),
             title: title,
-            reference: '$title, עמוד ${i + 1}',
+            reference: ref,
             topics: '$topics/$title',
             text: texts[j],
             segment: BigInt.from(i),
