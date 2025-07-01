@@ -104,21 +104,29 @@ HierarchyNode<TocEntry>? _findClosestEntryWithHierarchy(
 HierarchyNode<PdfOutlineNode>? _findOutlineByPageWithHierarchy(
     List<PdfOutlineNode> outlines, int targetPage,
     [List<String> currentPath = const []]) {
+  HierarchyNode<PdfOutlineNode>? closest;
+
   for (var outline in outlines) {
     final path = [...currentPath, outline.title.trim()];
 
-    if (outline.dest?.pageNumber == targetPage) {
-      return HierarchyNode(outline, path);
+    final page = outline.dest?.pageNumber;
+    if (page != null &&
+        page <= targetPage &&
+        (closest == null || page > (closest.node.dest?.pageNumber ?? -1))) {
+      closest = HierarchyNode(outline, path);
     }
 
     // Recursively search children with updated path
     final result =
         _findOutlineByPageWithHierarchy(outline.children, targetPage, path);
-    if (result != null) {
-      return result;
+    if (result != null &&
+        result.node.dest?.pageNumber != null &&
+        (closest == null ||
+            (result.node.dest!.pageNumber > (closest.node.dest?.pageNumber ?? -1)))) {
+      closest = result;
     }
   }
-  return null;
+  return closest;
 }
 
 /// Finds a matching outline entry using a hierarchy path

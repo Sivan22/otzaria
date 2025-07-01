@@ -219,10 +219,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             ),
             actions: [
               _buildTextButton(
-                  context,
-                  widget.tab.book,
-                  widget.tab.outline.value ?? [],
-                  widget.tab.pdfViewerController),
+                  context, widget.tab.book, widget.tab.pdfViewerController),
               IconButton(
                 icon: const Icon(
                   Icons.bookmark_add,
@@ -594,8 +591,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     return result ?? false;
   }
 
-  Widget _buildTextButton(BuildContext context, PdfBook book,
-      List<PdfOutlineNode> outline, PdfViewerController controller) {
+  Widget _buildTextButton(
+      BuildContext context, PdfBook book, PdfViewerController controller) {
     return FutureBuilder(
       future: DataRepository.instance.library
           .then((library) => library.findBookByTitle(book.title, TextBook)),
@@ -604,8 +601,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               icon: const Icon(Icons.article),
               tooltip: 'פתח טקסט',
               onPressed: () async {
-                final index = await pdfToTextPage(
-                    book, outline, controller.pageNumber ?? 1, context);
+                final index = await pdfToTextPage(book,
+                    widget.tab.outline.value ?? [], controller.pageNumber ?? 1, context);
                 openBook(context, snapshot.data!, index ?? 0, '');
               })
           : const SizedBox.shrink(),
