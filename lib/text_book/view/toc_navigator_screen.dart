@@ -5,6 +5,7 @@ import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/utils/ref_helper.dart';
 
 class TocViewer extends StatefulWidget {
   const TocViewer({
@@ -87,17 +88,23 @@ class _TocViewerState extends State<TocViewer>
         padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
         child: BlocBuilder<TextBookBloc, TextBookState>(
           builder: (context, state) {
+            final int? autoIndex = state is TextBookLoaded &&
+                    state.selectedIndex == null &&
+                    state.visibleIndices.isNotEmpty
+                ? closestTocEntryIndex(
+                    state.tableOfContents, state.visibleIndices.first)
+                : null;
             final bool selected = state is TextBookLoaded &&
                 ((state.selectedIndex != null &&
                         state.selectedIndex == entry.index) ||
-                    (state.selectedIndex == null &&
-                        state.visibleIndices.isNotEmpty &&
-                        state.visibleIndices.first == entry.index));
+                    autoIndex == entry.index);
             return ListTile(
               title: Text(entry.text),
               selected: selected,
               selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
-              selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,              onTap: navigateToEntry,
+              selectedTileColor:
+                  Theme.of(context).colorScheme.secondaryContainer,
+              onTap: navigateToEntry,
             );
           },
         ),
@@ -113,21 +120,22 @@ class _TocViewerState extends State<TocViewer>
             initiallyExpanded: entry.level == 1,
             title: BlocBuilder<TextBookBloc, TextBookState>(
               builder: (context, state) {
+                final int? autoIndex = state is TextBookLoaded &&
+                        state.selectedIndex == null &&
+                        state.visibleIndices.isNotEmpty
+                    ? closestTocEntryIndex(
+                        state.tableOfContents, state.visibleIndices.first)
+                    : null;
                 final bool selected = state is TextBookLoaded &&
                     ((state.selectedIndex != null &&
                             state.selectedIndex == entry.index) ||
-                        (state.selectedIndex == null &&
-                            state.visibleIndices.isNotEmpty &&
-                            state.visibleIndices.first == entry.index));
+                        autoIndex == entry.index);
                 return ListTile(
                   title: Text(showFullText ? entry.fullText : entry.text),
                   selected: selected,
-                  selectedColor:
-                      Theme.of(context).colorScheme.onSecondary,
-                  selectedTileColor: Theme.of(context)
-                      .colorScheme
-                      .secondary
-                      .withOpacity(0.2),
+                  selectedColor: Theme.of(context).colorScheme.onSecondary,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
                   onTap: navigateToEntry,
                   contentPadding: EdgeInsets.zero,
                 );
