@@ -184,6 +184,12 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         bindings: <ShortcutActivator, VoidCallback>{
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
               _ensureSearchTabIsActive,
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): _goNextPage,
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): _goPreviousPage,
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): _goNextPage,
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): _goPreviousPage,
+          LogicalKeySet(LogicalKeyboardKey.pageDown): _goNextPage,
+          LogicalKeySet(LogicalKeyboardKey.pageUp): _goPreviousPage,
         },
         child: Focus(
           focusNode: FocusNode(),
@@ -547,6 +553,24 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         ),
       ),
     );
+  }
+
+  void _goNextPage() {
+    if (widget.tab.pdfViewerController.isReady) {
+      final nextPage = min(
+          widget.tab.pdfViewerController.pageNumber! + 1,
+          widget.tab.pdfViewerController.pages.length);
+      widget.tab.pdfViewerController.goToPage(pageNumber: nextPage);
+    }
+  }
+
+  void _goPreviousPage() {
+    if (widget.tab.pdfViewerController.isReady) {
+      final prevPage = max(
+          widget.tab.pdfViewerController.pageNumber! - 1,
+          1);
+      widget.tab.pdfViewerController.goToPage(pageNumber: prevPage);
+    }
   }
 
   Future<void> navigateToUrl(Uri url) async {
