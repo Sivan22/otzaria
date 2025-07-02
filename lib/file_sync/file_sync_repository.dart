@@ -30,8 +30,9 @@ class FileSyncRepository {
   }
 
   Future<Map<String, dynamic>> _getLocalManifest() async {
+    final path = await _localManifestPath;
+    final file = File(path);
     try {
-      final file = File(await _localManifestPath);
       if (!await file.exists()) {
         return {};
       }
@@ -39,6 +40,15 @@ class FileSyncRepository {
       return json.decode(content);
     } catch (e) {
       print('Error reading local manifest: $e');
+      // Attempt to restore from backup if available
+      final backup = File('$path.bak');
+      if (await backup.exists()) {
+        try {
+          final backupContent = await backup.readAsString(encoding: utf8);
+          await backup.copy(path);
+          return json.decode(backupContent);
+        } catch (_) {}
+      }
       return {};
     }
   }
@@ -98,20 +108,45 @@ class FileSyncRepository {
     }
   }
 
+  Future<void> _writeManifest(Map<String, dynamic> manifest) async {
+    final path = await _localManifestPath;
+    final file = File(path);
+    final backup = File('$path.bak');
+    final tempFile = File('$path.tmp');
+
+    try {
+      if (await file.exists()) {
+        await file.copy(backup.path);
+      }
+
+      await tempFile.writeAsString(
+        json.encode(manifest),
+        encoding: utf8,
+      );
+
+      if (await file.exists()) {
+        await tempFile.replace(path);
+      } else {
+        await tempFile.rename(path);
+      }
+
+      if (await backup.exists()) {
+        await backup.delete();
+      }
+    } catch (e) {
+      print('Error writing manifest: $e');
+    }
+  }
+
   Future<void> _updateLocalManifestForFile(
       String filePath, Map<String, dynamic> fileInfo) async {
     try {
-      final manifestFile = File(await _localManifestPath);
       Map<String, dynamic> localManifest = await _getLocalManifest();
 
       // Update the manifest for this specific file
       localManifest[filePath] = fileInfo;
 
-      // Write the updated manifest back to disk with UTF-8 encoding
-      await manifestFile.writeAsString(
-        json.encode(localManifest),
-        encoding: utf8,
-      );
+      await _writeManifest(localManifest);
     } catch (e) {
       print('Error updating local manifest for file $filePath: $e');
     }
@@ -127,17 +162,12 @@ class FileSyncRepository {
       }
 
       //if successful, remove from manifest
-      final manifestFile = File(await _localManifestPath);
       Map<String, dynamic> localManifest = await _getLocalManifest();
 
       // Remove the file from the manifest
       localManifest.remove(filePath);
 
-      // Write the updated manifest back to disk with UTF-8 encoding
-      await manifestFile.writeAsString(
-        json.encode(localManifest),
-        encoding: utf8,
-      );
+      await _writeManifest(localManifest);
     } catch (e) {
       print('Error removing file $filePath from local manifest: $e');
     }
