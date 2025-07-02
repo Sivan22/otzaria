@@ -34,18 +34,28 @@ class FileSyncRepository {
     final file = File(path);
     try {
       if (!await file.exists()) {
-        return {};
+        // ---- תוספת חשובה ---- //
+        // אם הקובץ הראשי לא קיים, בדוק אם נשאר גיבוי מתהליך שנכשל
+        final oldFile = File('$path.old');
+        if (await oldFile.exists()) {
+          print('Main manifest missing, restoring from .old backup...');
+          await oldFile.rename(path); // שחזר את הגיבוי
+          // עכשיו הקובץ הראשי קיים, נמשיך כרגיל
+        } else {
+          return {}; // אם גם גיבוי אין, באמת אין מניפסט
+        }
       }
       final content = await file.readAsString(encoding: utf8);
       return json.decode(content);
     } catch (e) {
       print('Error reading local manifest: $e');
-      // Attempt to restore from backup if available
-      final backup = File('$path.bak');
-      if (await backup.exists()) {
+      // הלוגיקה שלך לגיבוי מ-.bak הייתה טובה, נתאים אותה ל-.old
+      final oldFile = File('$path.old'); // השתמש ב-.old במקום .bak
+      if (await oldFile.exists()) {
         try {
-          final backupContent = await backup.readAsString(encoding: utf8);
-          await backup.copy(path);
+          print('Main manifest is corrupt, restoring from .old backup...');
+          final backupContent = await oldFile.readAsString(encoding: utf8);
+          await oldFile.rename(path); // rename בטוח יותר מ-copy
           return json.decode(backupContent);
         } catch (_) {}
       }
@@ -111,30 +121,47 @@ class FileSyncRepository {
   Future<void> _writeManifest(Map<String, dynamic> manifest) async {
     final path = await _localManifestPath;
     final file = File(path);
-    final backup = File('$path.bak');
     final tempFile = File('$path.tmp');
+    // נשתמש ב- .old כפי שהוצע, זה עקבי וברור
+    final oldFile = File('$path.old');
 
     try {
-      if (await file.exists()) {
-        await file.copy(backup.path);
-      }
-
+      // 1. כותבים את המידע החדש לקובץ זמני.
+      // אם שלב זה נכשל, שום דבר לא קרה לקובץ המקורי.
       await tempFile.writeAsString(
         json.encode(manifest),
         encoding: utf8,
       );
 
+      // 2. אם הקובץ המקורי קיים, שנה את שמו לגיבוי.
+      // זו פעולה אטומית ומהירה. אם היא נכשלת, לא קרה כלום.
+      // אם היא מצליחה, המניפסט הישן בטוח בצד.
       if (await file.exists()) {
-        await tempFile.replace(path);
-      } else {
-        await tempFile.rename(path);
+        await file.rename(oldFile.path);
       }
 
-      if (await backup.exists()) {
-        await backup.delete();
+      // 3. שנה את שם הקובץ הזמני לשם הקובץ הסופי.
+      // גם זו פעולה אטומית. אם היא נכשלת, המניפסט הישן עדיין קיים ב- .old
+      // וניתן לשחזר אותו.
+      await tempFile.rename(path);
+
+      // 4. אם הגענו לכאן, הכל הצליח. אפשר למחוק בבטחה את הגיבוי.
+      if (await oldFile.exists()) {
+        await oldFile.delete();
       }
     } catch (e) {
       print('Error writing manifest: $e');
+      // במקרה של תקלה (למשל, אחרי ש-file.rename הצליח אבל tempFile.rename נכשל),
+      // ננסה לשחזר את המצב לקדמותו כדי למנוע מצב ללא מניפסט.
+      try {
+        if (await oldFile.exists() && !(await file.exists())) {
+          print('Attempting to restore manifest from .old backup...');
+          await oldFile.rename(path);
+        }
+      } catch (restoreError) {
+        print('FATAL: Could not restore manifest from backup: $restoreError');
+      }
+      rethrow; // זרוק את השגיאה המקורית כדי שהפונקציה שקראה תדע שהעדכון נכשל.
     }
   }
 
