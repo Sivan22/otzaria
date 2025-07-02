@@ -67,12 +67,12 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                             .read<TextBookBloc>()
                             .add(UpdateSelectedIndex(index)),
                         child: Html(
-                            //remove nikud if needed
+                            // remove nikud if needed
                             data: state.removeNikud
                                 ? highLight(
-                                    removeVolwels('${widget.data[index]}\n'),
+                                    removeVolwels('$data\n'),
                                     state.searchText)
-                                : highLight('${widget.data[index]}\n',
+                                : highLight('$data\n',
                                     state.searchText),
                             style: {
                               'body': Style(
