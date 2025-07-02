@@ -75,7 +75,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           showLeftPane: state.showLeftPane,
           showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
           activeCommentators: state.commentators,
-          removeNikud: false,
+          removeNikud:
+              Settings.getValue<bool>('key-default-nikud') ?? false,
           visibleIndices: [state.index],
           pinLeftPane: false,
           searchText: '',
@@ -168,9 +169,9 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
             Future.value(currentState.tableOfContents));
       }
 
-      int? index = event.visibleIndecies.isNotEmpty
-          ? event.visibleIndecies.first
-          : currentState.selectedIndex;
+      int? index = currentState.selectedIndex;
+      if (!event.visibleIndecies.contains(index)) {
+        index = null;      }
 
       emit(currentState.copyWith(
           visibleIndices: event.visibleIndecies,

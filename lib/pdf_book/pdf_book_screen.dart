@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
@@ -18,6 +19,7 @@ import 'package:otzaria/widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:printing/printing.dart';
 import 'package:otzaria/utils/page_converter.dart';
+import 'package:flutter/gestures.dart';
 
 class PdfBookScreen extends StatefulWidget {
   final PdfBookTab tab;
@@ -40,11 +42,15 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     ..addListener(_onTextSearcherUpdated);
   TabController? _leftPaneTabController;
   int _currentLeftPaneTabIndex = 0;
+  final FocusNode _searchFieldFocusNode = FocusNode();
+  final FocusNode _navigationFieldFocusNode = FocusNode();
 
   void _ensureSearchTabIsActive() {
+    widget.tab.showLeftPane.value = true;
     if (_leftPaneTabController != null && _leftPaneTabController!.index != 1) {
       _leftPaneTabController!.animateTo(1);
     }
+    _searchFieldFocusNode.requestFocus();
   }
 
   late TabController _tabController;
@@ -60,7 +66,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
 
     // Update the tab's state with the latest from the textSearcher
     widget.tab.searchText = currentSearchTerm;
-    widget.tab.pdfSearchMatches = List.from(textSearcher.matches); // Ensure matches are saved
+    widget.tab.pdfSearchMatches =
+        List.from(textSearcher.matches); // Ensure matches are saved
     widget.tab.pdfSearchCurrentMatchIndex = textSearcher.currentIndex;
 
     // Standard UI update
@@ -69,7 +76,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     }
 
     // Determine if this is a new search execution vs. just a navigation within existing results
-    bool isNewSearchExecution = (_lastProcessedSearchSessionId != textSearcher.searchSession);
+    bool isNewSearchExecution =
+        (_lastProcessedSearchSessionId != textSearcher.searchSession);
     if (isNewSearchExecution) {
       _lastProcessedSearchSessionId = textSearcher.searchSession;
     }
@@ -92,14 +100,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize tab controller with the search tab selected if there's search text
     _tabController = TabController(
       length: 3,
       vsync: this,
       initialIndex: widget.tab.searchText.isNotEmpty ? 1 : 0,
     );
-    
+
     widget.tab.pdfViewerController = PdfViewerController();
     widget.tab.pdfViewerController.addListener(_onPdfViewerControllerUpdate);
 
@@ -114,11 +122,30 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       vsync: this,
       initialIndex: _currentLeftPaneTabIndex,
     );
+    if (_currentLeftPaneTabIndex == 1) {
+      _searchFieldFocusNode.requestFocus();
+    } else {
+      _navigationFieldFocusNode.requestFocus();
+    }
     _leftPaneTabController!.addListener(() {
       if (_currentLeftPaneTabIndex != _leftPaneTabController!.index) {
         setState(() {
           _currentLeftPaneTabIndex = _leftPaneTabController!.index;
         });
+        if (_leftPaneTabController!.index == 1) {
+          _searchFieldFocusNode.requestFocus();
+        } else if (_leftPaneTabController!.index == 0) {
+          _navigationFieldFocusNode.requestFocus();
+        }
+      }
+    });
+    widget.tab.showLeftPane.addListener(() {
+      if (widget.tab.showLeftPane.value) {
+        if (_leftPaneTabController!.index == 1) {
+          _searchFieldFocusNode.requestFocus();
+        } else if (_leftPaneTabController!.index == 0) {
+          _navigationFieldFocusNode.requestFocus();
+        }
       }
     });
   }
@@ -130,7 +157,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         widget.tab.currentTitle.value = await refFromPageNumber(
             widget.tab.pageNumber =
                 widget.tab.pdfViewerController.pageNumber ?? 1,
-            widget.tab.outline.value);
+            widget.tab.outline.value,
+            widget.tab.book.title);
       }();
     }
   }
@@ -139,9 +167,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   void dispose() {
     textSearcher.removeListener(_onTextSearcherUpdated);
 
-    widget.tab.pdfViewerController
-        .removeListener(_onPdfViewerControllerUpdate);
+    widget.tab.pdfViewerController.removeListener(_onPdfViewerControllerUpdate);
     _leftPaneTabController?.dispose();
+    _searchFieldFocusNode.dispose();
+    _navigationFieldFocusNode.dispose();
 
     super.dispose();
   }
@@ -151,212 +180,268 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     super.build(context);
     return LayoutBuilder(builder: (context, constrains) {
       final wideScreen = (MediaQuery.of(context).size.width >= 600);
-      return Scaffold(
-        appBar: AppBar(
-          title: ValueListenableBuilder(
-              valueListenable: widget.tab.currentTitle,
-              builder: (context, value, child) => Center(
-                    child: SelectionArea(
-                      child: Text(
-                        value,
-                        style: const TextStyle(fontSize: 17),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )),
-          leading: IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: 'חיפוש וניווט',
-            onPressed: () {
-              widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
-            },
-          ),
-          actions: [
-            _buildTextButton(context, widget.tab.book,
-                widget.tab.outline.value ?? [], widget.tab.pdfViewerController),
-            IconButton(
-              icon: const Icon(
-                Icons.bookmark_add,
+      return CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
+              _ensureSearchTabIsActive,
+        },
+        child: Focus(
+          focusNode: FocusNode(),
+          autofocus: !Platform.isAndroid,
+          child: Scaffold(
+          appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+            shape: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                width: 0.3,
               ),
-              tooltip: 'הוספת סימניה',
+            ),
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            title: ValueListenableBuilder(
+                valueListenable: widget.tab.currentTitle,
+                builder: (context, value, child) => Center(
+                      child: SelectionArea(
+                        child: Text(
+                          value,
+                          style: const TextStyle(fontSize: 17),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )),
+            leading: IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'חיפוש וניווט',
               onPressed: () {
-                int index = widget.tab.pdfViewerController.isReady
-                    ? widget.tab.pdfViewerController.pageNumber!
-                    : 1;
-                bool bookmarkAdded =
-                    Provider.of<BookmarkBloc>(context, listen: false)
-                        .addBookmark(
-                            ref: '${widget.tab.title} עמוד $index',
-                            book: widget.tab.book,
-                            index: index);
-                // notify user
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(bookmarkAdded
-                          ? 'הסימניה נוספה בהצלחה'
-                          : 'הסימניה כבר קיימת'),
-                    ),
-                  );
-                }
+                widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
               },
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.zoom_in,
-              ),
-              tooltip: 'הגדל',
-              onPressed: () => widget.tab.pdfViewerController.zoomUp(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.zoom_out),
-              tooltip: 'הקטן',
-              onPressed: () => widget.tab.pdfViewerController.zoomDown(),
-            ),
-            if (wideScreen)
+            actions: [
+              _buildTextButton(
+                  context, widget.tab.book, widget.tab.pdfViewerController),
               IconButton(
-                icon: const Icon(Icons.first_page),
-                tooltip: 'תחילת הספר',
-                onPressed: () =>
-                    widget.tab.pdfViewerController.goToPage(pageNumber: 1),
+                icon: const Icon(
+                  Icons.bookmark_add,
+                ),
+                tooltip: 'הוספת סימניה',
+                onPressed: () {
+                  int index = widget.tab.pdfViewerController.isReady
+                      ? widget.tab.pdfViewerController.pageNumber!
+                      : 1;
+                  bool bookmarkAdded =
+                      Provider.of<BookmarkBloc>(context, listen: false)
+                          .addBookmark(
+                              ref: '${widget.tab.title} עמוד $index',
+                              book: widget.tab.book,
+                              index: index);
+                  // notify user
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(bookmarkAdded
+                            ? 'הסימניה נוספה בהצלחה'
+                            : 'הסימניה כבר קיימת'),
+                      ),
+                    );
+                  }
+                },
               ),
-            IconButton(
-                icon: const Icon(Icons.chevron_left),
-                tooltip: 'הקודם',
+              IconButton(
+                icon: const Icon(
+                  Icons.zoom_in,
+                ),
+                tooltip: 'הגדל',
+                onPressed: () => widget.tab.pdfViewerController.zoomUp(),
+              ),
+              IconButton(
+                icon: const Icon(Icons.zoom_out),
+                tooltip: 'הקטן',
+                onPressed: () => widget.tab.pdfViewerController.zoomDown(),
+              ),
+              if (wideScreen)
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  tooltip: 'חיפוש',
+                  onPressed: _ensureSearchTabIsActive,
+                ),
+              if (wideScreen)
+                IconButton(
+                  icon: const Icon(Icons.first_page),
+                  tooltip: 'תחילת הספר',
+                  onPressed: () =>
+                      widget.tab.pdfViewerController.goToPage(pageNumber: 1),
+                ),
+              IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  tooltip: 'הקודם',
+                  onPressed: () => widget.tab.pdfViewerController.isReady
+                      ? widget.tab.pdfViewerController.goToPage(
+                          pageNumber: max(
+                              widget.tab.pdfViewerController.pageNumber! - 1,
+                              1))
+                      : null),
+              PageNumberDisplay(controller: widget.tab.pdfViewerController),
+              IconButton(
                 onPressed: () => widget.tab.pdfViewerController.isReady
                     ? widget.tab.pdfViewerController.goToPage(
-                        pageNumber: max(
-                            widget.tab.pdfViewerController.pageNumber! - 1, 1))
-                    : null),
-            PageNumberDisplay(controller: widget.tab.pdfViewerController),
-            IconButton(
-              onPressed: () => widget.tab.pdfViewerController.isReady
-                  ? widget.tab.pdfViewerController.goToPage(
-                      pageNumber: min(
-                          widget.tab.pdfViewerController.pageNumber! + 1,
-                          widget.tab.pdfViewerController.pages.length))
-                  : null,
-              icon: const Icon(Icons.chevron_right),
-              tooltip: 'הבא',
-            ),
-            if (wideScreen)
+                        pageNumber: min(
+                            widget.tab.pdfViewerController.pageNumber! + 1,
+                            widget.tab.pdfViewerController.pages.length))
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+                tooltip: 'הבא',
+              ),
+              if (wideScreen)
+                IconButton(
+                  icon: const Icon(Icons.last_page),
+                  tooltip: 'סוף הספר',
+                  onPressed: () => widget.tab.pdfViewerController.goToPage(
+                      pageNumber: widget.tab.pdfViewerController.pages.length),
+                ),
               IconButton(
-                icon: const Icon(Icons.last_page),
-                tooltip: 'סוף הספר',
-                onPressed: () => widget.tab.pdfViewerController.goToPage(
-                    pageNumber: widget.tab.pdfViewerController.pages.length),
-              ),
-            IconButton(
-                icon: const Icon(Icons.share),
-                tooltip: 'שיתוף',
-                onPressed: () async {
-                  await Printing.sharePdf(
-                    bytes: File(widget.tab.book.path).readAsBytesSync(),
-                  );
-                }),
-          ],
-        ),
-        body: Row(
-          children: [
-            _buildLeftPane(),
-            Expanded(
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(
-                    Colors.white,
-                    Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
-                        ? BlendMode.difference
-                        : BlendMode.dst),
-                child: PdfViewer.file(
-                  widget.tab.book.path,
-                  initialPageNumber: widget.tab.pageNumber,
-            passwordProvider: () => passwordDialog(context),
-            controller: widget.tab.pdfViewerController,
-            params: PdfViewerParams(
-              //enableTextSelection: true,
-              maxScale: 10,
-              onInteractionStart: (_) {
-                if (!widget.tab.pinLeftPane.value) {
-                  widget.tab.showLeftPane.value = false;
-                }
-              },
-              viewerOverlayBuilder: (context, size, handleLinkTap) => [
-                PdfViewerScrollThumb(
-                  controller: widget.tab.pdfViewerController,
-                  orientation: ScrollbarOrientation.right,
-                  thumbSize: const Size(40, 25),
-                  thumbBuilder: (context, thumbSize, pageNumber, controller) =>
-                      Container(
-                    color: Colors.black,
-                    child: Center(
-                      child: Text(
-                        pageNumber.toString(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-                PdfViewerScrollThumb(
-                  controller: widget.tab.pdfViewerController,
-                  orientation: ScrollbarOrientation.bottom,
-                  thumbSize: const Size(80, 5),
-                  thumbBuilder: (context, thumbSize, pageNumber, controller) =>
-                      Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-              ],
-              loadingBannerBuilder: (context, bytesDownloaded, totalBytes) =>
-                  Center(
-                child: CircularProgressIndicator(
-                  value:
-                      totalBytes != null ? bytesDownloaded / totalBytes : null,
-                  backgroundColor: Colors.grey,
-                ),
-              ),
-              linkWidgetBuilder: (context, link, size) => Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    if (link.url != null) {
-                      navigateToUrl(link.url!);
-                    } else if (link.dest != null) {
-                      widget.tab.pdfViewerController.goToDest(link.dest);
+                  icon: const Icon(Icons.share),
+                  tooltip: 'שיתוף',
+                  onPressed: () async {
+                    await Printing.sharePdf(
+                      bytes: File(widget.tab.book.path).readAsBytesSync(),
+                    );
+                  }),
+            ],
+          ),
+          body: Row(
+            children: [
+              _buildLeftPane(),
+              Expanded(
+                child: NotificationListener<UserScrollNotification>(
+                  onNotification: (notification) {
+                    if (!widget.tab.pinLeftPane.value) {
+                      Future.microtask(() {
+                        widget.tab.showLeftPane.value = false;
+                      });
                     }
+                    return false;
                   },
-                  hoverColor: Colors.blue.withOpacity(0.2),
+                  child: Listener(
+                    onPointerSignal: (event) {
+                      if (event is PointerScrollEvent &&
+                          !widget.tab.pinLeftPane.value) {
+                        widget.tab.showLeftPane.value = false;
+                      }
+                    },
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                          Colors.white,
+                          Provider.of<SettingsBloc>(context, listen: true)
+                                  .state
+                                  .isDarkMode
+                              ? BlendMode.difference
+                              : BlendMode.dst),
+                      child: PdfViewer.file(
+                        widget.tab.book.path,
+                        initialPageNumber: widget.tab.pageNumber,
+                        passwordProvider: () => passwordDialog(context),
+                        controller: widget.tab.pdfViewerController,
+                        params: PdfViewerParams(
+                          //enableTextSelection: true,
+                          maxScale: 10,
+                          onInteractionStart: (_) {
+                            if (!widget.tab.pinLeftPane.value) {
+                              widget.tab.showLeftPane.value = false;
+                            }
+                          },
+                          viewerOverlayBuilder: (context, size, handleLinkTap) => [
+                        PdfViewerScrollThumb(
+                          controller: widget.tab.pdfViewerController,
+                          orientation: ScrollbarOrientation.right,
+                          thumbSize: const Size(40, 25),
+                          thumbBuilder:
+                              (context, thumbSize, pageNumber, controller) =>
+                                  Container(
+                            color: Colors.black,
+                            child: Center(
+                              child: Text(
+                                pageNumber.toString(),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ),
+                        PdfViewerScrollThumb(
+                          controller: widget.tab.pdfViewerController,
+                          orientation: ScrollbarOrientation.bottom,
+                          thumbSize: const Size(80, 5),
+                          thumbBuilder:
+                              (context, thumbSize, pageNumber, controller) =>
+                                  Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                      ],
+                      loadingBannerBuilder:
+                          (context, bytesDownloaded, totalBytes) => Center(
+                        child: CircularProgressIndicator(
+                          value: totalBytes != null
+                              ? bytesDownloaded / totalBytes
+                              : null,
+                          backgroundColor: Colors.grey,
+                        ),
+                      ),
+                      linkWidgetBuilder: (context, link, size) => Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            if (link.url != null) {
+                              navigateToUrl(link.url!);
+                            } else if (link.dest != null) {
+                              widget.tab.pdfViewerController
+                                  .goToDest(link.dest);
+                            }
+                          },
+                          hoverColor: Colors.blue.withOpacity(0.2),
+                        ),
+                      ),
+                      pagePaintCallbacks: [
+                        textSearcher.pageTextMatchPaintCallback
+                      ],
+                      onDocumentChanged: (document) async {
+                        if (document == null) {
+                          widget.tab.documentRef.value = null;
+                          widget.tab.outline.value = null;
+                        }
+                      },
+                      onViewerReady: (document, controller) async {
+                        widget.tab.documentRef.value = controller.documentRef;
+                        widget.tab.outline.value = await document.loadOutline();
+                        () async {
+                          widget.tab.currentTitle.value =
+                              await refFromPageNumber(
+                                  widget.tab.pageNumber = widget
+                                          .tab.pdfViewerController.pageNumber ??
+                                      1,
+                                  widget.tab.outline.value,
+                                  widget.tab.book.title);
+                        }();
+                        if (mounted) {
+                          widget.tab.showLeftPane.value = true;
+                          // No need for _performAutoSearch anymore - the PdfBookSearchView handles it
+                        }
+                      },
+                    ),
+                  ),
                 ),
               ),
-              pagePaintCallbacks: [textSearcher.pageTextMatchPaintCallback],
-              onDocumentChanged: (document) async {
-                if (document == null) {
-                  widget.tab.documentRef.value = null;
-                  widget.tab.outline.value = null;
-                }
-              },
-              onViewerReady: (document, controller) async {
-                widget.tab.documentRef.value = controller.documentRef;
-                widget.tab.outline.value = await document.loadOutline();
-                () async {
-                  widget.tab.currentTitle.value = await refFromPageNumber(
-                      widget.tab.pageNumber =
-                          widget.tab.pdfViewerController.pageNumber ?? 1,
-                      widget.tab.outline.value);
-                }();
-                if (mounted) {
-                  widget.tab.showLeftPane.value = true;
-                  // No need for _performAutoSearch anymore - the PdfBookSearchView handles it
-                }
-              },
             ),
           ),
-        ),
-        )],
-        ),
-      );
-    });
+        ],
+      ),
+      ),
+      ),
+    );
+  });
   }
 
   AnimatedSize _buildLeftPane() {
@@ -368,9 +453,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           width: showLeftPane ? 300 : 0,
           child: child!,
         ),
-
-        child: Container( 
-
+        child: Container(
           color: Theme.of(context).colorScheme.surface,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
@@ -383,7 +466,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         color: Colors.transparent,
                         child: ClipRect(
                           child: TabBar(
-                            controller: _leftPaneTabController, // Use the managed controller
+                            controller:
+                                _leftPaneTabController, // Use the managed controller
                             tabs: const [
                               Tab(text: 'ניווט'),
                               Tab(text: 'חיפוש'),
@@ -411,8 +495,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 ),
                 Expanded(
                   child: TabBarView(
-
-                    controller: _leftPaneTabController, // Use the managed controller
+                    controller:
+                        _leftPaneTabController, // Use the managed controller
 
                     children: [
                       ValueListenableBuilder(
@@ -420,6 +504,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         builder: (context, outline, child) => OutlineView(
                           outline: outline,
                           controller: widget.tab.pdfViewerController,
+                          focusNode: _navigationFieldFocusNode,
                         ),
                       ),
                       ValueListenableBuilder(
@@ -439,6 +524,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         child: PdfBookSearchView(
                           textSearcher: textSearcher,
                           searchController: widget.tab.searchController,
+                          focusNode: _searchFieldFocusNode,
+                          outline: widget.tab.outline.value,
+                          bookTitle: widget.tab.book.title,
                           initialSearchText: widget.tab.searchText,
                           onSearchResultNavigated: _ensureSearchTabIsActive,
                         ),
@@ -503,8 +591,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     return result ?? false;
   }
 
-  Widget _buildTextButton(BuildContext context, PdfBook book,
-      List<PdfOutlineNode> outline, PdfViewerController controller) {
+  Widget _buildTextButton(
+      BuildContext context, PdfBook book, PdfViewerController controller) {
     return FutureBuilder(
       future: DataRepository.instance.library
           .then((library) => library.findBookByTitle(book.title, TextBook)),
@@ -513,8 +601,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               icon: const Icon(Icons.article),
               tooltip: 'פתח טקסט',
               onPressed: () async {
-                final index = await pdfToTextPage(
-                    book, outline, controller.pageNumber ?? 1, context);
+                final index = await pdfToTextPage(book,
+                    widget.tab.outline.value ?? [], controller.pageNumber ?? 1, context);
                 openBook(context, snapshot.data!, index ?? 0, '');
               })
           : const SizedBox.shrink(),

@@ -39,6 +39,8 @@ class _CommentaryContentState extends State<CommentaryContent> {
         widget.openBookCallback(TextBookTab(
           book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
           index: widget.link.index2 - 1,
+          openLeftPane:
+              Settings.getValue<bool>('key-default-sidebar-open') ?? false,
         ));
       },
       child: FutureBuilder(

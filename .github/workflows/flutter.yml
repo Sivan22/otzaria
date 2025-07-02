@@ -1,272 +1,142 @@
 name: "Build for all platforms"
-
+ 
 on:
-  push: 
+  push:
     branches:
       - main
       - dev
+      - dev2
   workflow_dispatch:
-
+ 
 jobs:
   build_windows:
     runs-on: windows-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4      
-     
+        uses: actions/checkout@v4
+ 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
-      - name: Install Inno Setup
-        run: |
-          ./installer/install_inno_setup.ps1
-      
+ 
       - name: Build Flutter Windows app
         run: |
-          flutter build windows --release
-      
-    
-             
-      - name: Build Inno Setup installer
-        run: |
-          iscc installer\otzaria.iss
-      
-      - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: otzaria-windows-installer
-          path: installer/otzaria-*-windows.exe
-
-  build_linux:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y ninja-build libgtk-3-dev libblkid1 liblzma5 clang cmake git pkg-config liblzma-dev libstdc++-12-dev rpm patchelf
-      
-      - name: Install flutter_distributor
-        run: dart pub global activate flutter_distributor
-      
-      - name: Build Flutter Linux app
-        run: |
-          flutter build linux
-      
-      # - name: Build Linux DEB package
-      #   run: flutter_distributor release --name=production --jobs=release-linux-deb
-        
-      # - name: Build Linux RPM package  
-      #   run: flutter_distributor release --name=production --jobs=release-linux-rpm
-      
-      - name: Find and prepare Linux packages
-        id: find_packages
-        run: |
-          # Find DEB file
-          DEB_FILE=$(find dist/production/release-linux-deb -name "*.deb" | head -n 1)
-          if [ -n "$DEB_FILE" ]; then
-            echo "deb_file=$DEB_FILE" >> $GITHUB_OUTPUT
-            echo "deb_name=$(basename $DEB_FILE)" >> $GITHUB_OUTPUT
-          fi
-          
-          # Find RPM file
-          RPM_FILE=$(find dist/production/release-linux-rpm -name "*.rpm" | head -n 1)
-          if [ -n "$RPM_FILE" ]; then
-            echo "rpm_file=$RPM_FILE" >> $GITHUB_OUTPUT
-            echo "rpm_name=$(basename $RPM_FILE)" >> $GITHUB_OUTPUT
-          fi
-          
-          # Also keep the raw build for compatibility
-          mkdir -p linux-build
-          cp -r build/linux/x64/release/bundle/* linux-build/
-      
-      - name: Upload Linux DEB package
-        if: steps.find_packages.outputs.deb_file != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: otzaria-linux-deb
-          path: ${{ steps.find_packages.outputs.deb_file }}
-          
-      - name: Upload Linux RPM package
-        if: steps.find_packages.outputs.rpm_file != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: otzaria-linux-rpm
-          path: ${{ steps.find_packages.outputs.rpm_file }}
-       
-      - name: Upload linux build (raw)
-        uses: actions/upload-artifact@v4
-        with:
-          name: otzaria-linux-raw
-          path: linux-build/*
-
-  build_android:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-
-      
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      
-      - run: sudo apt install ninja-build
-      
-      - name: Build Android APK
-        run: |
           flutter pub get
-          flutter build apk
-      
-      - name: Upload apk
+          flutter build windows --release
+ 
+      - name: Zip Windows build
+        id: zip_win
+        shell: pwsh
+        run: |
+          # מאתרים את תיקיית ה-Release שמתחת לארכיטקטורה (x64 / arm64)
+          $relDir = Get-ChildItem -Directory build\windows |
+                    Where-Object { Test-Path "$($_.FullName)\runner\Release" } |
+                    Select-Object -First 1 -ExpandProperty FullName
+          if (-not $relDir) { throw "Release directory not found"; }
+          Compress-Archive -Path "$relDir\runner\Release\*" `
+                           -DestinationPath otzaria-windows.zip
+ 
+      - name: Upload Windows ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria-android.apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: otzaria-windows-zip
+          path: otzaria-windows.zip
+ 
 
   build_macos:
     runs-on: macos-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-
+ 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      
+ 
       - name: Build Flutter macOS app
         run: |
-          flutter build macos
-     
-      - name: Upload macos build
+          flutter pub get
+          flutter build macos --release
+ 
+      - name: Zip macOS app
+        run: |
+          APP_PATH=$(find build -name "*.app" | head -n 1)
+          echo "Zipping: $APP_PATH"
+          zip -r otzaria-macos.zip "$APP_PATH"
+
+      - name: Upload macOS ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: otzaria-macos.app
-          path: build/macos/Build/Products/Release
-
+          name: otzaria-macos-zip
+          path: otzaria-macos.zip
+ 
   create_release:
-    needs: [build_windows, build_linux, build_android, build_macos]
+    needs: [build_windows, build_macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      
+ 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
+ 
       - name: Get version from pubspec.yaml
         id: version
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            echo "tag=v$VERSION-dev-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          BRANCH="${{ github.ref_name }}"
+          if [ "$BRANCH" = "dev" ] || [ "$BRANCH" = "dev2" ]; then
+            echo "tag=v$VERSION-$BRANCH-${{ github.run_number }}" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
-            echo "title=Otzaria v$VERSION Development Build #${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "title=Otzaria v$VERSION ($BRANCH Build #${{ github.run_number }})" >> $GITHUB_OUTPUT
           else
             echo "tag=v$VERSION" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
             echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
           fi
-      
+ 
       - name: Organize release files
         run: |
           mkdir -p release-files
-          
-          # Windows installer
-          if [ -d "artifacts/otzaria-windows-installer" ]; then
-            cp artifacts/otzaria-windows-installer/*.exe release-files/ || true
-          fi
-          
-          # Linux DEB package
-          if [ -d "artifacts/otzaria-linux-deb" ]; then
-            cp artifacts/otzaria-linux-deb/*.deb release-files/ || true
-          fi
-          
-          # Linux RPM package  
-          if [ -d "artifacts/otzaria-linux-rpm" ]; then
-            cp artifacts/otzaria-linux-rpm/*.rpm release-files/ || true
-          fi
-          
-          # Linux raw build (fallback)
-          if [ -d "artifacts/otzaria-linux-raw" ] && [ ! -f release-files/*.deb ]; then
-            cd artifacts/otzaria-linux-raw
-            zip -r ../../release-files/otzaria-linux-raw.zip *
-            cd ../..
-          fi
-          
-          # Android APK
-          if [ -d "artifacts/otzaria-android.apk" ]; then
-            cp artifacts/otzaria-android.apk/*.apk release-files/ || true
-          fi
-          
-          # macOS app 
-          if [ -d "artifacts/otzaria-macos.app" ]; then
-          cd artifacts/otzaria-macos.app
-          zip -r ../../release-files/otzaria-macos.zip *
-          cd ../..
-          fi
-          
-          # List files for debugging
+          # The download action creates subdirectories for each artifact
+          find artifacts -name '*.zip' -exec mv {} release-files/ \;
+          find artifacts -name '*.apk' -exec mv {} release-files/ \;
           echo "Release files:"
           ls -la release-files/
-      
+
+      - name: Get commit message
+        id: commit
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "message<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+ 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.title }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           files: release-files/*
           body: |
-            ## Changes in this release
-            
-            Built from commit: ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
-            
-            ### Downloads:
-            - **Windows**: Download the `.exe` installer
-            - **Linux (Debian/Ubuntu)**: Download the `.deb` package and install with `sudo dpkg -i <filename>.deb`
-            - **Linux (Fedora/RHEL)**: Download the `.rpm` package and install with `sudo dnf localinstall <filename>.rpm`
-            - **Linux (Generic)**: Download the `.zip` file and extract
-            - **Android**: Install the `.apk` file
-            - **macOS**: Download and extract the `.zip` file
-            
-            ### Installation Commands:
-            
-            **Debian/Ubuntu (.deb)**:
-            ```bash
-            sudo dpkg -i otzaria-*.deb
-            # or
-            sudo apt install ./otzaria-*.deb
-            ```
-            
-            **Fedora/RHEL (.rpm)**:
-            ```bash
-            sudo dnf localinstall ./otzaria-*.rpm
-            # or  
-            sudo rpm -i otzaria-*.rpm
-            ```
-            
-            ${{ github.ref_name == 'dev' && '⚠️ **This is a development build** - Use at your own risk!' || '' }}
+            ## שינויים בגרסה זו
+ 
+            נבנה מתוך commit: `${{ github.sha }}`
+            ענף: `${{ github.ref_name }}`
+ 
+            ### הורדות
+            - **Windows**: חלצו את קובץ `otzaria-windows.zip` והפעילו את קובץ ה-`.exe` שבתוכו.
+            - **macOS**: חלצו את קובץ `otzaria-macos.zip` והעבירו את האפליקציה לתיקיית היישומים.
+ 
+            ${{ (github.ref_name == 'dev' || github.ref_name == 'dev2') && '⚠️ **זוהי גרסת פיתוח** - היא עלולה להיות לא יציבה. השתמשו בזהירות!' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

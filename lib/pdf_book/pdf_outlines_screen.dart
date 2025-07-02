@@ -6,17 +6,24 @@ class OutlineView extends StatefulWidget {
     super.key,
     required this.outline,
     required this.controller,
+    required this.focusNode,
   });
 
   final List<PdfOutlineNode>? outline;
   final PdfViewerController controller;
+  final FocusNode focusNode;
 
   @override
   State<OutlineView> createState() => _OutlineViewState();
 }
 
-class _OutlineViewState extends State<OutlineView> {
+class _OutlineViewState extends State<OutlineView>
+    with AutomaticKeepAliveClientMixin {
   TextEditingController searchController = TextEditingController();
+  final ScrollController scrollController = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -36,6 +43,7 @@ class _OutlineViewState extends State<OutlineView> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
+    scrollController.dispose();
     searchController.dispose();
     super.dispose();
   }
@@ -46,6 +54,7 @@ class _OutlineViewState extends State<OutlineView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final outline = widget.outline;
     if (outline == null || outline.isEmpty) {
       return const Center(
@@ -57,7 +66,12 @@ class _OutlineViewState extends State<OutlineView> {
       children: [
         TextField(
           controller: searchController,
+          focusNode: widget.focusNode,
+          autofocus: true,
           onChanged: (value) => setState(() {}),
+          onSubmitted: (_) {
+            widget.focusNode.requestFocus();
+          },
           decoration: InputDecoration(
             hintText: 'חיפוש סימניה...',
             suffixIcon: Row(
@@ -86,6 +100,7 @@ class _OutlineViewState extends State<OutlineView> {
 
   Widget _buildOutlineList(List<PdfOutlineNode> outline) {
     return SingleChildScrollView(
+      controller: scrollController,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -113,6 +128,7 @@ class _OutlineViewState extends State<OutlineView> {
         .toList();
 
     return SingleChildScrollView(
+      controller: scrollController,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -146,10 +162,8 @@ class _OutlineViewState extends State<OutlineView> {
                   selected: widget.controller.isReady &&
                       node.dest?.pageNumber ==
                           widget.controller.pageNumber,
-                  selectedColor: Theme.of(context).colorScheme.onSecondary,
-                  selectedTileColor:
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                  onTap: navigateToEntry,
+                  selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                  selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,                  onTap: navigateToEntry,
                   hoverColor: Theme.of(context).hoverColor,
                   mouseCursor: SystemMouseCursors.click,
                 ),
