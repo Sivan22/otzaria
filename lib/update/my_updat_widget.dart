@@ -21,7 +21,7 @@ Widget _flatChipAutoHideError({
   required void Function() dismissUpdate,
 }) {
   if (status == UpdatStatus.error) {
-    Future.delayed(const Duration(seconds: 5), dismissUpdate);
+    Future.delayed(const Duration(seconds: 3), dismissUpdate);
   }
   return flatChip(
     context: context,
