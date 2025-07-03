@@ -207,15 +207,23 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             scrolledUnderElevation: 0,
             title: ValueListenableBuilder(
                 valueListenable: widget.tab.currentTitle,
-                builder: (context, value, child) => Center(
-                      child: SelectionArea(
-                        child: Text(
-                          value,
-                          style: const TextStyle(fontSize: 17),
-                          textAlign: TextAlign.center,
-                        ),
+                builder: (context, value, child) {
+                  String displayTitle = value;
+                  // When a heading is provided and doesn't already contain the
+                  // book title, prefix the heading with the PDF's file name.
+                  if (value.isNotEmpty && !value.contains(widget.tab.book.title)) {
+                    displayTitle = "${widget.tab.book.title}, $value";
+                  }
+                  return Center(
+                    child: SelectionArea(
+                      child: Text(
+                        displayTitle,
+                        style: const TextStyle(fontSize: 17),
+                        textAlign: TextAlign.center,
                       ),
-                    )),
+                    ),
+                  );
+                }),
             leading: IconButton(
               icon: const Icon(Icons.menu),
               tooltip: 'חיפוש וניווט',
