@@ -2,10 +2,39 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:updat/theme/chips/flat.dart';
+import 'package:updat/updat.dart';
 import 'package:updat/updat_window_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:package_info_plus/package_info_plus.dart';
+
+/// Wraps [flatChip] and automatically dismisses update errors after a short delay.
+Widget _flatChipAutoHideError({
+  required BuildContext context,
+  required String? latestVersion,
+  required String appVersion,
+  required UpdatStatus status,
+  required void Function() checkForUpdate,
+  required void Function() openDialog,
+  required void Function() startUpdate,
+  required Future<void> Function() launchInstaller,
+  required void Function() dismissUpdate,
+}) {
+  if (status == UpdatStatus.error) {
+    Future.delayed(const Duration(seconds: 5), dismissUpdate);
+  }
+  return flatChip(
+    context: context,
+    latestVersion: latestVersion,
+    appVersion: appVersion,
+    status: status,
+    checkForUpdate: checkForUpdate,
+    openDialog: openDialog,
+    startUpdate: startUpdate,
+    launchInstaller: launchInstaller,
+    dismissUpdate: dismissUpdate,
+  );
+}
 
 class MyUpdatWidget extends StatelessWidget {
   const MyUpdatWidget({Key? key, required this.child}) : super(key: key);
@@ -52,7 +81,7 @@ class MyUpdatWidget extends StatelessWidget {
             return jsonDecode(data.body)["body"];
           },
           currentVersion: snapshot.data!.version,
-          updateChipBuilder: flatChip,
+          updateChipBuilder: _flatChipAutoHideError,
 
           callback: (status) {},
           child: child,
