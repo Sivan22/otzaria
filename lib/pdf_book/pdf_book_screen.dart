@@ -196,6 +196,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           autofocus: !Platform.isAndroid,
           child: Scaffold(
           appBar: AppBar(
+            centerTitle: false,
           backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
             shape: Border(
               bottom: BorderSide(
@@ -214,16 +215,15 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   if (value.isNotEmpty && !value.contains(widget.tab.book.title)) {
                     displayTitle = "${widget.tab.book.title}, $value";
                   }
-                  return Center(
-                    child: SelectionArea(
-                      child: Text(
-                        displayTitle,
-                        style: const TextStyle(fontSize: 17),
-                        textAlign: TextAlign.center,
+                  return SelectionArea( // <--- שים לב שה-Center נעלם, ה-SelectionArea הפך להיות הילד הישיר
+                    child: Text(
+                      displayTitle,
+                      style: const TextStyle(fontSize: 17),
+                      textAlign: TextAlign.end,
                       ),
-                    ),
                   );
-                }),
+                },
+              ),
             leading: IconButton(
               icon: const Icon(Icons.menu),
               tooltip: 'חיפוש וניווט',

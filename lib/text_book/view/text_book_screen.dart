@@ -112,6 +112,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       ),
       elevation: 0,
       scrolledUnderElevation: 0,
+      centerTitle: false,
 
       title: _buildTitle(state),
       leading: _buildMenuButton(context, state),
@@ -121,14 +122,13 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
   Widget _buildTitle(TextBookLoaded state) {
     return state.currentTitle != null
-        ? Center(
-            child: SelectionArea(
+      ? SelectionArea(
               child: Text(
                 state.currentTitle!,
                 style: const TextStyle(fontSize: 17),
+                textAlign: TextAlign.end,
               ),
-            ),
-          )
+            )
         : const SizedBox.shrink();
   }
 
