@@ -5,6 +5,9 @@ import 'package:otzaria/indexing/bloc/indexing_state.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/search/view/full_text_settings_widgets.dart';
 import 'package:otzaria/search/view/tantivy_search_field.dart';
 import 'package:otzaria/search/view/tantivy_search_results.dart';
@@ -30,16 +33,51 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     // Check if indexing is in progress using the IndexingBloc
     final indexingState = context.read<IndexingBloc>().state;
     _showIndexWarning = indexingState is IndexingInProgress;
+    
+    // Request focus on search field when the widget is first created
+    _requestSearchFieldFocus();
+  }
+
+  @override
+  void didUpdateWidget(TantivyFullTextSearch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Request focus when switching back to this tab
+    _requestSearchFieldFocus();
+  }
+
+  void _requestSearchFieldFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.tab.searchFieldFocusNode.canRequestFocus) {
+        // Check if this tab is the currently selected tab
+        final tabsState = context.read<TabsBloc>().state;
+        if (tabsState.hasOpenTabs && 
+            tabsState.currentTabIndex < tabsState.tabs.length &&
+            tabsState.tabs[tabsState.currentTabIndex] == widget.tab) {
+          widget.tab.searchFieldFocusNode.requestFocus();
+        }
+      }
+    });
+  }
+
+  void _onNavigationChanged(NavigationState state) {
+    // Request focus when navigating to search screen
+    if (state.currentScreen == Screen.search
+    || state.currentScreen == Screen.reading) {
+      _requestSearchFieldFocus();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      body: LayoutBuilder(builder: (context, constraints) {
-        if (constraints.maxWidth < 800) return _buildForSmallScreens();
-        return _buildForWideScreens();
-      }),
+    return BlocListener<NavigationBloc, NavigationState>(
+      listener: (context, state) => _onNavigationChanged(state),
+      child: Scaffold(
+        body: LayoutBuilder(builder: (context, constraints) {
+          if (constraints.maxWidth < 800) return _buildForSmallScreens();
+          return _buildForWideScreens();
+        }),
+      ),
     );
   }
 

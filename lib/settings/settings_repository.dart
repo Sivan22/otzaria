@@ -15,6 +15,8 @@ class SettingsRepository {
   static const String keyUseFastSearch = 'key-use-fast-search';
   static const String keyReplaceHolyNames = 'key-replace-holy-names';
   static const String keyAutoUpdateIndex = 'key-auto-index-update';
+  static const String keyDefaultNikud = 'key-default-nikud';
+  static const String keyDefaultSidebarOpen = 'key-default-sidebar-open';  
 
   final SettingsWrapper _settings;
 
@@ -62,6 +64,14 @@ class SettingsRepository {
         keyAutoUpdateIndex,
         defaultValue: true,
       ),
+      'defaultRemoveNikud': _settings.getValue<bool>(
+        keyDefaultNikud,
+        defaultValue: false,
+      ),
+      'defaultSidebarOpen': _settings.getValue<bool>(
+        keyDefaultSidebarOpen,
+        defaultValue: false,
+      ),      
     };
   }
 
@@ -111,5 +121,12 @@ class SettingsRepository {
 
   Future<void> updateAutoUpdateIndex(bool value) async {
     await _settings.setValue(keyAutoUpdateIndex, value);
+  }
+  
+  Future<void> updateDefaultRemoveNikud(bool value) async {
+    await _settings.setValue(keyDefaultNikud, value);
+  }  
+  Future<void> updateDefaultSidebarOpen(bool value) async {
+    await _settings.setValue(keyDefaultSidebarOpen, value);
   }
 }

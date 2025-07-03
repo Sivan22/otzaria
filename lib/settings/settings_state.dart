@@ -14,6 +14,8 @@ class SettingsState extends Equatable {
   final bool useFastSearch;
   final bool replaceHolyNames;
   final bool autoUpdateIndex;
+  final bool defaultRemoveNikud;
+  final bool defaultSidebarOpen;
 
   const SettingsState({
     required this.isDarkMode,
@@ -28,6 +30,8 @@ class SettingsState extends Equatable {
     required this.useFastSearch,
     required this.replaceHolyNames,
     required this.autoUpdateIndex,
+    required this.defaultRemoveNikud,
+    required this.defaultSidebarOpen, 
   });
 
   factory SettingsState.initial() {
@@ -44,6 +48,8 @@ class SettingsState extends Equatable {
       useFastSearch: true,
       replaceHolyNames: true,
       autoUpdateIndex: true,
+      defaultRemoveNikud: false,
+      defaultSidebarOpen: false,     
     );
   }
 
@@ -60,6 +66,8 @@ class SettingsState extends Equatable {
     bool? useFastSearch,
     bool? replaceHolyNames,
     bool? autoUpdateIndex,
+    bool? defaultRemoveNikud,
+    bool? defaultSidebarOpen, 
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -74,6 +82,8 @@ class SettingsState extends Equatable {
       useFastSearch: useFastSearch ?? this.useFastSearch,
       replaceHolyNames: replaceHolyNames ?? this.replaceHolyNames,
       autoUpdateIndex: autoUpdateIndex ?? this.autoUpdateIndex,
+      defaultRemoveNikud: defaultRemoveNikud ?? this.defaultRemoveNikud,  
+      defaultSidebarOpen: defaultSidebarOpen ?? this.defaultSidebarOpen,    
     );
   }
 
@@ -91,5 +101,7 @@ class SettingsState extends Equatable {
         useFastSearch,
         replaceHolyNames,
         autoUpdateIndex,
+        defaultRemoveNikud,
+        defaultSidebarOpen,       
       ];
 }

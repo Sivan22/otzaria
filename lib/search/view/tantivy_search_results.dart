@@ -11,6 +11,7 @@ import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/search/view/full_text_settings_widgets.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 class TantivySearchResults extends StatefulWidget {
   final SearchingTab tab;
@@ -81,6 +82,9 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                       path: result.filePath),
                                   pageNumber: result.segment.toInt() + 1,
                                   searchText: widget.tab.queryController.text,
+                                  openLeftPane: Settings.getValue<bool>(
+                                          'key-default-sidebar-open') ??
+                                      false,                                  
                                 ),
                               ));
                         } else {
@@ -91,7 +95,10 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                     ),
                                     index: result.segment.toInt(),
                                     searchText:
-                                        widget.tab.queryController.text),
+                                        widget.tab.queryController.text,
+                                    openLeftPane: Settings.getValue<bool>(
+                                            'key-default-sidebar-open') ??
+                                        false),
                               ));
                         }
                       },

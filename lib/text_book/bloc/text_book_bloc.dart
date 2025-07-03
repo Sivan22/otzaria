@@ -73,9 +73,10 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           tableOfContents: tableOfContents,
           fontSize: Settings.getValue<double>('key-font-size') ?? 25.0,
           showLeftPane: state.showLeftPane,
-          showSplitView: false,
+          showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
           activeCommentators: state.commentators,
-          removeNikud: false,
+          removeNikud:
+              Settings.getValue<bool>('key-default-nikud') ?? false,
           visibleIndices: [state.index],
           pinLeftPane: false,
           searchText: '',
@@ -170,8 +171,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
 
       int? index = currentState.selectedIndex;
       if (!event.visibleIndecies.contains(index)) {
-        index = null;
-      }
+        index = null;      }
 
       emit(currentState.copyWith(
           visibleIndices: event.visibleIndecies,

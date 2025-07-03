@@ -8,6 +8,7 @@ import 'package:otzaria/models/books.dart';
 class SearchingTab extends OpenedTab {
   final searchBloc = SearchBloc();
   final queryController = TextEditingController();
+  final searchFieldFocusNode = FocusNode();
   final ValueNotifier<bool> isLeftPaneOpen = ValueNotifier(true);
   final ItemScrollController scrollController = ItemScrollController();
   List<Book> allBooks = [];
@@ -24,6 +25,12 @@ class SearchingTab extends OpenedTab {
 
   Future<int> countForFacet(String facet) {
     return searchBloc.countForFacet(facet);
+  }
+
+  @override
+  void dispose() {
+    searchFieldFocusNode.dispose();
+    super.dispose();
   }
 
   @override

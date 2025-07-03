@@ -25,7 +25,10 @@ class PdfBookTab extends OpenedTab {
 
   final TextEditingController searchController = TextEditingController();
 
-  final String searchText;
+  String searchText;
+
+  List<PdfTextRangeWithFragments>? pdfSearchMatches;
+  int? pdfSearchCurrentMatchIndex;
 
   final currentTitle = ValueNotifier<String>("");
 
@@ -39,12 +42,14 @@ class PdfBookTab extends OpenedTab {
   ///
   /// The [book] parameter represents the PDF book, and the [pageNumber]
   /// parameter represents the current page number.
-  PdfBookTab(
-      {required this.book,
-      required this.pageNumber,
-      bool openLeftPane = false,
-      this.searchText = ''})
-      : super(book.title) {
+  PdfBookTab({
+    required this.book,
+    required this.pageNumber,
+    bool openLeftPane = false,
+    this.searchText = '',
+    this.pdfSearchMatches,
+    this.pdfSearchCurrentMatchIndex,
+  }) : super(book.title) {
     showLeftPane = ValueNotifier<bool>(openLeftPane);
     searchController.text = searchText;
   }

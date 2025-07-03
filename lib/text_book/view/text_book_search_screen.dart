@@ -9,6 +9,14 @@ import 'package:search_highlight_text/search_highlight_text.dart';
 import 'package:otzaria/text_book/models/search_results.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+class _GroupedResultItem {
+  final String? header;
+  final TextSearchResult? result;
+  const _GroupedResultItem.header(this.header) : result = null;
+  const _GroupedResultItem.result(this.result) : header = null;
+  bool get isHeader => header != null;
+}
+
 class TextBookSearchView extends StatefulWidget {
   final String data;
   final ItemScrollController scrollControler;
@@ -42,9 +50,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     searchTextController.text =
         (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
     scrollControler = widget.scrollControler;
-    if (!Platform.isAndroid) {
-      widget.focusNode.requestFocus();
-    }
+    widget.focusNode.requestFocus();
   }
 
   void _searchTextUpdated() {
@@ -68,7 +74,14 @@ class TextBookSearchViewState extends State<TextBookSearchView>
           context.read<TextBookBloc>().add(UpdateSearchText(e));
           _searchTextUpdated();
         },
+        onSubmitted: (_) {
+          widget.focusNode.requestFocus();
+        },
+        textAlign: TextAlign.right,
+        textDirection: TextDirection.rtl,
         controller: searchTextController,
+        focusNode: widget.focusNode,
+        autofocus: true,
         decoration: InputDecoration(
           hintText: 'חפש כאן..',
           suffixIcon: Row(
@@ -85,18 +98,58 @@ class TextBookSearchViewState extends State<TextBookSearchView>
           ),
         ),
       ),
+      // START --- Added Code for Result Count
+      if (searchResults.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              'נמצאו ${searchResults.length} תוצאות',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey[700],
+              ),
+            ),
+          ),
+        ),
+      // END --- Added Code for Result Count
       Expanded(
-        child: ListView.builder(
+        child: Builder(builder: (context) {
+          final List<_GroupedResultItem> items = [];
+          String? lastAddress;
+          for (final r in searchResults) {
+            if (lastAddress != r.address) {
+              items.add(_GroupedResultItem.header(r.address));
+              lastAddress = r.address;
+            }
+            items.add(_GroupedResultItem.result(r));
+          }
+
+          if (items.isEmpty && searchTextController.text.isNotEmpty) {
+            return const Center(child: Text('אין תוצאות'));
+          }
+
+          return ListView.builder(
             shrinkWrap: true,
-            itemCount: searchResults.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              if (searchResults.isNotEmpty) {
-                final result = searchResults[index];
-                return ListTile(
-                    title: Text(
-                      result.address,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+              final item = items[index];
+              if (item.isHeader) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  child: Text(
+                    item.header!,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
+                    textDirection: TextDirection.rtl,
+                  ),
+                );
+              } else {
+                final result = item.result!;
+                return ListTile(
                     subtitle: SearchHighlightText(result.snippet,
                         searchText: result.query),
                     onTap: () {
@@ -109,10 +162,10 @@ class TextBookSearchViewState extends State<TextBookSearchView>
                         widget.closeLeftPaneCallback();
                       }
                     });
-              } else {
-                return const SizedBox.shrink();
               }
-            }),
+            },
+          );
+        }),
       )
     ]);
   }

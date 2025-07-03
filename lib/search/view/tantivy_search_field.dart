@@ -17,7 +17,7 @@ class TantivySearchField extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextField(
-        autofocus: true,
+        focusNode: widget.tab.searchFieldFocusNode,
         controller: widget.tab.queryController,
         onSubmitted: (e) {
           context.read<SearchBloc>().add(UpdateSearchQuery(e));

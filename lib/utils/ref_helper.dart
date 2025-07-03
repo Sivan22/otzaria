@@ -97,7 +97,8 @@ Future<String> refFromIndex(
 Future<String> refFromPageNumber(
   int pageNumber,
   List<PdfOutlineNode>? outline,
-) async {
+  [String? bookTitle,
+  ]) async {
   if (outline == null) return "";
 
   List<String> texts = [];
@@ -124,5 +125,28 @@ Future<String> refFromPageNumber(
 
   searchOutline(outline);
   texts = texts.map((e) => e.trim()).toList();
+  if (bookTitle != null && texts.isNotEmpty && texts.first == bookTitle) {
+    texts = texts.sublist(1);
+  }
   return texts.join(', ');
+}
+
+/// Returns the index of the last [TocEntry] whose [index] is less than or equal
+/// to [targetIndex]. If no such entry exists, returns `null`.
+int? closestTocEntryIndex(List<TocEntry> entries, int targetIndex) {
+  TocEntry? closest;
+
+  void search(List<TocEntry> toc) {
+    for (final entry in toc) {
+      if (entry.index <= targetIndex) {
+        if (closest == null || entry.index > closest!.index) {
+          closest = entry;
+        }
+        search(entry.children);
+      }
+    }
+  }
+
+  search(entries);
+  return closest?.index;
 }
