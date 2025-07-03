@@ -359,6 +359,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         params: PdfViewerParams(
                           //enableTextSelection: true,
                           maxScale: 10,
+                          // limit page caching to the current page 
+                          // plus five pages before and after
+                          horizontalCacheExtent: 5,
+                          verticalCacheExtent: 5,
                           onInteractionStart: (_) {
                             if (!widget.tab.pinLeftPane.value) {
                               widget.tab.showLeftPane.value = false;
