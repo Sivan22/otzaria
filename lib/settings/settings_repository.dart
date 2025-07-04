@@ -24,6 +24,7 @@ class SettingsRepository {
       : _settings = settings ?? SettingsWrapper();
 
   Future<Map<String, dynamic>> loadSettings() async {
+    await _initializeDefaultsIfNeeded();
     return {
       'isDarkMode': _settings.getValue<bool>(keyDarkMode, defaultValue: false),
       'seedColor': ColorUtils.colorFromString(
@@ -128,5 +129,42 @@ class SettingsRepository {
   }  
   Future<void> updateDefaultSidebarOpen(bool value) async {
     await _settings.setValue(keyDefaultSidebarOpen, value);
+  }
+
+  Future<void> _initializeDefaultsIfNeeded() async {
+    final needsInitialization = await _checkIfDefaultsNeeded();
+    if (needsInitialization) {
+      await _writeDefaultsToStorage();
+    }
+  }
+
+  Future<bool> _checkIfDefaultsNeeded() async {
+    // Check if any essential settings exist. If not, we need to initialize defaults.
+    // We'll check for font family as it's critical for the bug fix.
+    try {
+      final fontFamily = _settings.getValue<String>(keyFontFamily);
+      return fontFamily == null;
+    } catch (e) {
+      // If there's an error reading settings, assume we need to initialize
+      return true;
+    }
+  }
+
+  Future<void> _writeDefaultsToStorage() async {
+    // Write all default settings to persistent storage
+    await _settings.setValue(keyDarkMode, false);
+    await _settings.setValue(keySwatchColor, '#ff2c1b02');
+    await _settings.setValue(keyPaddingSize, 10.0);
+    await _settings.setValue(keyFontSize, 16.0);
+    await _settings.setValue(keyFontFamily, 'FrankRuhlCLM');
+    await _settings.setValue(keyShowOtzarHachochma, false);
+    await _settings.setValue(keyShowHebrewBooks, false);
+    await _settings.setValue(keyShowExternalBooks, false);
+    await _settings.setValue(keyShowTeamim, true);
+    await _settings.setValue(keyUseFastSearch, true);
+    await _settings.setValue(keyReplaceHolyNames, true);
+    await _settings.setValue(keyAutoUpdateIndex, true);
+    await _settings.setValue(keyDefaultNikud, false);
+    await _settings.setValue(keyDefaultSidebarOpen, false);
   }
 }
