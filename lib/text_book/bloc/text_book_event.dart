@@ -8,8 +8,18 @@ sealed class TextBookEvent extends Equatable {
 }
 
 class LoadContent extends TextBookEvent {
+  final double fontSize;
+  final bool showSplitView;
+  final bool removeNikud;
+
+  const LoadContent({
+    required this.fontSize,
+    required this.showSplitView,
+    required this.removeNikud,
+  });
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [fontSize, showSplitView, removeNikud];
 }
 
 class UpdateFontSize extends TextBookEvent {

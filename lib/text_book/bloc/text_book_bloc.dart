@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/text_book_repository.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
@@ -71,12 +70,11 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           links: links,
           availableCommentators: availableCommentators,
           tableOfContents: tableOfContents,
-          fontSize: Settings.getValue<double>('key-font-size') ?? 25.0,
+          fontSize: event.fontSize,
           showLeftPane: state.showLeftPane,
-          showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
+          showSplitView: event.showSplitView,
           activeCommentators: state.commentators,
-          removeNikud:
-              Settings.getValue<bool>('key-default-nikud') ?? false,
+          removeNikud: event.removeNikud,
           visibleIndices: [state.index],
           pinLeftPane: false,
           searchText: '',
