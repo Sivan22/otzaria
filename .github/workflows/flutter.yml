@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - dev
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:
@@ -268,5 +270,105 @@ jobs:
             ```
             
             ${{ github.ref_name == 'dev' && '⚠️ **This is a development build** - Use at your own risk!' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          create_pr_prerelease:
+    needs: [build_windows, build_linux, build_android, build_macos]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Get version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION-pr-${{ github.event.number }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "title=Otzaria v$VERSION - PR #${{ github.event.number }} Preview" >> $GITHUB_OUTPUT
+      
+      - name: Organize release files
+        run: |
+          mkdir -p release-files
+          
+          # Windows installer
+          if [ -d "artifacts/otzaria-windows-installer" ]; then
+            cp artifacts/otzaria-windows-installer/*.exe release-files/ || true
+          fi
+          
+          # Linux DEB package
+          if [ -d "artifacts/otzaria-linux-deb" ]; then
+            cp artifacts/otzaria-linux-deb/*.deb release-files/ || true
+          fi
+          
+          # Linux RPM package  
+          if [ -d "artifacts/otzaria-linux-rpm" ]; then
+            cp artifacts/otzaria-linux-rpm/*.rpm release-files/ || true
+          fi
+          
+          # Linux raw build (fallback)
+          if [ -d "artifacts/otzaria-linux-raw" ] && [ ! -f release-files/*.deb ]; then
+            cd artifacts/otzaria-linux-raw
+            zip -r ../../release-files/otzaria-linux-raw.zip *
+            cd ../..
+          fi
+          
+          # Android APK
+          if [ -d "artifacts/otzaria-android.apk" ]; then
+            cp artifacts/otzaria-android.apk/*.apk release-files/ || true
+          fi
+          
+          # macOS app 
+          if [ -d "artifacts/otzaria-macos.app" ]; then
+          cd artifacts/otzaria-macos.app
+          zip -r ../../release-files/otzaria-macos.zip *
+          cd ../..
+          fi
+          
+          # List files for debugging
+          echo "Release files:"
+          ls -la release-files/
+      
+      - name: Create PR Pre-release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.title }}
+          prerelease: true
+          files: release-files/*
+          body: |
+            ## 🔄 PR Preview Build #${{ github.event.number }}
+            
+            **This is a preview build for testing PR changes before merge.**
+            
+            ### PR Information:
+            - **PR Title**: ${{ github.event.pull_request.title }}
+            - **PR Author**: @${{ github.event.pull_request.user.login }}
+            - **PR Number**: #${{ github.event.number }}
+            - **Branch**: `${{ github.head_ref }}` → `${{ github.base_ref }}`
+            
+            ### PR Description:
+            ${{ github.event.pull_request.body }}
+            
+            ---
+            
+            Built from commit: ${{ github.sha }}
+            
+            ### Downloads:
+            - **Windows**: Download the `.exe` installer
+            - **Linux (Debian/Ubuntu)**: Download the `.deb` package and install with `sudo dpkg -i <filename>.deb`
+            - **Linux (Fedora/RHEL)**: Download the `.rpm` package and install with `sudo dnf localinstall <filename>.rpm`
+            - **Linux (Generic)**: Download the `.zip` file and extract
+            - **Android**: Install the `.apk` file
+            - **macOS**: Download and extract the `.zip` file
+            
+            ⚠️ **This is a preview build for testing purposes** - Use at your own risk!
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
