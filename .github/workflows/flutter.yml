@@ -273,7 +273,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          create_pr_prerelease:
+  create_pr_prerelease:
     needs: [build_windows, build_linux, build_android, build_macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
