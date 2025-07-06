@@ -380,13 +380,21 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                     ),
+                    const SwitchSettingsTile(
+                      title: 'סנכרון ספרי דיקטה',
+                      leading: Icon(Icons.book),
+                      settingKey: 'key-sync-dicta-books',
+                      defaultValue: false,
+                      enabledLabel: 'ספרי דיקטה יסונכרנו יחד עם הספרייה',
+                      disabledLabel: 'לא יסונכרנו ספרי דיקטה',
+                    ),
                     _buildColumns(2, [
                       BlocBuilder<IndexingBloc, IndexingState>(
                         builder: (context, indexingState) {
                           return SimpleSettingsTile(
                             title: "אינדקס חיפוש",
                             subtitle: indexingState is IndexingInProgress
-                                ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
+                                ? "בתהליך עדכון: ${indexingState.booksProcessed}/${indexingState.totalBooks}"
                                 : "האינדקס מעודכן",
                             leading: const Icon(Icons.table_chart),
                             onTap: () async {
