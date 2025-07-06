@@ -142,8 +142,8 @@ class SettingsRepository {
 
   /// Check if default settings need to be initialized
   Future<bool> _checkIfDefaultsNeeded() async {
-    // Check if key settings exist - if not, this is likely a first launch
-    return _settings.getValue<String>(keyFontFamily, defaultValue: null) == null;
+    // Use a dedicated flag to track initialization
+    return !_settings.getValue<bool>('settings_initialized', defaultValue: false);
   }
 
   /// Write all default settings to persistent storage
@@ -162,5 +162,8 @@ class SettingsRepository {
     await _settings.setValue(keyAutoUpdateIndex, true);
     await _settings.setValue(keyDefaultNikud, false);
     await _settings.setValue(keyDefaultSidebarOpen, false);
+    
+    // Mark as initialized
+    await _settings.setValue('settings_initialized', true);
   }
 }
