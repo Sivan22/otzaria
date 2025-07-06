@@ -6,6 +6,7 @@ import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/ref_helper.dart';
+import 'package:flutter/scheduler.dart';
 
 class TocViewer extends StatefulWidget {
   const TocViewer({
@@ -28,7 +29,70 @@ class _TocViewerState extends State<TocViewer>
   @override
   bool get wantKeepAlive => true;
 
-  TextEditingController searchController = TextEditingController();
+final TextEditingController searchController = TextEditingController();
+  final ScrollController _tocScrollController = ScrollController();
+  final Map<int, GlobalKey> _tocItemKeys = {};
+  bool _isManuallyScrolling = false;
+  int? _lastScrolledTocIndex;
+
+  @override
+  void dispose() {
+    _tocScrollController.dispose();
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToActiveItem(TextBookLoaded state) {
+    if (_isManuallyScrolling) return;
+
+    final int? activeIndex = state.selectedIndex ??
+        (state.visibleIndices.isNotEmpty
+            ? closestTocEntryIndex(
+                state.tableOfContents, state.visibleIndices.first)
+            : null);
+
+    // --- התחלה: התיקון ---
+    // עוטפים את ה-setState ב-callback כדי למנוע את השגיאה
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if(mounted) {
+        setState(() {});
+      }
+    });
+    // --- סיום: התיקון ---
+    
+    if (activeIndex == null || activeIndex == _lastScrolledTocIndex) return;
+
+    // נחכה פריים אחד נוסף כדי שה-setState יסיים וה-UI יתעדכן
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isManuallyScrolling) return;
+
+      final key = _tocItemKeys[activeIndex];
+      final itemContext = key?.currentContext;
+      if (itemContext == null) return;
+      
+      final itemRenderObject = itemContext.findRenderObject();
+      if (itemRenderObject is! RenderBox) return;
+
+      final scrollableBox = _tocScrollController.position.context.storageContext.findRenderObject() as RenderBox;
+      
+      final itemOffset = itemRenderObject.localToGlobal(Offset.zero, ancestor: scrollableBox).dy;
+      final viewportHeight = scrollableBox.size.height;
+      final itemHeight = itemRenderObject.size.height;
+      
+      final target = _tocScrollController.offset + itemOffset - (viewportHeight / 2) + (itemHeight / 2);
+      
+      _tocScrollController.animateTo(
+        target.clamp(
+          0.0,
+          _tocScrollController.position.maxScrollExtent,
+        ),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+
+      _lastScrolledTocIndex = activeIndex;
+    });
+  }
 
   Widget _buildFilteredList(List<TocEntry> entries, BuildContext context) {
     List<TocEntry> allEntries = [];
@@ -56,6 +120,10 @@ class _TocViewerState extends State<TocViewer>
                 ? ListTile(
                     title: Text(allEntries[index].fullText),
                     onTap: () {
+                      setState(() {
+                        _isManuallyScrolling = false;
+                        _lastScrolledTocIndex = null;
+                      });
                       widget.scrollController.scrollTo(
                         index: allEntries[index].index,
                         duration: const Duration(milliseconds: 250),
@@ -72,7 +140,12 @@ class _TocViewerState extends State<TocViewer>
   }
 
   Widget _buildTocItem(TocEntry entry, {bool showFullText = false}) {
+    final itemKey = _tocItemKeys.putIfAbsent(entry.index, () => GlobalKey());
     void navigateToEntry() {
+      setState(() {
+        _isManuallyScrolling = false;
+        _lastScrolledTocIndex = null;
+      });
       widget.scrollController.scrollTo(
         index: entry.index,
         duration: const Duration(milliseconds: 250),
@@ -85,6 +158,7 @@ class _TocViewerState extends State<TocViewer>
 
     if (entry.children.isEmpty) {
       return Padding(
+        key: itemKey,
         padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
         child: BlocBuilder<TextBookBloc, TextBookState>(
           builder: (context, state) {
@@ -111,6 +185,7 @@ class _TocViewerState extends State<TocViewer>
       );
     } else {
       return Padding(
+        key: itemKey,
         padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
         child: Theme(
           data: Theme.of(context).copyWith(
@@ -170,6 +245,7 @@ class _TocViewerState extends State<TocViewer>
         bloc: context.read<TextBookBloc>(),
         builder: (context, state) {
           if (state is! TextBookLoaded) return const Center();
+          _scrollToActiveItem(state);
           return Column(
             children: [
               TextField(
@@ -198,8 +274,22 @@ class _TocViewerState extends State<TocViewer>
                 ),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  child: searchController.text.isEmpty
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollStartNotification && notification.dragDetails != null) {
+                      setState(() {
+                        _isManuallyScrolling = true;
+                      });
+                    } else if (notification is ScrollEndNotification) {
+                      setState(() {
+                        _isManuallyScrolling = false;
+                      });
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView( // אנחנו עדיין משאירים את המבנה המקורי שלך
+                    controller: _tocScrollController,
+                    child: searchController.text.isEmpty
                       ? ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -209,6 +299,7 @@ class _TocViewerState extends State<TocViewer>
                       : _buildFilteredList(state.tableOfContents, context),
                 ),
               ),
+            ),
             ],
           );
         });
