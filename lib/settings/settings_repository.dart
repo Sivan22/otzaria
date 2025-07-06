@@ -143,7 +143,7 @@ class SettingsRepository {
   /// Check if default settings need to be initialized
   Future<bool> _checkIfDefaultsNeeded() async {
     // Check if key settings exist - if not, this is likely a first launch
-    return _settings.getValue<String>(keyFontFamily) == null;
+    return _settings.getValue<String>(keyFontFamily, defaultValue: null) == null;
   }
 
   /// Write all default settings to persistent storage
