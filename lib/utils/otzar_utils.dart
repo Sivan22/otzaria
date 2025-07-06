@@ -34,16 +34,15 @@ class OtzarUtils {
 
   static Future<bool> checkBookExistence(int bookId) async {
     for (final drive in _availableDrives) {
-      //newer version teh path is under the /books folder with the extension .book
-      final bookPath = '$drive:\\books\\$bookId.book';
-      final bookFile = File(bookPath);
-      if (await bookFile.exists()) {
-        return true;
-      }
-
-      final zipPath = '$drive:\\zip';
-
       try {
+        //newer version teh path is under the /books folder with the extension .book
+        final bookPath = '$drive:\\books\\$bookId.book';
+        final bookFile = File(bookPath);
+        if (await bookFile.exists()) {
+          return true;
+        }
+
+        final zipPath = '$drive:\\zip';
         final zipDir = Directory(zipPath);
         if (await zipDir.exists()) {
           final bookPath = '$zipPath\\$bookId.ocd';
@@ -53,7 +52,7 @@ class OtzarUtils {
           }
         }
       } catch (e) {
-        // Continue to the next possible drive  if there's an error
+        // Continue to the next possible drive if there's an error (e.g., drive doesn't exist)
         continue;
       }
     }
