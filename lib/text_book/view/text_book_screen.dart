@@ -49,8 +49,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
   String? encodeQueryParameters(Map<String, String> params) {
     return params.entries
-        .map((MapEntry<String, String> e) =>
-            '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map(
+          (MapEntry<String, String> e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+        )
         .join('&');
   }
 
@@ -66,6 +68,11 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     textSearchFocusNode.dispose();
     navigationSearchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _openLeftPaneTab(int index) {
+    context.read<TextBookBloc>().add(const ToggleLeftPane(true));
+    tabController.index = index;
   }
 
   @override
@@ -85,13 +92,15 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         }
 
         if (state is TextBookLoaded) {
-          return LayoutBuilder(builder: (context, constrains) {
-            final wideScreen = (MediaQuery.of(context).size.width >= 600);
-            return Scaffold(
-              appBar: _buildAppBar(context, state, wideScreen),
-              body: _buildBody(context, state, wideScreen),
-            );
-          });
+          return LayoutBuilder(
+            builder: (context, constrains) {
+              final wideScreen = (MediaQuery.of(context).size.width >= 600);
+              return Scaffold(
+                appBar: _buildAppBar(context, state, wideScreen),
+                body: _buildBody(context, state, wideScreen),
+              );
+            },
+          );
         }
 
         // Fallback
@@ -101,7 +110,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   PreferredSizeWidget _buildAppBar(
-      BuildContext context, TextBookLoaded state, bool wideScreen) {
+    BuildContext context,
+    TextBookLoaded state,
+    bool wideScreen,
+  ) {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
       shape: Border(
@@ -113,7 +125,6 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-
       title: _buildTitle(state),
       leading: _buildMenuButton(context, state),
       actions: _buildActions(context, state, wideScreen),
@@ -122,13 +133,13 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
   Widget _buildTitle(TextBookLoaded state) {
     return state.currentTitle != null
-      ? SelectionArea(
-              child: Text(
-                state.currentTitle!,
-                style: const TextStyle(fontSize: 17),
-                textAlign: TextAlign.end,
-              ),
-            )
+        ? SelectionArea(
+            child: Text(
+              state.currentTitle!,
+              style: const TextStyle(fontSize: 17),
+              textAlign: TextAlign.end,
+            ),
+          )
         : const SizedBox.shrink();
   }
 
@@ -136,14 +147,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     return IconButton(
       icon: const Icon(Icons.menu),
       tooltip: "ניווט וחיפוש",
-      onPressed: () => context.read<TextBookBloc>().add(
-            ToggleLeftPane(!state.showLeftPane),
-          ),
+      onPressed: () =>
+          context.read<TextBookBloc>().add(ToggleLeftPane(!state.showLeftPane)),
     );
   }
 
   List<Widget> _buildActions(
-      BuildContext context, TextBookLoaded state, bool wideScreen) {
+    BuildContext context,
+    TextBookLoaded state,
+    bool wideScreen,
+  ) {
     return [
       // PDF Button
       _buildPdfButton(context, state),
@@ -185,15 +198,18 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   Widget _buildPdfButton(BuildContext context, TextBookLoaded state) {
     return FutureBuilder(
       future: DataRepository.instance.library.then(
-          (library) => library.findBookByTitle(state.book.title, PdfBook)),
+        (library) => library.findBookByTitle(state.book.title, PdfBook),
+      ),
       builder: (context, snapshot) => snapshot.hasData
           ? IconButton(
               icon: const Icon(Icons.picture_as_pdf),
               tooltip: 'פתח ספר במהדורה מודפסת ',
               onPressed: () async {
                 final library = DataRepository.instance.library;
-                final book = await library.then((library) =>
-                    library.findBookByTitle(state.book.title, PdfBook));
+                final book = await library.then(
+                  (library) =>
+                      library.findBookByTitle(state.book.title, PdfBook),
+                );
                 final index = await textToPdfPage(
                   state.book,
                   state.positionsListener.itemPositions.value.isNotEmpty
@@ -225,9 +241,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
   Widget _buildNikudButton(BuildContext context, TextBookLoaded state) {
     return IconButton(
-      onPressed: () => context.read<TextBookBloc>().add(
-            ToggleNikud(!state.removeNikud),
-          ),
+      onPressed: () =>
+          context.read<TextBookBloc>().add(ToggleNikud(!state.removeNikud)),
       icon: const Icon(Icons.format_overline),
       tooltip: 'הצג או הסתר ניקוד',
     );
@@ -240,15 +255,17 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         final toc = state.book.tableOfContents;
         String ref = await refFromIndex(index, toc);
         bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
-            ref: ref,
-            book: state.book,
-            index: index,
-            commentatorsToShow: state.activeCommentators);
+              ref: ref,
+              book: state.book,
+              index: index,
+              commentatorsToShow: state.activeCommentators,
+            );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת'),
+                bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת',
+              ),
             ),
           );
         }
@@ -373,7 +390,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   Future<void> _showReportBugDialog(
-      BuildContext context, TextBookLoaded state) async {
+    BuildContext context,
+    TextBookLoaded state,
+  ) async {
     final currentRef = await refFromIndex(
       state.positionsListener.itemPositions.value.isNotEmpty
           ? state.positionsListener.itemPositions.value.first.index
@@ -401,10 +420,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     if (selectedText == null || selectedText.isEmpty) return;
     if (!mounted) return;
 
-    final shouldProceed = await _showConfirmationDialog(
-      context,
-      selectedText,
-    );
+    final shouldProceed = await _showConfirmationDialog(context, selectedText);
 
     if (shouldProceed != true) return;
 
@@ -431,25 +447,24 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('לא ניתן לפתוח את תוכנת הדואר'),
-            ),
+            const SnackBar(content: Text('לא ניתן לפתוח את תוכנת הדואר')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('לא ניתן לפתוח את תוכנת הדואר'),
-          ),
+          const SnackBar(content: Text('לא ניתן לפתוח את תוכנת הדואר')),
         );
       }
     }
   }
 
   Future<String?> _showTextSelectionDialog(
-      BuildContext context, String text, double fontSize) async {
+    BuildContext context,
+    String text,
+    double fontSize,
+  ) async {
     String? selectedContent;
     return showDialog<String>(
       context: context,
@@ -485,7 +500,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                             onSelectionChanged: (selection, cause) {
                               if (selection.start != selection.end) {
                                 final newContent = text.substring(
-                                    selection.start, selection.end);
+                                  selection.start,
+                                  selection.end,
+                                );
                                 if (newContent.isNotEmpty) {
                                   setDialogState(() {
                                     selectedContent = newContent;
@@ -520,7 +537,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   Future<bool?> _showConfirmationDialog(
-      BuildContext context, String selectedText) {
+    BuildContext context,
+    String selectedText,
+  ) {
     return showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -552,8 +571,12 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  String _buildEmailBody(String bookTitle, String currentRef,
-      Map<String, String> bookDetails, String selectedText) {
+  String _buildEmailBody(
+    String bookTitle,
+    String currentRef,
+    Map<String, String> bookDetails,
+    String selectedText,
+  ) {
     return '''שם הספר: $bookTitle
 מיקום: $currentRef
 שם הקובץ: ${bookDetails['שם הקובץ']}
@@ -571,7 +594,8 @@ $selectedText
     try {
       final libraryPath = Settings.getValue('key-library-path');
       final file = File(
-          '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv');
+        '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv',
+      );
       if (await file.exists()) {
         final contents = await file.readAsString();
         final lines = contents.split('\n');
@@ -596,12 +620,15 @@ $selectedText
     return {
       'שם הקובץ': 'לא ניתן למצוא את הספר',
       'נתיב הקובץ': 'לא ניתן למצוא את הספר',
-      'תיקיית המקור': 'לא ניתן למצוא את הספר'
+      'תיקיית המקור': 'לא ניתן למצוא את הספר',
     };
   }
 
   Widget _buildBody(
-      BuildContext context, TextBookLoaded state, bool wideScreen) {
+    BuildContext context,
+    TextBookLoaded state,
+    bool wideScreen,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) => MediaQuery.of(context).size.width < 600
           ? Stack(
@@ -628,9 +655,7 @@ $selectedText
       child: GestureDetector(
         onScaleUpdate: (details) {
           context.read<TextBookBloc>().add(
-                UpdateFontSize(
-                  (state.fontSize * details.scale).clamp(15, 60),
-                ),
+                UpdateFontSize((state.fontSize * details.scale).clamp(15, 60)),
               );
         },
         child: NotificationListener<UserScrollNotification>(
@@ -645,7 +670,9 @@ $selectedText
           child: CallbackShortcuts(
             bindings: <ShortcutActivator, VoidCallback>{
               LogicalKeySet(
-                  LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): () {
+                LogicalKeyboardKey.control,
+                LogicalKeyboardKey.keyF,
+              ): () {
                 context.read<TextBookBloc>().add(const ToggleLeftPane(true));
                 tabController.index = 1;
                 textSearchFocusNode.requestFocus();
@@ -668,6 +695,7 @@ $selectedText
         content: state.content,
         openBookCallback: widget.openBookCallback,
         searchTextController: TextEditingValue(text: state.searchText),
+        openLeftPaneTab: _openLeftPaneTab,
         tab: widget.tab,
       );
     }
@@ -689,6 +717,7 @@ $selectedText
       data: state.content,
       textSize: state.fontSize,
       openBookCallback: widget.openBookCallback,
+      openLeftPaneTab: _openLeftPaneTab,
       showSplitedView: ValueNotifier(state.showSplitView),
       tab: widget.tab,
     );
@@ -720,7 +749,7 @@ $selectedText
                         Tab(text: 'ניווט'),
                         Tab(text: 'חיפוש'),
                         Tab(text: 'פרשנות'),
-                        Tab(text: 'קישורים')
+                        Tab(text: 'קישורים'),
                       ],
                       controller: tabController,
                       onTap: (value) {
@@ -749,11 +778,13 @@ $selectedText
                     _buildTocViewer(context, state),
                     CallbackShortcuts(
                       bindings: <ShortcutActivator, VoidCallback>{
-                        LogicalKeySet(LogicalKeyboardKey.control,
-                            LogicalKeyboardKey.keyF): () {
-                          context
-                              .read<TextBookBloc>()
-                              .add(const ToggleLeftPane(true));
+                        LogicalKeySet(
+                          LogicalKeyboardKey.control,
+                          LogicalKeyboardKey.keyF,
+                        ): () {
+                          context.read<TextBookBloc>().add(
+                                const ToggleLeftPane(true),
+                              );
                           tabController.index = 1;
                           textSearchFocusNode.requestFocus();
                         },
