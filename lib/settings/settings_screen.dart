@@ -30,20 +30,50 @@ class _MySettingsScreenState extends State<MySettingsScreen>
   bool get wantKeepAlive => true;
 
   Widget _buildColumns(int maxColumns, List<Widget> children) {
-    const spacing = 8.0;
+    const double rowSpacing = 16.0;
+    const double columnSpacing = 16.0;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         int columns = (width / 300).floor();
         columns = math.min(math.max(columns, 1), maxColumns);
-        final itemWidth = (width - (columns - 1) * spacing) / columns;
+
+        if (columns <= 1) {
+          return Column(children: children);
+        }
+
+        List<Widget> rows = [];
+        for (int i = 0; i < children.length; i += columns) {
+          List<Widget> rowChildren = [];
+          
+          for (int j = 0; j < columns; j++) {
+            if (i + j < children.length) {
+              rowChildren.add(Expanded(child: children[i + j]));
+
+              if (j < columns - 1 && i + j + 1 < children.length) {
+                rowChildren.add(const VerticalDivider(
+                  width: columnSpacing,
+                  thickness: 1,
+                ));
+              }
+            }
+          }
+          
+          // עוטפים את ה-Row ב-IntrinsicHeight כדי להבטיח גובה אחיד לקו המפריד
+          rows.add(
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch, // גורם לילדים להימתח
+                children: rowChildren,
+              ),
+            ),
+          );
+        }
+
         return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final child in children)
-              SizedBox(width: itemWidth, child: child),
-          ],
+          runSpacing: rowSpacing,
+          children: rows,
         );
       },
     );
