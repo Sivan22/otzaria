@@ -127,8 +127,12 @@ class _CombinedViewState extends State<CombinedView> {
             contextMenu: _buildContextMenu(state),
             child: SelectionArea(
               key: _selectionKey,
-              child: buildOuterList(state),
+              contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+              child: ContextMenuRegion(
+                contextMenu: _buildContextMenu(state),
+                child: buildOuterList(state),
             ),
+          ),
           ),
         );
       },

@@ -121,6 +121,9 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             contextMenu: _buildContextMenu(state),
             child: SelectionArea(
               key: _selectionKey,
+              contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+              child: ContextMenuRegion(
+                contextMenu: _buildContextMenu(state),              
               child: ScrollablePositionedList.builder(
                 key: PageStorageKey(widget.tab),
                 initialScrollIndex: state.visibleIndices.first,
@@ -164,6 +167,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                   );
                 },
               ),
+            ),
             ),
           ),
         );
