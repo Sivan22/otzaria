@@ -130,8 +130,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           maxSpeed: 10000.0,
           curve: 10.0,
           accelerationFactor: 5,
-          child: ContextMenuRegion(
-            contextMenu: _buildContextMenu(state),
             child: SelectionArea(
               key: _selectionKey,
               contextMenuBuilder: (_, __) => const SizedBox.shrink(),
@@ -182,7 +180,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               ),
             ),
             ),
-          ),
         );
       },
     );

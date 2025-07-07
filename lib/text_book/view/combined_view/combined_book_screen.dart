@@ -138,8 +138,6 @@ class _CombinedViewState extends State<CombinedView> {
           curve: 10.0,
           accelerationFactor: 5,
           scrollController: state.scrollOffsetController,
-          child: ContextMenuRegion(
-            contextMenu: _buildContextMenu(state),
             child: SelectionArea(
               key: _selectionKey,
               contextMenuBuilder: (_, __) => const SizedBox.shrink(),
@@ -147,7 +145,6 @@ class _CombinedViewState extends State<CombinedView> {
                 contextMenu: _buildContextMenu(state),
                 child: buildOuterList(state),
               ),
-          ),
           ),
         );
       },
