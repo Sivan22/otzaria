@@ -20,6 +20,8 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/text_book/bloc/text_book_event.dart';
+
 
 class CombinedView extends StatefulWidget {
   CombinedView({
@@ -56,22 +58,35 @@ class _CombinedViewState extends State<CombinedView> {
           items: [
             MenuItem(
               label: 'הצג את כל המפרשים',
-              onSelected: () => widget.openLeftPaneTab(2),
+              onSelected: () {
+                // 1. מפעילים את כל המפרשים הזמינים
+                context.read<TextBookBloc>().add(
+                      UpdateCommentators(
+                        List<String>.from(state.availableCommentators),
+                      ),
+                    );
+
+                // 2. פותחים את סרגל הצד אם צריך
+                if (!state.showSplitView) {
+                  widget.openLeftPaneTab(2);
+                }
+              },
             ),
             const MenuDivider(),
             ...state.availableCommentators.map(
               (title) => MenuItem(
                 label: title,
                 onSelected: () {
-                  widget.openBookCallback(
-                    TextBookTab(
-                      book: TextBook(title: title),
-                      index: state.selectedIndex ?? state.visibleIndices.first,
-                      openLeftPane:
-                          Settings.getValue<bool>('key-default-sidebar-open') ??
-                              false,
-                    ),
-                  );
+                 // 1. בונים רשימה מעודכנת של פרשנים פעילים
+                 final List<String> current =
+                     List<String>.from(state.activeCommentators);
+                 current.contains(title) ? current.remove(title) : current.add(title);
+          
+                 // 2. שולחים את האירוע ל-Bloc
+                 context.read<TextBookBloc>().add(UpdateCommentators(current));
+          
+                 // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
+                 if (!state.showSplitView) widget.openLeftPaneTab(2);
                 },
               ),
             ),
@@ -128,10 +143,10 @@ class _CombinedViewState extends State<CombinedView> {
             child: SelectionArea(
               key: _selectionKey,
               contextMenuBuilder: (_, __) => const SizedBox.shrink(),
-              child: ContextMenuRegion(
+              child: ContextMenuRegion( // <-- ה-Region היחיד, במיקום הנכון
                 contextMenu: _buildContextMenu(state),
                 child: buildOuterList(state),
-            ),
+              ),
           ),
           ),
         );

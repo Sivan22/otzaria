@@ -52,22 +52,35 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           items: [
             MenuItem(
               label: 'הצג את כל המפרשים',
-              onSelected: () => widget.openLeftPaneTab(2),
+              onSelected: () {
+                // 1. מפעילים את כל המפרשים הזמינים
+                context.read<TextBookBloc>().add(
+                      UpdateCommentators(
+                        List<String>.from(state.availableCommentators),
+                      ),
+                    );
+
+                // 2. פותחים את סרגל הצד אם צריך
+                if (!state.showSplitView) {
+                  widget.openLeftPaneTab(2);
+                }
+              },
             ),
             const MenuDivider(),
             ...state.availableCommentators.map(
               (title) => MenuItem(
                 label: title,
                 onSelected: () {
-                  widget.openBookCallback(
-                    TextBookTab(
-                      book: TextBook(title: title),
-                      index: state.selectedIndex ?? state.visibleIndices.first,
-                      openLeftPane:
-                          Settings.getValue<bool>('key-default-sidebar-open') ??
-                              false,
-                    ),
-                  );
+                // 1. בונים רשימה מעודכנת של פרשנים פעילים
+                final List<String> current =
+                    List<String>.from(state.activeCommentators);
+                current.contains(title) ? current.remove(title) : current.add(title);
+
+                // 2. שולחים את האירוע ל-Bloc
+                context.read<TextBookBloc>().add(UpdateCommentators(current));
+
+                // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
+                if (!state.showSplitView) widget.openLeftPaneTab(2);
                 },
               ),
             ),
@@ -122,16 +135,16 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             child: SelectionArea(
               key: _selectionKey,
               contextMenuBuilder: (_, __) => const SizedBox.shrink(),
-              child: ContextMenuRegion(
-                contextMenu: _buildContextMenu(state),              
-              child: ScrollablePositionedList.builder(
-                key: PageStorageKey(widget.tab),
-                initialScrollIndex: state.visibleIndices.first,
-                itemPositionsListener: state.positionsListener,
-                itemScrollController: state.scrollController,
-                scrollOffsetController: state.scrollOffsetController,
-                itemCount: widget.data.length,
-                itemBuilder: (context, index) {
+              child: ContextMenuRegion( // <-- זה ה-Region היחיד שנשאר, במיקום הנכון
+                contextMenu: _buildContextMenu(state),
+                child: ScrollablePositionedList.builder(
+                  key: PageStorageKey(widget.tab),
+                  initialScrollIndex: state.visibleIndices.first,
+                  itemPositionsListener: state.positionsListener,
+                  itemScrollController: state.scrollController,
+                  scrollOffsetController: state.scrollOffsetController,
+                  itemCount: widget.data.length,
+                  itemBuilder: (context, index) {
                   return BlocBuilder<SettingsBloc, SettingsState>(
                     builder: (context, settingsState) {
                       String data = widget.data[index];
