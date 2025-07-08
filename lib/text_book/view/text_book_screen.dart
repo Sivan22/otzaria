@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:convert';
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -564,6 +566,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 $selectedText
 
 פירוט הטעות:
+
 ''';
   }
 
@@ -572,27 +575,58 @@ $selectedText
       final libraryPath = Settings.getValue('key-library-path');
       final file = File(
           '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv');
-      if (await file.exists()) {
-        final contents = await file.readAsString();
-        final lines = contents.split('\n');
+      
+      if (!await file.exists()) {
+        return _getDefaultBookDetails();
+      }
 
-        for (var i = 1; i < lines.length; i++) {
-          final parts = lines[i].split(',');
-          if (parts.length >= 3) {
-            final fileName = parts[0].replaceAll('.txt', '');
+      // קריאת הקובץ כ-stream
+      final inputStream = file.openRead();
+      final converter = const CsvToListConverter();
+      
+      var isFirstLine = true;
+      
+      await for (final line in inputStream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())) {
+        
+        // דילוג על שורת הכותרת
+        if (isFirstLine) {
+          isFirstLine = false;
+          continue;
+        }
+        
+        try {
+          // המרת השורה לרשימה
+          final row = converter.convert(line).first;
+          
+          if (row.length >= 3) {
+            final fileNameRaw = row[0].toString();
+            final fileName = fileNameRaw.replaceAll('.txt', '');
+            
             if (fileName == bookTitle) {
               return {
-                'שם הקובץ': parts[0],
-                'נתיב הקובץ': parts[1],
-                'תיקיית המקור': parts[2],
+                'שם הקובץ': fileNameRaw,
+                'נתיב הקובץ': row[1].toString(),
+                'תיקיית המקור': row[2].toString(),
               };
             }
           }
+        } catch (e) {
+          // אם יש שגיאה בפירוק השורה, נמשיך לשורה הבאה
+          debugPrint('Error parsing CSV line: $line, Error: $e');
+          continue;
         }
       }
+
     } catch (e) {
       debugPrint('Error reading sourcebooks.csv: $e');
     }
+      
+    return _getDefaultBookDetails();
+  }
+
+  Map<String, String> _getDefaultBookDetails() {
     return {
       'שם הקובץ': 'לא ניתן למצוא את הספר',
       'נתיב הקובץ': 'לא ניתן למצוא את הספר',
