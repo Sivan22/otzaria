@@ -58,6 +58,9 @@ class HistoryView extends StatelessWidget {
               child: ListView.builder(
                 itemCount: state.history.length,
                 itemBuilder: (context, index) => ListTile(
+                  leading: state.history[index].book is PdfBook
+                      ? const Icon(Icons.picture_as_pdf)
+                      : null,
                   title: Text(state.history[index].ref),
                   onTap: () {
                     _openBook(

@@ -73,6 +73,8 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                   itemBuilder: (context, index) {
                     final result = state.results[index];
                     return ListTile(
+                      leading:
+                          result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
                       onTap: () {
                         if (result.isPdf) {
                           context.read<TabsBloc>().add(AddTab(

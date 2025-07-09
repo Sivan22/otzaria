@@ -123,6 +123,9 @@ class _FindRefScreenState extends State<FindRefScreen> {
                       itemCount: state.refs.length,
                       itemBuilder: (context, index) {
                         return ListTile(
+                            leading: state.refs[index].isPdf
+                                ? const Icon(Icons.picture_as_pdf)
+                                : null,
                             title: Text(state.refs[index].reference),
                             onTap: () {
                               TabsBloc tabsBloc = context.read<TabsBloc>();

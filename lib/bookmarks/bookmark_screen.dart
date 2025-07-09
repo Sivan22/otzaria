@@ -49,6 +49,9 @@ class BookmarkView extends StatelessWidget {
                       itemCount: state.bookmarks.length,
                       itemBuilder: (context, index) => ListTile(
                           selected: false,
+                          leading: state.bookmarks[index].book is PdfBook
+                              ? const Icon(Icons.picture_as_pdf)
+                              : null,
                           title: Text(state.bookmarks[index].ref),
                           onTap: () => _openBook(
                               context,
