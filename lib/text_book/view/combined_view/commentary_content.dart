@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/links.dart';
+import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
@@ -51,13 +54,16 @@ class _CommentaryContentState extends State<CommentaryContent> {
               if (widget.removeNikud) {
                 text = utils.removeVolwels(text);
               }
-              return Html(data: text, style: {
-                'body': Style(
-                    fontSize: FontSize(widget.fontSize / 1.2),
-                    fontFamily:
-                        Settings.getValue('key-font-family') ?? 'candara',
-                    textAlign: TextAlign.justify),
-              });
+              return BlocBuilder<SettingsBloc, SettingsState>(
+                builder: (context, settingsState) {
+                  return Html(data: text, style: {
+                    'body': Style(
+                        fontSize: FontSize(widget.fontSize / 1.2),
+                        fontFamily: settingsState.fontFamily,
+                        textAlign: TextAlign.justify),
+                  });
+                },
+              );
             }
             return const Center(
               child: CircularProgressIndicator(),

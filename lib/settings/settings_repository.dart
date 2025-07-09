@@ -24,6 +24,9 @@ class SettingsRepository {
       : _settings = settings ?? SettingsWrapper();
 
   Future<Map<String, dynamic>> loadSettings() async {
+    // Initialize default settings to disk if needed
+    await _initializeDefaultsIfNeeded();
+    
     return {
       'isDarkMode': _settings.getValue<bool>(keyDarkMode, defaultValue: false),
       'seedColor': ColorUtils.colorFromString(
@@ -128,5 +131,39 @@ class SettingsRepository {
   }  
   Future<void> updateDefaultSidebarOpen(bool value) async {
     await _settings.setValue(keyDefaultSidebarOpen, value);
+  }
+
+  /// Initialize default settings to disk if this is the first app launch
+  Future<void> _initializeDefaultsIfNeeded() async {
+    if (await _checkIfDefaultsNeeded()) {
+      await _writeDefaultsToStorage();
+    }
+  }
+
+  /// Check if default settings need to be initialized
+  Future<bool> _checkIfDefaultsNeeded() async {
+    // Use a dedicated flag to track initialization
+    return !_settings.getValue<bool>('settings_initialized', defaultValue: false);
+  }
+
+  /// Write all default settings to persistent storage
+  Future<void> _writeDefaultsToStorage() async {
+    await _settings.setValue(keyDarkMode, false);
+    await _settings.setValue(keySwatchColor, '#ff2c1b02');
+    await _settings.setValue(keyPaddingSize, 10.0);
+    await _settings.setValue(keyFontSize, 16.0);
+    await _settings.setValue(keyFontFamily, 'FrankRuhlCLM');
+    await _settings.setValue(keyShowOtzarHachochma, false);
+    await _settings.setValue(keyShowHebrewBooks, false);
+    await _settings.setValue(keyShowExternalBooks, false);
+    await _settings.setValue(keyShowTeamim, true);
+    await _settings.setValue(keyUseFastSearch, true);
+    await _settings.setValue(keyReplaceHolyNames, true);
+    await _settings.setValue(keyAutoUpdateIndex, true);
+    await _settings.setValue(keyDefaultNikud, false);
+    await _settings.setValue(keyDefaultSidebarOpen, false);
+    
+    // Mark as initialized
+    await _settings.setValue('settings_initialized', true);
   }
 }
