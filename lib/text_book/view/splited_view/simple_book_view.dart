@@ -1,8 +1,7 @@
-// a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart' as ctx;
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
@@ -43,18 +42,42 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
 
-  ContextMenu _buildContextMenu(TextBookLoaded state) {
+  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת
+  List<ctx.MenuItem<void>> _buildGroup(
+    List<String>? group,
+    TextBookLoaded st,
+  ) {
+    if (group == null || group.isEmpty) return const [];
+
+    return group
+        .map(
+          (title) => ctx.MenuItem<void>(
+            label: title,
+            onSelected: () {
+              final current = List<String>.from(st.activeCommentators);
+              current.contains(title)
+                  ? current.remove(title)
+                  : current.add(title);
+              context.read<TextBookBloc>().add(UpdateCommentators(current));
+              if (!st.showSplitView) widget.openLeftPaneTab(2);
+            },
+          ),
+        )
+        .toList();
+  }
+
+  ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
-    return ContextMenu(
+    return ctx.ContextMenu(
       // 2. הגדרת הגובה המקסימלי ל-90% מגובה המסך
       maxHeight: screenHeight * 0.9,
       entries: [
-        MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
-        MenuItem.submenu(
+        ctx.MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
+        ctx.MenuItem.submenu(
           label: 'פרשנות',
           items: [
-            MenuItem(
+            ctx.MenuItem(
               label: 'הצג את כל המפרשים',
               onSelected: () {
                 // 1. מפעילים את כל המפרשים הזמינים
@@ -70,40 +93,30 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                 }
               },
             ),
-            const MenuDivider(),
-            ...state.availableCommentators.map(
-              (title) {
-                // בודקים אם הפרשן הנוכחי כבר פעיל
-                final bool isActive = state.activeCommentators.contains(title);
+            const ctx.MenuDivider(),
+            // ראשונים
+            ..._buildGroup(state.rishonim, state),
+            
+            // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
+            if(state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
+                const ctx.MenuDivider(),
 
-                return MenuItem(
-                  label: title,
-                  // אם הפרשן פעיל, מציגים אייקון "וי". אחרת, לא מציגים אייקון.
-                  icon: isActive ? Icons.check : null,
-                  onSelected: () {
-                    // 1. בונים רשימה מעודכנת של פרשנים פעילים
-                    final List<String> current =
-                        List<String>.from(state.activeCommentators);
-                    current.contains(title)
-                        ? current.remove(title)
-                        : current.add(title);
+            // אחרונים
+            ..._buildGroup(state.acharonim, state),
 
-                    // 2. שולחים את האירוע ל-Bloc
-                    context.read<TextBookBloc>().add(UpdateCommentators(current));
-
-                    // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
-                    if (!state.showSplitView) widget.openLeftPaneTab(2);
-                  },
-                );
-              },
-            ),
+            // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
+            if(state.acharonim.isNotEmpty && state.modernCommentators.isNotEmpty)
+                const ctx.MenuDivider(),
+                
+            // מחברי זמננו
+            ..._buildGroup(state.modernCommentators, state),
           ],
         ),
-        MenuItem.submenu(
+        ctx.MenuItem.submenu(
           label: 'קישורים',
           items: LinksViewer.getLinks(state)
               .map(
-                (link) => MenuItem(
+                (link) => ctx.MenuItem(
                   label: link.heRef,
                   onSelected: () {
                     widget.openBookCallback(
@@ -123,8 +136,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               )
               .toList(),
         ),
-        const MenuDivider(),
-        MenuItem(
+        const ctx.MenuDivider(),
+        ctx.MenuItem(
           label: 'בחר את כל הטקסט',
           onSelected: () =>
               _selectionKey.currentState?.selectableRegion.selectAll(),
@@ -132,7 +145,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
       ],
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(
@@ -146,7 +159,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             child: SelectionArea(
               key: _selectionKey,
               contextMenuBuilder: (_, __) => const SizedBox.shrink(),
-              child: ContextMenuRegion( // <-- זה ה-Region היחיד שנשאר, במיקום הנכון
+              child: ctx.ContextMenuRegion(
                 contextMenu: _buildContextMenu(state),
                 child: ScrollablePositionedList.builder(
                   key: PageStorageKey(widget.tab),
