@@ -185,7 +185,18 @@ List<ctx.MenuItem<void>> _buildGroup(
       itemCount: widget.data.length,
       itemBuilder: (context, index) {
         ExpansibleController controller = ExpansibleController();
-        return buildExpansiomTile(controller, index, state);
+        // WORKAROUND: Add an invisible newline character to preserve line breaks
+        // when copying text from the SelectionArea. This addresses a known
+        // issue in Flutter where newlines are stripped when copying from
+        // multiple widgets.
+        // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            buildExpansiomTile(controller, index, state),
+            const Text('\n', style: TextStyle(fontSize: 0, height: 0)),
+          ],
+        );
       },
     );
   }

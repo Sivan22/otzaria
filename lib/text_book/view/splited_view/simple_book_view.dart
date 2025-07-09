@@ -169,43 +169,55 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                   scrollOffsetController: state.scrollOffsetController,
                   itemCount: widget.data.length,
                   itemBuilder: (context, index) {
-                  return BlocBuilder<SettingsBloc, SettingsState>(
-                    builder: (context, settingsState) {
-                      String data = widget.data[index];
-                      if (!settingsState.showTeamim) {
-                        data = utils.removeTeamim(data);
-                      }
+                    // WORKAROUND: Add an invisible newline character to preserve line breaks
+                    // when copying text from the SelectionArea. This addresses a known
+                    // issue in Flutter where newlines are stripped when copying from
+                    // multiple widgets.
+                    // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BlocBuilder<SettingsBloc, SettingsState>(
+                          builder: (context, settingsState) {
+                            String data = widget.data[index];
+                            if (!settingsState.showTeamim) {
+                              data = utils.removeTeamim(data);
+                            }
 
-                      if (settingsState.replaceHolyNames) {
-                        data = utils.replaceHolyNames(data);
-                      }
-                      return InkWell(
-                        onTap: () => context.read<TextBookBloc>().add(
-                              UpdateSelectedIndex(index),
-                            ),
-                        child: Html(
-                          // remove nikud if needed
-                          data: state.removeNikud
-                              ? utils.highLight(
-                                  utils.removeVolwels('$data\n'),
-                                  state.searchText,
-                                )
-                              : utils.highLight('$data\n', state.searchText),
-                          style: {
-                            'body': Style(
-                              fontSize: FontSize(widget.textSize),
-                              fontFamily: settingsState.fontFamily,
-                              textAlign: TextAlign.justify,
-                            ),
+                            if (settingsState.replaceHolyNames) {
+                              data = utils.replaceHolyNames(data);
+                            }
+                            return InkWell(
+                              onTap: () => context.read<TextBookBloc>().add(
+                                    UpdateSelectedIndex(index),
+                                  ),
+                              child: Html(
+                                // remove nikud if needed
+                                data: state.removeNikud
+                                    ? utils.highLight(
+                                        utils.removeVolwels('$data\n'),
+                                        state.searchText,
+                                      )
+                                    : utils.highLight('$data\n', state.searchText),
+                                style: {
+                                  'body': Style(
+                                    fontSize: FontSize(widget.textSize),
+                                    fontFamily: settingsState.fontFamily,
+                                    textAlign: TextAlign.justify,
+                                  ),
+                                },
+                              ),
+                            );
                           },
                         ),
-                      );
-                    },
-                  );
-                },
+                        const Text('\n', style: TextStyle(fontSize: 0, height: 0)),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
-            ),
+            
         );
       },
     );
