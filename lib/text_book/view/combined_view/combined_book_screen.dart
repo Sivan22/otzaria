@@ -78,21 +78,28 @@ class _CombinedViewState extends State<CombinedView> {
             ),
             const MenuDivider(),
             ...state.availableCommentators.map(
-              (title) => MenuItem(
-                label: title,
-                onSelected: () {
-                 // 1. בונים רשימה מעודכנת של פרשנים פעילים
-                 final List<String> current =
-                     List<String>.from(state.activeCommentators);
-                 current.contains(title) ? current.remove(title) : current.add(title);
-          
-                 // 2. שולחים את האירוע ל-Bloc
-                 context.read<TextBookBloc>().add(UpdateCommentators(current));
-          
-                 // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
-                 if (!state.showSplitView) widget.openLeftPaneTab(2);
-                },
-              ),
+              (title) { // שינוי: פותחים בלוק עם סוגריים מסולסלים
+                // בודקים אם הפרשן הנוכחי כבר פעיל
+                final bool isActive = state.activeCommentators.contains(title);
+
+                return MenuItem(
+                  label: title,
+                  // הוספה: מוסיפים אייקון אם הפרשן פעיל
+                  icon: isActive ? Icons.check : null,
+                  onSelected: () {
+                    // 1. בונים רשימה מעודכנת של פרשנים פעילים
+                    final List<String> current =
+                        List<String>.from(state.activeCommentators);
+                    current.contains(title) ? current.remove(title) : current.add(title);
+
+                    // 2. שולחים את האירוע ל-Bloc
+                    context.read<TextBookBloc>().add(UpdateCommentators(current));
+
+                    // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
+                    if (!state.showSplitView) widget.openLeftPaneTab(2);
+                  },
+                );
+              },
             ),
           ],
         ),

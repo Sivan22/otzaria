@@ -47,7 +47,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
     return ContextMenu(
-      // 2. הגדרת הגובה המקסימלי ל-70% מגובה המסך
+      // 2. הגדרת הגובה המקסימלי ל-90% מגובה המסך
       maxHeight: screenHeight * 0.9,
       entries: [
         MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
@@ -72,21 +72,30 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             ),
             const MenuDivider(),
             ...state.availableCommentators.map(
-              (title) => MenuItem(
-                label: title,
-                onSelected: () {
-                // 1. בונים רשימה מעודכנת של פרשנים פעילים
-                final List<String> current =
-                    List<String>.from(state.activeCommentators);
-                current.contains(title) ? current.remove(title) : current.add(title);
+              (title) {
+                // בודקים אם הפרשן הנוכחי כבר פעיל
+                final bool isActive = state.activeCommentators.contains(title);
 
-                // 2. שולחים את האירוע ל-Bloc
-                context.read<TextBookBloc>().add(UpdateCommentators(current));
+                return MenuItem(
+                  label: title,
+                  // אם הפרשן פעיל, מציגים אייקון "וי". אחרת, לא מציגים אייקון.
+                  icon: isActive ? Icons.check : null,
+                  onSelected: () {
+                    // 1. בונים רשימה מעודכנת של פרשנים פעילים
+                    final List<String> current =
+                        List<String>.from(state.activeCommentators);
+                    current.contains(title)
+                        ? current.remove(title)
+                        : current.add(title);
 
-                // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
-                if (!state.showSplitView) widget.openLeftPaneTab(2);
-                },
-              ),
+                    // 2. שולחים את האירוע ל-Bloc
+                    context.read<TextBookBloc>().add(UpdateCommentators(current));
+
+                    // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
+                    if (!state.showSplitView) widget.openLeftPaneTab(2);
+                  },
+                );
+              },
             ),
           ],
         ),
