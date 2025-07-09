@@ -185,18 +185,7 @@ List<ctx.MenuItem<void>> _buildGroup(
       itemCount: widget.data.length,
       itemBuilder: (context, index) {
         ExpansibleController controller = ExpansibleController();
-        // WORKAROUND: Add an invisible newline character to preserve line breaks
-        // when copying text from the SelectionArea. This addresses a known
-        // issue in Flutter where newlines are stripped when copying from
-        // multiple widgets.
-        // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            buildExpansiomTile(controller, index, state),
-            const Text('\n', style: TextStyle(fontSize: 0, height: 0)),
-          ],
-        );
+        return buildExpansiomTile(controller, index, state);
       },
     );
   }
@@ -224,14 +213,19 @@ List<ctx.MenuItem<void>> _buildGroup(
           if (settingsState.replaceHolyNames) {
             data = utils.replaceHolyNames(data);
           }
+          // WORKAROUND: Add a <br> tag to preserve line breaks when copying
+          // text from the SelectionArea. This addresses a known issue in
+          // Flutter where newlines are stripped when copying from multiple widgets.
+          // See: https://github.com/flutter/flutter/issues/104548
           return Html(
             //remove nikud if needed
-            data: state.removeNikud
-                ? utils.highLight(
-                    utils.removeVolwels('$data\n'),
-                    state.searchText,
-                  )
-                : utils.highLight('$data\n', state.searchText),
+            data: (state.removeNikud
+                    ? utils.highLight(
+                        utils.removeVolwels(data),
+                        state.searchText,
+                      )
+                    : utils.highLight(data, state.searchText)) +
+                '<br>',
             style: {
               'body': Style(
                   fontSize: FontSize(widget.textSize),
