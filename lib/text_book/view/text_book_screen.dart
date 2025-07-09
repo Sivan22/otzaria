@@ -79,12 +79,18 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TextBookBloc, TextBookState>(
-      bloc: context.read<TextBookBloc>(),
-      builder: (context, state) {
-        if (state is TextBookInitial) {
-          context.read<TextBookBloc>().add(LoadContent());
-        }
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) {
+        return BlocBuilder<TextBookBloc, TextBookState>(
+          bloc: context.read<TextBookBloc>(),
+          builder: (context, state) {
+            if (state is TextBookInitial) {
+              context.read<TextBookBloc>().add(LoadContent(
+                fontSize: settingsState.fontSize,
+                showSplitView: false, // TODO: Add this to settings if needed
+                removeNikud: settingsState.defaultRemoveNikud,
+              ));
+            }
         if (state is TextBookInitial || state is TextBookLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -107,6 +113,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
         // Fallback
         return const Center(child: Text('Unknown state'));
+      },
+    );
       },
     );
   }
@@ -491,26 +499,28 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: SingleChildScrollView(
-                          child: SelectableText(
-                            text,
-                            style: TextStyle(
-                              fontSize: fontSize,
-                              fontFamily:
-                                  Settings.getValue('key-font-family') ??
-                                      'candara',
-                            ),
-                            onSelectionChanged: (selection, cause) {
-                              if (selection.start != selection.end) {
-                                final newContent = text.substring(
-                                  selection.start,
-                                  selection.end,
-                                );
-                                if (newContent.isNotEmpty) {
-                                  setDialogState(() {
-                                    selectedContent = newContent;
-                                  });
-                                }
-                              }
+
+                          child: BlocBuilder<SettingsBloc, SettingsState>(
+                            builder: (context, settingsState) {
+                              return SelectableText(
+                                text,
+                                style: TextStyle(
+                                  fontSize: fontSize,
+                                  fontFamily: settingsState.fontFamily,
+                                ),
+                                onSelectionChanged: (selection, cause) {
+                                  if (selection.start != selection.end) {
+                                    final newContent = text.substring(
+                                        selection.start, selection.end);
+                                    if (newContent.isNotEmpty) {
+                                      setDialogState(() {
+                                        selectedContent = newContent;
+                                      });
+                                    }
+                                  }
+                                },
+                              );
+
                             },
                           ),
                         ),

@@ -201,5 +201,152 @@ void main() {
               SettingsRepository.keyDefaultSidebarOpen, true))
           .called(1);
     });
+
+    test('loadSettings initializes defaults when fontFamily is null', () async {
+      // Setup mock to return null for fontFamily (indicating first launch)
+      when(mockSettingsWrapper.getValue<String>(
+              SettingsRepository.keyFontFamily))
+          .thenReturn(null);
+      
+      // Setup mock to return default values after initialization
+      when(mockSettingsWrapper.getValue<bool>(SettingsRepository.keyDarkMode,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<String>(
+              SettingsRepository.keySwatchColor,
+              defaultValue: '#ff2c1b02'))
+          .thenReturn('#ff2c1b02');
+      when(mockSettingsWrapper.getValue<double>(
+              SettingsRepository.keyPaddingSize,
+              defaultValue: 10))
+          .thenReturn(10);
+      when(mockSettingsWrapper.getValue<double>(SettingsRepository.keyFontSize,
+              defaultValue: 16))
+          .thenReturn(16);
+      when(mockSettingsWrapper.getValue<String>(
+              SettingsRepository.keyFontFamily,
+              defaultValue: 'FrankRuhlCLM'))
+          .thenReturn('FrankRuhlCLM');
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyShowOtzarHachochma,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyShowHebrewBooks,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyShowExternalBooks,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(SettingsRepository.keyShowTeamim,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyUseFastSearch,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyReplaceHolyNames,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyAutoUpdateIndex,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultNikud,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultSidebarOpen,
+              defaultValue: false))
+          .thenReturn(false);
+
+      await repository.loadSettings();
+
+      // Verify that all defaults were written to storage
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyDarkMode, false)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keySwatchColor, '#ff2c1b02')).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyPaddingSize, 10.0)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyFontSize, 16.0)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyFontFamily, 'FrankRuhlCLM')).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyShowOtzarHachochma, false)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyShowHebrewBooks, false)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyShowExternalBooks, false)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyShowTeamim, true)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyUseFastSearch, true)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyReplaceHolyNames, true)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyAutoUpdateIndex, true)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyDefaultNikud, false)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyDefaultSidebarOpen, false)).called(1);
+    });
+
+    test('loadSettings does not initialize defaults when fontFamily exists', () async {
+      // Setup mock to return existing fontFamily value
+      when(mockSettingsWrapper.getValue<String>(
+              SettingsRepository.keyFontFamily))
+          .thenReturn('FrankRuhlCLM');
+      
+      // Setup mock to return values for loadSettings
+      when(mockSettingsWrapper.getValue<bool>(SettingsRepository.keyDarkMode,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<String>(
+              SettingsRepository.keySwatchColor,
+              defaultValue: '#ff2c1b02'))
+          .thenReturn('#ff2c1b02');
+      when(mockSettingsWrapper.getValue<double>(
+              SettingsRepository.keyPaddingSize,
+              defaultValue: 10))
+          .thenReturn(10);
+      when(mockSettingsWrapper.getValue<double>(SettingsRepository.keyFontSize,
+              defaultValue: 16))
+          .thenReturn(16);
+      when(mockSettingsWrapper.getValue<String>(
+              SettingsRepository.keyFontFamily,
+              defaultValue: 'FrankRuhlCLM'))
+          .thenReturn('FrankRuhlCLM');
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyShowOtzarHachochma,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyShowHebrewBooks,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyShowExternalBooks,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(SettingsRepository.keyShowTeamim,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyUseFastSearch,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyReplaceHolyNames,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyAutoUpdateIndex,
+              defaultValue: true))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultNikud,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyDefaultSidebarOpen,
+              defaultValue: false))
+          .thenReturn(false);
+
+      await repository.loadSettings();
+
+      // Verify that setValue was never called for any defaults (since they already exist)
+      verifyNever(mockSettingsWrapper.setValue(any, any));
+    });
   });
 }

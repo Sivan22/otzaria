@@ -210,10 +210,9 @@ class _CombinedViewState extends State<CombinedView> {
                 : utils.highLight('$data\n', state.searchText),
             style: {
               'body': Style(
-                fontSize: FontSize(widget.textSize),
-                fontFamily: Settings.getValue('key-font-family') ?? 'candara',
-                textAlign: TextAlign.justify,
-              ),
+                  fontSize: FontSize(widget.textSize),
+                  fontFamily: settingsState.fontFamily,
+                  textAlign: TextAlign.justify),
             },
           );
         },
