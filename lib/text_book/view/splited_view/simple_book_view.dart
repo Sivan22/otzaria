@@ -204,6 +204,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                               ),
                             },
                           ),
+                          
                         );
                       },
                     );
