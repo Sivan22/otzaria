@@ -50,7 +50,11 @@ class _CombinedViewState extends State<CombinedView> {
       GlobalKey<SelectionAreaState>();
 
   ContextMenu _buildContextMenu(TextBookLoaded state) {
+    // 1. קבלת מידע על גודל המסך
+    final screenHeight = MediaQuery.of(context).size.height;
     return ContextMenu(
+      // 2. הגדרת הגובה המקסימלי ל-70% מגובה המסך
+      maxHeight: screenHeight * 0.9,
       entries: [
         MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         MenuItem.submenu(
