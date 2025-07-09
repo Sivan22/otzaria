@@ -116,3 +116,27 @@ String replaceParaphrases(String s) {
 
   return s;
 }
+
+//פונקציה לחלוקת פרשנים לפי תקופה
+Future<Map<String, List<String>>> splitByEra(
+  List<String> titles,
+) async {
+  // יוצרים מבנה נתונים ריק לכל שלוש הקטגוריות
+  final Map<String, List<String>> byEra = {
+    'ראשונים': [],
+    'אחרונים': [],
+    'מחברי זמננו': [],
+  };
+
+  // ממיינים כל פרשן לקטגוריה הראשונה שמתאימה לו
+  for (final t in titles) {
+    if (await hasTopic(t, 'ראשונים')) {
+      byEra['ראשונים']!.add(t);
+    } else if (await hasTopic(t, 'אחרונים')) {
+      byEra['אחרונים']!.add(t);
+    } else if (await hasTopic(t, 'מחברי זמננו')) {
+      byEra['מחברי זמננו']!.add(t);
+    }
+  }
+  return byEra;
+}

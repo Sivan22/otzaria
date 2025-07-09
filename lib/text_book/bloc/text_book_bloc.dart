@@ -5,6 +5,7 @@ import 'package:otzaria/text_book/text_book_repository.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
@@ -47,6 +48,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         final tableOfContents = await _repository.getTableOfContents(book);
         final availableCommentators =
             await _repository.getAvailableCommentators(links);
+        // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
+        final eras = await utils.splitByEra(availableCommentators);
 
         // Create controllers if this is the first load
         final ItemScrollController scrollController = ItemScrollController();
@@ -75,6 +78,9 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           showLeftPane: state.showLeftPane,
           showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
           activeCommentators: state.commentators,
+          rishonim: eras['ראשונים']!,
+          acharonim: eras['אחרונים']!,
+          modernCommentators: eras['מחברי זמננו']!,
           removeNikud:
               Settings.getValue<bool>('key-default-nikud') ?? false,
           visibleIndices: [state.index],

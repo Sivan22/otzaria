@@ -46,6 +46,9 @@ class TextBookLoaded extends TextBookState {
   final double fontSize;
   final bool showSplitView;
   final List<String> activeCommentators;
+  final List<String> rishonim;
+  final List<String> acharonim;
+  final List<String> modernCommentators;
   final List<String> availableCommentators;
   final List<Link> links;
   final List<TocEntry> tableOfContents;
@@ -68,6 +71,9 @@ class TextBookLoaded extends TextBookState {
     required this.fontSize,
     required this.showSplitView,
     required this.activeCommentators,
+      required this.rishonim,
+    required this.acharonim,
+    required this.modernCommentators,
     required this.availableCommentators,
     required this.links,
     required this.tableOfContents,
@@ -96,6 +102,9 @@ class TextBookLoaded extends TextBookState {
       showLeftPane: showLeftPane,
       showSplitView: splitView,
       activeCommentators: commentators ?? const [],
+      rishonim: const [],
+      acharonim: const [],
+      modernCommentators: const [],
       availableCommentators: const [],
       links: const [],
       tableOfContents: const [],
@@ -116,6 +125,9 @@ class TextBookLoaded extends TextBookState {
     bool? showLeftPane,
     bool? showSplitView,
     List<String>? activeCommentators,
+    List<String>? rishonim,
+    List<String>? acharonim,
+    List<String>? modernCommentators,
     List<String>? availableCommentators,
     List<Link>? links,
     List<TocEntry>? tableOfContents,
@@ -136,6 +148,9 @@ class TextBookLoaded extends TextBookState {
       showLeftPane: showLeftPane ?? this.showLeftPane,
       showSplitView: showSplitView ?? this.showSplitView,
       activeCommentators: activeCommentators ?? this.activeCommentators,
+      rishonim: rishonim ?? this.rishonim,
+      acharonim: acharonim ?? this.acharonim,
+      modernCommentators: modernCommentators ?? this.modernCommentators,
       availableCommentators:
           availableCommentators ?? this.availableCommentators,
       links: links ?? this.links,
@@ -161,6 +176,7 @@ class TextBookLoaded extends TextBookState {
         showLeftPane,
         showSplitView,
         activeCommentators.length,
+        rishonim, acharonim, modernCommentators,
         availableCommentators.length,
         links.length,
         tableOfContents.length,
