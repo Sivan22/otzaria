@@ -50,16 +50,7 @@ final TextEditingController searchController = TextEditingController();
             ? closestTocEntryIndex(
                 state.tableOfContents, state.visibleIndices.first)
             : null);
-
-    // --- התחלה: התיקון ---
-    // עוטפים את ה-setState ב-callback כדי למנוע את השגיאה
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if(mounted) {
-        setState(() {});
-      }
-    });
-    // --- סיום: התיקון ---
-    
+ 
     if (activeIndex == null || activeIndex == _lastScrolledTocIndex) return;
 
     // נחכה פריים אחד נוסף כדי שה-setState יסיים וה-UI יתעדכן
@@ -238,17 +229,37 @@ final TextEditingController searchController = TextEditingController();
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return BlocBuilder<TextBookBloc, TextBookState>(
-        bloc: context.read<TextBookBloc>(),
-        builder: (context, state) {
-          if (state is! TextBookLoaded) return const Center();
-          _scrollToActiveItem(state);
-          return Column(
-            children: [
-              TextField(
+@override
+Widget build(BuildContext context) {
+  super.build(context);
+  // הוספנו BlocListener שעוטף את כל מה שהיה קודם
+  return BlocListener<TextBookBloc, TextBookState>(
+    // listenWhen קובע מתי ה-listener יופעל, כדי למנוע הפעלות מיותרות
+    listenWhen: (previous, current) {
+      if (current is! TextBookLoaded) return false;
+      if (previous is! TextBookLoaded) return true; // הפעלה ראשונה
+
+      // הפעל רק אם האינדקס הנבחר או האינדקס הנראה השתנו
+      final prevVisibleIndex = previous.visibleIndices.isNotEmpty ? previous.visibleIndices.first : -1;
+      final currVisibleIndex = current.visibleIndices.isNotEmpty ? current.visibleIndices.first : -1;
+      
+      return previous.selectedIndex != current.selectedIndex || prevVisibleIndex != currVisibleIndex;
+    },
+    // listener היא הפונקציה שתרוץ כשהתנאי ב-listenWhen מתקיים
+    listener: (context, state) {
+      if (state is TextBookLoaded) {
+        _scrollToActiveItem(state);
+      }
+    },
+    // ה-child הוא ה-UI הקיים שלא השתנה
+    child: BlocBuilder<TextBookBloc, TextBookState>(
+      bloc: context.read<TextBookBloc>(),
+      builder: (context, state) {
+        if (state is! TextBookLoaded) return const Center();
+        // שימו לב שכאן כבר אין קריאה ל-_scrollToActiveItem
+        return Column(
+          children: [
+            TextField(
                 controller: searchController,
                 onChanged: (value) => setState(() {}),
                 focusNode: widget.focusNode,
@@ -302,6 +313,7 @@ final TextEditingController searchController = TextEditingController();
             ),
             ],
           );
-        });
+        }),
+  );
   }
 }
