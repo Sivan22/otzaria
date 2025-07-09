@@ -25,60 +25,68 @@ class LinksViewer extends StatefulWidget {
     required this.closeLeftPanelCallback,
   });
 
+  /// Returns the visible links for the provided [state].
+  ///
+  /// This method filters out commentary links and sorts the result by
+  /// the book name so that callers such as context menus can easily
+  /// display them synchronously.
+  static List<Link> getLinks(TextBookLoaded state) {
+    final links = state.links
+        .where(
+          (link) =>
+              link.index1 == state.visibleIndices.first + 2 &&
+              link.connectionType != 'commentary',
+        )
+        .toList();
+
+    links.sort(
+      (a, b) => a.path2
+          .split(Platform.pathSeparator)
+          .last
+          .compareTo(b.path2.split(Platform.pathSeparator).last),
+    );
+
+    return links;
+  }
+
   @override
   State<LinksViewer> createState() => _LinksViewerState();
 }
 
 class _LinksViewerState extends State<LinksViewer>
     with AutomaticKeepAliveClientMixin<LinksViewer> {
-  late Future<List<Link>> visibleLinks;
-
-  Future<List<Link>> getLinks(TextBookLoaded state) async {
-    List<Link> visibleLinks = state.links
-        .where((link) =>
-            link.index1 == state.visibleIndices.first + 2 &&
-            link.connectionType != "commentary")
-        .toList();
-
-    visibleLinks.sort((a, b) => a.path2
-        .split(Platform.pathSeparator)
-        .last
-        .compareTo(b.path2.split(Platform.pathSeparator).last));
-
-    return visibleLinks;
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
-      if (state is TextBookError) {
-        return Center(child: Text('Error: ${state.message}'));
-      }
-      if (state is! TextBookLoaded) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      return FutureBuilder(
-          future: getLinks(state),
+    return BlocBuilder<TextBookBloc, TextBookState>(
+      builder: (context, state) {
+        if (state is TextBookError) {
+          return Center(child: Text('Error: ${state.message}'));
+        }
+        if (state is! TextBookLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return FutureBuilder(
+          future: Future<List<Link>>.value(LinksViewer.getLinks(state)),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return ListView.builder(
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) => ListTile(
-                  title: Text(
-                    snapshot.data![index].heRef,
-                  ),
+                  title: Text(snapshot.data![index].heRef),
                   onTap: () {
                     widget.openTabcallback(
                       TextBookTab(
                         book: TextBook(
-                          title: utils
-                              .getTitleFromPath(snapshot.data![index].path2),
+                          title: utils.getTitleFromPath(
+                            snapshot.data![index].path2,
+                          ),
                         ),
                         index: snapshot.data![index].index2 - 1,
-                        openLeftPane:
-                            Settings.getValue<bool>('key-default-sidebar-open') ??
-                                false,
+                        openLeftPane: Settings.getValue<bool>(
+                              'key-default-sidebar-open',
+                            ) ??
+                            false,
                       ),
                     );
                     if (MediaQuery.of(context).size.width < 600) {
@@ -88,11 +96,11 @@ class _LinksViewerState extends State<LinksViewer>
                 ),
               );
             }
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          });
-    });
+            return const Center(child: CircularProgressIndicator());
+          },
+        );
+      },
+    );
   }
 
   @override
