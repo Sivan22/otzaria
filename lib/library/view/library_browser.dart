@@ -107,6 +107,12 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                               repositoryName: "otzaria-library",
                               branch: "main",
                             ),
+                            dictaRepository: FileSyncRepository(
+                              githubOwner: "zevisvei",
+                              repositoryName: "otzaria-library",
+                              branch: "main",
+                              manifestFileName: 'dicta_files_manifest.json',
+                            ),
                           ),
                           child: const SyncIconButton(),
                         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:flutter/scheduler.dart';
 
 class OutlineView extends StatefulWidget {
   const OutlineView({
@@ -19,8 +20,12 @@ class OutlineView extends StatefulWidget {
 
 class _OutlineViewState extends State<OutlineView>
     with AutomaticKeepAliveClientMixin {
-  TextEditingController searchController = TextEditingController();
-  final ScrollController scrollController = ScrollController();
+    final TextEditingController searchController = TextEditingController();
+
+  final ScrollController _tocScrollController = ScrollController();
+  final Map<PdfOutlineNode, GlobalKey> _tocItemKeys = {};
+  bool _isManuallyScrolling = false;
+  int? _lastScrolledPage;
 
   @override
   bool get wantKeepAlive => true;
@@ -43,13 +48,94 @@ class _OutlineViewState extends State<OutlineView>
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
-    scrollController.dispose();
+    _tocScrollController.dispose();
     searchController.dispose();
     super.dispose();
   }
 
   void _onControllerChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      _scrollToActiveItem();
+    }
+  }
+  void _scrollToActiveItem() {
+    if (_isManuallyScrolling || !widget.controller.isReady) return;
+
+    final currentPage = widget.controller.pageNumber;
+    if (currentPage == _lastScrolledPage) return;
+
+    PdfOutlineNode? activeNode;
+
+    PdfOutlineNode? findClosestNode(List<PdfOutlineNode> nodes, int page) {
+      PdfOutlineNode? bestMatch;
+      for (final node in nodes) {
+        if (node.dest?.pageNumber != null && node.dest!.pageNumber <= page) {
+          bestMatch = node;
+          final childMatch = findClosestNode(node.children, page);
+          if (childMatch != null) {
+            bestMatch = childMatch;
+          }
+        } else {
+          break;
+        }
+      }
+      return bestMatch;
+    }
+
+    if (widget.outline != null && currentPage != null) {
+      activeNode = findClosestNode(widget.outline!, currentPage);
+    }
+
+    // קריאה ל-setState כדי לוודא שהפריט הנכון מודגש לפני הגלילה
+    if (mounted) {
+      setState(() {});
+    }
+
+    if (activeNode == null) {
+      _lastScrolledPage = currentPage;
+      return;
+    }
+
+    // נחכה פריים אחד כדי שה-setState יסיים וה-UI יתעדכן
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isManuallyScrolling) return;
+
+      final key = _tocItemKeys[activeNode];
+      final itemContext = key?.currentContext;
+      if (itemContext == null) return;
+      
+      final itemRenderObject = itemContext.findRenderObject();
+      if (itemRenderObject is! RenderBox) return;
+
+      // --- התחלה: החישוב הנכון והבדוק ---
+      // זהו החישוב מההצעה של ה-AI השני, מותאם לקוד שלנו.
+      
+      final scrollableBox = _tocScrollController.position.context.storageContext.findRenderObject() as RenderBox;
+      
+      // המיקום של הפריט ביחס ל-viewport של הגלילה
+      final itemOffset = itemRenderObject.localToGlobal(Offset.zero, ancestor: scrollableBox).dy;
+      
+      // גובה ה-viewport (האזור הנראה)
+      final viewportHeight = scrollableBox.size.height;
+      
+      // גובה הפריט עצמו
+      final itemHeight = itemRenderObject.size.height;
+
+      // מיקום היעד המדויק למירוכז
+      final target = _tocScrollController.offset + itemOffset - (viewportHeight / 2) + (itemHeight / 2);
+      // --- סיום: החישוב הנכון והבדוק ---
+      
+      _tocScrollController.animateTo(
+        target.clamp(
+          0.0,
+          _tocScrollController.position.maxScrollExtent,
+        ),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+
+      _lastScrolledPage = currentPage;
+    });
   }
 
   @override
@@ -90,9 +176,23 @@ class _OutlineViewState extends State<OutlineView>
           ),
         ),
         Expanded(
-          child: searchController.text.isEmpty
-              ? _buildOutlineList(outline)
-              : _buildFilteredOutlineList(outline),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollStartNotification && notification.dragDetails != null) {
+                setState(() {
+                  _isManuallyScrolling = true;
+                });
+              } else if (notification is ScrollEndNotification) {
+                setState(() {
+                  _isManuallyScrolling = false;
+                });
+              }
+              return false;
+            },
+            child: searchController.text.isEmpty
+                ? _buildOutlineList(outline)
+                : _buildFilteredOutlineList(outline),
+          ),
         ),
       ],
     );
@@ -100,7 +200,7 @@ class _OutlineViewState extends State<OutlineView>
 
   Widget _buildOutlineList(List<PdfOutlineNode> outline) {
     return SingleChildScrollView(
-      controller: scrollController,
+      controller: _tocScrollController,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -128,7 +228,7 @@ class _OutlineViewState extends State<OutlineView>
         .toList();
 
     return SingleChildScrollView(
-      controller: scrollController,
+      controller: _tocScrollController,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -141,7 +241,12 @@ class _OutlineViewState extends State<OutlineView>
   }
 
   Widget _buildOutlineItem(PdfOutlineNode node, {int level = 0}) {
+    final itemKey = _tocItemKeys.putIfAbsent(node, () => GlobalKey());
     void navigateToEntry() {
+      setState(() {
+        _isManuallyScrolling = false;
+        _lastScrolledPage = null;
+      });
       if (node.dest != null) {
         widget.controller.goTo(widget.controller
             .calcMatrixFitWidthForPage(pageNumber: node.dest?.pageNumber ?? 1));
@@ -149,6 +254,7 @@ class _OutlineViewState extends State<OutlineView>
     }
 
     return Padding(
+      key: itemKey,
       padding: EdgeInsets.fromLTRB(0, 0, 10 * level.toDouble(), 0),
       child: Theme(
         data: Theme.of(context).copyWith(

@@ -74,7 +74,10 @@ dependencies:
   expandable: ^5.0.1
   multi_split_view: ^2.4.0
   updat: ^1.3.2
-  flutter_context_menu: ^0.1.3
+  flutter_context_menu:
+    git:
+      url: https://github.com/Y-PLONI/flutter_context_menu
+
   printing:
   pdf: ^3.10.8
   kosher_dart: ^2.0.16
@@ -84,6 +87,7 @@ dependencies:
   filter_list: 1.0.3
   package_info_plus: ^8.0.2
   crypto: ^3.0.5
+  path: ^1.9.0
   http: ^1.2.2
   flutter_document_picker:
     git:

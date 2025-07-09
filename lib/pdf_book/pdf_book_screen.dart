@@ -184,12 +184,19 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         bindings: <ShortcutActivator, VoidCallback>{
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
               _ensureSearchTabIsActive,
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): _goNextPage,
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): _goPreviousPage,
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): _goNextPage,
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): _goPreviousPage,
+          LogicalKeySet(LogicalKeyboardKey.pageDown): _goNextPage,
+          LogicalKeySet(LogicalKeyboardKey.pageUp): _goPreviousPage,
         },
         child: Focus(
           focusNode: FocusNode(),
           autofocus: !Platform.isAndroid,
           child: Scaffold(
           appBar: AppBar(
+            centerTitle: false,
           backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
             shape: Border(
               bottom: BorderSide(
@@ -201,15 +208,22 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             scrolledUnderElevation: 0,
             title: ValueListenableBuilder(
                 valueListenable: widget.tab.currentTitle,
-                builder: (context, value, child) => Center(
-                      child: SelectionArea(
-                        child: Text(
-                          value,
-                          style: const TextStyle(fontSize: 17),
-                          textAlign: TextAlign.center,
-                        ),
+                builder: (context, value, child) {
+                  String displayTitle = value;
+                  // When a heading is provided and doesn't already contain the
+                  // book title, prefix the heading with the PDF's file name.
+                  if (value.isNotEmpty && !value.contains(widget.tab.book.title)) {
+                    displayTitle = "${widget.tab.book.title}, $value";
+                  }
+                  return SelectionArea( // <--- שים לב שה-Center נעלם, ה-SelectionArea הפך להיות הילד הישיר
+                    child: Text(
+                      displayTitle,
+                      style: const TextStyle(fontSize: 17),
+                      textAlign: TextAlign.end,
                       ),
-                    )),
+                  );
+                },
+              ),
             leading: IconButton(
               icon: const Icon(Icons.menu),
               tooltip: 'חיפוש וניווט',
@@ -345,6 +359,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         params: PdfViewerParams(
                           //enableTextSelection: true,
                           maxScale: 10,
+                          // limit page caching to the current page 
+                          // plus five pages before and after
+                          horizontalCacheExtent: 5,
+                          verticalCacheExtent: 5,
                           onInteractionStart: (_) {
                             if (!widget.tab.pinLeftPane.value) {
                               widget.tab.showLeftPane.value = false;
@@ -547,6 +565,24 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         ),
       ),
     );
+  }
+
+  void _goNextPage() {
+    if (widget.tab.pdfViewerController.isReady) {
+      final nextPage = min(
+          widget.tab.pdfViewerController.pageNumber! + 1,
+          widget.tab.pdfViewerController.pages.length);
+      widget.tab.pdfViewerController.goToPage(pageNumber: nextPage);
+    }
+  }
+
+  void _goPreviousPage() {
+    if (widget.tab.pdfViewerController.isReady) {
+      final prevPage = max(
+          widget.tab.pdfViewerController.pageNumber! - 1,
+          1);
+      widget.tab.pdfViewerController.goToPage(pageNumber: prevPage);
+    }
   }
 
   Future<void> navigateToUrl(Uri url) async {

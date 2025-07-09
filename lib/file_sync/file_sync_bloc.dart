@@ -7,9 +7,11 @@ import 'package:otzaria/file_sync/file_sync_repository.dart';
 
 class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
   final FileSyncRepository repository;
+  final FileSyncRepository? dictaRepository;
   Timer? _progressTimer;
 
-  FileSyncBloc({required this.repository}) : super(const FileSyncState()) {
+  FileSyncBloc({required this.repository, this.dictaRepository})
+      : super(const FileSyncState()) {
     on<StartSync>(_onStartSync);
     on<StopSync>(_onStopSync);
     on<UpdateProgress>(_onUpdateProgress);
@@ -34,7 +36,7 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
       message: 'מסנכרן...',
     ));
 
-    // Set up a timer to update progress periodically
+    // Set up a timer to update progress periodically for the main repository
     _progressTimer?.cancel();
     _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       if (repository.isSyncing && repository.totalFiles > 0) {
@@ -46,8 +48,24 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
     });
 
     try {
-      final successCount = await repository.syncFiles();
+      int successCount = await repository.syncFiles();
       _progressTimer?.cancel();
+
+      // Sync Dicta books if enabled and repository provided
+      if (dictaRepository != null &&
+          (Settings.getValue<bool>('key-sync-dicta-books') ?? false)) {
+        _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+          if (dictaRepository!.isSyncing && dictaRepository!.totalFiles > 0) {
+            add(UpdateProgress(
+              current: dictaRepository!.currentProgress,
+              total: dictaRepository!.totalFiles,
+            ));
+          }
+        });
+
+        successCount += await dictaRepository!.syncFiles();
+        _progressTimer?.cancel();
+      }
 
       if (successCount > 0) {
         emit(state.copyWith(
@@ -71,6 +89,7 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
   void _onStopSync(StopSync event, Emitter<FileSyncState> emit) {
     _progressTimer?.cancel();
     repository.stopSyncing();
+    dictaRepository?.stopSyncing();
     emit(const FileSyncState());
   }
 

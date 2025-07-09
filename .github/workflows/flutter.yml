@@ -1,6 +1,8 @@
 name: "Build for all platforms"
-permissions:
-  contents: write  
+permissions: 
+  contents: write
+ 
+
 
 on:
   push: 
