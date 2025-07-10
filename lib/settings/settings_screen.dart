@@ -310,6 +310,19 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .add(UpdateDefaultRemoveNikud(value));
                         },
                       ),
+                      SwitchSettingsTile(
+                        settingKey: 'key-remove-nikud-tanach',
+                        title: 'הסרת ניקוד מספרי התנ"ך',
+                        enabledLabel: 'גם ספרי התנ"ך יוצגו ללא ניקוד',
+                        disabledLabel: 'בספרי התנ"ך יוצג ניקוד',
+                        leading: const Icon(Icons.book),
+                        defaultValue: state.removeNikudFromTanach,
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateRemoveNikudFromTanach(value));
+                        },
+                      ),
                       const SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',

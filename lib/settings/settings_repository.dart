@@ -16,7 +16,8 @@ class SettingsRepository {
   static const String keyReplaceHolyNames = 'key-replace-holy-names';
   static const String keyAutoUpdateIndex = 'key-auto-index-update';
   static const String keyDefaultNikud = 'key-default-nikud';
-  static const String keyDefaultSidebarOpen = 'key-default-sidebar-open';  
+  static const String keyRemoveNikudFromTanach = 'key-remove-nikud-tanach';
+  static const String keyDefaultSidebarOpen = 'key-default-sidebar-open';
 
   final SettingsWrapper _settings;
 
@@ -71,10 +72,14 @@ class SettingsRepository {
         keyDefaultNikud,
         defaultValue: false,
       ),
+      'removeNikudFromTanach': _settings.getValue<bool>(
+        keyRemoveNikudFromTanach,
+        defaultValue: false,
+      ),
       'defaultSidebarOpen': _settings.getValue<bool>(
         keyDefaultSidebarOpen,
         defaultValue: false,
-      ),      
+      ),
     };
   }
 
@@ -125,10 +130,13 @@ class SettingsRepository {
   Future<void> updateAutoUpdateIndex(bool value) async {
     await _settings.setValue(keyAutoUpdateIndex, value);
   }
-  
+
   Future<void> updateDefaultRemoveNikud(bool value) async {
     await _settings.setValue(keyDefaultNikud, value);
-  }  
+  }
+  Future<void> updateRemoveNikudFromTanach(bool value) async {
+    await _settings.setValue(keyRemoveNikudFromTanach, value);
+  }
   Future<void> updateDefaultSidebarOpen(bool value) async {
     await _settings.setValue(keyDefaultSidebarOpen, value);
   }
@@ -161,6 +169,7 @@ class SettingsRepository {
     await _settings.setValue(keyReplaceHolyNames, true);
     await _settings.setValue(keyAutoUpdateIndex, true);
     await _settings.setValue(keyDefaultNikud, false);
+    await _settings.setValue(keyRemoveNikudFromTanach, false);
     await _settings.setValue(keyDefaultSidebarOpen, false);
     
     // Mark as initialized

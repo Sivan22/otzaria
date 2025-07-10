@@ -6,6 +6,7 @@ import 'package:otzaria/utils/ref_helper.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
@@ -51,6 +52,15 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
         final eras = await utils.splitByEra(availableCommentators);
 
+        final defaultRemoveNikud =
+            Settings.getValue<bool>('key-default-nikud') ?? false;
+        final removeNikudFromTanach =
+            Settings.getValue<bool>('key-remove-nikud-tanach') ?? false;
+        final isTanach =
+            await FileSystemData.instance.isTanachBook(book.title);
+        final removeNikud = defaultRemoveNikud &&
+            (removeNikudFromTanach || !isTanach);
+
         // Create controllers if this is the first load
         final ItemScrollController scrollController = ItemScrollController();
         final ScrollOffsetController scrollOffsetController =
@@ -81,8 +91,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           rishonim: eras['ראשונים']!,
           acharonim: eras['אחרונים']!,
           modernCommentators: eras['מחברי זמננו']!,
-          removeNikud:
-              Settings.getValue<bool>('key-default-nikud') ?? false,
+          removeNikud: removeNikud,
           visibleIndices: [state.index],
           pinLeftPane: false,
           searchText: '',
