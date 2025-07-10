@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
@@ -22,10 +20,12 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   TextEditingController searchController = TextEditingController();
   List<String> selectedTopics = [];
   List<String> commentatorsList = [];
-  static const String _separator = '__sep__';
+  static const String _rishonimTitle = '__TITLE_RISHONIM__';
+  static const String _acharonimTitle = '__TITLE_ACHARONim__';
+  static const String _modernTitle = '__TITLE_MODERN__';
+  static const String _ungroupedTitle = '__TITLE_UNGROUPED__';
 
-  // 1. הפונקציה filterGroup חזרה להיות פונקציה רגילה בקלאס
-  //    ותוקן בה המיקום של ה-return
+
   Future<List<String>> filterGroup(List<String> group) async {
     final filteredByQuery =
         group.where((title) => title.contains(searchController.text));
@@ -47,26 +47,43 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
     return filtered;
   }
 
-  // 2. הפונקציה update מכילה את כל הלוגיקה הא-סינכרונית
-  //    ובסופה היא קוראת ל-setState כדי לעדכן את ה-UI
-  Future<void> update(BuildContext context, TextBookState state) async {
-    if (state is! TextBookLoaded) return;
-
-    // קריאות א-סינכרוניות לסינון הרשימות
+  Future<void> _update(BuildContext context, TextBookLoaded state) async {
+    // סינון הקבוצות הידועות
     final rishonim = await filterGroup(state.rishonim);
     final acharonim = await filterGroup(state.acharonim);
     final modern = await filterGroup(state.modernCommentators);
-
-    // עדכון המצב (state) של הווידג'ט רק אחרי שכל המידע מוכן
-    setState(() {
-      commentatorsList = [
-        ...rishonim,
-        if (rishonim.isNotEmpty && acharonim.isNotEmpty) _separator,
-        ...acharonim,
-        if (acharonim.isNotEmpty && modern.isNotEmpty) _separator,
-        ...modern,
-      ];
-    });
+  
+    final Set<String> alreadyListed = {
+      ...rishonim,
+      ...acharonim,
+      ...modern,
+    };
+    final ungroupedRaw = state.availableCommentators
+        .where((c) => !alreadyListed.contains(c))
+        .toList();
+    final ungrouped = await filterGroup(ungroupedRaw);
+  
+    // בניית הרשימה עם כותרות לפני כל קבוצה קיימת
+    final List<String> merged = [];
+    
+    if (rishonim.isNotEmpty) {
+      merged.add(_rishonimTitle); // הוסף כותרת ראשונים
+      merged.addAll(rishonim);
+    }
+    if (acharonim.isNotEmpty) {
+      merged.add(_acharonimTitle); // הוסף כותרת אחרונים
+      merged.addAll(acharonim);
+    }
+    if (modern.isNotEmpty) {
+      merged.add(_modernTitle); // הוסף כותרת מחברי זמננו
+      merged.addAll(modern);
+    }
+    if (ungrouped.isNotEmpty) {
+      merged.add(_ungroupedTitle); // הוסף כותרת לשאר
+      merged.addAll(ungrouped);
+    }
+  
+    setState(() => commentatorsList = merged);
   }
 
 
@@ -79,16 +96,15 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
           child: Text("אין פרשנים"),
         );
       }
-      if (commentatorsList.isEmpty) update(context, state);
+      if (commentatorsList.isEmpty) _update(context, state);
       return Column(
         children: [
           FilterListWidget<String>(
             hideSearchField: true,
             controlButtons: const [],
             onApplyButtonClick: (list) {
-              // 3. אין צורך ב-setState כאן, כי update כבר עושה את זה
               selectedTopics = list ?? [];
-              update(context, state);
+              _update(context, state as TextBookLoaded);
             },
             validateSelectedItem: (list, item) =>
                 list != null && list.contains(item),
@@ -127,81 +143,123 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
             ),
           ),
           Expanded(
-            child: Builder(builder: (context) {
-              return Column(
-                children: [
-                  TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: "סינון",
-                      suffix: IconButton(
-                          onPressed: () {
-                            searchController.clear();
-                            update(context, state);
-                          },
-                          icon: Icon(Icons.close)),
-                    ),
-                    onChanged: (query) {
-                      // 4. אין צורך ב-setState כאן
-                      update(context, state);
+            child: Column(
+              children: [
+                // --- שדה החיפוש ---
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: "סינון",
+                    suffix: IconButton(
+                        onPressed: () {
+                          searchController.clear();
+                          _update(context, state);
+                        },
+                        icon: const Icon(Icons.close)),
+                  ),
+                  onChanged: (_) => _update(context, state),
+                ),
+          
+                // --- כפתור הכל ---
+                if (commentatorsList.isNotEmpty)
+                  CheckboxListTile(
+                    title: const Text('הצג את כל הפרשנים'), // שמרתי את השינוי שלך
+                    value: commentatorsList
+                        .where((e) => !e.startsWith('__TITLE_'))
+                        .every(state.activeCommentators.contains),
+                    onChanged: (checked) {
+                      final items = commentatorsList
+                          .where((e) => !e.startsWith('__TITLE_'))
+                          .toList();
+                      if (checked ?? false) {
+                        context.read<TextBookBloc>().add(UpdateCommentators(
+                            {...state.activeCommentators, ...items}.toList()));
+                      } else {
+                        context.read<TextBookBloc>().add(UpdateCommentators(
+                            state.activeCommentators
+                                .where((e) => !items.contains(e))
+                                .toList()));
+                      }
                     },
                   ),
-                  if (commentatorsList.isNotEmpty)
-                    CheckboxListTile(
-                      title: const Text("הכל"),
-                      value: commentatorsList
-                          .where((e) => e != _separator)
-                          .every((test) =>
-                              state.activeCommentators.contains(test)),
-                      onChanged: (value) {
-                        setState(() { // כאן צריך setState כי זה משפיע ישירות על ה-Bloc
-                          final items =
-                              commentatorsList.where((e) => e != _separator).toList();
-                          if (value!) {
-                            final allCommentators = [
-                              ...items,
-                              ...state.activeCommentators
-                            ];
-                            context
-                                .read<TextBookBloc>()
-                                .add(UpdateCommentators(allCommentators.toSet().toList())); // toSet().toList() למניעת כפילויות
-                          } else {
-                            context.read<TextBookBloc>().add(UpdateCommentators(
-                                state.activeCommentators
-                                    .where((element) => !items.contains(element))
-                                    .toList()));
-                          }
-                        });
-                      },
-                    ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: commentatorsList.length,
-                      itemBuilder: (context, index) {
-                        final item = commentatorsList[index];
-                        if (item == _separator) return const Divider();
-                        return CheckboxListTile(
-                          title: Text(item),
-                          value: state.activeCommentators.contains(item),
-                          onChanged: (value) {
-                            if (value!) {
-                              context
-                                  .read<TextBookBloc>()
-                                  .add(UpdateCommentators(state.activeCommentators + [item]));
-                            } else {
-                              context.read<TextBookBloc>().add(UpdateCommentators(
-                                  state.activeCommentators
-                                      .where((element) => element != item)
-                                      .toList()));
-                            }
-                          },
+          
+                // --- רשימת הפרשנים ---
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: commentatorsList.length,
+                    itemBuilder: (context, index) {
+                      final item = commentatorsList[index];
+          
+                      // בדוק אם הפריט הוא כותרת
+                      if (item.startsWith('__TITLE_')) {
+                        String titleText = '';
+                        switch (item) {
+                          case _rishonimTitle:
+                            titleText = 'ראשונים';
+                            break;
+                          case _acharonimTitle:
+                            titleText = 'אחרונים';
+                            break;
+                          case _modernTitle:
+                            titleText = 'מחברי זמננו';
+                            break;
+                          case _ungroupedTitle:
+                            titleText = 'שאר מפרשים';
+                            break;
+                        }
+          
+                        // ווידג'ט הכותרת
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10.0, horizontal: 16.0),
+                          child: Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text(
+                                  titleText,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.8),
+                                  ),
+                                ),
+                              ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
                         );
-                      },
-                    ),
+                      }
+          
+                      // אם זה לא כותרת, הצג CheckboxListTile רגיל
+                      return CheckboxListTile(
+                        title: Text(item),
+                        value: state.activeCommentators.contains(item),
+                        onChanged: (checked) {
+                          if (checked ?? false) {
+                            context.read<TextBookBloc>().add(
+                                  UpdateCommentators(
+                                      [...state.activeCommentators, item]),
+                                );
+                          } else {
+                            context.read<TextBookBloc>().add(
+                                  UpdateCommentators(state.activeCommentators
+                                      .where((e) => e != item)
+                                      .toList()),
+                                );
+                          }
+                        },
+                      );
+                    },
                   ),
-                ],
-              );
-            }),
+                ),
+              ],
+            ),
           )
         ],
       );
