@@ -22,7 +22,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateUseFastSearch>(_onUpdateUseFastSearch);
     on<UpdateReplaceHolyNames>(_onUpdateReplaceHolyNames);
     on<UpdateAutoUpdateIndex>(_onUpdateAutoUpdateIndex);
-    on<UpdateDefaultRemoveNikud>(_onUpdateDefaultRemoveNikud);    
+    on<UpdateDefaultRemoveNikud>(_onUpdateDefaultRemoveNikud);
+    on<UpdateRemoveNikudFromTanach>(_onUpdateRemoveNikudFromTanach);
     on<UpdateDefaultSidebarOpen>(_onUpdateDefaultSidebarOpen);
   }
 
@@ -44,8 +45,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       useFastSearch: settings['useFastSearch'],
       replaceHolyNames: settings['replaceHolyNames'],
       autoUpdateIndex: settings['autoUpdateIndex'],
-      defaultRemoveNikud: settings['defaultRemoveNikud'], 
-      defaultSidebarOpen: settings['defaultSidebarOpen'],     
+      defaultRemoveNikud: settings['defaultRemoveNikud'],
+      removeNikudFromTanach: settings['removeNikudFromTanach'],
+      defaultSidebarOpen: settings['defaultSidebarOpen'],
     ));
   }
 
@@ -151,7 +153,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _repository.updateDefaultRemoveNikud(event.defaultRemoveNikud);
     emit(state.copyWith(defaultRemoveNikud: event.defaultRemoveNikud));
-  }  
+  }
+
+  Future<void> _onUpdateRemoveNikudFromTanach(
+    UpdateRemoveNikudFromTanach event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _repository.updateRemoveNikudFromTanach(event.removeNikudFromTanach);
+    emit(state.copyWith(removeNikudFromTanach: event.removeNikudFromTanach));
+  }
   Future<void> _onUpdateDefaultSidebarOpen(
     UpdateDefaultSidebarOpen event,
     Emitter<SettingsState> emit,

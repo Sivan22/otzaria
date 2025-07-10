@@ -68,6 +68,10 @@ void main() {
               defaultValue: false))
           .thenReturn(false);
       when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyRemoveNikudFromTanach,
+              defaultValue: false))
+          .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
               SettingsRepository.keyDefaultSidebarOpen,
               defaultValue: false))
           .thenReturn(false);
@@ -88,6 +92,7 @@ void main() {
       expect(settings['replaceHolyNames'], true);
       expect(settings['autoUpdateIndex'], true);
       expect(settings['defaultRemoveNikud'], false);
+      expect(settings['removeNikudFromTanach'], false);
       expect(settings['defaultSidebarOpen'], false);
     });
 
@@ -143,6 +148,10 @@ void main() {
               defaultValue: false))
           .thenReturn(true);
       when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyRemoveNikudFromTanach,
+              defaultValue: false))
+          .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
               SettingsRepository.keyDefaultSidebarOpen,
               defaultValue: false))
           .thenReturn(true);
@@ -163,6 +172,7 @@ void main() {
       expect(settings['replaceHolyNames'], false);
       expect(settings['autoUpdateIndex'], false);
       expect(settings['defaultRemoveNikud'], true);
+      expect(settings['removeNikudFromTanach'], true);
       expect(settings['defaultSidebarOpen'], true);
     });
 
@@ -191,6 +201,14 @@ void main() {
       await repository.updateDefaultRemoveNikud(true);
       verify(mockSettingsWrapper.setValue(
               SettingsRepository.keyDefaultNikud, true))
+          .called(1);
+    });
+
+    test('updateRemoveNikudFromTanach calls setValue on settings wrapper',
+        () async {
+      await repository.updateRemoveNikudFromTanach(true);
+      verify(mockSettingsWrapper.setValue(
+              SettingsRepository.keyRemoveNikudFromTanach, true))
           .called(1);
     });
 
@@ -280,6 +298,9 @@ when(mockSettingsWrapper.getValue<String?>(
       verify(mockSettingsWrapper.setValue(SettingsRepository.keyReplaceHolyNames, true)).called(1);
       verify(mockSettingsWrapper.setValue(SettingsRepository.keyAutoUpdateIndex, true)).called(1);
       verify(mockSettingsWrapper.setValue(SettingsRepository.keyDefaultNikud, false)).called(1);
+      verify(mockSettingsWrapper.setValue(
+              SettingsRepository.keyRemoveNikudFromTanach, false))
+          .called(1);
       verify(mockSettingsWrapper.setValue(SettingsRepository.keyDefaultSidebarOpen, false)).called(1);
     });
 

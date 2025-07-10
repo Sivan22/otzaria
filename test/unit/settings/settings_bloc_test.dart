@@ -39,8 +39,9 @@ void main() {
         'useFastSearch': false,
         'replaceHolyNames': false,
         'autoUpdateIndex': false,
-        'defaultRemoveNikud': true,    
-        'defaultSidebarOpen': true,    
+        'defaultRemoveNikud': true,
+        'removeNikudFromTanach': true,
+        'defaultSidebarOpen': true,
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -66,7 +67,9 @@ void main() {
             replaceHolyNames: mockSettings['replaceHolyNames'] as bool,
             autoUpdateIndex: mockSettings['autoUpdateIndex'] as bool,
             defaultRemoveNikud: mockSettings['defaultRemoveNikud'] as bool,
-            defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,         
+            removeNikudFromTanach:
+                mockSettings['removeNikudFromTanach'] as bool,
+            defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
           ),
         ],
         verify: (_) {
@@ -147,6 +150,20 @@ void main() {
         ],
         verify: (_) {
           verify(mockRepository.updateDefaultRemoveNikud(true)).called(1);
+        },
+      );
+    });
+
+    group('UpdateRemoveNikudFromTanach', () {
+      blocTest<SettingsBloc, SettingsState>(
+        'emits updated state when UpdateRemoveNikudFromTanach is added',
+        build: () => settingsBloc,
+        act: (bloc) => bloc.add(const UpdateRemoveNikudFromTanach(true)),
+        expect: () => [
+          settingsBloc.state.copyWith(removeNikudFromTanach: true),
+        ],
+        verify: (_) {
+          verify(mockRepository.updateRemoveNikudFromTanach(true)).called(1);
         },
       );
     });
