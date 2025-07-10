@@ -74,7 +74,11 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
           message: 'סונכרנו $successCount קבצים חדשים',
         ));
       } else {
-        emit(const FileSyncState());
+        emit(state.copyWith(
+          status: FileSyncStatus.completed,
+          hasNewSync: false,
+          message: 'הספרייה מעודכנת',
+        ));
       }
     } catch (e) {
       _progressTimer?.cancel();
