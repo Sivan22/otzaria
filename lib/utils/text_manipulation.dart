@@ -55,6 +55,7 @@ String replaceHolyNames(String s) {
       .replaceAll("יהֹוָה֮", "יקׂוָק֮")
       .replaceAll("ַיהֹוָ֥ה", "ַיקׂוָ֥ק")
       .replaceAll("יְהֹוָ֔ה", "יְקׂוָ֔ק")
+      .replaceAll("יְהֹוָ֗ה", "יְקׂוָ֗ק")
       .replaceAll("יְהֹוָ֑ה", "יְקׂוָ֑ק");
   return s;
 }
