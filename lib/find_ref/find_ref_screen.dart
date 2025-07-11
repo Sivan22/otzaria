@@ -138,18 +138,24 @@ class _FindRefScreenState extends State<FindRefScreen> {
                                         path: state.refs[index].filePath),
                                     pageNumber:
                                         state.refs[index].segment.toInt(),
-                                    openLeftPane: Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false)));
+                                    openLeftPane:
+                                        (Settings.getValue<bool>('key-pin-sidebar') ??
+                                                false) ||
+                                            (Settings.getValue<bool>(
+                                                    'key-default-sidebar-open') ??
+                                                false))));
                               } else {
                                 tabsBloc.add(AddTab(TextBookTab(
                                     book: TextBook(
                                       title: state.refs[index].title,
                                     ),
                                     index: state.refs[index].segment.toInt(),
-                                    openLeftPane: Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false)));
+                                    openLeftPane:
+                                        (Settings.getValue<bool>('key-pin-sidebar') ??
+                                                false) ||
+                                            (Settings.getValue<bool>(
+                                                    'key-default-sidebar-open') ??
+                                                false))));
                               }
                               navigationBloc
                                   .add(const NavigateToScreen(Screen.reading));

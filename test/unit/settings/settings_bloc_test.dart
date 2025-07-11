@@ -42,6 +42,7 @@ void main() {
         'defaultRemoveNikud': true,
         'removeNikudFromTanach': true,
         'defaultSidebarOpen': true,
+        'pinSidebar': true,
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -70,6 +71,7 @@ void main() {
             removeNikudFromTanach:
                 mockSettings['removeNikudFromTanach'] as bool,
             defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
+            pinSidebar: mockSettings['pinSidebar'] as bool,
           ),
         ],
         verify: (_) {
@@ -178,6 +180,20 @@ void main() {
         ],
         verify: (_) {
           verify(mockRepository.updateDefaultSidebarOpen(true)).called(1);
+        },
+      );
+    });
+
+    group('UpdatePinSidebar', () {
+      blocTest<SettingsBloc, SettingsState>(
+        'emits updated state when UpdatePinSidebar is added',
+        build: () => settingsBloc,
+        act: (bloc) => bloc.add(const UpdatePinSidebar(true)),
+        expect: () => [
+          settingsBloc.state.copyWith(pinSidebar: true),
+        ],
+        verify: (_) {
+          verify(mockRepository.updatePinSidebar(true)).called(1);
         },
       );
     });

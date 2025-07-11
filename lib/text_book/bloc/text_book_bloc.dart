@@ -93,7 +93,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           modernCommentators: eras['מחברי זמננו']!,
           removeNikud: removeNikud,
           visibleIndices: [state.index],
-          pinLeftPane: false,
+          pinLeftPane:
+              Settings.getValue<bool>('key-pin-sidebar') ?? false,
           searchText: '',
           scrollController: scrollController,
           scrollOffsetController: scrollOffsetController,

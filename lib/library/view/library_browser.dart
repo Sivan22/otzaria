@@ -417,14 +417,18 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             book: book,
             pageNumber: 1,
             openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+                (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                    (Settings.getValue<bool>('key-default-sidebar-open') ??
+                        false),
           )));
     } else if (book is TextBook) {
       context.read<TabsBloc>().add(AddTab(TextBookTab(
             book: book,
             index: 0,
             openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+                (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                    (Settings.getValue<bool>('key-default-sidebar-open') ??
+                        false),
           )));
     }
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));

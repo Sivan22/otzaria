@@ -75,6 +75,10 @@ void main() {
               SettingsRepository.keyDefaultSidebarOpen,
               defaultValue: false))
           .thenReturn(false);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyPinSidebar,
+              defaultValue: false))
+          .thenReturn(false);
 
       final settings = await repository.loadSettings();
 
@@ -94,6 +98,7 @@ void main() {
       expect(settings['defaultRemoveNikud'], false);
       expect(settings['removeNikudFromTanach'], false);
       expect(settings['defaultSidebarOpen'], false);
+      expect(settings['pinSidebar'], false);
     });
 
     test('loadSettings returns custom values when settings are set', () async {
@@ -155,6 +160,10 @@ void main() {
               SettingsRepository.keyDefaultSidebarOpen,
               defaultValue: false))
           .thenReturn(true);
+      when(mockSettingsWrapper.getValue<bool>(
+              SettingsRepository.keyPinSidebar,
+              defaultValue: false))
+          .thenReturn(true);
 
       final settings = await repository.loadSettings();
 
@@ -174,6 +183,7 @@ void main() {
       expect(settings['defaultRemoveNikud'], true);
       expect(settings['removeNikudFromTanach'], true);
       expect(settings['defaultSidebarOpen'], true);
+      expect(settings['pinSidebar'], true);
     });
 
     test('updateDarkMode calls setValue on settings wrapper', () async {
@@ -217,6 +227,13 @@ void main() {
       await repository.updateDefaultSidebarOpen(true);
       verify(mockSettingsWrapper.setValue(
               SettingsRepository.keyDefaultSidebarOpen, true))
+          .called(1);
+    });
+
+    test('updatePinSidebar calls setValue on settings wrapper', () async {
+      await repository.updatePinSidebar(true);
+      verify(mockSettingsWrapper.setValue(
+              SettingsRepository.keyPinSidebar, true))
           .called(1);
     });
 
@@ -302,6 +319,7 @@ when(mockSettingsWrapper.getValue<String?>(
               SettingsRepository.keyRemoveNikudFromTanach, false))
           .called(1);
       verify(mockSettingsWrapper.setValue(SettingsRepository.keyDefaultSidebarOpen, false)).called(1);
+      verify(mockSettingsWrapper.setValue(SettingsRepository.keyPinSidebar, false)).called(1);
     });
 
     test('loadSettings does not initialize defaults when fontFamily exists', () async {

@@ -128,10 +128,10 @@ List<ctx.MenuItem<void>> _buildGroup(
                           title: utils.getTitleFromPath(link.path2),
                         ),
                         index: link.index2 - 1,
-                        openLeftPane: Settings.getValue<bool>(
-                              'key-default-sidebar-open',
-                            ) ??
-                            false,
+                        openLeftPane:
+                            (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                                (Settings.getValue<bool>('key-default-sidebar-open') ??
+                                    false),
                       ),
                     );
                   },

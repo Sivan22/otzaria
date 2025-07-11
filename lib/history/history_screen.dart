@@ -21,15 +21,15 @@ class HistoryView extends StatelessWidget {
         ? PdfBookTab(
             book: book,
             pageNumber: index,
-            openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           )
         : TextBookTab(
             book: book as TextBook,
             index: index,
             commentators: commentators,
-            openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           );
 
     context.read<TabsBloc>().add(AddTab(tab));

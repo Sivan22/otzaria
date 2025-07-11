@@ -23,8 +23,8 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
       final tab = TextBookTab(
         book: book,
         index: index,
-        openLeftPane:
-            Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+        openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else if (book is PdfBook) {
@@ -33,8 +33,8 @@ void openDafYomiBook(BuildContext context, String tractate, String daf) async {
       final tab = PdfBookTab(
         book: book,
         pageNumber: index,
-        openLeftPane:
-            Settings.getValue<bool>('key-default-sidebar-open') ?? false,        
+        openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     }
@@ -95,8 +95,8 @@ openPdfBookFromRef(String bookname, String ref, BuildContext context) async {
       final tab = PdfBookTab(
         book: book,
         pageNumber: outline.dest?.pageNumber ?? 0,
-        openLeftPane:
-            Settings.getValue<bool>('key-default-sidebar-open') ?? false,        
+        openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {
@@ -126,8 +126,8 @@ openTextBookFromRef(String bookname, String ref, BuildContext context) async {
       final tab = TextBookTab(
         book: book,
         index: tocEntry.index,
-        openLeftPane:
-            Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+        openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
       );
       BlocProvider.of<TabsBloc>(context).add(AddTab(tab));
     } else {
