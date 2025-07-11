@@ -84,9 +84,12 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                       path: result.filePath),
                                   pageNumber: result.segment.toInt() + 1,
                                   searchText: widget.tab.queryController.text,
-                                  openLeftPane: Settings.getValue<bool>(
-                                          'key-default-sidebar-open') ??
-                                      false,                                  
+                                  openLeftPane:
+                                      (Settings.getValue<bool>('key-pin-sidebar') ??
+                                              false) ||
+                                          (Settings.getValue<bool>(
+                                                  'key-default-sidebar-open') ??
+                                              false),
                                 ),
                               ));
                         } else {
@@ -98,9 +101,12 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                     index: result.segment.toInt(),
                                     searchText:
                                         widget.tab.queryController.text,
-                                    openLeftPane: Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false),
+                                    openLeftPane:
+                                        (Settings.getValue<bool>('key-pin-sidebar') ??
+                                                false) ||
+                                            (Settings.getValue<bool>(
+                                                    'key-default-sidebar-open') ??
+                                                false)),
                               ));
                         }
                       },

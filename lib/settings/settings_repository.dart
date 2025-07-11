@@ -18,6 +18,7 @@ class SettingsRepository {
   static const String keyDefaultNikud = 'key-default-nikud';
   static const String keyRemoveNikudFromTanach = 'key-remove-nikud-tanach';
   static const String keyDefaultSidebarOpen = 'key-default-sidebar-open';
+  static const String keyPinSidebar = 'key-pin-sidebar';
 
   final SettingsWrapper _settings;
 
@@ -78,6 +79,10 @@ class SettingsRepository {
       ),
       'defaultSidebarOpen': _settings.getValue<bool>(
         keyDefaultSidebarOpen,
+        defaultValue: false,
+      ),
+      'pinSidebar': _settings.getValue<bool>(
+        keyPinSidebar,
         defaultValue: false,
       ),
     };
@@ -141,6 +146,10 @@ class SettingsRepository {
     await _settings.setValue(keyDefaultSidebarOpen, value);
   }
 
+  Future<void> updatePinSidebar(bool value) async {
+    await _settings.setValue(keyPinSidebar, value);
+  }
+
   /// Initialize default settings to disk if this is the first app launch
   Future<void> _initializeDefaultsIfNeeded() async {
     if (await _checkIfDefaultsNeeded()) {
@@ -171,6 +180,7 @@ class SettingsRepository {
     await _settings.setValue(keyDefaultNikud, false);
     await _settings.setValue(keyRemoveNikudFromTanach, false);
     await _settings.setValue(keyDefaultSidebarOpen, false);
+    await _settings.setValue(keyPinSidebar, false);
     
     // Mark as initialized
     await _settings.setValue('settings_initialized', true);

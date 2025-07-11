@@ -702,7 +702,8 @@ $selectedText
         },
         child: NotificationListener<UserScrollNotification>(
           onNotification: (scrollNotification) {
-            if (!state.pinLeftPane) {
+            if (!(state.pinLeftPane ||
+                (Settings.getValue<bool>('key-pin-sidebar') ?? false))) {
               Future.microtask(() {
                 context.read<TextBookBloc>().add(const ToggleLeftPane(false));
               });
@@ -805,11 +806,15 @@ $selectedText
                   ),
                   if (MediaQuery.of(context).size.width >= 600)
                     IconButton(
-                      onPressed: () => context.read<TextBookBloc>().add(
-                            TogglePinLeftPane(!state.pinLeftPane),
-                          ),
+                      onPressed: (Settings.getValue<bool>('key-pin-sidebar') ??
+                              false)
+                          ? null
+                          : () => context.read<TextBookBloc>().add(
+                                TogglePinLeftPane(!state.pinLeftPane),
+                              ),
                       icon: const Icon(Icons.push_pin),
-                      isSelected: state.pinLeftPane,
+                      isSelected: state.pinLeftPane ||
+                          (Settings.getValue<bool>('key-pin-sidebar') ?? false),
                     ),
                 ],
               ),

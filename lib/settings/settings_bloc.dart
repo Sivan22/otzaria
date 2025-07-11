@@ -25,6 +25,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateDefaultRemoveNikud>(_onUpdateDefaultRemoveNikud);
     on<UpdateRemoveNikudFromTanach>(_onUpdateRemoveNikudFromTanach);
     on<UpdateDefaultSidebarOpen>(_onUpdateDefaultSidebarOpen);
+    on<UpdatePinSidebar>(_onUpdatePinSidebar);
   }
 
   Future<void> _onLoadSettings(
@@ -48,6 +49,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       defaultRemoveNikud: settings['defaultRemoveNikud'],
       removeNikudFromTanach: settings['removeNikudFromTanach'],
       defaultSidebarOpen: settings['defaultSidebarOpen'],
+      pinSidebar: settings['pinSidebar'],
     ));
   }
 
@@ -168,5 +170,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _repository.updateDefaultSidebarOpen(event.defaultSidebarOpen);
     emit(state.copyWith(defaultSidebarOpen: event.defaultSidebarOpen));
-  }  
+  }
+
+  Future<void> _onUpdatePinSidebar(
+    UpdatePinSidebar event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _repository.updatePinSidebar(event.pinSidebar);
+    emit(state.copyWith(pinSidebar: event.pinSidebar));
+  }
 }

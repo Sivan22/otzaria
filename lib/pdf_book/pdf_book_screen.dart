@@ -18,6 +18,7 @@ import 'pdf_outlines_screen.dart';
 import 'package:otzaria/widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:printing/printing.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/page_converter.dart';
 import 'package:flutter/gestures.dart';
 //test
@@ -329,7 +330,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               Expanded(
                 child: NotificationListener<UserScrollNotification>(
                   onNotification: (notification) {
-                    if (!widget.tab.pinLeftPane.value) {
+                    if (!(widget.tab.pinLeftPane.value ||
+                        (Settings.getValue<bool>('key-pin-sidebar') ?? false))) {
                       Future.microtask(() {
                         widget.tab.showLeftPane.value = false;
                       });
@@ -339,7 +341,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   child: Listener(
                     onPointerSignal: (event) {
                       if (event is PointerScrollEvent &&
-                          !widget.tab.pinLeftPane.value) {
+                          !(widget.tab.pinLeftPane.value ||
+                              (Settings.getValue<bool>('key-pin-sidebar') ??
+                                  false))) {
                         widget.tab.showLeftPane.value = false;
                       }
                     },
@@ -364,7 +368,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           horizontalCacheExtent: 5,
                           verticalCacheExtent: 5,
                           onInteractionStart: (_) {
-                            if (!widget.tab.pinLeftPane.value) {
+                            if (!(widget.tab.pinLeftPane.value ||
+                                (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false))) {
                               widget.tab.showLeftPane.value = false;
                             }
                           },
@@ -501,12 +507,18 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           MediaQuery.of(context).size.width < 600
                               ? const SizedBox.shrink()
                               : IconButton(
-                                  onPressed: () {
-                                    widget.tab.pinLeftPane.value =
-                                        !widget.tab.pinLeftPane.value;
-                                  },
+                                  onPressed: (Settings.getValue<bool>(
+                                              'key-pin-sidebar') ??
+                                          false)
+                                      ? null
+                                      : () {
+                                          widget.tab.pinLeftPane.value =
+                                              !widget.tab.pinLeftPane.value;
+                                        },
                                   icon: const Icon(Icons.push_pin),
-                                  isSelected: pinLeftPanel,
+                                  isSelected: pinLeftPanel ||
+                                      (Settings.getValue<bool>('key-pin-sidebar') ??
+                                          false),
                                 ),
                     ),
                   ],

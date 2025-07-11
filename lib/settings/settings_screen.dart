@@ -338,10 +338,29 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         disabledLabel: 'סרגל הצד ישאר סגור',
                         leading: const Icon(Icons.menu_open),
                         defaultValue: state.defaultSidebarOpen,
+                        enabled: !state.pinSidebar,
                         onChange: (value) {
                           context
                               .read<SettingsBloc>()
                               .add(UpdateDefaultSidebarOpen(value));
+                        },
+                      ),
+                      SwitchSettingsTile(
+                        settingKey: 'key-pin-sidebar',
+                        title: 'הצמדת סרגל צד',
+                        enabledLabel: 'סרגל הצד יוצמד תמיד',
+                        disabledLabel: 'סרגל הצד יפעל כרגיל',
+                        leading: const Icon(Icons.push_pin),
+                        defaultValue: state.pinSidebar,
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdatePinSidebar(value));
+                          if (value) {
+                            context
+                                .read<SettingsBloc>()
+                                .add(const UpdateDefaultSidebarOpen(true));
+                          }
                         },
                       ),
                       SwitchSettingsTile(

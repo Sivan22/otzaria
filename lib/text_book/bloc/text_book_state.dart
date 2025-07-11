@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 abstract class TextBookState extends Equatable {
   final TextBook book;
@@ -109,7 +110,7 @@ class TextBookLoaded extends TextBookState {
       links: const [],
       tableOfContents: const [],
       removeNikud: false,
-      pinLeftPane: false,
+      pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
       searchText: '',
       scrollController: ItemScrollController(),
       scrollOffsetController: ScrollOffsetController(),

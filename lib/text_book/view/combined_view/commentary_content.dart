@@ -45,7 +45,8 @@ class _CommentaryContentState extends State<CommentaryContent> {
           book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
           index: widget.link.index2 - 1,
           openLeftPane:
-              Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+              (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                  (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
         ));
       },
       child: FutureBuilder(

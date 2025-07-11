@@ -144,3 +144,12 @@ class UpdateDefaultSidebarOpen extends SettingsEvent {
   @override
   List<Object?> get props => [defaultSidebarOpen];
 }
+
+class UpdatePinSidebar extends SettingsEvent {
+  final bool pinSidebar;
+
+  const UpdatePinSidebar(this.pinSidebar);
+
+  @override
+  List<Object?> get props => [pinSidebar];
+}

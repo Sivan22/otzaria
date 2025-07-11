@@ -16,14 +16,15 @@ void openBook(BuildContext context, Book book, int index, String searchQuery) {
         book: book,
         index: index,
         searchText: searchQuery,
-        openLeftPane:
-            Settings.getValue<bool>('key-default-sidebar-open') ?? false)));
+        openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false)));
   } else if (book is PdfBook) {
     context.read<TabsBloc>().add(AddTab(PdfBookTab(
           book: book,
           pageNumber: index,
           openLeftPane:
-              Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+              (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                  (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
         )));
   }
   context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
