@@ -63,7 +63,6 @@ List<ctx.MenuItem<void>> _buildGroup(
                 ? current.remove(title)
                 : current.add(title);
             context.read<TextBookBloc>().add(UpdateCommentators(current));
-            if (!st.showSplitView) widget.openLeftPaneTab(2);
           },
         ),
       )

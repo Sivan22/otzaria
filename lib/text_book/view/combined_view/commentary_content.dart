@@ -22,7 +22,7 @@ class CommentaryContent extends StatefulWidget {
   final Link link;
   final double fontSize;
   final Function(TextBookTab) openBookCallback;
- final String searchQuery;
+  final String searchQuery;
 
   @override
   State<CommentaryContent> createState() => _CommentaryContentState();

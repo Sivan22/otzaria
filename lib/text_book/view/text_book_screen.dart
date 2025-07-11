@@ -84,13 +84,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         return BlocBuilder<TextBookBloc, TextBookState>(
           bloc: context.read<TextBookBloc>(),
           builder: (context, state) {
-            if (state is TextBookInitial) {
-              context.read<TextBookBloc>().add(LoadContent(
+          if (state is TextBookInitial) {
+            context.read<TextBookBloc>().add(
+              LoadContent(
                 fontSize: settingsState.fontSize,
-                showSplitView: false, // TODO: Add this to settings if needed
+                showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
                 removeNikud: settingsState.defaultRemoveNikud,
-              ));
-            }
+              ),
+            );
+          }
+
         if (state is TextBookInitial || state is TextBookLoading) {
           return const Center(child: CircularProgressIndicator());
         }
