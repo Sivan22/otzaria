@@ -449,7 +449,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                                   widget.tab.outline.value,
                                   widget.tab.book.title);
                         }();
-                        if (mounted) {
+                        if (mounted &&
+                            (widget.tab.showLeftPane.value ||
+                                widget.tab.searchText.isNotEmpty)) {
                           widget.tab.showLeftPane.value = true;
                           // No need for _performAutoSearch anymore - the PdfBookSearchView handles it
                         }
