@@ -62,10 +62,7 @@ class _CombinedViewState extends State<CombinedView> {
         onSelected: () {
           final current = List<String>.from(st.activeCommentators);
           current.contains(title) ? current.remove(title) : current.add(title);
-          context.read<TextBookBloc>().add(UpdateCommentators(current));
-          if (!st.showSplitView) {
-            widget.openLeftPaneTab(2);
-          }
+          context.read<TextBookBloc>().add(UpdateCommentators(current));          
         },
       );
     }).toList();
@@ -105,11 +102,6 @@ class _CombinedViewState extends State<CombinedView> {
                         List<String>.from(state.availableCommentators),
                       ),
                     );
-
-                // 2. פותחים את סרגל הצד אם צריך
-                if (!state.showSplitView) {
-                  widget.openLeftPaneTab(2);
-                }
               },
             ),
             const ctx.MenuDivider(),

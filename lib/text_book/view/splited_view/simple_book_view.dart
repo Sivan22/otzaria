@@ -60,9 +60,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           final current = List<String>.from(st.activeCommentators);
           current.contains(title) ? current.remove(title) : current.add(title);
           context.read<TextBookBloc>().add(UpdateCommentators(current));
-          if (!st.showSplitView) {
-            widget.openLeftPaneTab(2);
-          }
         },
       );
     }).toList();
@@ -102,11 +99,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                         List<String>.from(state.availableCommentators),
                       ),
                     );
-
-                // 2. פותחים את סרגל הצד אם צריך
-                if (!state.showSplitView) {
-                  widget.openLeftPaneTab(2);
-                }
               },
             ),
             const ctx.MenuDivider(),
