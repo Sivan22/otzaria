@@ -51,21 +51,24 @@ class _CombinedViewState extends State<CombinedView> {
     TextBookLoaded st,
   ) {
     if (group == null || group.isEmpty) return const [];
+    return group.map((title) {
+      // בודקים אם הפרשן הנוכחי פעיל
+      final bool isActive = st.activeCommentators.contains(title);
 
-    return group
-        .map(
-          (title) => ctx.MenuItem<void>(
-            label: title,
-            onSelected: () {
-              final current = List<String>.from(st.activeCommentators);
-              current.contains(title)
-                  ? current.remove(title)
-                  : current.add(title);
-              context.read<TextBookBloc>().add(UpdateCommentators(current));
-            },
-          ),
-        )
-        .toList();
+      return ctx.MenuItem<void>(
+        label: title,
+        // הוספה: מוסיפים אייקון V אם הפרשן פעיל
+        icon: isActive ? Icons.check : null,
+        onSelected: () {
+          final current = List<String>.from(st.activeCommentators);
+          current.contains(title) ? current.remove(title) : current.add(title);
+          context.read<TextBookBloc>().add(UpdateCommentators(current));
+          if (!st.showSplitView) {
+            widget.openLeftPaneTab(2);
+          }
+        },
+      );
+    }).toList();
   }
 
   ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
