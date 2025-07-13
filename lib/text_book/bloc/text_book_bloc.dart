@@ -32,78 +32,82 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     LoadContent event,
     Emitter<TextBookState> emit,
   ) async {
-    if (state is TextBookLoading) {
+    // הגנה כדי לוודא שאנחנו מתחילים רק מהמצב ההתחלתי
+    if (state is! TextBookInitial) {
+      if (state is TextBookLoaded) {
+        emit(state);
+      }
       return;
     }
-    if (state is TextBookLoaded) {
-      emit(state);
-    }
+    // "הטלה" בטוחה של המצב למשתנה מקומי
+    final initial = state as TextBookInitial;
+    // שמירת הערכים הדרושים במשתנים מקומיים לפני פעולות אסינכרוניות
+    final book = initial.book;
+    final searchText = initial.searchText;
 
-    if (state is TextBookInitial) {
-      final book = state.book;
-      emit(TextBookLoading(
-          book, state.index, state.showLeftPane, state.commentators));
-      try {
-        final content = await _repository.getBookContent(book);
-        final links = await _repository.getBookLinks(book);
-        final tableOfContents = await _repository.getTableOfContents(book);
-        final availableCommentators =
-            await _repository.getAvailableCommentators(links);
-        // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
-        final eras = await utils.splitByEra(availableCommentators);
+    emit(TextBookLoading(
+        book, initial.index, initial.showLeftPane, initial.commentators));
+    try {
+      final content = await _repository.getBookContent(book);
+      final links = await _repository.getBookLinks(book);
+      final tableOfContents = await _repository.getTableOfContents(book);
+      final availableCommentators =
+          await _repository.getAvailableCommentators(links);
+      // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
+      final eras = await utils.splitByEra(availableCommentators);
 
-        final defaultRemoveNikud =
-            Settings.getValue<bool>('key-default-nikud') ?? false;
-        final removeNikudFromTanach =
-            Settings.getValue<bool>('key-remove-nikud-tanach') ?? false;
-        final isTanach =
-            await FileSystemData.instance.isTanachBook(book.title);
-        final removeNikud = defaultRemoveNikud &&
-            (removeNikudFromTanach || !isTanach);
+      final defaultRemoveNikud =
+          Settings.getValue<bool>('key-default-nikud') ?? false;
+      final removeNikudFromTanach =
+          Settings.getValue<bool>('key-remove-nikud-tanach') ?? false;
+      final isTanach =
+          await FileSystemData.instance.isTanachBook(book.title);
+      final removeNikud =
+          defaultRemoveNikud && (removeNikudFromTanach || !isTanach);
 
-        // Create controllers if this is the first load
-        final ItemScrollController scrollController = ItemScrollController();
-        final ScrollOffsetController scrollOffsetController =
-            ScrollOffsetController();
-        final ItemPositionsListener positionsListener =
-            ItemPositionsListener.create();
+      // Create controllers if this is the first load
+      final ItemScrollController scrollController = ItemScrollController();
+      final ScrollOffsetController scrollOffsetController =
+          ScrollOffsetController();
+      final ItemPositionsListener positionsListener =
+          ItemPositionsListener.create();
 
-        // Set up position listener
-        positionsListener.itemPositions.addListener(() {
-          final visibleInecies = positionsListener.itemPositions.value
-              .map((e) => e.index)
-              .toList();
-          if (visibleInecies.isNotEmpty) {
-            add(UpdateVisibleIndecies(visibleInecies));
-          }
-        });
+      // Set up position listener
+      positionsListener.itemPositions.addListener(() {
+        final visibleInecies = positionsListener.itemPositions.value
+            .map((e) => e.index)
+            .toList();
+        if (visibleInecies.isNotEmpty) {
+          add(UpdateVisibleIndecies(visibleInecies));
+        }
+      });
 
-        emit(TextBookLoaded(
-          book: state.book,
-          content: content.split('\n'),
-          links: links,
-          availableCommentators: availableCommentators,
-          tableOfContents: tableOfContents,
-          fontSize: event.fontSize,
-          showLeftPane: state.showLeftPane,
-          showSplitView: event.showSplitView,
-          activeCommentators: state.commentators,
-          rishonim: eras['ראשונים']!,
-          acharonim: eras['אחרונים']!,
-          modernCommentators: eras['מחברי זמננו']!,
-          removeNikud: removeNikud,
-          visibleIndices: [state.index],
-          pinLeftPane:
-              Settings.getValue<bool>('key-pin-sidebar') ?? false,
-          searchText: '',
-          scrollController: scrollController,
-          scrollOffsetController: scrollOffsetController,
-          positionsListener: positionsListener,
-        ));
-      } catch (e) {
-        emit(TextBookError(e.toString(), book, state.index, state.showLeftPane,
-            state.commentators));
-      }
+      emit(TextBookLoaded(
+        book: book, // שימוש במשתנה המקומי
+        content: content.split('\n'),
+        links: links,
+        availableCommentators: availableCommentators,
+        tableOfContents: tableOfContents,
+        fontSize: event.fontSize,
+        // הצג את סרגל הצד אם ההגדרה דורשת זאת, או אם הגענו מחיפוש
+        showLeftPane: initial.showLeftPane || initial.searchText.isNotEmpty,
+        showSplitView: event.showSplitView,
+        activeCommentators: initial.commentators, // שימוש במשתנה המקומי
+        rishonim: eras['ראשונים']!,
+        acharonim: eras['אחרונים']!,
+        modernCommentators: eras['מחברי זמננו']!,
+        removeNikud: removeNikud,
+        visibleIndices: [initial.index], // שימוש במשתנה המקומי
+        pinLeftPane:
+            Settings.getValue<bool>('key-pin-sidebar') ?? false,
+        searchText: searchText,
+        scrollController: scrollController,
+        scrollOffsetController: scrollOffsetController,
+        positionsListener: positionsListener,
+      ));
+    } catch (e) {
+      emit(TextBookError(e.toString(), book, initial.index, initial.showLeftPane,
+          initial.commentators));
     }
   }
 

@@ -58,11 +58,21 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         .join('&');
   }
 
-  @override
-  void initState() {
-    super.initState();
-    tabController = TabController(length: 4, vsync: this);
-  }
+    @override
+    void initState() {
+      super.initState();
+    
+      // אם יש טקסט חיפוש (searchText), נתחיל בלשונית 'חיפוש' (שנמצאת במקום ה-1)
+      // אחרת, נתחיל בלשונית 'ניווט' (שנמצאת במקום ה-0)
+      final int initialIndex = widget.tab.searchText.isNotEmpty ? 1 : 0;
+    
+      // יוצרים את בקר הלשוניות עם האינדקס ההתחלתי שקבענו
+      tabController = TabController(
+        length: 4, // יש 4 לשוניות
+        vsync: this,
+        initialIndex: initialIndex,
+      );   
+    }
 
   @override
   void dispose() {
@@ -853,15 +863,17 @@ $selectedText
     );
   }
 
-  Widget _buildSearchView(BuildContext context, TextBookLoaded state) {
-    return TextBookSearchView(
-      focusNode: textSearchFocusNode,
-      data: state.content.join('\n'),
-      scrollControler: state.scrollController,
-      closeLeftPaneCallback: () =>
-          context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
-    );
-  }
+    Widget _buildSearchView(BuildContext context, TextBookLoaded state) {
+      return TextBookSearchView(
+        focusNode: textSearchFocusNode,
+        data: state.content.join('\n'),
+        scrollControler: state.scrollController,
+        // הוא מעביר את טקסט החיפוש מה-state הנוכחי אל תוך רכיב החיפוש
+        initialQuery: state.searchText, 
+        closeLeftPaneCallback: () =>
+            context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
+      );
+    }
 
   Widget _buildTocViewer(BuildContext context, TextBookLoaded state) {
     return TocViewer(

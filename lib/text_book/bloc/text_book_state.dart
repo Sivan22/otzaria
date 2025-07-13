@@ -17,11 +17,17 @@ abstract class TextBookState extends Equatable {
 }
 
 class TextBookInitial extends TextBookState {
+  final String searchText;
+
   const TextBookInitial(
-      super.book, super.index, super.showLeftPane, super.commentators);
+      super.book,
+      super.index,
+      super.showLeftPane,
+      super.commentators,
+      [this.searchText = '']);
 
   @override
-  List<Object?> get props => [book.title];
+  List<Object?> get props => [book.title, searchText];
 }
 
 class TextBookLoading extends TextBookState {

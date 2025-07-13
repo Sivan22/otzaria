@@ -28,7 +28,7 @@ class TextBookSearchView extends StatefulWidget {
       required this.data,
       required this.scrollControler,
       required this.focusNode,
-      required this.closeLeftPaneCallback})
+      required this.closeLeftPaneCallback, required String initialQuery})
       : super(key: key);
 
   @override
@@ -47,11 +47,23 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     super.initState();
     markdownTextSearcher = TextBookSearcher(widget.data);
     markdownTextSearcher.addListener(_searchResultUpdated);
-    searchTextController.text =
-        (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
+    
+    // מעדכנים את תיבת הטקסט עם החיפוש שהגיע מבחוץ
+    searchTextController.text = (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
+    
     scrollControler = widget.scrollControler;
     widget.focusNode.requestFocus();
+  
+    // אנחנו קוראים לפונקציה שתפעיל את החיפוש רגע אחרי שהמסך מוכן
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _runInitialSearch();
+    });
   }
+
+    // פונקציה מתוקנת שמפעילה את החיפוש הראשוני
+    void _runInitialSearch() {
+      _searchTextUpdated();
+    }
 
   void _searchTextUpdated() {
     markdownTextSearcher.startTextSearch(searchTextController.text);
