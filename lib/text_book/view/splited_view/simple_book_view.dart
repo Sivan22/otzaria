@@ -69,11 +69,25 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
+
+    // 2. זיהוי פרשנים שכבר שויכו לקבוצה
+    final Set<String> alreadyListed = {
+      ...state.rishonim,
+      ...state.acharonim,
+      ...state.modernCommentators,
+    };
+
+    // 3. יצירת רשימה של פרשנים שלא שויכו לאף קבוצה
+    final List<String> ungrouped = state.availableCommentators
+        .where((c) => !alreadyListed.contains(c))
+        .toList();
+
     return ctx.ContextMenu(
-      // 2. הגדרת הגובה המקסימלי ל-90% מגובה המסך
+      // 4. הגדרת הגובה המקסימלי ל-90% מגובה המסך
       maxHeight: screenHeight * 0.9,
       entries: [
-        ctx.MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
+        ctx.MenuItem(
+            label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
           label: 'פרשנות',
           items: [
@@ -96,20 +110,31 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             const ctx.MenuDivider(),
             // ראשונים
             ..._buildGroup(state.rishonim, state),
-            
+
             // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
-            if(state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
-                const ctx.MenuDivider(),
+            if (state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
+              const ctx.MenuDivider(),
 
             // אחרונים
             ..._buildGroup(state.acharonim, state),
 
             // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
-            if(state.acharonim.isNotEmpty && state.modernCommentators.isNotEmpty)
-                const ctx.MenuDivider(),
-                
+            if (state.acharonim.isNotEmpty &&
+                state.modernCommentators.isNotEmpty)
+              const ctx.MenuDivider(),
+
             // מחברי זמננו
             ..._buildGroup(state.modernCommentators, state),
+
+            // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
+            if ((state.rishonim.isNotEmpty ||
+                    state.acharonim.isNotEmpty ||
+                    state.modernCommentators.isNotEmpty) &&
+                ungrouped.isNotEmpty)
+              const ctx.MenuDivider(),
+
+            // הוסף את רשימת הפרשנים הלא משויכים
+            ..._buildGroup(ungrouped, state),
           ],
         ),
         ctx.MenuItem.submenu(
@@ -126,8 +151,10 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                         ),
                         index: link.index2 - 1,
                         openLeftPane:
-                            (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                                (Settings.getValue<bool>('key-default-sidebar-open') ??
+                            (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false) ||
+                                (Settings.getValue<bool>(
+                                        'key-default-sidebar-open') ??
                                     false),
                       ),
                     );
@@ -145,7 +172,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
       ],
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(
@@ -156,68 +183,69 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           maxSpeed: 10000.0,
           curve: 10.0,
           accelerationFactor: 5,
-            child: SelectionArea(
-              key: _selectionKey,
-              contextMenuBuilder: (_, __) => const SizedBox.shrink(),
-              child: ctx.ContextMenuRegion(
-                contextMenu: _buildContextMenu(state),
-                child: ScrollablePositionedList.builder(
-                  key: PageStorageKey(widget.tab),
-                  initialScrollIndex: state.visibleIndices.first,
-                  itemPositionsListener: state.positionsListener,
-                  itemScrollController: state.scrollController,
-                  scrollOffsetController: state.scrollOffsetController,
-                  itemCount: widget.data.length,
-                  itemBuilder: (context, index) {
-                    // WORKAROUND: Add an invisible newline character to preserve line breaks
-                    // when copying text from the SelectionArea. This addresses a known
-                    // issue in Flutter where newlines are stripped when copying from
-                    // multiple widgets.
-                    // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        BlocBuilder<SettingsBloc, SettingsState>(
-                          builder: (context, settingsState) {
-                            String data = widget.data[index];
-                            if (!settingsState.showTeamim) {
-                              data = utils.removeTeamim(data);
-                            }
+          child: SelectionArea(
+            key: _selectionKey,
+            contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+            child: ctx.ContextMenuRegion(
+              contextMenu: _buildContextMenu(state),
+              child: ScrollablePositionedList.builder(
+                key: PageStorageKey(widget.tab),
+                initialScrollIndex: state.visibleIndices.first,
+                itemPositionsListener: state.positionsListener,
+                itemScrollController: state.scrollController,
+                scrollOffsetController: state.scrollOffsetController,
+                itemCount: widget.data.length,
+                itemBuilder: (context, index) {
+                  // WORKAROUND: Add an invisible newline character to preserve line breaks
+                  // when copying text from the SelectionArea. This addresses a known
+                  // issue in Flutter where newlines are stripped when copying from
+                  // multiple widgets.
+                  // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      BlocBuilder<SettingsBloc, SettingsState>(
+                        builder: (context, settingsState) {
+                          String data = widget.data[index];
+                          if (!settingsState.showTeamim) {
+                            data = utils.removeTeamim(data);
+                          }
 
-                            if (settingsState.replaceHolyNames) {
-                              data = utils.replaceHolyNames(data);
-                            }
-                            return InkWell(
-                              onTap: () => context.read<TextBookBloc>().add(
-                                    UpdateSelectedIndex(index),
-                                  ),
-                              child: Html(
-                                // remove nikud if needed
-                                data: state.removeNikud
-                                    ? utils.highLight(
-                                        utils.removeVolwels('$data\n'),
-                                        state.searchText,
-                                      )
-                                    : utils.highLight('$data\n', state.searchText),
-                                style: {
-                                  'body': Style(
-                                    fontSize: FontSize(widget.textSize),
-                                    fontFamily: settingsState.fontFamily,
-                                    textAlign: TextAlign.justify,
-                                  ),
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                        const Text('\n', style: TextStyle(fontSize: 0, height: 0)),
-                      ],
-                    );
-                  },
-                ),
+                          if (settingsState.replaceHolyNames) {
+                            data = utils.replaceHolyNames(data);
+                          }
+                          return InkWell(
+                            onTap: () => context.read<TextBookBloc>().add(
+                                  UpdateSelectedIndex(index),
+                                ),
+                            child: Html(
+                              // remove nikud if needed
+                              data: state.removeNikud
+                                  ? utils.highLight(
+                                      utils.removeVolwels('$data\n'),
+                                      state.searchText,
+                                    )
+                                  : utils.highLight(
+                                      '$data\n', state.searchText),
+                              style: {
+                                'body': Style(
+                                  fontSize: FontSize(widget.textSize),
+                                  fontFamily: settingsState.fontFamily,
+                                  textAlign: TextAlign.justify,
+                                ),
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                      const Text('\n',
+                          style: TextStyle(fontSize: 0, height: 0)),
+                    ],
+                  );
+                },
               ),
             ),
-            
+          ),
         );
       },
     );

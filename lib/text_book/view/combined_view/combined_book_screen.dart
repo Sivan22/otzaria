@@ -19,7 +19,6 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 
-
 class CombinedView extends StatefulWidget {
   CombinedView({
     super.key,
@@ -46,37 +45,51 @@ class _CombinedViewState extends State<CombinedView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
 
-/// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת
-List<ctx.MenuItem<void>> _buildGroup(
-  List<String>? group,
-  TextBookLoaded st,
-) {
-  if (group == null || group.isEmpty) return const [];
+  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת
+  List<ctx.MenuItem<void>> _buildGroup(
+    List<String>? group,
+    TextBookLoaded st,
+  ) {
+    if (group == null || group.isEmpty) return const [];
 
-  return group
-      .map(
-        (title) => ctx.MenuItem<void>(
-          label: title,
-          onSelected: () {
-            final current = List<String>.from(st.activeCommentators);
-            current.contains(title)
-                ? current.remove(title)
-                : current.add(title);
-            context.read<TextBookBloc>().add(UpdateCommentators(current));
-          },
-        ),
-      )
-      .toList();
-}
+    return group
+        .map(
+          (title) => ctx.MenuItem<void>(
+            label: title,
+            onSelected: () {
+              final current = List<String>.from(st.activeCommentators);
+              current.contains(title)
+                  ? current.remove(title)
+                  : current.add(title);
+              context.read<TextBookBloc>().add(UpdateCommentators(current));
+            },
+          ),
+        )
+        .toList();
+  }
 
   ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
+
+    // 2. זיהוי פרשנים שכבר שויכו לקבוצה
+    final Set<String> alreadyListed = {
+      ...state.rishonim,
+      ...state.acharonim,
+      ...state.modernCommentators,
+    };
+
+    // 3. יצירת רשימה של פרשנים שלא שויכו לאף קבוצה
+    final List<String> ungrouped = state.availableCommentators
+        .where((c) => !alreadyListed.contains(c))
+        .toList();
+
     return ctx.ContextMenu(
-      // 2. הגדרת הגובה המקסימלי ל-70% מגובה המסך
+      // 4. הגדרת הגובה המקסימלי ל-70% מגובה המסך
       maxHeight: screenHeight * 0.9,
       entries: [
-        ctx.MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
+        ctx.MenuItem(
+            label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
           label: 'פרשנות',
           items: [
@@ -99,20 +112,31 @@ List<ctx.MenuItem<void>> _buildGroup(
             const ctx.MenuDivider(),
             // ראשונים
             ..._buildGroup(state.rishonim, state),
-            
+
             // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
-            if(state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
-                const ctx.MenuDivider(),
+            if (state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
+              const ctx.MenuDivider(),
 
             // אחרונים
             ..._buildGroup(state.acharonim, state),
 
             // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
-            if(state.acharonim.isNotEmpty && state.modernCommentators.isNotEmpty)
-                const ctx.MenuDivider(),
-                
+            if (state.acharonim.isNotEmpty &&
+                state.modernCommentators.isNotEmpty)
+              const ctx.MenuDivider(),
+
             // מחברי זמננו
             ..._buildGroup(state.modernCommentators, state),
+
+            // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
+            if ((state.rishonim.isNotEmpty ||
+                    state.acharonim.isNotEmpty ||
+                    state.modernCommentators.isNotEmpty) &&
+                ungrouped.isNotEmpty)
+              const ctx.MenuDivider(),
+
+            // הוסף את רשימת הפרשנים הלא משויכים
+            ..._buildGroup(ungrouped, state),
           ],
         ),
         ctx.MenuItem.submenu(
@@ -129,8 +153,10 @@ List<ctx.MenuItem<void>> _buildGroup(
                         ),
                         index: link.index2 - 1,
                         openLeftPane:
-                            (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                                (Settings.getValue<bool>('key-default-sidebar-open') ??
+                            (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false) ||
+                                (Settings.getValue<bool>(
+                                        'key-default-sidebar-open') ??
                                     false),
                       ),
                     );
@@ -161,13 +187,14 @@ List<ctx.MenuItem<void>> _buildGroup(
           curve: 10.0,
           accelerationFactor: 5,
           scrollController: state.scrollOffsetController,
-            child: SelectionArea(
-              key: _selectionKey,
-              contextMenuBuilder: (_, __) => const SizedBox.shrink(),
-              child: ctx.ContextMenuRegion( // <-- ה-Region היחיד, במיקום הנכון
-                contextMenu: _buildContextMenu(state),
-                child: buildOuterList(state),
-              ),
+          child: SelectionArea(
+            key: _selectionKey,
+            contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+            child: ctx.ContextMenuRegion(
+              // <-- ה-Region היחיד, במיקום הנכון
+              contextMenu: _buildContextMenu(state),
+              child: buildOuterList(state),
+            ),
           ),
         );
       },
