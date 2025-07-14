@@ -37,6 +37,7 @@ Future<bool> hasTopic(String title, String topic) async {
 String replaceHolyNames(String s) {
   s = s
       .replaceAll("יהוה", "יקוק")
+      .replaceAll("יהֹוָ֥ה", "יקׂוָ֥ק")
       .replaceAll("יְהֹוָה", "יְקׂוָק")
       .replaceAll("יְהֹוָ֤ה", "יְקׂוָ֤ק")
       .replaceAll("יְהֹוָ֨ה", "יְקׂוָ֨ק")
