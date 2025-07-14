@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:convert';
+import 'dart:async';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_event.dart' hide UpdateFontSize;
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
@@ -48,6 +50,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   final FocusNode textSearchFocusNode = FocusNode();
   final FocusNode navigationSearchFocusNode = FocusNode();
   late TabController tabController;
+  late final ValueNotifier<double> _sidebarWidth;
+  late final StreamSubscription<SettingsState> _settingsSub;
 
   String? encodeQueryParameters(Map<String, String> params) {
     return params.entries
@@ -71,7 +75,14 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         length: 4, // יש 4 לשוניות
         vsync: this,
         initialIndex: initialIndex,
-      );   
+      );
+
+      _sidebarWidth = ValueNotifier<double>(
+          Settings.getValue<double>('key-sidebar-width', defaultValue: 300)!);
+      _settingsSub = context
+          .read<SettingsBloc>()
+          .stream
+          .listen((state) => _sidebarWidth.value = state.sidebarWidth);
     }
 
   @override
@@ -79,6 +90,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     tabController.dispose();
     textSearchFocusNode.dispose();
     navigationSearchFocusNode.dispose();
+    _sidebarWidth.dispose();
+    _settingsSub.cancel();
     super.dispose();
   }
 
@@ -699,6 +712,24 @@ $selectedText
           : Row(
               children: [
                 _buildTabBar(state),
+                if (state.showLeftPane)
+                  MouseRegion(
+                    cursor: SystemMouseCursors.resizeColumn,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragUpdate: (details) {
+                        final newWidth =
+                            (_sidebarWidth.value + details.delta.dx).clamp(200.0, 600.0);
+                        _sidebarWidth.value = newWidth;
+                      },
+                      onHorizontalDragEnd: (_) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateSidebarWidth(_sidebarWidth.value));
+                      },
+                      child: const VerticalDivider(width: 4),
+                    ),
+                  ),                
                 Expanded(child: _buildHTMLViewer(state)),
               ],
             ),
@@ -793,7 +824,8 @@ $selectedText
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       child: SizedBox(
-        width: state.showLeftPane ? 400 : 0,
+        // קובעים את הרוחב כדי שהאנימציה תפעל על שינוי הרוחב
+        width: state.showLeftPane ? _sidebarWidth.value : 0,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
           child: Column(

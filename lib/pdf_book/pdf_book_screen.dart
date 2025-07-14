@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
@@ -7,6 +8,8 @@ import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/pdf_book/pdf_page_number_dispaly.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_event.dart';
+import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/utils/open_book.dart';
 import 'package:otzaria/utils/ref_helper.dart';
@@ -45,6 +48,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   int _currentLeftPaneTabIndex = 0;
   final FocusNode _searchFieldFocusNode = FocusNode();
   final FocusNode _navigationFieldFocusNode = FocusNode();
+  late final ValueNotifier<double> _sidebarWidth;
+  late final StreamSubscription<SettingsState> _settingsSub;
  
   Future<void> _runInitialSearchIfNeeded() async {
     final controller = widget.tab.searchController;
@@ -121,6 +126,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     // 3. שמור את הבקר בטאב כדי ששאר חלקי האפליקציה יוכלו להשתמש בו.
     widget.tab.pdfViewerController = pdfController;
   
+      _sidebarWidth = ValueNotifier<double>(
+        Settings.getValue<double>('key-sidebar-width', defaultValue: 300)!);
+
+    _settingsSub =
+        context.read<SettingsBloc>().stream.listen((state) {
+      _sidebarWidth.value = state.sidebarWidth;
+    });
+
     // -- שאר הקוד של initState נשאר כמעט זהה --
     pdfController.addListener(_onPdfViewerControllerUpdate);
   
@@ -188,6 +201,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     _leftPaneTabController?.dispose();
     _searchFieldFocusNode.dispose();
     _navigationFieldFocusNode.dispose();
+    _sidebarWidth.dispose();
+    _settingsSub.cancel();
     super.dispose();
   }
  
@@ -321,6 +336,28 @@ class _PdfBookScreenState extends State<PdfBookScreen>
             body: Row(
               children: [
                 _buildLeftPane(),
+                ValueListenableBuilder(
+                  valueListenable: widget.tab.showLeftPane,
+                  builder: (context, show, child) => show
+                      ? MouseRegion(
+                          cursor: SystemMouseCursors.resizeColumn,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onHorizontalDragUpdate: (details) {
+                              final newWidth = (_sidebarWidth.value +
+                                      details.delta.dx)
+                                  .clamp(200.0, 600.0);
+                              _sidebarWidth.value = newWidth;
+                            },
+                            onHorizontalDragEnd: (_) {
+                              context.read<SettingsBloc>().add(
+                                  UpdateSidebarWidth(_sidebarWidth.value));
+                            },
+                            child: const VerticalDivider(width: 4),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),                
                 Expanded(
                   child: NotificationListener<UserScrollNotification>(
                     onNotification: (notification) {
@@ -451,9 +488,14 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       duration: const Duration(milliseconds: 300),
       child: ValueListenableBuilder(
         valueListenable: widget.tab.showLeftPane,
-        builder: (context, showLeftPane, child) => SizedBox(
-          width: showLeftPane ? 300 : 0,
-          child: child!,
+        builder: (context, showLeftPane, child) =>
+            ValueListenableBuilder<double>(
+          valueListenable: _sidebarWidth,
+          builder: (context, width, child2) => SizedBox(
+            width: showLeftPane ? width : 0,
+            child: child2!,
+          ),
+          child: child,
         ),
         child: Container(
           color: Theme.of(context).colorScheme.surface,
