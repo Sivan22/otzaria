@@ -289,6 +289,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
               content: Text(
                 bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת',
               ),
+              duration: const Duration(milliseconds: 350),
             ),
           );
         }

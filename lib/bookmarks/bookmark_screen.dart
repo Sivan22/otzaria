@@ -83,6 +83,7 @@ class BookmarkView extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('כל הסימניות נמחקו'),
+                                duration: const Duration(milliseconds: 350),
                           ),
                         );
                       },

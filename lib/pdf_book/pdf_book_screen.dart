@@ -257,6 +257,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת'),
+                              duration: const Duration(milliseconds: 350),
                         ),
                       );
                     }
