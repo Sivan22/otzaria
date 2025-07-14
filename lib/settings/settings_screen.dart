@@ -145,6 +145,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateDarkMode(value));
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       ColorPickerSettingsTile(
                         title: 'צבע בסיס',
@@ -283,6 +284,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateReplaceHolyNames(value));
                         },
+                       activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-teamim',
@@ -296,6 +298,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateShowTeamim(value));
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-default-nikud',
@@ -309,6 +312,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateDefaultRemoveNikud(value));
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-remove-nikud-tanach',
@@ -322,14 +326,16 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateRemoveNikudFromTanach(value));
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
-                      const SwitchSettingsTile(
+                      SwitchSettingsTile(
                         settingKey: 'key-splited-view',
                         title: 'ברירת המחדל להצגת המפרשים',
                         enabledLabel: 'המפרשים יוצגו לצד הטקסט',
                         disabledLabel: 'המפרשים יוצגו מתחת הטקסט',
                         leading: Icon(Icons.vertical_split),
                         defaultValue: false,
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-default-sidebar-open',
@@ -344,6 +350,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateDefaultSidebarOpen(value));
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-pin-sidebar',
@@ -362,6 +369,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                 .add(const UpdateDefaultSidebarOpen(true));
                           }
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-use-fast-search',
@@ -376,6 +384,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateUseFastSearch(value));
                         },
+                       activeColor: Theme.of(context).cardColor,                        
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-external-books',
@@ -394,7 +403,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           context
                               .read<SettingsBloc>()
                               .add(UpdateShowOtzarHachochma(value));
-                        }
+                        },
+                       activeColor: Theme.of(context).cardColor,                      
                       ),
                     ]),
                   ],
@@ -404,21 +414,23 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleAlignment: Alignment.centerRight,
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
-                    const SwitchSettingsTile(
+                    SwitchSettingsTile(
                       title: 'סינכרון אוטומטי',
                       leading: Icon(Icons.sync),
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
+                       activeColor: Theme.of(context).cardColor,                        
                     ),
-                    const SwitchSettingsTile(
+                    SwitchSettingsTile(
                       title: 'סנכרון ספרי דיקטה',
                       leading: Icon(Icons.book),
                       settingKey: 'key-sync-dicta-books',
                       defaultValue: false,
                       enabledLabel: 'ספרי דיקטה יסונכרנו יחד עם הספרייה',
                       disabledLabel: 'לא יסונכרנו ספרי דיקטה',
+                       activeColor: Theme.of(context).cardColor,                        
                     ),
                     _buildColumns(2, [
                       BlocBuilder<IndexingBloc, IndexingState>(
@@ -512,6 +524,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .add(StartIndexing(await library));
                         }
                       },
+                       activeColor: Theme.of(context).cardColor,
                     ),
                     ]),
                     if (!(Platform.isAndroid || Platform.isIOS))
@@ -549,13 +562,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           },
                         ),
                       ]),
-                    const SwitchSettingsTile(
+                    SwitchSettingsTile(
                       settingKey: 'key-dev-channel',
                       title: 'עדכון לגרסאות מפתחים',
                       enabledLabel:
                           'קבלת עדכונים על גרסאות בדיקה, ייתכנו באגים וחוסר יציבות',
                       disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
                       leading: Icon(Icons.bug_report),
+                       activeColor: Theme.of(context).cardColor,                        
                     ),
                     FutureBuilder(
                         future: PackageInfo.fromPlatform(),
