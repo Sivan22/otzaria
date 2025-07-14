@@ -14,6 +14,7 @@ import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'dart:async';
 
 class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({
@@ -196,21 +197,38 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             .add(UpdateFontFamily(value));
                       },
                     ),
-                    SliderSettingsTile(
-                      title: 'רוחב השוליים בצידי הטקסט',
-                      settingKey: 'key-padding-size',
-                      defaultValue: state.paddingSize,
-                      min: 0,
-                      max: 500,
-                      step: 2,
-                      leading: const Icon(Icons.horizontal_distribute),
-                      decimalPrecision: 0,
-                      onChange: (value) {
-                        context
-                            .read<SettingsBloc>()
-                            .add(UpdatePaddingSize(value));
-                      },
-                    ),
+SettingsContainer(
+  children: <Widget>[
+    Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4, left: 16, right: 16),
+      child: Row(
+        children: [
+          const Icon(Icons.horizontal_distribute),
+          const SizedBox(width: 16),
+          Text(
+            'רוחב השוליים בצידי הטקסט',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16),
+          ),
+        ],
+      ),
+    ),
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: MarginSliderPreview(
+        initial: Settings.getValue<double>('key-padding-size', defaultValue: state.paddingSize)!,
+        min: 0,
+        max: 500,
+        step: 2,
+        onChanged: (v) {
+            // הלוגיקה לשמירת הערך נשארת זהה ומדויקת
+            Settings.setValue<double>('key-padding-size', v);
+            context.read<SettingsBloc>().add(UpdatePaddingSize(v));
+            setState(() {});
+        },
+      ),
+    ),
+  ],
+),
                   ],
                 ),
                 Platform.isAndroid
@@ -597,6 +615,227 @@ class _MySettingsScreenState extends State<MySettingsScreen>
           );
         },
       ),
+    );
+  }
+}
+
+/// Slider סימטרי עם תצוגה חיה לרוחב השוליים
+class MarginSliderPreview extends StatefulWidget {
+  final double initial;
+  final double min;
+  final double max;
+  final int step;
+  final ValueChanged<double> onChanged;
+
+  const MarginSliderPreview({
+    super.key,
+    required this.initial,
+    this.min = 0,
+    this.max = 500,
+    this.step = 2,
+    required this.onChanged,
+  });
+
+  @override
+  State<MarginSliderPreview> createState() => _MarginSliderPreviewState();
+}
+
+class _MarginSliderPreviewState extends State<MarginSliderPreview> {
+  late double _margin;
+  bool _showPreview = false;
+  Timer? _disappearTimer;
+
+  // משתנים לעיצוב כדי שיהיה קל לשנות
+  final double thumbSize = 20.0; // גודל הידית
+  final double trackHeight = 4.0; // גובה הפס
+  final double widgetHeight = 50.0; // גובה כל הווידג'ט
+
+  @override
+  void initState() {
+    super.initState();
+    _margin = widget.initial.clamp(widget.min, widget.max / 2);
+  }
+
+  @override
+  void dispose() {
+    _disappearTimer?.cancel();
+    super.dispose();
+  }
+
+  void _handleDragStart() {
+    _disappearTimer?.cancel();
+    setState(() => _showPreview = true);
+  }
+
+  void _handleDragEnd() {
+    _disappearTimer?.cancel();
+    _disappearTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _showPreview = false);
+    });
+  }
+
+  // פונקציה לבניית הידית כדי למנוע כפילות קוד
+  Widget _buildThumb({required bool isLeft}) {
+    return GestureDetector(
+      onPanUpdate: (details) {
+        setState(() {
+          double newMargin = isLeft
+              ? _margin + details.delta.dx
+              : _margin - details.delta.dx;
+          
+          // מגבילים את המרחב לפי רוחב הווידג'ט והגדרות המשתמש
+          final maxWidth = (context.findRenderObject() as RenderBox).size.width;
+          _margin = newMargin.clamp(widget.min, maxWidth / 2).clamp(widget.min, widget.max);
+        });
+        widget.onChanged(_margin);
+      },
+      onPanStart: (_) => _handleDragStart(),
+      onPanEnd: (_) => _handleDragEnd(),
+      child: Container(
+        width: thumbSize * 2, // אזור לחיצה גדול יותר מהנראות
+        height: thumbSize * 2,
+        color: Colors.transparent, // אזור הלחיצה שקוף
+        alignment: Alignment.center,
+        child: Container(
+            // --- שינוי 1: עיצוב הידית מחדש ---
+            width: thumbSize,
+            height: thumbSize,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary, // צבע ראשי
+              shape: BoxShape.circle,
+              boxShadow: kElevationToShadow[1], // הצללה סטנדרטית של פלאטר
+            ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fullWidth = constraints.maxWidth;
+        final previewTextWidth = (fullWidth - 2 * _margin).clamp(0.0, fullWidth);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ------------  הסליידר המתוקן  -------------
+            SizedBox(
+              // --- שינוי 2: הגדלת גובה הרכיב לנוחות ---
+              height: widgetHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // קו הרקע
+                  Container(
+                    height: trackHeight,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(trackHeight / 2),
+                    ),
+                  ),
+
+                  // הקו הפעיל (מייצג את רוחב הטקסט)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: _margin),
+                    child: Container(
+                      height: trackHeight,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(trackHeight / 2),
+                      ),
+                    ),
+                  ),
+                  
+                  // הצגת הערך מעל הידית (רק בזמן תצוגה)
+                  if (_showPreview)
+                    Positioned(
+                      left: _margin - 10,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _margin.toStringAsFixed(0),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  
+                  if (_showPreview)
+                    Positioned(
+                      right: _margin - 10,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _margin.toStringAsFixed(0),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12),
+                        ),
+                      ),
+                    ),
+
+                  // הכפתור השמאלי
+                  Positioned(
+                    left: _margin - (thumbSize),
+                    child: _buildThumb(isLeft: true),
+                  ),
+                  
+                  // הכפתור הימני
+                  Positioned(
+                    right: _margin - (thumbSize),
+                    child: _buildThumb(isLeft: false),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+
+            // ------------  תצוגה מקדימה עם אנימציה חלקה  -------------
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _showPreview ? 1.0 : 0.0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                height: _showPreview ? 60 : 0,
+                // ... שאר הקוד של התצוגה המקדימה נשאר אותו דבר ...
+                curve: Curves.easeInOut,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor.withOpacity(0.5),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: _margin),
+                child: SizedBox(
+                  width: previewTextWidth,
+                  child: Text(
+                    'מאימתי קורין את שמע בערבין משעה שהכהנים נכנסים לאכול בתרומתן עד סוף האשמורה הראשונה דברי רבי אליעזר וחכמים אומרים עד חצות רבן גמליאל אומר עד שיעלה עמוד השחר מעשה ובאו בניו מבית המשתה אמרו לו לא קרינו את שמע אמר להם אם לא עלה עמוד השחר חייבין אתם לקרות ולא זו בלבד אמרו אלא כל מה שאמרו חכמים עד חצות מצותן עד שיעלה עמוד השחר',
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    textDirection: TextDirection.rtl,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

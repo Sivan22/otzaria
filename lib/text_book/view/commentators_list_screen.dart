@@ -82,8 +82,9 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
       merged.add(_ungroupedTitle); // הוסף כותרת לשאר
       merged.addAll(ungrouped);
     }
-  
+      if (mounted) {
     setState(() => commentatorsList = merged);
+    }
   }
 
 
