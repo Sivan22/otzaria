@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/models/books.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
+import 'package:otzaria/search/view/full_text_settings_widgets.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
-import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
-import 'package:otzaria/search/view/full_text_settings_widgets.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class TantivySearchResults extends StatefulWidget {
   final SearchingTab tab;
@@ -72,54 +74,69 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                   itemCount: state.results.length,
                   itemBuilder: (context, index) {
                     final result = state.results[index];
-                    return ListTile(
-                      leading:
-                          result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
-                      onTap: () {
-                        if (result.isPdf) {
-                          context.read<TabsBloc>().add(AddTab(
-                                PdfBookTab(
-                                  book: PdfBook(
-                                      title: result.title,
-                                      path: result.filePath),
-                                  pageNumber: result.segment.toInt() + 1,
-                                  searchText: widget.tab.queryController.text,
-                                  openLeftPane:
-                                      (Settings.getValue<bool>('key-pin-sidebar') ??
+                    return BlocBuilder<SettingsBloc, SettingsState>(
+                      builder: (context, settingsState) {
+                        String titleText =
+                            '[תוצאה ${index + 1}] ${result.reference}';
+                        String snippet = result.text;
+                        if (settingsState.replaceHolyNames) {
+                          titleText = utils.replaceHolyNames(titleText);
+                          snippet = utils.replaceHolyNames(snippet);
+                        }
+                        return ListTile(
+                          leading: result.isPdf
+                              ? const Icon(Icons.picture_as_pdf)
+                              : null,
+                          onTap: () {
+                            if (result.isPdf) {
+                              context.read<TabsBloc>().add(AddTab(
+                                    PdfBookTab(
+                                      book: PdfBook(
+                                          title: result.title,
+                                          path: result.filePath),
+                                      pageNumber: result.segment.toInt() + 1,
+                                      searchText:
+                                          widget.tab.queryController.text,
+                                      openLeftPane: (Settings.getValue<bool>(
+                                                  'key-pin-sidebar') ??
                                               false) ||
                                           (Settings.getValue<bool>(
                                                   'key-default-sidebar-open') ??
                                               false),
-                                ),
-                              ));
-                        } else {
-                          context.read<TabsBloc>().add(AddTab(
-                                TextBookTab(
-                                    book: TextBook(
-                                      title: result.title,
                                     ),
-                                    index: result.segment.toInt(),
-                                    searchText:
-                                        widget.tab.queryController.text,
-                                    openLeftPane:
-                                        (Settings.getValue<bool>('key-pin-sidebar') ??
+                                  ));
+                            } else {
+                              context.read<TabsBloc>().add(AddTab(
+                                    TextBookTab(
+                                        book: TextBook(
+                                          title: result.title,
+                                        ),
+                                        index: result.segment.toInt(),
+                                        searchText:
+                                            widget.tab.queryController.text,
+                                        openLeftPane: (Settings.getValue<bool>(
+                                                    'key-pin-sidebar') ??
                                                 false) ||
                                             (Settings.getValue<bool>(
                                                     'key-default-sidebar-open') ??
                                                 false)),
-                              ));
-                        }
+                                  ));
+                            }
+                          },
+                          title: Text(titleText),
+                          subtitle: Html(data: snippet, style: {
+                            'body': Style(
+                                fontSize: FontSize(
+                                  context.read<SettingsBloc>().state.fontSize,
+                                ),
+                                fontFamily: context
+                                    .read<SettingsBloc>()
+                                    .state
+                                    .fontFamily,
+                                textAlign: TextAlign.justify),
+                          }),
+                        );
                       },
-                      title: Text('[תוצאה ${index + 1}] ${result.reference}'),
-                      subtitle: Html(data: result.text, style: {
-                        'body': Style(
-                            fontSize: FontSize(
-                              context.read<SettingsBloc>().state.fontSize,
-                            ),
-                            fontFamily:
-                                context.read<SettingsBloc>().state.fontFamily,
-                            textAlign: TextAlign.justify),
-                      }),
                     );
                   },
                 ),

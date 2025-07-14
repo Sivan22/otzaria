@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
-import 'package:otzaria/tabs/models/text_tab.dart';
-import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
-import 'package:search_highlight_text/search_highlight_text.dart';
-import 'book_tree_checklist.dart';
-import '../models/legacy_full_text_searcher.dart';
-import '../../tabs/models/tab.dart';
-import '../../text_book/models/search_results.dart';
+import 'package:otzaria/settings/settings_bloc.dart';
+import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/models/tab.dart';
+import 'package:otzaria/tabs/models/text_tab.dart';
+import 'package:otzaria/text_book/models/search_results.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:search_highlight_text/search_highlight_text.dart';
+import '../models/legacy_full_text_searcher.dart';
+import 'book_tree_checklist.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
@@ -36,29 +38,22 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   @override
   void initState() {
     super.initState();
-    // Request focus on search field when the widget is first created
     _requestSearchFieldFocus();
   }
 
   @override
   void didUpdateWidget(TextFileSearchScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Request focus when switching back to this tab
     _requestSearchFieldFocus();
   }
 
   void _requestSearchFieldFocus() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && focusNode.canRequestFocus) {
-        // Check if this is a legacy search by checking if current tab contains this searcher
         final tabsState = context.read<TabsBloc>().state;
-        if (tabsState.hasOpenTabs && 
+        if (tabsState.hasOpenTabs &&
             tabsState.currentTabIndex < tabsState.tabs.length) {
-          // For legacy search, we need to check if we're in the active tab differently
-          // since legacy search doesn't have a direct tab reference
           final currentTab = tabsState.tabs[tabsState.currentTabIndex];
-          // Only request focus if current tab is a searching tab 
-          // (legacy search is only used when not using fast search)
           if (currentTab.runtimeType.toString().contains('SearchingTab')) {
             focusNode.requestFocus();
           }
@@ -68,7 +63,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   }
 
   void _onNavigationChanged(NavigationState state) {
-    // Request focus when navigating to search screen
     if (state.currentScreen == Screen.search) {
       _requestSearchFieldFocus();
     }
@@ -91,8 +85,8 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
       hintText: "הקלד את הטקסט והקש אנטר או לחץ על סמל החיפוש",
       suffixIcon: isSearching
           ? Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(child: Text(widget.searcher.queryController.text)),
                 IconButton(
                   icon: const Icon(Icons.cancel),
                   onPressed: () {
@@ -105,7 +99,10 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
                     });
                   },
                 ),
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               ],
             )
           : IconButton(
@@ -176,9 +173,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
   }
 
   Widget buildSearchProgressBar(searchResults) {
-    // show progress bar if search is in progress
-    // max value is widget.searcher.booksToSearch.length
-    // current value is widget.searcher.bookIndex
     return SizedBox(
         height: 3.0,
         child: LinearProgressIndicator(
@@ -186,7 +180,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
                   widget.searcher.booksToSearch.isNotEmpty
               ? widget.searcher.bookIndex / widget.searcher.booksToSearch.length
               : 0.0,
-          //backgroundColor: Colors.grey,
           borderRadius: const BorderRadius.all(Radius.circular(10)),
         ));
   }
@@ -208,7 +201,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     return searchResults.isEmpty &&
             !widget.searcher.isSearching.value &&
             widget.searcher.bookIndex == widget.searcher.booksToSearch.length
-        // return empty list if no search results
         ? const Expanded(
             child: Center(
               child: Text(
@@ -219,7 +211,6 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
               ),
             ),
           )
-        // return list of search results if there are any
         : Expanded(
             child: buildSearchResultsList(searchResults),
           );
@@ -230,27 +221,37 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
       itemCount: searchResults.length,
       itemBuilder: (context, index) {
         final result = searchResults[index];
-        return ListTile(
-          title: Text(
-            result.address,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: SearchHighlightText(
-            result.snippet,
-            searchText: result.query,
-            textAlign: TextAlign.justify,
-          ),
-          onTap: () {
-            widget.openBookCallback(
-              TextBookTab(
-                book: TextBook(title: utils.getTitleFromPath(result.path)),
-                index: result.index,
+        return BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settingsState) {
+            String header = result.address;
+            String snippet = result.snippet;
+            if (settingsState.replaceHolyNames) {
+              header = utils.replaceHolyNames(header);
+              snippet = utils.replaceHolyNames(snippet);
+            }
+            return ListTile(
+              title: Text(
+                header,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: SearchHighlightText(
+                snippet,
                 searchText: result.query,
-                openLeftPane:
-                    (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                textAlign: TextAlign.justify,
+              ),
+              onTap: () {
+                widget.openBookCallback(
+                  TextBookTab(
+                    book: TextBook(title: utils.getTitleFromPath(result.path)),
+                    index: result.index,
+                    searchText: result.query,
+                    openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ??
+                            false) ||
                         (Settings.getValue<bool>('key-default-sidebar-open') ??
                             false),
-              ),
+                  ),
+                );
+              },
             );
           },
         );

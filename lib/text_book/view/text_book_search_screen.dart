@@ -1,13 +1,16 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/settings/settings_state.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:search_highlight_text/search_highlight_text.dart';
+import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
-import 'package:otzaria/text_book/models/text_book_searcher.dart';
-import 'package:flutter/material.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:search_highlight_text/search_highlight_text.dart';
 import 'package:otzaria/text_book/models/search_results.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/text_book/models/text_book_searcher.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
 
 class _GroupedResultItem {
   final String? header;
@@ -28,7 +31,8 @@ class TextBookSearchView extends StatefulWidget {
       required this.data,
       required this.scrollControler,
       required this.focusNode,
-      required this.closeLeftPaneCallback, required String initialQuery})
+      required this.closeLeftPaneCallback,
+      required String initialQuery})
       : super(key: key);
 
   @override
@@ -47,23 +51,21 @@ class TextBookSearchViewState extends State<TextBookSearchView>
     super.initState();
     markdownTextSearcher = TextBookSearcher(widget.data);
     markdownTextSearcher.addListener(_searchResultUpdated);
-    
-    // מעדכנים את תיבת הטקסט עם החיפוש שהגיע מבחוץ
-    searchTextController.text = (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
-    
+
+    searchTextController.text =
+        (context.read<TextBookBloc>().state as TextBookLoaded).searchText;
+
     scrollControler = widget.scrollControler;
     widget.focusNode.requestFocus();
-  
-    // אנחנו קוראים לפונקציה שתפעיל את החיפוש רגע אחרי שהמסך מוכן
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _runInitialSearch();
     });
   }
 
-    // פונקציה מתוקנת שמפעילה את החיפוש הראשוני
-    void _runInitialSearch() {
-      _searchTextUpdated();
-    }
+  void _runInitialSearch() {
+    _searchTextUpdated();
+  }
 
   void _searchTextUpdated() {
     markdownTextSearcher.startTextSearch(searchTextController.text);
@@ -110,7 +112,6 @@ class TextBookSearchViewState extends State<TextBookSearchView>
           ),
         ),
       ),
-      // START --- Added Code for Result Count
       if (searchResults.isNotEmpty)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
@@ -120,12 +121,12 @@ class TextBookSearchViewState extends State<TextBookSearchView>
               'נמצאו ${searchResults.length} תוצאות',
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey[700],
+                color: Theme.of(context).textTheme.bodySmall?.color ??
+                    Colors.grey[700],
               ),
             ),
           ),
         ),
-      // END --- Added Code for Result Count
       Expanded(
         child: Builder(builder: (context) {
           final List<_GroupedResultItem> items = [];
@@ -148,32 +149,49 @@ class TextBookSearchViewState extends State<TextBookSearchView>
             itemBuilder: (context, index) {
               final item = items[index];
               if (item.isHeader) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  child: Text(
-                    item.header!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                    textDirection: TextDirection.rtl,
-                  ),
+                return BlocBuilder<SettingsBloc, SettingsState>(
+                  builder: (context, settingsState) {
+                    String text = item.header!;
+                    if (settingsState.replaceHolyNames) {
+                      text = utils.replaceHolyNames(text);
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 16.0),
+                      child: Text(
+                        text,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    );
+                  },
                 );
               } else {
                 final result = item.result!;
-                return ListTile(
-                    subtitle: SearchHighlightText(result.snippet,
-                        searchText: result.query),
-                    onTap: () {
-                      widget.scrollControler.scrollTo(
-                        index: result.index,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.ease,
-                      );
-                      if (Platform.isAndroid) {
-                        widget.closeLeftPaneCallback();
-                      }
-                    });
+                return BlocBuilder<SettingsBloc, SettingsState>(
+                  builder: (context, settingsState) {
+                    String snippet = result.snippet;
+                    if (settingsState.replaceHolyNames) {
+                      snippet = utils.replaceHolyNames(snippet);
+                    }
+                    return ListTile(
+                        subtitle: SearchHighlightText(snippet,
+                            searchText: result.query),
+                        onTap: () {
+                          widget.scrollControler.scrollTo(
+                            index: result.index,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.ease,
+                          );
+                          if (Platform.isAndroid) {
+                            widget.closeLeftPaneCallback();
+                          }
+                        });
+                  },
+                );
               }
             },
           );
