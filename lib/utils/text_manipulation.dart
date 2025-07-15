@@ -38,7 +38,9 @@ String replaceHolyNames(String s) {
   s = s
       .replaceAll("יהוה", "יקוק")
       .replaceAll("יהֹוָ֥ה", "יקׂוָ֥ק")
+      .replaceAll("ֽיהֹוָ֑ה", "ֽיקׂוָ֑ק")
       .replaceAll("יְהֹוָה", "יְקׂוָק")
+      .replaceAll("יהֹוָ֑ה", "יקׂוָ֑ק")
       .replaceAll("יְהֹוָ֤ה", "יְקׂוָ֤ק")
       .replaceAll("יְהֹוָ֨ה", "יְקׂוָ֨ק")
       .replaceAll("יְהֹוָ֥ה", "יְקׂוָ֥ק")
@@ -53,12 +55,16 @@ String replaceHolyNames(String s) {
       .replaceAll("יהֹוָ֗ה", "יקׂוָ֗ק")
       .replaceAll("יְהֹוָ֞ה", "יְקׂוָ֞ק")
       .replaceAll("יהֹוָֽה", "יקׂוָֽק")
+      .replaceAll("ֽיהֹוָ֞ה", "ֽיקֹוָ֞ק")
       .replaceAll("יהֹוָה֮", "יקׂוָק֮")
       .replaceAll("ַיהֹוָ֥ה", "ַיקׂוָ֥ק")
       .replaceAll("יְהֹוָ֔ה", "יְקׂוָ֔ק")
+      .replaceAll("יהֹוָ֞ה", "ֽיקׂוָ֞ק")
       .replaceAll("יְהֹוָ֗ה", "יְקׂוָ֗ק")
       .replaceAll("ַיהֹוָ֔ה", "ַיקׂוָ֔ק")
       .replaceAll("יֱהֹוִֽה", "יֱקׂוִֽק")
+      .replaceAll("יהֹוָ֖ה", "יקׂוָ֖ק")
+      .replaceAll("ַֽיהֹוָ֔ה", "ַֽיקׂוָ֔ק")
       .replaceAll("יְהֹוָ֑ה", "יְקׂוָ֑ק");
   return s;
 }
