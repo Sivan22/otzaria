@@ -60,10 +60,14 @@ class PdfBookTab extends OpenedTab {
   ///
   /// The JSON map should have 'path' and 'pageNumber' keys.
   factory PdfBookTab.fromJson(Map<String, dynamic> json) {
+    final bool shouldOpenLeftPane =
+        (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false);
     return PdfBookTab(
         book:
             PdfBook(title: getTitleFromPath(json['path']), path: json['path']),
-        pageNumber: json['pageNumber']);
+        pageNumber: json['pageNumber'],
+        openLeftPane: shouldOpenLeftPane);
   }
 
   /// Converts the [PdfBookTab] instance into a JSON map.
