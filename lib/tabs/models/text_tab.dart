@@ -4,6 +4,7 @@ import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/tab.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 /// Represents a tab that contains a text book.
 ///
@@ -58,6 +59,10 @@ class TextBookTab extends OpenedTab {
   /// The JSON map should have 'initalIndex', 'title', 'commentaries',
   /// and 'type' keys.
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
+    final bool shouldOpenLeftPane =
+        (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false);
+
     return TextBookTab(
       index: json['initalIndex'],
       book: TextBook(
@@ -65,6 +70,7 @@ class TextBookTab extends OpenedTab {
       ),
       commentators: List<String>.from(json['commentators']),
       splitedView: json['splitedView'],
+      openLeftPane: shouldOpenLeftPane,
     );
   }
 

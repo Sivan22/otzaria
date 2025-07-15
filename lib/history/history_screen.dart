@@ -34,6 +34,10 @@ class HistoryView extends StatelessWidget {
 
     context.read<TabsBloc>().add(AddTab(tab));
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
+    // Close the dialog if this view is displayed inside one
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
