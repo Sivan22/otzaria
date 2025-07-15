@@ -95,11 +95,17 @@ class _CombinedViewState extends State<CombinedView> {
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
+              icon: state.activeCommentators.toSet().containsAll(
+                      state.availableCommentators)
+                  ? Icons.check
+                  : null,              
               onSelected: () {
-                // 1. מפעילים את כל המפרשים הזמינים
+                final allActive = state.activeCommentators.toSet().containsAll(
+                    state.availableCommentators);
                 context.read<TextBookBloc>().add(
                       UpdateCommentators(
-                        List<String>.from(state.availableCommentators),
+                        allActive ? <String>[] : List<String>.from(
+                            state.availableCommentators),
                       ),
                     );
               },
