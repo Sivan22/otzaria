@@ -20,10 +20,18 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
   TextEditingController searchController = TextEditingController();
   List<String> selectedTopics = [];
   List<String> commentatorsList = [];
+  List<String> _rishonim = [];
+  List<String> _acharonim = [];
+  List<String> _modern = [];
+  List<String> _ungrouped = [];
   static const String _rishonimTitle = '__TITLE_RISHONIM__';
   static const String _acharonimTitle = '__TITLE_ACHARONim__';
   static const String _modernTitle = '__TITLE_MODERN__';
   static const String _ungroupedTitle = '__TITLE_UNGROUPED__';
+  static const String _rishonimButton = '__BUTTON_RISHONIM__';
+  static const String _acharonimButton = '__BUTTON_ACHARONIM__';
+  static const String _modernButton = '__BUTTON_MODERN__';
+  static const String _ungroupedButton = '__BUTTON_UNGROUPED__';
 
 
   Future<List<String>> filterGroup(List<String> group) async {
@@ -62,23 +70,32 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
         .where((c) => !alreadyListed.contains(c))
         .toList();
     final ungrouped = await filterGroup(ungroupedRaw);
+
+    _rishonim = rishonim;
+    _acharonim = acharonim;
+    _modern = modern;
+    _ungrouped = ungrouped;
   
     // בניית הרשימה עם כותרות לפני כל קבוצה קיימת
     final List<String> merged = [];
     
     if (rishonim.isNotEmpty) {
+      merged.add(_rishonimButton);
       merged.add(_rishonimTitle); // הוסף כותרת ראשונים
       merged.addAll(rishonim);
     }
     if (acharonim.isNotEmpty) {
+      merged.add(_acharonimButton);
       merged.add(_acharonimTitle); // הוסף כותרת אחרונים
       merged.addAll(acharonim);
     }
     if (modern.isNotEmpty) {
+      merged.add(_modernButton);
       merged.add(_modernTitle); // הוסף כותרת מחברי זמננו
       merged.addAll(modern);
     }
     if (ungrouped.isNotEmpty) {
+      merged.add(_ungroupedButton);
       merged.add(_ungroupedTitle); // הוסף כותרת לשאר
       merged.addAll(ungrouped);
     }
@@ -166,11 +183,11 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                   CheckboxListTile(
                     title: const Text('הצג את כל הפרשנים'), // שמרתי את השינוי שלך
                     value: commentatorsList
-                        .where((e) => !e.startsWith('__TITLE_'))
+                        .where((e) => !e.startsWith('__TITLE_') && !e.startsWith('__BUTTON_'))
                         .every(state.activeCommentators.contains),
                     onChanged: (checked) {
                       final items = commentatorsList
-                          .where((e) => !e.startsWith('__TITLE_'))
+                          .where((e) => !e.startsWith('__TITLE_') && !e.startsWith('__BUTTON_'))
                           .toList();
                       if (checked ?? false) {
                         context.read<TextBookBloc>().add(UpdateCommentators(
@@ -191,6 +208,84 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                     itemBuilder: (context, index) {
                       final item = commentatorsList[index];
           
+                      // בדוק אם הפריט הוא כפתור הצגת קבוצה
+                      if (item == _rishonimButton) {
+                        final allActive =
+                            _rishonim.every(state.activeCommentators.contains);
+                        return CheckboxListTile(
+                          title: const Text('הצג את כל הראשונים'),
+                          value: allActive,
+                          onChanged: (checked) {
+                            final current = List<String>.from(state.activeCommentators);
+                            if (checked ?? false) {
+                              for (final t in _rishonim) {
+                                if (!current.contains(t)) current.add(t);
+                              }
+                            } else {
+                              current.removeWhere(_rishonim.contains);
+                            }
+                            context.read<TextBookBloc>().add(UpdateCommentators(current));
+                          },
+                        );
+                      }
+                      if (item == _acharonimButton) {
+                        final allActive =
+                            _acharonim.every(state.activeCommentators.contains);
+                        return CheckboxListTile(
+                          title: const Text('הצג את כל האחרונים'),
+                          value: allActive,
+                          onChanged: (checked) {
+                            final current = List<String>.from(state.activeCommentators);
+                            if (checked ?? false) {
+                              for (final t in _acharonim) {
+                                if (!current.contains(t)) current.add(t);
+                              }
+                            } else {
+                              current.removeWhere(_acharonim.contains);
+                            }
+                            context.read<TextBookBloc>().add(UpdateCommentators(current));
+                          },
+                        );
+                      }
+                      if (item == _modernButton) {
+                        final allActive =
+                            _modern.every(state.activeCommentators.contains);
+                        return CheckboxListTile(
+                          title: const Text('הצג את כל מחברי זמננו'),
+                          value: allActive,
+                          onChanged: (checked) {
+                            final current = List<String>.from(state.activeCommentators);
+                            if (checked ?? false) {
+                              for (final t in _modern) {
+                                if (!current.contains(t)) current.add(t);
+                              }
+                            } else {
+                              current.removeWhere(_modern.contains);
+                            }
+                            context.read<TextBookBloc>().add(UpdateCommentators(current));
+                          },
+                        );
+                      }
+                      if (item == _ungroupedButton) {
+                        final allActive =
+                            _ungrouped.every(state.activeCommentators.contains);
+                        return CheckboxListTile(
+                          title: const Text('הצג את כל שאר המפרשים'),
+                          value: allActive,
+                          onChanged: (checked) {
+                            final current = List<String>.from(state.activeCommentators);
+                            if (checked ?? false) {
+                              for (final t in _ungrouped) {
+                                if (!current.contains(t)) current.add(t);
+                              }
+                            } else {
+                              current.removeWhere(_ungrouped.contains);
+                            }
+                            context.read<TextBookBloc>().add(UpdateCommentators(current));
+                          },
+                        );
+                      }
+
                       // בדוק אם הפריט הוא כותרת
                       if (item.startsWith('__TITLE_')) {
                         String titleText = '';
