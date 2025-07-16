@@ -80,23 +80,23 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
     final List<String> merged = [];
     
     if (rishonim.isNotEmpty) {
-      merged.add(_rishonimButton);
       merged.add(_rishonimTitle); // הוסף כותרת ראשונים
+      merged.add(_rishonimButton);
       merged.addAll(rishonim);
     }
     if (acharonim.isNotEmpty) {
-      merged.add(_acharonimButton);
       merged.add(_acharonimTitle); // הוסף כותרת אחרונים
+      merged.add(_acharonimButton);
       merged.addAll(acharonim);
     }
     if (modern.isNotEmpty) {
-      merged.add(_modernButton);
       merged.add(_modernTitle); // הוסף כותרת מחברי זמננו
+      merged.add(_modernButton);
       merged.addAll(modern);
     }
     if (ungrouped.isNotEmpty) {
-      merged.add(_ungroupedButton);
       merged.add(_ungroupedTitle); // הוסף כותרת לשאר
+      merged.add(_ungroupedButton);
       merged.addAll(ungrouped);
     }
       if (mounted) {
