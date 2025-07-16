@@ -39,6 +39,13 @@ class ReportedErrorData {
       {required this.selectedText, required this.errorDetails});
 }
 
+/// פעולה שנבחרה בדיאלוג האישור.
+enum ReportAction {
+  cancel,
+  sendEmail,
+  saveForLater,
+}
+
 class TextBookViewerBloc extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
   final TextBookTab tab;
@@ -60,6 +67,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   late TabController tabController;
   late final ValueNotifier<double> _sidebarWidth;
   late final StreamSubscription<SettingsState> _settingsSub;
+  static const String _reportFileName = 'דיווח שגיאות בספרים.txt';
+  static const String _reportSeparator = '==============================';
+  static const String _fallbackMail = 'otzaria.200@gmail.com';
 
   String? encodeQueryParameters(Map<String, String> params) {
     return params.entries
@@ -466,44 +476,56 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     if (reportData == null) return; // בוטל או לא נבחר טקסט
     if (!mounted) return;
 
-    final shouldProceed = await _showConfirmationDialog(context, reportData);
+    final ReportAction? action =
+        await _showConfirmationDialog(context, reportData);
 
-    if (shouldProceed != true) return;
+    if (action == null || action == ReportAction.cancel) return;
 
-    final emailAddress =
-        bookDetails['תיקיית המקור']?.contains('sefaria') == true
-            ? 'corrections@sefaria.org'
-            : 'otzaria.200@gmail.com';
-
-    final emailUri = Uri(
-      scheme: 'mailto',
-      path: emailAddress,
-      query: encodeQueryParameters(<String, String>{
-        'subject': 'דיווח על טעות: ${state.book.title}',
-        'body': _buildEmailBody(
-          state.book.title,
-          currentRef,
-          bookDetails,
-          reportData.selectedText,
-          reportData.errorDetails,
-        ),
-      }),
+    // נבנה את גוף המייל (נעשה שימוש גם לשליחה וגם לשמירה)
+    final emailBody = _buildEmailBody(
+      state.book.title,
+      currentRef,
+      bookDetails,
+      reportData.selectedText,
+      reportData.errorDetails,
     );
 
-    try {
-      if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('לא ניתן לפתוח את תוכנת הדואר')),
-          );
+    if (action == ReportAction.sendEmail) {
+      // בחירת כתובת דוא"ל לקבלת הדיווח
+      final emailAddress =
+          bookDetails['תיקיית המקור']?.contains('sefaria') == true
+              ? 'corrections@sefaria.org'
+              : _fallbackMail;
+
+      final emailUri = Uri(
+        scheme: 'mailto',
+        path: emailAddress,
+        query: encodeQueryParameters(<String, String>{
+          'subject': 'דיווח על טעות: ${state.book.title}',
+          'body': emailBody,
+        }),
+      );
+
+      try {
+        if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
+          _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
         }
+      } catch (_) {
+        _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('לא ניתן לפתוח את תוכנת הדואר')),
-        );
+      return;
+    }
+
+    if (action == ReportAction.saveForLater) {
+      final saved = await _saveReportToFile(emailBody);
+      if (!saved) {
+        _showSimpleSnack('שמירת הדיווח נכשלה.');
+        return;
       }
+
+      final count = await _countReportsInFile();
+      _showSavedSnack(count);
+      return;
     }
   }
 
@@ -611,18 +633,19 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  Future<bool?> _showConfirmationDialog(
+  Future<ReportAction?> _showConfirmationDialog(
     BuildContext context,
     ReportedErrorData reportData,
   ) {
-    return showDialog<bool>(
+    return showDialog<ReportAction>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('דיווח על טעות בספר'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          content: SingleChildScrollView(
+              child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'הטקסט שנבחר:',
@@ -639,14 +662,21 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
               ],
             ],
           ),
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('ביטול'),
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(context).pop(ReportAction.cancel),
+            ),
+            TextButton(
+              child: const Text('שמור לדיווח מאוחר'),
+              onPressed: () =>
+                  Navigator.of(context).pop(ReportAction.saveForLater),
             ),
             TextButton(
               child: const Text('פתיחת דוא"ל'),
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () =>
+                  Navigator.of(context).pop(ReportAction.sendEmail),
             ),
           ],
         );
@@ -676,6 +706,107 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     ''';
   }
+
+/// שמירת דיווח לקובץ בתיקייה הראשית של הספרייה (libraryPath).
+Future<bool> _saveReportToFile(String reportContent) async {
+  try {
+    final libraryPath = Settings.getValue('key-library-path');
+
+    if (libraryPath == null || libraryPath.isEmpty) {
+      debugPrint('libraryPath not set; cannot save report.');
+      return false;
+    }
+
+    final filePath =
+        '$libraryPath${Platform.pathSeparator}$_reportFileName';
+    final file = File(filePath);
+
+    final exists = await file.exists();
+
+    final sink = file.openWrite(
+      mode: exists ? FileMode.append : FileMode.write,
+      encoding: utf8,
+    );
+
+    // אם יש כבר תוכן קודם בקובץ קיים -> הוסף מפריד לפני הרשומה החדשה
+    if (exists && (await file.length()) > 0) {
+      sink.writeln(''); // שורת רווח
+      sink.writeln(_reportSeparator);
+      sink.writeln(''); // שורת רווח
+    }
+
+    sink.write(reportContent);
+    await sink.flush();
+    await sink.close();
+    return true;
+  } catch (e) {
+    debugPrint('Failed saving report: $e');
+    return false;
+  }
+}
+
+/// סופר כמה דיווחים יש בקובץ – לפי המפריד.
+Future<int> _countReportsInFile() async {
+  try {
+    final libraryPath = Settings.getValue('key-library-path');
+    if (libraryPath == null || libraryPath.isEmpty) return 0;
+
+    final filePath =
+        '$libraryPath${Platform.pathSeparator}$_reportFileName';
+    final file = File(filePath);
+    if (!await file.exists()) return 0;
+
+    final content = await file.readAsString(encoding: utf8);
+    if (content.trim().isEmpty) return 0;
+
+    final occurrences = _reportSeparator.allMatches(content).length;
+    return occurrences + 1;
+  } catch (e) {
+    debugPrint('countReports error: $e');
+    return 0;
+  }
+}
+
+void _showSimpleSnack(String message) {
+  if (!mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message)),
+  );
+}
+
+/// SnackBar לאחר שמירה: מציג מונה + פעולה לפתיחת דוא"ל (mailto).
+void _showSavedSnack(int count) {
+  if (!mounted) return;
+
+  final message =
+      "הדיווח נשמר בהצלחה לקובץ '$_reportFileName', הנמצא בתיקייה הראשית של אוצריא.\n"
+      "יש לך כבר $count דיווחים, וכעת תוכל לשלוח את הקובץ למייל: $_fallbackMail!";
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      duration: const Duration(seconds: 8),
+      content: Text(message, textDirection: TextDirection.rtl),
+      action: SnackBarAction(
+        label: 'שלח',
+        onPressed: () {
+          _launchMail(_fallbackMail);
+        },
+      ),
+    ),
+  );
+}
+
+Future<void> _launchMail(String email) async {
+  final emailUri = Uri(
+    scheme: 'mailto',
+    path: email,
+  );
+  try {
+    await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+  }
+}
 
   Future<Map<String, String>> _getBookDetails(String bookTitle) async {
     try {
