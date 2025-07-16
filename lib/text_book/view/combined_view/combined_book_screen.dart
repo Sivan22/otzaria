@@ -89,7 +89,6 @@ class _CombinedViewState extends State<CombinedView> {
     ];
   }
 
-
   ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
@@ -117,17 +116,20 @@ class _CombinedViewState extends State<CombinedView> {
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
-              icon: state.activeCommentators.toSet().containsAll(
-                      state.availableCommentators)
+              icon: state.activeCommentators
+                      .toSet()
+                      .containsAll(state.availableCommentators)
                   ? Icons.check
-                  : null,              
+                  : null,
               onSelected: () {
-                final allActive = state.activeCommentators.toSet().containsAll(
-                    state.availableCommentators);
+                final allActive = state.activeCommentators
+                    .toSet()
+                    .containsAll(state.availableCommentators);
                 context.read<TextBookBloc>().add(
                       UpdateCommentators(
-                        allActive ? <String>[] : List<String>.from(
-                            state.availableCommentators),
+                        allActive
+                            ? <String>[]
+                            : List<String>.from(state.availableCommentators),
                       ),
                     );
               },
@@ -234,18 +236,7 @@ class _CombinedViewState extends State<CombinedView> {
       itemCount: widget.data.length,
       itemBuilder: (context, index) {
         ExpansibleController controller = ExpansibleController();
-        // WORKAROUND: Add an invisible newline character to preserve line breaks
-        // when copying text from the SelectionArea. This addresses a known
-        // issue in Flutter where newlines are stripped when copying from
-        // multiple widgets.
-        // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            buildExpansiomTile(controller, index, state),
-            const Text('\n', style: TextStyle(fontSize: 0, height: 0)),
-          ],
-        );
+        return buildExpansiomTile(controller, index, state);
       },
     );
   }
