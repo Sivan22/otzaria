@@ -31,6 +31,14 @@ import 'package:otzaria/utils/ref_helper.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:url_launcher/url_launcher.dart';
 
+/// נתוני הדיווח שנאספו מתיבת סימון הטקסט + פירוט הטעות שהמשתמש הקליד.
+class ReportedErrorData {
+  final String selectedText; // הטקסט שסומן ע"י המשתמש
+  final String errorDetails; // פירוט הטעות (שדה טקסט נוסף)
+  const ReportedErrorData(
+      {required this.selectedText, required this.errorDetails});
+}
+
 class TextBookViewerBloc extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
   final TextBookTab tab;
@@ -62,28 +70,28 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         .join('&');
   }
 
-    @override
-    void initState() {
-      super.initState();
-    
-      // אם יש טקסט חיפוש (searchText), נתחיל בלשונית 'חיפוש' (שנמצאת במקום ה-1)
-      // אחרת, נתחיל בלשונית 'ניווט' (שנמצאת במקום ה-0)
-      final int initialIndex = widget.tab.searchText.isNotEmpty ? 1 : 0;
-    
-      // יוצרים את בקר הלשוניות עם האינדקס ההתחלתי שקבענו
-      tabController = TabController(
-        length: 4, // יש 4 לשוניות
-        vsync: this,
-        initialIndex: initialIndex,
-      );
+  @override
+  void initState() {
+    super.initState();
 
-      _sidebarWidth = ValueNotifier<double>(
-          Settings.getValue<double>('key-sidebar-width', defaultValue: 300)!);
-      _settingsSub = context
-          .read<SettingsBloc>()
-          .stream
-          .listen((state) => _sidebarWidth.value = state.sidebarWidth);
-    }
+    // אם יש טקסט חיפוש (searchText), נתחיל בלשונית 'חיפוש' (שנמצאת במקום ה-1)
+    // אחרת, נתחיל בלשונית 'ניווט' (שנמצאת במקום ה-0)
+    final int initialIndex = widget.tab.searchText.isNotEmpty ? 1 : 0;
+
+    // יוצרים את בקר הלשוניות עם האינדקס ההתחלתי שקבענו
+    tabController = TabController(
+      length: 4, // יש 4 לשוניות
+      vsync: this,
+      initialIndex: initialIndex,
+    );
+
+    _sidebarWidth = ValueNotifier<double>(
+        Settings.getValue<double>('key-sidebar-width', defaultValue: 300)!);
+    _settingsSub = context
+        .read<SettingsBloc>()
+        .stream
+        .listen((state) => _sidebarWidth.value = state.sidebarWidth);
+  }
 
   @override
   void dispose() {
@@ -107,40 +115,41 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         return BlocBuilder<TextBookBloc, TextBookState>(
           bloc: context.read<TextBookBloc>(),
           builder: (context, state) {
-          if (state is TextBookInitial) {
-            context.read<TextBookBloc>().add(
-              LoadContent(
-                fontSize: settingsState.fontSize,
-                showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
-                removeNikud: settingsState.defaultRemoveNikud,
-              ),
-            );
-          }
+            if (state is TextBookInitial) {
+              context.read<TextBookBloc>().add(
+                    LoadContent(
+                      fontSize: settingsState.fontSize,
+                      showSplitView:
+                          Settings.getValue<bool>('key-splited-view') ?? false,
+                      removeNikud: settingsState.defaultRemoveNikud,
+                    ),
+                  );
+            }
 
-        if (state is TextBookInitial || state is TextBookLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+            if (state is TextBookInitial || state is TextBookLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        if (state is TextBookError) {
-          return Center(child: Text('Error: ${(state).message}'));
-        }
+            if (state is TextBookError) {
+              return Center(child: Text('Error: ${(state).message}'));
+            }
 
-        if (state is TextBookLoaded) {
-          return LayoutBuilder(
-            builder: (context, constrains) {
-              final wideScreen = (MediaQuery.of(context).size.width >= 600);
-              return Scaffold(
-                appBar: _buildAppBar(context, state, wideScreen),
-                body: _buildBody(context, state, wideScreen),
+            if (state is TextBookLoaded) {
+              return LayoutBuilder(
+                builder: (context, constrains) {
+                  final wideScreen = (MediaQuery.of(context).size.width >= 600);
+                  return Scaffold(
+                    appBar: _buildAppBar(context, state, wideScreen),
+                    body: _buildBody(context, state, wideScreen),
+                  );
+                },
               );
-            },
-          );
-        }
+            }
 
-        // Fallback
-        return const Center(child: Text('Unknown state'));
-      },
-    );
+            // Fallback
+            return const Center(child: Text('Unknown state'));
+          },
+        );
       },
     );
   }
@@ -448,16 +457,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     if (!mounted) return;
 
-    final selectedText = await _showTextSelectionDialog(
+    final ReportedErrorData? reportData = await _showTextSelectionDialog(
       context,
       visibleText,
       state.fontSize,
     );
 
-    if (selectedText == null || selectedText.isEmpty) return;
+    if (reportData == null) return; // בוטל או לא נבחר טקסט
     if (!mounted) return;
 
-    final shouldProceed = await _showConfirmationDialog(context, selectedText);
+    final shouldProceed = await _showConfirmationDialog(context, reportData);
 
     if (shouldProceed != true) return;
 
@@ -475,7 +484,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
           state.book.title,
           currentRef,
           bookDetails,
-          selectedText,
+          reportData.selectedText,
+          reportData.errorDetails,
         ),
       }),
     );
@@ -497,28 +507,32 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     }
   }
 
-  Future<String?> _showTextSelectionDialog(
+  Future<ReportedErrorData?> _showTextSelectionDialog(
     BuildContext context,
     String text,
     double fontSize,
   ) async {
     String? selectedContent;
-    return showDialog<String>(
+    final TextEditingController detailsController = TextEditingController();
+    return showDialog<ReportedErrorData>(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('בחר את הטקסט שבו יש טעות'),
-              content: SizedBox(
-                width: double.maxFinite,
-                height: MediaQuery.of(context).size.height * 0.6,
+              content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('סמן את הטקסט שבו נמצאת הטעות:'),
                     const SizedBox(height: 8),
-                    Expanded(
+                    // השתמשנו ב-ConstrainedBox כדי לתת גובה מקסימלי, במקום Expanded
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      ),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -526,32 +540,49 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: SingleChildScrollView(
-
-                          child: BlocBuilder<SettingsBloc, SettingsState>(
-                            builder: (context, settingsState) {
-                              return SelectableText(
-                                text,
-                                style: TextStyle(
-                                  fontSize: fontSize,
-                                  fontFamily: settingsState.fontFamily,
-                                ),
-                                onSelectionChanged: (selection, cause) {
-                                  if (selection.start != selection.end) {
-                                    final newContent = text.substring(
-                                        selection.start, selection.end);
-                                    if (newContent.isNotEmpty) {
-                                      setDialogState(() {
-                                        selectedContent = newContent;
-                                      });
-                                    }
-                                  }
-                                },
-                              );
-
+                          child: SelectableText(
+                            text,
+                            style: TextStyle(
+                              fontSize: fontSize,
+                              fontFamily:
+                                  Settings.getValue('key-font-family') ?? 'candara',
+                            ),
+                            onSelectionChanged: (selection, cause) {
+                              if (selection.start != selection.end) {
+                                final newContent = text.substring(
+                                  selection.start,
+                                  selection.end,
+                                );
+                                if (newContent.isNotEmpty) {
+                                  setDialogState(() {
+                                    selectedContent = newContent;
+                                  });
+                                }
+                              }
                             },
                           ),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'פירוט הטעות (אופציונלי):',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: detailsController,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                        hintText: 'כתוב כאן מה לא תקין, הצע תיקון וכו\'',
+                      ),
+                      textDirection: TextDirection.rtl,
                     ),
                   ],
                 ),
@@ -564,7 +595,12 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                 TextButton(
                   onPressed: selectedContent == null || selectedContent!.isEmpty
                       ? null
-                      : () => Navigator.of(context).pop(selectedContent),
+                      : () => Navigator.of(context).pop(
+                            ReportedErrorData(
+                              selectedText: selectedContent!,
+                              errorDetails: detailsController.text.trim(),
+                            ),
+                          ),
                   child: const Text('המשך'),
                 ),
               ],
@@ -577,7 +613,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
   Future<bool?> _showConfirmationDialog(
     BuildContext context,
-    String selectedText,
+    ReportedErrorData reportData,
   ) {
     return showDialog<bool>(
       context: context,
@@ -592,7 +628,15 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                 'הטקסט שנבחר:',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              Text(selectedText),
+              Text(reportData.selectedText),
+              const SizedBox(height: 16),
+              if (reportData.errorDetails.isNotEmpty) ...[
+                const Text(
+                  'פירוט הטעות:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(reportData.errorDetails),
+              ],
             ],
           ),
           actions: <Widget>[
@@ -615,26 +659,29 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     String currentRef,
     Map<String, String> bookDetails,
     String selectedText,
+    String errorDetails,
   ) {
+    final detailsSection = errorDetails.isEmpty ? '' : '\n$errorDetails';
+
     return '''שם הספר: $bookTitle
-מיקום: $currentRef
-שם הקובץ: ${bookDetails['שם הקובץ']}
-נתיב הקובץ: ${bookDetails['נתיב הקובץ']}
-תיקיית המקור: ${bookDetails['תיקיית המקור']}
+    מיקום: $currentRef
+    שם הקובץ: ${bookDetails['שם הקובץ']}
+    נתיב הקובץ: ${bookDetails['נתיב הקובץ']}
+    תיקיית המקור: ${bookDetails['תיקיית המקור']}
 
-הטקסט שבו נמצאה הטעות:
-$selectedText
+    הטקסט שבו נמצאה הטעות:
+    $selectedText
 
-פירוט הטעות:
+    פירוט הטעות:$detailsSection
 
-''';
+    ''';
   }
 
   Future<Map<String, String>> _getBookDetails(String bookTitle) async {
     try {
       final libraryPath = Settings.getValue('key-library-path');
       final file = File(
-          '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv');      
+          '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}SourcesBooks.csv');
       if (!await file.exists()) {
         return _getDefaultBookDetails();
       }
@@ -642,27 +689,26 @@ $selectedText
       // קריאת הקובץ כ-stream
       final inputStream = file.openRead();
       final converter = const CsvToListConverter();
-      
+
       var isFirstLine = true;
-      
+
       await for (final line in inputStream
           .transform(utf8.decoder)
           .transform(const LineSplitter())) {
-        
         // דילוג על שורת הכותרת
         if (isFirstLine) {
           isFirstLine = false;
           continue;
         }
-        
+
         try {
           // המרת השורה לרשימה
           final row = converter.convert(line).first;
-          
+
           if (row.length >= 3) {
             final fileNameRaw = row[0].toString();
             final fileName = fileNameRaw.replaceAll('.txt', '');
-            
+
             if (fileName == bookTitle) {
               return {
                 'שם הקובץ': fileNameRaw,
@@ -677,11 +723,10 @@ $selectedText
           continue;
         }
       }
-
     } catch (e) {
       debugPrint('Error reading sourcebooks.csv: $e');
     }
-      
+
     return _getDefaultBookDetails();
   }
 
@@ -719,7 +764,8 @@ $selectedText
                       behavior: HitTestBehavior.translucent,
                       onHorizontalDragUpdate: (details) {
                         final newWidth =
-                            (_sidebarWidth.value + details.delta.dx).clamp(200.0, 600.0);
+                            (_sidebarWidth.value + details.delta.dx)
+                                .clamp(200.0, 600.0);
                         _sidebarWidth.value = newWidth;
                       },
                       onHorizontalDragEnd: (_) {
@@ -729,7 +775,7 @@ $selectedText
                       },
                       child: const VerticalDivider(width: 4),
                     ),
-                  ),                
+                  ),
                 Expanded(child: _buildHTMLViewer(state)),
               ],
             ),
@@ -852,12 +898,12 @@ $selectedText
                   ),
                   if (MediaQuery.of(context).size.width >= 600)
                     IconButton(
-                      onPressed: (Settings.getValue<bool>('key-pin-sidebar') ??
-                              false)
-                          ? null
-                          : () => context.read<TextBookBloc>().add(
-                                TogglePinLeftPane(!state.pinLeftPane),
-                              ),
+                      onPressed:
+                          (Settings.getValue<bool>('key-pin-sidebar') ?? false)
+                              ? null
+                              : () => context.read<TextBookBloc>().add(
+                                    TogglePinLeftPane(!state.pinLeftPane),
+                                  ),
                       icon: const Icon(Icons.push_pin),
                       isSelected: state.pinLeftPane ||
                           (Settings.getValue<bool>('key-pin-sidebar') ?? false),
@@ -896,17 +942,17 @@ $selectedText
     );
   }
 
-    Widget _buildSearchView(BuildContext context, TextBookLoaded state) {
-      return TextBookSearchView(
-        focusNode: textSearchFocusNode,
-        data: state.content.join('\n'),
-        scrollControler: state.scrollController,
-        // הוא מעביר את טקסט החיפוש מה-state הנוכחי אל תוך רכיב החיפוש
-        initialQuery: state.searchText, 
-        closeLeftPaneCallback: () =>
-            context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
-      );
-    }
+  Widget _buildSearchView(BuildContext context, TextBookLoaded state) {
+    return TextBookSearchView(
+      focusNode: textSearchFocusNode,
+      data: state.content.join('\n'),
+      scrollControler: state.scrollController,
+      // הוא מעביר את טקסט החיפוש מה-state הנוכחי אל תוך רכיב החיפוש
+      initialQuery: state.searchText,
+      closeLeftPaneCallback: () =>
+          context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
+    );
+  }
 
   Widget _buildTocViewer(BuildContext context, TextBookLoaded state) {
     return TocViewer(
