@@ -197,15 +197,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                 scrollOffsetController: state.scrollOffsetController,
                 itemCount: widget.data.length,
                 itemBuilder: (context, index) {
-                  // WORKAROUND: Add an invisible newline character to preserve line breaks
-                  // when copying text from the SelectionArea. This addresses a known
-                  // issue in Flutter where newlines are stripped when copying from
-                  // multiple widgets.
-                  // See: https://github.com/flutter/flutter/issues/104548#issuecomment-2051481671
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BlocBuilder<SettingsBloc, SettingsState>(
+                return BlocBuilder<SettingsBloc, SettingsState>(
                         builder: (context, settingsState) {
                           String data = widget.data[index];
                           if (!settingsState.showTeamim) {
@@ -238,10 +230,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                             ),
                           );
                         },
-                      ),
-                      const Text('\n',
-                          style: TextStyle(fontSize: 0, height: 0)),
-                    ],
                   );
                 },
               ),
