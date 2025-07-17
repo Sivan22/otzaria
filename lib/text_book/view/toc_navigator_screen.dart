@@ -107,10 +107,12 @@ final TextEditingController searchController = TextEditingController();
           return Padding(
             padding: EdgeInsets.fromLTRB(
                 0, 0, 10 * allEntries[index].level.toDouble(), 0),
-            child: allEntries[index].children.isEmpty
-                ? ListTile(
-                    title: Text(allEntries[index].fullText),
-                    onTap: () {
+        child: allEntries[index].children.isEmpty
+            ? Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  title: Text(allEntries[index].fullText),
+                  onTap: () {
                       setState(() {
                         _isManuallyScrolling = false;
                         _lastScrolledTocIndex = null;
@@ -124,7 +126,8 @@ final TextEditingController searchController = TextEditingController();
                         widget.closeLeftPaneCallback();
                       }
                     },
-                  )
+                  ),
+                )
                 : _buildTocItem(allEntries[index], showFullText: true),
           );
         });
@@ -163,13 +166,16 @@ final TextEditingController searchController = TextEditingController();
                 ((state.selectedIndex != null &&
                         state.selectedIndex == entry.index) ||
                     autoIndex == entry.index);
-            return ListTile(
-              title: Text(entry.text),
-              selected: selected,
-              selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
-              selectedTileColor:
-                  Theme.of(context).colorScheme.secondaryContainer,
-              onTap: navigateToEntry,
+            return Material(
+              color: Colors.transparent,
+              child: ListTile(
+                title: Text(entry.text),
+                selected: selected,
+                selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                selectedTileColor:
+                    Theme.of(context).colorScheme.secondaryContainer,
+                onTap: navigateToEntry,
+              ),
             );
           },
         ),
@@ -196,14 +202,17 @@ final TextEditingController searchController = TextEditingController();
                     ((state.selectedIndex != null &&
                             state.selectedIndex == entry.index) ||
                         autoIndex == entry.index);
-                return ListTile(
-                  title: Text(showFullText ? entry.fullText : entry.text),
-                  selected: selected,
-                  selectedColor: Theme.of(context).colorScheme.onSecondary,
-                  selectedTileColor:
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                  onTap: navigateToEntry,
-                  contentPadding: EdgeInsets.zero,
+                return Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    title: Text(showFullText ? entry.fullText : entry.text),
+                    selected: selected,
+                    selectedColor: Theme.of(context).colorScheme.onSecondary,
+                    selectedTileColor:
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                    onTap: navigateToEntry,
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 );
               },
             ),
