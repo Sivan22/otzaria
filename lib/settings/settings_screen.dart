@@ -450,15 +450,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
-                    SwitchSettingsTile(
-                      title: 'סנכרון ספרי דיקטה',
-                      leading: Icon(Icons.book),
-                      settingKey: 'key-sync-dicta-books',
-                      defaultValue: false,
-                      enabledLabel: 'ספרי דיקטה יסונכרנו יחד עם הספרייה',
-                      disabledLabel: 'לא יסונכרנו ספרי דיקטה',
-                      activeColor: Theme.of(context).cardColor,
-                    ),
                     _buildColumns(2, [
                       BlocBuilder<IndexingBloc, IndexingState>(
                         builder: (context, indexingState) {
