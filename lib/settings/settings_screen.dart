@@ -47,7 +47,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
         List<Widget> rows = [];
         for (int i = 0; i < children.length; i += columns) {
           List<Widget> rowChildren = [];
-          
+
           for (int j = 0; j < columns; j++) {
             if (i + j < children.length) {
               rowChildren.add(Expanded(child: children[i + j]));
@@ -60,12 +60,13 @@ class _MySettingsScreenState extends State<MySettingsScreen>
               }
             }
           }
-          
+
           // עוטפים את ה-Row ב-IntrinsicHeight כדי להבטיח גובה אחיד לקו המפריד
           rows.add(
             IntrinsicHeight(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch, // גורם לילדים להימתח
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch, // גורם לילדים להימתח
                 children: rowChildren,
               ),
             ),
@@ -146,7 +147,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               .read<SettingsBloc>()
                               .add(UpdateDarkMode(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       ColorPickerSettingsTile(
                         title: 'צבע בסיס',
@@ -197,38 +198,46 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             .add(UpdateFontFamily(value));
                       },
                     ),
-SettingsContainer(
-  children: <Widget>[
-    Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4, left: 16, right: 16),
-      child: Row(
-        children: [
-          const Icon(Icons.horizontal_distribute),
-          const SizedBox(width: 16),
-          Text(
-            'רוחב השוליים בצידי הטקסט',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16),
-          ),
-        ],
-      ),
-    ),
-    Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: MarginSliderPreview(
-        initial: Settings.getValue<double>('key-padding-size', defaultValue: state.paddingSize)!,
-        min: 0,
-        max: 500,
-        step: 2,
-        onChanged: (v) {
-            // הלוגיקה לשמירת הערך נשארת זהה ומדויקת
-            Settings.setValue<double>('key-padding-size', v);
-            context.read<SettingsBloc>().add(UpdatePaddingSize(v));
-            setState(() {});
-        },
-      ),
-    ),
-  ],
-),
+                    SettingsContainer(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              top: 8, bottom: 4, left: 16, right: 16),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.horizontal_distribute),
+                              const SizedBox(width: 16),
+                              Text(
+                                'רוחב השוליים בצידי הטקסט',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: MarginSliderPreview(
+                            initial: Settings.getValue<double>(
+                                'key-padding-size',
+                                defaultValue: state.paddingSize)!,
+                            min: 0,
+                            max: 500,
+                            step: 2,
+                            onChanged: (v) {
+                              // הלוגיקה לשמירת הערך נשארת זהה ומדויקת
+                              Settings.setValue<double>('key-padding-size', v);
+                              context
+                                  .read<SettingsBloc>()
+                                  .add(UpdatePaddingSize(v));
+                              setState(() {});
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 Platform.isAndroid
@@ -285,12 +294,12 @@ SettingsContainer(
                         ],
                       ),
                 SettingsGroup(
-                    title: 'הגדרות ממשק',
-                    titleAlignment: Alignment.centerRight,
-                    titleTextStyle: const TextStyle(fontSize: 25),
-                    children: [
-                      _buildColumns(2, [
-                        SwitchSettingsTile(
+                  title: 'הגדרות ממשק',
+                  titleAlignment: Alignment.centerRight,
+                  titleTextStyle: const TextStyle(fontSize: 25),
+                  children: [
+                    _buildColumns(2, [
+                      SwitchSettingsTile(
                         settingKey: 'key-replace-holy-names',
                         title: 'הסתרת שמות הקודש',
                         enabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
@@ -302,7 +311,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateReplaceHolyNames(value));
                         },
-                       activeColor: Theme.of(context).cardColor,
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-teamim',
@@ -316,7 +325,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateShowTeamim(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-default-nikud',
@@ -330,7 +339,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateDefaultRemoveNikud(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-remove-nikud-tanach',
@@ -344,7 +353,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateRemoveNikudFromTanach(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-splited-view',
@@ -353,7 +362,7 @@ SettingsContainer(
                         disabledLabel: 'המפרשים יוצגו מתחת הטקסט',
                         leading: Icon(Icons.vertical_split),
                         defaultValue: false,
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-default-sidebar-open',
@@ -368,7 +377,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateDefaultSidebarOpen(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-pin-sidebar',
@@ -387,7 +396,7 @@ SettingsContainer(
                                 .add(const UpdateDefaultSidebarOpen(true));
                           }
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-use-fast-search',
@@ -402,7 +411,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateUseFastSearch(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                        
+                        activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-show-external-books',
@@ -422,7 +431,7 @@ SettingsContainer(
                               .read<SettingsBloc>()
                               .add(UpdateShowOtzarHachochma(value));
                         },
-                       activeColor: Theme.of(context).cardColor,                      
+                        activeColor: Theme.of(context).cardColor,
                       ),
                     ]),
                   ],
@@ -439,16 +448,7 @@ SettingsContainer(
                       defaultValue: true,
                       enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
-                       activeColor: Theme.of(context).cardColor,                        
-                    ),
-                    SwitchSettingsTile(
-                      title: 'סנכרון ספרי דיקטה',
-                      leading: Icon(Icons.book),
-                      settingKey: 'key-sync-dicta-books',
-                      defaultValue: false,
-                      enabledLabel: 'ספרי דיקטה יסונכרנו יחד עם הספרייה',
-                      disabledLabel: 'לא יסונכרנו ספרי דיקטה',
-                       activeColor: Theme.of(context).cardColor,                        
+                      activeColor: Theme.of(context).cardColor,
                     ),
                     _buildColumns(2, [
                       BlocBuilder<IndexingBloc, IndexingState>(
@@ -466,21 +466,21 @@ SettingsContainer(
                                     builder: (context) => AlertDialog(
                                           content: const Text(
                                               'האם לעצור את תהליך יצירת האינדקס?'),
-                                        actions: <Widget>[
-                                          TextButton(
-                                            child: const Text('ביטול'),
-                                            onPressed: () {
-                                              Navigator.pop(context, false);
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: const Text('אישור'),
-                                            onPressed: () {
-                                              Navigator.pop(context, true);
-                                            },
-                                          ),
-                                        ],
-                                      ));
+                                          actions: <Widget>[
+                                            TextButton(
+                                              child: const Text('ביטול'),
+                                              onPressed: () {
+                                                Navigator.pop(context, false);
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: const Text('אישור'),
+                                              onPressed: () {
+                                                Navigator.pop(context, true);
+                                              },
+                                            ),
+                                          ],
+                                        ));
                                 if (result == true) {
                                   context
                                       .read<IndexingBloc>()
@@ -489,28 +489,30 @@ SettingsContainer(
                                 }
                               } else {
                                 final result = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                        content:
-                                            const Text('האם לאפס את האינדקס?'),
-                                        actions: <Widget>[
-                                          TextButton(
-                                            child: const Text('ביטול'),
-                                            onPressed: () {
-                                              Navigator.pop(context, false);
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: const Text('אישור'),
-                                            onPressed: () {
-                                              Navigator.pop(context, true);
-                                            },
-                                          ),
-                                        ],
-                                      ));
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                          content: const Text(
+                                              'האם לאפס את האינדקס?'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              child: const Text('ביטול'),
+                                              onPressed: () {
+                                                Navigator.pop(context, false);
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: const Text('אישור'),
+                                              onPressed: () {
+                                                Navigator.pop(context, true);
+                                              },
+                                            ),
+                                          ],
+                                        ));
                                 if (result == true) {
                                   //reset the index
-                                  context.read<IndexingBloc>().add(ClearIndex());
+                                  context
+                                      .read<IndexingBloc>()
+                                      .add(ClearIndex());
                                   final library =
                                       context.read<LibraryBloc>().state.library;
                                   if (library != null) {
@@ -525,25 +527,25 @@ SettingsContainer(
                         },
                       ),
                       SwitchSettingsTile(
-                      title: 'עדכון אינדקס',
-                      leading: const Icon(Icons.sync),
-                      settingKey: 'key-auto-index-update',
-                      defaultValue: state.autoUpdateIndex,
-                      enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
-                      disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
-                      onChange: (value) async {
-                        context
-                            .read<SettingsBloc>()
-                            .add(UpdateAutoUpdateIndex(value));
-                        if (value) {
-                          final library = DataRepository.instance.library;
+                        title: 'עדכון אינדקס',
+                        leading: const Icon(Icons.sync),
+                        settingKey: 'key-auto-index-update',
+                        defaultValue: state.autoUpdateIndex,
+                        enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
+                        disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
+                        onChange: (value) async {
                           context
-                              .read<IndexingBloc>()
-                              .add(StartIndexing(await library));
-                        }
-                      },
-                       activeColor: Theme.of(context).cardColor,
-                    ),
+                              .read<SettingsBloc>()
+                              .add(UpdateAutoUpdateIndex(value));
+                          if (value) {
+                            final library = DataRepository.instance.library;
+                            context
+                                .read<IndexingBloc>()
+                                .add(StartIndexing(await library));
+                          }
+                        },
+                        activeColor: Theme.of(context).cardColor,
+                      ),
                     ]),
                     if (!(Platform.isAndroid || Platform.isIOS))
                       _buildColumns(2, [
@@ -587,7 +589,52 @@ SettingsContainer(
                           'קבלת עדכונים על גרסאות בדיקה, ייתכנו באגים וחוסר יציבות',
                       disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
                       leading: Icon(Icons.bug_report),
-                       activeColor: Theme.of(context).cardColor,                        
+                      activeColor: Theme.of(context).cardColor,
+                    ),
+                    SimpleSettingsTile(
+                      title: 'איפוס הגדרות',
+                      subtitle:
+                          'פעולה זו תמחק את כל ההגדרות ותחזיר את התוכנה למצב התחלתי',
+                      leading: const Icon(Icons.restore, color: Colors.red),
+                      onTap: () async {
+                        // דיאלוג לאישור המשתמש
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('איפוס הגדרות?'),
+                            content: const Text(
+                                'כל ההגדרות האישיות שלך ימחקו. פעולה זו אינה הפיכה. האם להמשיך?'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('ביטול')),
+                              TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('אישור',
+                                      style: TextStyle(color: Colors.red))),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true && context.mounted) {
+                          Settings.clearCache();
+
+                          // הודעה למשתמש שנדרשת הפעלה מחדש
+                          await showDialog<void>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => AlertDialog(
+                                      title: const Text('ההגדרות אופסו'),
+                                      content: const Text(
+                                          'יש לסגור ולהפעיל מחדש את התוכנה כדי שהשינויים יכנסו לתוקף.'),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () => exit(0),
+                                            child: const Text('סגור את התוכנה'))
+                                      ]));
+                        }
+                      },
                     ),
                     FutureBuilder(
                         future: PackageInfo.fromPlatform(),
@@ -679,13 +726,14 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
     return GestureDetector(
       onPanUpdate: (details) {
         setState(() {
-          double newMargin = isLeft
-              ? _margin + details.delta.dx
-              : _margin - details.delta.dx;
-          
+          double newMargin =
+              isLeft ? _margin + details.delta.dx : _margin - details.delta.dx;
+
           // מגבילים את המרחב לפי רוחב הווידג'ט והגדרות המשתמש
           final maxWidth = (context.findRenderObject() as RenderBox).size.width;
-          _margin = newMargin.clamp(widget.min, maxWidth / 2).clamp(widget.min, widget.max);
+          _margin = newMargin
+              .clamp(widget.min, maxWidth / 2)
+              .clamp(widget.min, widget.max);
         });
         widget.onChanged(_margin);
       },
@@ -697,14 +745,14 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
         color: Colors.transparent, // אזור הלחיצה שקוף
         alignment: Alignment.center,
         child: Container(
-            // --- שינוי 1: עיצוב הידית מחדש ---
-            width: thumbSize,
-            height: thumbSize,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary, // צבע ראשי
-              shape: BoxShape.circle,
-              boxShadow: kElevationToShadow[1], // הצללה סטנדרטית של פלאטר
-            ),
+          // --- שינוי 1: עיצוב הידית מחדש ---
+          width: thumbSize,
+          height: thumbSize,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary, // צבע ראשי
+            shape: BoxShape.circle,
+            boxShadow: kElevationToShadow[1], // הצללה סטנדרטית של פלאטר
+          ),
         ),
       ),
     );
@@ -715,7 +763,8 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final fullWidth = constraints.maxWidth;
-        final previewTextWidth = (fullWidth - 2 * _margin).clamp(0.0, fullWidth);
+        final previewTextWidth =
+            (fullWidth - 2 * _margin).clamp(0.0, fullWidth);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -747,38 +796,44 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
                       ),
                     ),
                   ),
-                  
+
                   // הצגת הערך מעל הידית (רק בזמן תצוגה)
                   if (_showPreview)
                     Positioned(
                       left: _margin - 10,
                       top: 0,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _margin.toStringAsFixed(0),
-                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 12),
                         ),
                       ),
                     ),
-                  
+
                   if (_showPreview)
                     Positioned(
                       right: _margin - 10,
                       top: 0,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _margin.toStringAsFixed(0),
-                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 12),
                         ),
                       ),
                     ),
@@ -788,7 +843,7 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
                     left: _margin - (thumbSize),
                     child: _buildThumb(isLeft: true),
                   ),
-                  
+
                   // הכפתור הימני
                   Positioned(
                     right: _margin - (thumbSize),
@@ -797,7 +852,7 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 8),
 
             // ------------  תצוגה מקדימה עם אנימציה חלקה  -------------

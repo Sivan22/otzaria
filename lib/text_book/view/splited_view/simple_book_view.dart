@@ -42,27 +42,48 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
 
-  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת
+  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת, כולל כפתור הצג/הסתר הכל
   List<ctx.MenuItem<void>> _buildGroup(
+    String groupName,
     List<String>? group,
     TextBookLoaded st,
   ) {
     if (group == null || group.isEmpty) return const [];
-    return group.map((title) {
-      // בודקים אם הפרשן הנוכחי פעיל
-      final bool isActive = st.activeCommentators.contains(title);
 
-      return ctx.MenuItem<void>(
-        label: title,
-        // הוספה: מוסיפים אייקון V אם הפרשן פעיל
-        icon: isActive ? Icons.check : null,
+    final bool groupActive =
+        group.every((title) => st.activeCommentators.contains(title));
+
+    return [
+      ctx.MenuItem<void>(
+        label: 'הצג את כל ${groupName}',
+        icon: groupActive ? Icons.check : null,
         onSelected: () {
           final current = List<String>.from(st.activeCommentators);
-          current.contains(title) ? current.remove(title) : current.add(title);
+          if (groupActive) {
+            current.removeWhere(group.contains);
+          } else {
+            for (final title in group) {
+              if (!current.contains(title)) current.add(title);
+            }
+          }
           context.read<TextBookBloc>().add(UpdateCommentators(current));
         },
-      );
-    }).toList();
+      ),
+      ...group.map((title) {
+        final bool isActive = st.activeCommentators.contains(title);
+        return ctx.MenuItem<void>(
+          label: title,
+          icon: isActive ? Icons.check : null,
+          onSelected: () {
+            final current = List<String>.from(st.activeCommentators);
+            current.contains(title)
+                ? current.remove(title)
+                : current.add(title);
+            context.read<TextBookBloc>().add(UpdateCommentators(current));
+          },
+        );
+      }),
+    ];
   }
 
   ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
@@ -92,13 +113,15 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
-              icon: state.activeCommentators.toSet().containsAll(
-                      state.availableCommentators)
+              icon: state.activeCommentators
+                      .toSet()
+                      .containsAll(state.availableCommentators)
                   ? Icons.check
                   : null,
               onSelected: () {
-                final allActive = state.activeCommentators.toSet().containsAll(
-                    state.availableCommentators);
+                final allActive = state.activeCommentators
+                    .toSet()
+                    .containsAll(state.availableCommentators);
                 context.read<TextBookBloc>().add(
                       UpdateCommentators(
                         allActive
@@ -110,14 +133,14 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             ),
             const ctx.MenuDivider(),
             // ראשונים
-            ..._buildGroup(state.rishonim, state),
+            ..._buildGroup('ראשונים', state.rishonim, state),
 
             // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
             if (state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
               const ctx.MenuDivider(),
 
             // אחרונים
-            ..._buildGroup(state.acharonim, state),
+            ..._buildGroup('אחרונים', state.acharonim, state),
 
             // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
             if (state.acharonim.isNotEmpty &&
@@ -125,7 +148,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               const ctx.MenuDivider(),
 
             // מחברי זמננו
-            ..._buildGroup(state.modernCommentators, state),
+            ..._buildGroup('מחברי זמננו', state.modernCommentators, state),
 
             // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
             if ((state.rishonim.isNotEmpty ||
@@ -135,7 +158,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               const ctx.MenuDivider(),
 
             // הוסף את רשימת הפרשנים הלא משויכים
-            ..._buildGroup(ungrouped, state),
+            ..._buildGroup('שאר מפרשים', ungrouped, state),
           ],
         ),
         ctx.MenuItem.submenu(
@@ -197,39 +220,37 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                 scrollOffsetController: state.scrollOffsetController,
                 itemCount: widget.data.length,
                 itemBuilder: (context, index) {
-                return BlocBuilder<SettingsBloc, SettingsState>(
-                        builder: (context, settingsState) {
-                          String data = widget.data[index];
-                          if (!settingsState.showTeamim) {
-                            data = utils.removeTeamim(data);
-                          }
-
-                          if (settingsState.replaceHolyNames) {
-                            data = utils.replaceHolyNames(data);
-                          }
-                          return InkWell(
-                            onTap: () => context.read<TextBookBloc>().add(
-                                  UpdateSelectedIndex(index),
-                                ),
-                            child: Html(
-                              // remove nikud if needed
-                              data: state.removeNikud
-                                  ? utils.highLight(
-                                      utils.removeVolwels('$data\n'),
-                                      state.searchText,
-                                    )
-                                  : utils.highLight(
-                                      '$data\n', state.searchText),
-                              style: {
-                                'body': Style(
-                                  fontSize: FontSize(widget.textSize),
-                                  fontFamily: settingsState.fontFamily,
-                                  textAlign: TextAlign.justify,
-                                ),
-                              },
+                  return BlocBuilder<SettingsBloc, SettingsState>(
+                    builder: (context, settingsState) {
+                      String data = widget.data[index];
+                      if (!settingsState.showTeamim) {
+                        data = utils.removeTeamim(data);
+                      }
+                      if (settingsState.replaceHolyNames) {
+                        data = utils.replaceHolyNames(data);
+                      }
+                      return InkWell(
+                        onTap: () => context.read<TextBookBloc>().add(
+                              UpdateSelectedIndex(index),
                             ),
-                          );
-                        },
+                        child: Html(
+                          // remove nikud if needed
+                          data: state.removeNikud
+                              ? utils.highLight(
+                                  utils.removeVolwels('$data\n'),
+                                  state.searchText,
+                                )
+                              : utils.highLight('$data\n', state.searchText),
+                          style: {
+                            'body': Style(
+                              fontSize: FontSize(widget.textSize),
+                              fontFamily: settingsState.fontFamily,
+                              textAlign: TextAlign.justify,
+                            ),
+                          },
+                        ),
+                      );
+                    },
                   );
                 },
               ),

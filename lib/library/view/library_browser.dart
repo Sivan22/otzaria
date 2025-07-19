@@ -107,12 +107,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                               repositoryName: "otzaria-library",
                               branch: "main",
                             ),
-                            dictaRepository: FileSyncRepository(
-                              githubOwner: "zevisvei",
-                              repositoryName: "otzaria-library",
-                              branch: "main",
-                              manifestFileName: 'dicta_files_manifest.json',
-                            ),
                           ),
                           child: const SyncIconButton(),
                         ),
@@ -180,7 +174,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             Expanded(
               child: TextField(
                 controller: focusRepository.librarySearchController,
-                focusNode: context.read<FocusRepository>().librarySearchFocusNode,
+                focusNode:
+                    context.read<FocusRepository>().librarySearchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
                   constraints: const BoxConstraints(maxWidth: 400),
@@ -416,19 +411,17 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       context.read<TabsBloc>().add(AddTab(PdfBookTab(
             book: book,
             pageNumber: 1,
-            openLeftPane:
-                (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                    (Settings.getValue<bool>('key-default-sidebar-open') ??
-                        false),
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ??
+                    false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           )));
     } else if (book is TextBook) {
       context.read<TabsBloc>().add(AddTab(TextBookTab(
             book: book,
             index: 0,
-            openLeftPane:
-                (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                    (Settings.getValue<bool>('key-default-sidebar-open') ??
-                        false),
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ??
+                    false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           )));
     }
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));

@@ -45,27 +45,48 @@ class _CombinedViewState extends State<CombinedView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
 
-  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת
+  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת, כולל כפתור הצג/הסתר הכל
   List<ctx.MenuItem<void>> _buildGroup(
+    String groupName,
     List<String>? group,
     TextBookLoaded st,
   ) {
     if (group == null || group.isEmpty) return const [];
-    return group.map((title) {
-      // בודקים אם הפרשן הנוכחי פעיל
-      final bool isActive = st.activeCommentators.contains(title);
 
-      return ctx.MenuItem<void>(
-        label: title,
-        // הוספה: מוסיפים אייקון V אם הפרשן פעיל
-        icon: isActive ? Icons.check : null,
+    final bool groupActive =
+        group.every((title) => st.activeCommentators.contains(title));
+
+    return [
+      ctx.MenuItem<void>(
+        label: 'הצג את כל ${groupName}',
+        icon: groupActive ? Icons.check : null,
         onSelected: () {
           final current = List<String>.from(st.activeCommentators);
-          current.contains(title) ? current.remove(title) : current.add(title);
-          context.read<TextBookBloc>().add(UpdateCommentators(current));          
+          if (groupActive) {
+            current.removeWhere(group.contains);
+          } else {
+            for (final title in group) {
+              if (!current.contains(title)) current.add(title);
+            }
+          }
+          context.read<TextBookBloc>().add(UpdateCommentators(current));
         },
-      );
-    }).toList();
+      ),
+      ...group.map((title) {
+        final bool isActive = st.activeCommentators.contains(title);
+        return ctx.MenuItem<void>(
+          label: title,
+          icon: isActive ? Icons.check : null,
+          onSelected: () {
+            final current = List<String>.from(st.activeCommentators);
+            current.contains(title)
+                ? current.remove(title)
+                : current.add(title);
+            context.read<TextBookBloc>().add(UpdateCommentators(current));
+          },
+        );
+      }),
+    ];
   }
 
   ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
@@ -95,31 +116,34 @@ class _CombinedViewState extends State<CombinedView> {
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
-              icon: state.activeCommentators.toSet().containsAll(
-                      state.availableCommentators)
+              icon: state.activeCommentators
+                      .toSet()
+                      .containsAll(state.availableCommentators)
                   ? Icons.check
-                  : null,              
+                  : null,
               onSelected: () {
-                final allActive = state.activeCommentators.toSet().containsAll(
-                    state.availableCommentators);
+                final allActive = state.activeCommentators
+                    .toSet()
+                    .containsAll(state.availableCommentators);
                 context.read<TextBookBloc>().add(
                       UpdateCommentators(
-                        allActive ? <String>[] : List<String>.from(
-                            state.availableCommentators),
+                        allActive
+                            ? <String>[]
+                            : List<String>.from(state.availableCommentators),
                       ),
                     );
               },
             ),
             const ctx.MenuDivider(),
             // ראשונים
-            ..._buildGroup(state.rishonim, state),
+            ..._buildGroup('ראשונים', state.rishonim, state),
 
             // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
             if (state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
               const ctx.MenuDivider(),
 
             // אחרונים
-            ..._buildGroup(state.acharonim, state),
+            ..._buildGroup('אחרונים', state.acharonim, state),
 
             // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
             if (state.acharonim.isNotEmpty &&
@@ -127,7 +151,7 @@ class _CombinedViewState extends State<CombinedView> {
               const ctx.MenuDivider(),
 
             // מחברי זמננו
-            ..._buildGroup(state.modernCommentators, state),
+            ..._buildGroup('מחברי זמננו', state.modernCommentators, state),
 
             // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
             if ((state.rishonim.isNotEmpty ||
@@ -137,7 +161,7 @@ class _CombinedViewState extends State<CombinedView> {
               const ctx.MenuDivider(),
 
             // הוסף את רשימת הפרשנים הלא משויכים
-            ..._buildGroup(ungrouped, state),
+            ..._buildGroup('שאר מפרשים', ungrouped, state),
           ],
         ),
         ctx.MenuItem.submenu(
