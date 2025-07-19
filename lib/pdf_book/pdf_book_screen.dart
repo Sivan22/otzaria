@@ -344,7 +344,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           child: GestureDetector(
                             behavior: HitTestBehavior.translucent,
                             onHorizontalDragUpdate: (details) {
-                              final newWidth = (_sidebarWidth.value +
+                              final newWidth = (_sidebarWidth.value -
                                       details.delta.dx)
                                   .clamp(200.0, 600.0);
                               _sidebarWidth.value = newWidth;

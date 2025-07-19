@@ -567,7 +567,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                             style: TextStyle(
                               fontSize: fontSize,
                               fontFamily:
-                                  Settings.getValue('key-font-family') ?? 'candara',
+                                  Settings.getValue('key-font-family') ??
+                                      'candara',
                             ),
                             onSelectionChanged: (selection, cause) {
                               if (selection.start != selection.end) {
@@ -591,7 +592,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                       alignment: Alignment.centerRight,
                       child: Text(
                         'פירוט הטעות (אופציונלי):',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -643,25 +647,25 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         return AlertDialog(
           title: const Text('דיווח על טעות בספר'),
           content: SingleChildScrollView(
-              child: Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'הטקסט שנבחר:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(reportData.selectedText),
-              const SizedBox(height: 16),
-              if (reportData.errorDetails.isNotEmpty) ...[
+              children: [
                 const Text(
-                  'פירוט הטעות:',
+                  'הטקסט שנבחר:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                Text(reportData.errorDetails),
+                Text(reportData.selectedText),
+                const SizedBox(height: 16),
+                if (reportData.errorDetails.isNotEmpty) ...[
+                  const Text(
+                    'פירוט הטעות:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(reportData.errorDetails),
+                ],
               ],
-            ],
-          ),
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -707,106 +711,104 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     ''';
   }
 
-/// שמירת דיווח לקובץ בתיקייה הראשית של הספרייה (libraryPath).
-Future<bool> _saveReportToFile(String reportContent) async {
-  try {
-    final libraryPath = Settings.getValue('key-library-path');
+  /// שמירת דיווח לקובץ בתיקייה הראשית של הספרייה (libraryPath).
+  Future<bool> _saveReportToFile(String reportContent) async {
+    try {
+      final libraryPath = Settings.getValue('key-library-path');
 
-    if (libraryPath == null || libraryPath.isEmpty) {
-      debugPrint('libraryPath not set; cannot save report.');
+      if (libraryPath == null || libraryPath.isEmpty) {
+        debugPrint('libraryPath not set; cannot save report.');
+        return false;
+      }
+
+      final filePath = '$libraryPath${Platform.pathSeparator}$_reportFileName';
+      final file = File(filePath);
+
+      final exists = await file.exists();
+
+      final sink = file.openWrite(
+        mode: exists ? FileMode.append : FileMode.write,
+        encoding: utf8,
+      );
+
+      // אם יש כבר תוכן קודם בקובץ קיים -> הוסף מפריד לפני הרשומה החדשה
+      if (exists && (await file.length()) > 0) {
+        sink.writeln(''); // שורת רווח
+        sink.writeln(_reportSeparator);
+        sink.writeln(''); // שורת רווח
+      }
+
+      sink.write(reportContent);
+      await sink.flush();
+      await sink.close();
+      return true;
+    } catch (e) {
+      debugPrint('Failed saving report: $e');
       return false;
     }
+  }
 
-    final filePath =
-        '$libraryPath${Platform.pathSeparator}$_reportFileName';
-    final file = File(filePath);
+  /// סופר כמה דיווחים יש בקובץ – לפי המפריד.
+  Future<int> _countReportsInFile() async {
+    try {
+      final libraryPath = Settings.getValue('key-library-path');
+      if (libraryPath == null || libraryPath.isEmpty) return 0;
 
-    final exists = await file.exists();
+      final filePath = '$libraryPath${Platform.pathSeparator}$_reportFileName';
+      final file = File(filePath);
+      if (!await file.exists()) return 0;
 
-    final sink = file.openWrite(
-      mode: exists ? FileMode.append : FileMode.write,
-      encoding: utf8,
-    );
+      final content = await file.readAsString(encoding: utf8);
+      if (content.trim().isEmpty) return 0;
 
-    // אם יש כבר תוכן קודם בקובץ קיים -> הוסף מפריד לפני הרשומה החדשה
-    if (exists && (await file.length()) > 0) {
-      sink.writeln(''); // שורת רווח
-      sink.writeln(_reportSeparator);
-      sink.writeln(''); // שורת רווח
+      final occurrences = _reportSeparator.allMatches(content).length;
+      return occurrences + 1;
+    } catch (e) {
+      debugPrint('countReports error: $e');
+      return 0;
     }
-
-    sink.write(reportContent);
-    await sink.flush();
-    await sink.close();
-    return true;
-  } catch (e) {
-    debugPrint('Failed saving report: $e');
-    return false;
   }
-}
 
-/// סופר כמה דיווחים יש בקובץ – לפי המפריד.
-Future<int> _countReportsInFile() async {
-  try {
-    final libraryPath = Settings.getValue('key-library-path');
-    if (libraryPath == null || libraryPath.isEmpty) return 0;
-
-    final filePath =
-        '$libraryPath${Platform.pathSeparator}$_reportFileName';
-    final file = File(filePath);
-    if (!await file.exists()) return 0;
-
-    final content = await file.readAsString(encoding: utf8);
-    if (content.trim().isEmpty) return 0;
-
-    final occurrences = _reportSeparator.allMatches(content).length;
-    return occurrences + 1;
-  } catch (e) {
-    debugPrint('countReports error: $e');
-    return 0;
+  void _showSimpleSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
-}
 
-void _showSimpleSnack(String message) {
-  if (!mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
-}
+  /// SnackBar לאחר שמירה: מציג מונה + פעולה לפתיחת דוא"ל (mailto).
+  void _showSavedSnack(int count) {
+    if (!mounted) return;
 
-/// SnackBar לאחר שמירה: מציג מונה + פעולה לפתיחת דוא"ל (mailto).
-void _showSavedSnack(int count) {
-  if (!mounted) return;
+    final message =
+        "הדיווח נשמר בהצלחה לקובץ '$_reportFileName', הנמצא בתיקייה הראשית של אוצריא.\n"
+        "יש לך כבר $count דיווחים, וכעת תוכל לשלוח את הקובץ למייל: $_fallbackMail!";
 
-  final message =
-      "הדיווח נשמר בהצלחה לקובץ '$_reportFileName', הנמצא בתיקייה הראשית של אוצריא.\n"
-      "יש לך כבר $count דיווחים, וכעת תוכל לשלוח את הקובץ למייל: $_fallbackMail!";
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      duration: const Duration(seconds: 8),
-      content: Text(message, textDirection: TextDirection.rtl),
-      action: SnackBarAction(
-        label: 'שלח',
-        onPressed: () {
-          _launchMail(_fallbackMail);
-        },
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 8),
+        content: Text(message, textDirection: TextDirection.rtl),
+        action: SnackBarAction(
+          label: 'שלח',
+          onPressed: () {
+            _launchMail(_fallbackMail);
+          },
+        ),
       ),
-    ),
-  );
-}
-
-Future<void> _launchMail(String email) async {
-  final emailUri = Uri(
-    scheme: 'mailto',
-    path: email,
-  );
-  try {
-    await launchUrl(emailUri, mode: LaunchMode.externalApplication);
-  } catch (e) {
-    _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+    );
   }
-}
+
+  Future<void> _launchMail(String email) async {
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: email,
+    );
+    try {
+      await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+    }
+  }
 
   Future<Map<String, String>> _getBookDetails(String bookTitle) async {
     try {
@@ -895,7 +897,7 @@ Future<void> _launchMail(String email) async {
                       behavior: HitTestBehavior.translucent,
                       onHorizontalDragUpdate: (details) {
                         final newWidth =
-                            (_sidebarWidth.value + details.delta.dx)
+                            (_sidebarWidth.value - details.delta.dx)
                                 .clamp(200.0, 600.0);
                         _sidebarWidth.value = newWidth;
                       },
@@ -998,12 +1000,13 @@ Future<void> _launchMail(String email) async {
         }
       }
     });
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      child: SizedBox(
-        // קובעים את הרוחב כדי שהאנימציה תפעל על שינוי הרוחב
-        width: state.showLeftPane ? _sidebarWidth.value : 0,
-        child: Padding(
+    return ValueListenableBuilder<double>(
+      valueListenable: _sidebarWidth,
+      builder: (context, width, child) => AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        child: SizedBox(
+          width: state.showLeftPane ? width : 0,
+          child: Padding(
           padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
           child: Column(
             children: [
@@ -1070,6 +1073,7 @@ Future<void> _launchMail(String email) async {
           ),
         ),
       ),
+    ),
     );
   }
 
