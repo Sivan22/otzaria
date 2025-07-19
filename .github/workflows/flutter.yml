@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - dev_dev2
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
