@@ -9,8 +9,8 @@ import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/view/splited_view/simple_book_view.dart';
 import 'package:otzaria/text_book/view/splited_view/commentary_list_for_splited_view.dart';
 
-class SplitedViewScreen extends StatelessWidget {
-  SplitedViewScreen({
+class SplitedViewScreen extends StatefulWidget {
+  const SplitedViewScreen({
     super.key,
     required this.content,
     required this.openBookCallback,
@@ -18,19 +18,43 @@ class SplitedViewScreen extends StatelessWidget {
     required this.openLeftPaneTab,
     required this.tab,
   });
+
   final List<String> content;
   final void Function(OpenedTab) openBookCallback;
   final TextEditingValue searchTextController;
   final void Function(int) openLeftPaneTab;
   final TextBookTab tab;
 
+  @override
+  State<SplitedViewScreen> createState() => _SplitedViewScreenState();
+}
+
+class _SplitedViewScreenState extends State<SplitedViewScreen> {
+  late final MultiSplitViewController _controller;
   static final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MultiSplitViewController(areas: [
+      Area(weight: 0.4, minimalSize: 200),
+      Area(weight: 0.6, minimalSize: 200),
+    ]);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   ContextMenu _buildContextMenu(TextBookLoaded state) {
     return ContextMenu(
       entries: [
-        MenuItem(label: 'חיפוש', onSelected: () => openLeftPaneTab(1)),
+        MenuItem(
+            label: 'חיפוש',
+            onSelected: () => widget.openLeftPaneTab(1)),
         const MenuDivider(),
         MenuItem(
           label: 'בחר את כל הטקסט',
@@ -44,38 +68,64 @@ class SplitedViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(
-      builder: (context, state) => MultiSplitView(
-        controller: MultiSplitViewController(areas: Area.weights([0.4, 0.6])),
-        axis: Axis.horizontal,
-        resizable: true,
-        dividerBuilder:
-            (axis, index, resizable, dragging, highlighted, themeData) =>
-                const VerticalDivider(),
-        children: [
-          ContextMenuRegion(
-            contextMenu: _buildContextMenu(state as TextBookLoaded),
-            child: SelectionArea(
-              key: _selectionKey,
-              child: CommentaryList(
-                index:
-                    0, // we don't need the index here, b/c we listen to the selected index in the commentary list
+      buildWhen: (previous, current) {
+        if (previous is TextBookLoaded && current is TextBookLoaded) {
+          return previous.fontSize != current.fontSize ||
+              previous.showSplitView != current.showSplitView ||
+              previous.activeCommentators != current.activeCommentators;
+        }
+        return true;
+      },
+      builder: (context, state) {
+        if (state is! TextBookLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-                fontSize: (state as TextBookLoaded).fontSize,
-                openBookCallback: openBookCallback,
-                showSplitView: state.showSplitView,
+        return MultiSplitView(
+          controller: _controller,
+          axis: Axis.horizontal,
+          resizable: true,
+          dividerBuilder:
+              (axis, index, resizable, dragging, highlighted, themeData) {
+            final color = dragging
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).dividerColor;
+            return MouseRegion(
+              cursor: SystemMouseCursors.resizeColumn,
+              child: Container(
+                width: 8,
+                alignment: Alignment.center,
+                child: Container(
+                  width: 1.5,
+                  color: color,
+                ),
+              ),
+            );
+          },
+          children: [
+            ContextMenuRegion(
+              contextMenu: _buildContextMenu(state),
+              child: SelectionArea(
+                key: _selectionKey,
+                child: CommentaryList(
+                  index: 0,
+                  fontSize: state.fontSize,
+                  openBookCallback: widget.openBookCallback,
+                  showSplitView: state.showSplitView,
+                ),
               ),
             ),
-          ),
-          SimpleBookView(
-            data: content,
-            textSize: state.fontSize,
-            openBookCallback: openBookCallback,
-            openLeftPaneTab: openLeftPaneTab,
-            showSplitedView: state.showSplitView,
-            tab: tab,
-          ),
-        ],
-      ),
+            SimpleBookView(
+              data: widget.content,
+              textSize: state.fontSize,
+              openBookCallback: widget.openBookCallback,
+              openLeftPaneTab: widget.openLeftPaneTab,
+              showSplitedView: state.showSplitView,
+              tab: widget.tab,
+            ),
+          ],
+        );
+      },
     );
   }
 }
