@@ -35,7 +35,17 @@ jobs:
         run: |
           flutter build windows --release
       
-    
+      - name: Zip Windows build
+        shell: pwsh
+        run: |
+          $relDir = Get-ChildItem -Directory build\windows |
+                    Where-Object { Test-Path "$($_.FullName)\runner\Release" } |
+                    Select-Object -First 1 -ExpandProperty FullName
+          if (-not $relDir) { throw 'Release directory not found' }
+          Compress-Archive -Path "$relDir\runner\Release\*" -DestinationPath otzaria-windows.zip
+
+      - name: Build MSIX package
+        run: dart run msix:create --install-certificate false
              
       - name: Build Inno Setup installer
         run: |
@@ -46,6 +56,18 @@ jobs:
         with:
           name: otzaria-windows-installer
           path: installer/otzaria-*-windows.exe
+
+      - name: Upload Windows ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-windows-zip
+          path: otzaria-windows.zip
+
+      - name: Upload Windows MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria.msix
+          path: build/windows/x64/runner/release/*.msix
 
   build_linux:
     runs-on: ubuntu-latest
@@ -193,9 +215,13 @@ jobs:
           else
             echo "tag=v$VERSION" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
-            echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
+          echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
           fi
-      
+
+      - name: Get commit message
+        id: commit
+        run: echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+
       - name: Organize release files
         run: |
           mkdir -p release-files
@@ -205,6 +231,16 @@ jobs:
             cp artifacts/otzaria-windows-installer/*.exe release-files/ || true
           fi
           
+          # Windows ZIP
+          if [ -d "artifacts/otzaria-windows-zip" ]; then
+            cp artifacts/otzaria-windows-zip/*.zip release-files/ || true
+          fi
+
+          # Windows MSIX
+          if [ -d "artifacts/otzaria.msix" ]; then
+            cp artifacts/otzaria.msix/*.msix release-files/ || true
+          fi
+
           # Linux DEB package
           if [ -d "artifacts/otzaria-linux-deb" ]; then
             cp artifacts/otzaria-linux-deb/*.deb release-files/ || true
@@ -248,11 +284,13 @@ jobs:
           body: |
             ## Changes in this release
             
-            Built from commit: ${{ github.sha }}
+            Built from commit: ${{ github.sha }} - ${{ steps.commit.outputs.message }}
             Branch: ${{ github.ref_name }}
             
             ### Downloads:
             - **Windows**: Download the `.exe` installer
+            - **Windows (.msix)**: Download the `.msix` package
+            - **Windows (.zip)**: Download the `.zip` archive
             - **Linux (Debian/Ubuntu)**: Download the `.deb` package and install with `sudo dpkg -i <filename>.deb`
             - **Linux (Fedora/RHEL)**: Download the `.rpm` package and install with `sudo dnf localinstall <filename>.rpm`
             - **Linux (Generic)**: Download the `.zip` file and extract
@@ -299,7 +337,11 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION-pr-${{ github.event.number }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
           echo "title=Otzaria v$VERSION - PR #${{ github.event.number }} Preview" >> $GITHUB_OUTPUT
-      
+
+      - name: Get commit message
+        id: commit
+        run: echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+
       - name: Organize release files
         run: |
           mkdir -p release-files
@@ -365,10 +407,12 @@ jobs:
             
             ---
             
-            Built from commit: ${{ github.sha }}
+            Built from commit: ${{ github.sha }} - ${{ steps.commit.outputs.message }}
             
             ### Downloads:
             - **Windows**: Download the `.exe` installer
+            - **Windows (.msix)**: Download the `.msix` package
+            - **Windows (.zip)**: Download the `.zip` archive
             - **Linux (Debian/Ubuntu)**: Download the `.deb` package and install with `sudo dpkg -i <filename>.deb`
             - **Linux (Fedora/RHEL)**: Download the `.rpm` package and install with `sudo dnf localinstall <filename>.rpm`
             - **Linux (Generic)**: Download the `.zip` file and extract
