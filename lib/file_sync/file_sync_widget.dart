@@ -95,7 +95,7 @@ class _SyncIconButtonState extends State<SyncIconButton>
           child: IconButton(
             onPressed: () => _handlePress(context, state),
             icon: RotationTransition(
-              turns: _controller,
+              turns: Tween(begin: 0.0, end: -1.0).animate(_controller),
               child: Icon(
                 iconData,
                 color: iconColor,
