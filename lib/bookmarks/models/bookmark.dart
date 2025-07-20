@@ -32,13 +32,13 @@ class Bookmark {
   ///
   /// The JSON object must have 'ref', 'title', and 'index' keys.
   factory Bookmark.fromJson(Map<String, dynamic> json) {
+    final rawCommentators = json['commentatorsToShow'] as List<dynamic>?;
     return Bookmark(
       ref: json['ref'] as String,
       index: json['index'] as int,
       book: Book.fromJson(json['book'] as Map<String, dynamic>),
-      commentatorsToShow: (json['commentatorsToShow'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList(),
+      commentatorsToShow:
+          (rawCommentators ?? []).map((e) => e.toString()).toList(),
     );
   }
 
