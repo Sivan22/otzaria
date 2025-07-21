@@ -456,7 +456,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           return SimpleSettingsTile(
                             title: "אינדקס חיפוש",
                             subtitle: indexingState is IndexingInProgress
-                                ? "בתהליך עדכון: ${indexingState.booksProcessed}/${indexingState.totalBooks}"
+                                ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
                                 : "האינדקס מעודכן",
                             leading: const Icon(Icons.table_chart),
                             onTap: () async {
