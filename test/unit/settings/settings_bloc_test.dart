@@ -39,8 +39,10 @@ void main() {
         'useFastSearch': false,
         'replaceHolyNames': false,
         'autoUpdateIndex': false,
-        'defaultRemoveNikud': true,    
-        'defaultSidebarOpen': true,    
+        'defaultRemoveNikud': true,
+        'removeNikudFromTanach': true,
+        'defaultSidebarOpen': true,
+        'pinSidebar': true,
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -66,7 +68,10 @@ void main() {
             replaceHolyNames: mockSettings['replaceHolyNames'] as bool,
             autoUpdateIndex: mockSettings['autoUpdateIndex'] as bool,
             defaultRemoveNikud: mockSettings['defaultRemoveNikud'] as bool,
-            defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,         
+            removeNikudFromTanach:
+                mockSettings['removeNikudFromTanach'] as bool,
+            defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
+            pinSidebar: mockSettings['pinSidebar'] as bool,
           ),
         ],
         verify: (_) {
@@ -151,6 +156,20 @@ void main() {
       );
     });
 
+    group('UpdateRemoveNikudFromTanach', () {
+      blocTest<SettingsBloc, SettingsState>(
+        'emits updated state when UpdateRemoveNikudFromTanach is added',
+        build: () => settingsBloc,
+        act: (bloc) => bloc.add(const UpdateRemoveNikudFromTanach(true)),
+        expect: () => [
+          settingsBloc.state.copyWith(removeNikudFromTanach: true),
+        ],
+        verify: (_) {
+          verify(mockRepository.updateRemoveNikudFromTanach(true)).called(1);
+        },
+      );
+    });
+
     group('UpdateDefaultSidebarOpen', () {
       blocTest<SettingsBloc, SettingsState>(
         'emits updated state when UpdateDefaultSidebarOpen is added',
@@ -161,6 +180,20 @@ void main() {
         ],
         verify: (_) {
           verify(mockRepository.updateDefaultSidebarOpen(true)).called(1);
+        },
+      );
+    });
+
+    group('UpdatePinSidebar', () {
+      blocTest<SettingsBloc, SettingsState>(
+        'emits updated state when UpdatePinSidebar is added',
+        build: () => settingsBloc,
+        act: (bloc) => bloc.add(const UpdatePinSidebar(true)),
+        expect: () => [
+          settingsBloc.state.copyWith(pinSidebar: true),
+        ],
+        verify: (_) {
+          verify(mockRepository.updatePinSidebar(true)).called(1);
         },
       );
     });

@@ -73,7 +73,9 @@ class _SyncIconButtonState extends State<SyncIconButton>
             iconData = Icons.sync_problem;
           case FileSyncStatus.completed:
             _controller.reset();
-            iconColor = Colors.green;
+            iconColor = state.hasNewSync
+                ? Colors.green
+                : widget.color ?? Theme.of(context).iconTheme.color!;
             iconData = Icons.check_circle;
           case FileSyncStatus.syncing:
             _controller.repeat();

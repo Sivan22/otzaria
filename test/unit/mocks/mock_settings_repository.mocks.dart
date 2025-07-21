@@ -169,6 +169,16 @@ class MockSettingsRepository extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
+  _i3.Future<void> updateRemoveNikudFromTanach(bool? value) => (super.noSuchMethod(
+        Invocation.method(
+          #updateRemoveNikudFromTanach,
+          [value],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
   _i3.Future<void> updateDefaultSidebarOpen(bool? value) => (super.noSuchMethod(
         Invocation.method(
           #updateDefaultSidebarOpen,
@@ -176,5 +186,15 @@ class MockSettingsRepository extends _i1.Mock
         ),
         returnValue: _i3.Future<void>.value(),
         returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);      
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> updatePinSidebar(bool? value) => (super.noSuchMethod(
+        Invocation.method(
+          #updatePinSidebar,
+          [value],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 }

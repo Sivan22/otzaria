@@ -21,15 +21,15 @@ class BookmarkView extends StatelessWidget {
         ? PdfBookTab(
             book: book,
             pageNumber: index,
-            openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           )
         : TextBookTab(
             book: book as TextBook,
             index: index,
             commentators: commentators,
-            openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           );
           
     context.read<TabsBloc>().add(AddTab(tab));
@@ -49,6 +49,9 @@ class BookmarkView extends StatelessWidget {
                       itemCount: state.bookmarks.length,
                       itemBuilder: (context, index) => ListTile(
                           selected: false,
+                          leading: state.bookmarks[index].book is PdfBook
+                              ? const Icon(Icons.picture_as_pdf)
+                              : null,
                           title: Text(state.bookmarks[index].ref),
                           onTap: () => _openBook(
                               context,
@@ -80,6 +83,7 @@ class BookmarkView extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('כל הסימניות נמחקו'),
+                                duration: const Duration(milliseconds: 350),
                           ),
                         );
                       },
