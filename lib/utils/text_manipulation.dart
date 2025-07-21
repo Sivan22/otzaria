@@ -65,6 +65,8 @@ String removeSectionNames(String s) => s
     .replaceAll('מאמר ', '')
     .replaceAll('קטן ', '')
     .replaceAll('משנה ', '')
+    .replaceAll('י', '')
+    .replaceAll('ו', '')
     .replaceAll('"', '')
     .replaceAll("'", '')
     .replaceAll(',', '')
@@ -73,12 +75,6 @@ String removeSectionNames(String s) => s
 
 String replaceParaphrases(String s) {
   s = s
-      .replaceAll(' מהדורא תנינא', ' מהדו"ת')
-      .replaceAll(' מהדורא', ' מהדורה')
-      .replaceAll(' מהדורה', ' מהדורא')
-      .replaceAll(' פני', ' פני יהושע')
-      .replaceAll(' תניינא', ' תנינא')
-      .replaceAll(' תנינא', ' תניינא')
       .replaceAll(' אא', ' אשל אברהם')
       .replaceAll(' אבהע', ' אבן העזר')
       .replaceAll(' אבעז', ' אבן עזרא')
