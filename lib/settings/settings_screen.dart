@@ -196,6 +196,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       },
                     ),
                     SliderSettingsTile(
+                      
                       title: 'רוחב השוליים בצידי הטקסט',
                       settingKey: 'key-padding-size',
                       defaultValue: state.paddingSize,
