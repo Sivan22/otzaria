@@ -44,11 +44,80 @@ class FileSystemData {
   /// Reads the library from the configured path and combines it with metadata
   /// to create a full [Library] object containing all categories and books.
   Future<Library> getLibrary() async {
-    titleToPath = _getTitleToPath();
-    metadata = _getMetadata();
-    return _getLibraryFromDirectory(
-        '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
+  // --- הגדרת נתיבים ---
+  final cachePath = '$libraryPath${Platform.pathSeparator}library_cache.json';
+  final cacheFile = File(cachePath);
+  final metadataPath = '$libraryPath${Platform.pathSeparator}metadata.json';
+  final metadataFile = File(metadataPath);
+
+  // --- בדיקת תוקף המטמון ---
+  bool isCacheValid = await cacheFile.exists(); // 1. האם המטמון קיים?
+
+  if (isCacheValid) {
+    try {
+      final cacheLastModified = await cacheFile.stat();
+      final libraryDirLastModified = await Directory(libraryPath).stat();
+
+      // 2. בדוק אם המטמון ישן יותר משינוי במבנה תיקיית הספרייה (הוספה/מחיקה)
+      if (cacheLastModified.modified.isBefore(libraryDirLastModified.modified)) {
+        isCacheValid = false; // אם כן, המטמון לא תקין
+      }
+
+      // 3. בדוק אם המטמון ישן יותר מקובץ המטא-דאטה
+      if (isCacheValid && await metadataFile.exists()) {
+        final metadataLastModified = await metadataFile.stat();
+        if (cacheLastModified.modified.isBefore(metadataLastModified.modified)) {
+          isCacheValid = false; // אם כן, המטמון לא תקין
+        }
+      }
+    } catch (_) {
+      isCacheValid = false; // אם יש שגיאה בבדיקה, נניח שהמטמון לא תקין
+    }
   }
+
+  // --- טעינה מהמטמון (רק אם הוא קיים ותקין) ---
+  if (isCacheValid) {
+    try {
+      final jsonString = await cacheFile.readAsString();
+      final jsonMap = await Isolate.run(() => jsonDecode(jsonString));
+
+      // טוען גם את הנתיבים וגם את המטא-דאטה מהמטמון
+      titleToPath = Future.value(Map<String, String>.from(jsonMap['titleToPath'] ?? {}));
+      
+      // המפתח 'metadata' עדיין לא קיים במטמונים ישנים, לכן צריך בדיקה
+      if (jsonMap.containsKey('metadata')) {
+        metadata = Future.value(Map<String, Map<String, dynamic>>.from(jsonMap['metadata']));
+      } else {
+        metadata = _getMetadata(); // טעינה רגילה אם המפתח חסר
+      }
+
+      return Library.fromJson(Map<String, dynamic>.from(jsonMap['library']));
+    } catch (_) {
+      // אם יש שגיאה בקריאה מהמטמון, נסרוק מחדש
+    }
+  }
+
+  // --- סריקה מלאה (אם המטמון לא קיים או לא תקין) ---
+  titleToPath = _getTitleToPath();
+  metadata = _getMetadata(); // טעינה טרייה של המטא-דאטה
+  final lib = await _getLibraryFromDirectory(
+      '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
+
+  // --- יצירת קובץ מטמון חדש ---
+  try {
+    // כותב לקובץ גם את המטא-דאטה כדי לחסוך קריאה בפעם הבאה
+    final jsonMap = {
+      'library': lib.toJson(),
+      'titleToPath': await titleToPath,
+      'metadata': await metadata, // הוספנו את המטא-דאטה!
+    };
+    await cacheFile.writeAsString(jsonEncode(jsonMap));
+  } catch (_) {
+    // מתעלם משגיאות כתיבה למטמון
+  }
+
+  return lib;
+}
 
   /// Recursively builds the library structure from a directory.
   ///

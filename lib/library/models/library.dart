@@ -90,7 +90,39 @@ class Category {
     required this.books,
     required this.parent,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'shortDescription': shortDescription,
+      'order': order,
+      'books': books.map((b) => b.toJson()).toList(),
+      'subCategories': subCategories.map((c) => c.toJson()).toList(),
+    };
+  }
+
+  factory Category.fromJson(Map<String, dynamic> json, [Category? parent]) {
+    final category = Category(
+      title: json['title'] as String,
+      description: json['description'] ?? '',
+      shortDescription: json['shortDescription'] ?? '',
+      order: json['order'] ?? 999,
+      subCategories: [],
+      books: [],
+      parent: parent,
+    );
+
+    category.books = (json['books'] as List? ?? [])
+        .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+    category.subCategories = (json['subCategories'] as List? ?? [])
+        .map((e) => Category.fromJson(Map<String, dynamic>.from(e), category))
+        .toList();
+    return category;
+  }
 }
+
 
 /// Represents a library of categories and books.
 ///
@@ -112,6 +144,20 @@ class Library extends Category {
             books: [],
             parent: null) {
     parent = this;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'subCategories': subCategories.map((c) => c.toJson()).toList(),
+    };
+  }
+
+  factory Library.fromJson(Map<String, dynamic> json) {
+    final lib = Library(categories: []);
+    lib.subCategories = (json['subCategories'] as List? ?? [])
+        .map((e) => Category.fromJson(Map<String, dynamic>.from(e), lib))
+        .toList();
+    return lib;
   }
 
   /// Finds a book by its title in the library.
