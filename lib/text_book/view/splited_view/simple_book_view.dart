@@ -53,6 +53,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         MenuItem.submenu(
           label: 'פרשנות',
+          enabled: state.availableCommentators.isNotEmpty, // <--- חדש
           items: [
             MenuItem(
               label: 'הצג את כל המפרשים',
@@ -101,6 +102,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         ),
         MenuItem.submenu(
           label: 'קישורים',
+          enabled: LinksViewer.getLinks(state).isNotEmpty, // <--- חדש
           items: LinksViewer.getLinks(state)
               .map(
                 (link) => MenuItem(
