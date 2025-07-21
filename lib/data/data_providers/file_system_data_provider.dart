@@ -51,7 +51,7 @@ class FileSystemData {
   final metadataFile = File(metadataPath);
 
   // --- בדיקת תוקף המטמון ---
-  bool isCacheValid = await cacheFile.exists(); // 1. האם המטמון קיים?
+  bool isCacheValid = await cacheFile.exists();
 
   if (isCacheValid) {
     try {
@@ -99,17 +99,16 @@ class FileSystemData {
 
   // --- סריקה מלאה (אם המטמון לא קיים או לא תקין) ---
   titleToPath = _getTitleToPath();
-  metadata = _getMetadata(); // טעינה טרייה של המטא-דאטה
+  metadata = _getMetadata();
   final lib = await _getLibraryFromDirectory(
       '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
 
   // --- יצירת קובץ מטמון חדש ---
   try {
-    // כותב לקובץ גם את המטא-דאטה כדי לחסוך קריאה בפעם הבאה
     final jsonMap = {
       'library': lib.toJson(),
       'titleToPath': await titleToPath,
-      'metadata': await metadata, // הוספנו את המטא-דאטה!
+      'metadata': await metadata,
     };
     await cacheFile.writeAsString(jsonEncode(jsonMap));
   } catch (_) {
