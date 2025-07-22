@@ -81,9 +81,7 @@ class _SplitedViewScreenState extends State<SplitedViewScreen> {
   ContextMenu _buildContextMenu(TextBookLoaded state) {
     return ContextMenu(
       entries: [
-        MenuItem(
-            label: 'חיפוש',
-            onSelected: () => widget.openLeftPaneTab(1)),
+        MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         const MenuDivider(),
         MenuItem(
           label: 'בחר את כל הטקסט',
@@ -153,6 +151,7 @@ class _SplitedViewScreenState extends State<SplitedViewScreen> {
                             fontSize: state.fontSize,
                             openBookCallback: widget.openBookCallback,
                             showSplitView: state.showSplitView,
+                            onClosePane: _togglePane,
                           )
                         : const SizedBox.shrink(),
                   ),
@@ -167,17 +166,40 @@ class _SplitedViewScreenState extends State<SplitedViewScreen> {
                 ),
               ],
             ),
-            Positioned(
-              left: 0,
-              top: 0,
-              child: IconButton(
-                iconSize: 16,
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                icon: Icon(_paneOpen ? Icons.close : Icons.drag_handle),
-                onPressed: _togglePane,
+            if (!_paneOpen)
+              Positioned(
+                left: 8,
+                top: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    iconSize: 18,
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                    icon: Icon(
+                      Icons.menu_open,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    onPressed: _togglePane,
+                  ),
+                ),
               ),
-            )
           ],
         );
       },
