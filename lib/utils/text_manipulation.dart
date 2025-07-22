@@ -34,29 +34,18 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
+
+// Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
+final RegExp _holyNameRegex = RegExp(
+  r"י([\p{Mn}]*)ה([\p{Mn}]*)ו([\p{Mn}]*)ה([\p{Mn}]*)",
+  unicode: true,
+);
+
 String replaceHolyNames(String s) {
-  s = s
-      .replaceAll("יהוה", "יקוק")
-      .replaceAll("יְהֹוָה", "יְקׂוָק")
-      .replaceAll("יְהֹוָ֤ה", "יְקׂוָ֤ק")
-      .replaceAll("יְהֹוָ֨ה", "יְקׂוָ֨ק")
-      .replaceAll("יְהֹוָ֥ה", "יְקׂוָ֥ק")
-      .replaceAll("יְהֹוָ֖ה", "יְקׂוָ֖ק")
-      .replaceAll("יְהֹוָ֧ה", "יְקׂוָ֧ק")
-      .replaceAll("יְהֹוָ֣ה", "יְקׂוָ֣ק")
-      .replaceAll("יְהֹוָה֙", "יְקׂוָק֙")
-      .replaceAll("יְהֹוָֽה", "יְקׂוָֽק")
-      .replaceAll("יְהֹוָ֛ה", "יְְקׂוָ֛ק")
-      .replaceAll("יְהֹוָ֜ה", "יְקׂוָ֜ק")
-      .replaceAll("ַֽיהֹוָ֣ה", "ַֽיקׂוָ֣ק")
-      .replaceAll("יהֹוָ֗ה", "יקׂוָ֗ק")
-      .replaceAll("יְהֹוָ֞ה", "יְקׂוָ֞ק")
-      .replaceAll("יהֹוָֽה", "יקׂוָֽק")
-      .replaceAll("יהֹוָה֮", "יקׂוָק֮")
-      .replaceAll("ַיהֹוָ֥ה", "ַיקׂוָ֥ק")
-      .replaceAll("יְהֹוָ֔ה", "יְקׂוָ֔ק")
-      .replaceAll("יְהֹוָ֑ה", "יְקׂוָ֑ק");
-  return s;
+  return s.replaceAllMapped(
+    _holyNameRegex,
+    (match) => 'י${match[1]}ק${match[2]}ו${match[3]}ק${match[4]}',
+  );
 }
 
 String removeTeamim(String s) => s
@@ -356,4 +345,28 @@ String replaceParaphrases(String s) {
   }
 
   return s;
+}
+
+//פונקציה לחלוקת פרשנים לפי תקופה
+Future<Map<String, List<String>>> splitByEra(
+  List<String> titles,
+) async {
+  // יוצרים מבנה נתונים ריק לכל שלוש הקטגוריות
+  final Map<String, List<String>> byEra = {
+    'ראשונים': [],
+    'אחרונים': [],
+    'מחברי זמננו': [],
+  };
+
+  // ממיינים כל פרשן לקטגוריה הראשונה שמתאימה לו
+  for (final t in titles) {
+    if (await hasTopic(t, 'ראשונים')) {
+      byEra['ראשונים']!.add(t);
+    } else if (await hasTopic(t, 'אחרונים')) {
+      byEra['אחרונים']!.add(t);
+    } else if (await hasTopic(t, 'מחברי זמננו')) {
+      byEra['מחברי זמננו']!.add(t);
+    }
+  }
+  return byEra;
 }

@@ -10,7 +10,7 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - pdfrx (0.0.3):
+  - pdfrx (0.0.6):
     - Flutter
     - FlutterMacOS
   - printing (1.0.0):
@@ -78,7 +78,7 @@ SPEC CHECKSUMS:
   isar_flutter_libs: 43385c99864c168fadba7c9adeddc5d38838ca6a
   package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  pdfrx: 07fc287c47ea8d027c4ed56457f8a1aa74d73594
+  pdfrx: 7d42fd227c1ea6a48d7e687cfe27d503238c7f97
   printing: 1dd6a1fce2209ec240698e2439a4adbb9b427637
   screen_retriever: 59634572a57080243dd1bf715e55b6c54f241a38
   search_engine: 9c03e685433b964792a1c30891140147ad75835b

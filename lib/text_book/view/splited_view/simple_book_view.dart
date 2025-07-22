@@ -1,8 +1,7 @@
-// a widget that takes an html strings array and displays it as a widget
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart' as ctx;
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
@@ -43,69 +42,109 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
 
-  ContextMenu _buildContextMenu(TextBookLoaded state) {
+  /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת
+  List<ctx.MenuItem<void>> _buildGroup(
+    List<String>? group,
+    TextBookLoaded st,
+  ) {
+    if (group == null || group.isEmpty) return const [];
+    return group.map((title) {
+      // בודקים אם הפרשן הנוכחי פעיל
+      final bool isActive = st.activeCommentators.contains(title);
+
+      return ctx.MenuItem<void>(
+        label: title,
+        // הוספה: מוסיפים אייקון V אם הפרשן פעיל
+        icon: isActive ? Icons.check : null,
+        onSelected: () {
+          final current = List<String>.from(st.activeCommentators);
+          current.contains(title) ? current.remove(title) : current.add(title);
+          context.read<TextBookBloc>().add(UpdateCommentators(current));
+        },
+      );
+    }).toList();
+  }
+
+  ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
-    return ContextMenu(
-      // 2. הגדרת הגובה המקסימלי ל-90% מגובה המסך
+
+    // 2. זיהוי פרשנים שכבר שויכו לקבוצה
+    final Set<String> alreadyListed = {
+      ...state.rishonim,
+      ...state.acharonim,
+      ...state.modernCommentators,
+    };
+
+    // 3. יצירת רשימה של פרשנים שלא שויכו לאף קבוצה
+    final List<String> ungrouped = state.availableCommentators
+        .where((c) => !alreadyListed.contains(c))
+        .toList();
+
+    return ctx.ContextMenu(
+      // 4. הגדרת הגובה המקסימלי ל-90% מגובה המסך
       maxHeight: screenHeight * 0.9,
       entries: [
-        MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
-        MenuItem.submenu(
+        ctx.MenuItem(
+            label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
+        ctx.MenuItem.submenu(
           label: 'פרשנות',
           enabled: state.availableCommentators.isNotEmpty, // <--- חדש
           items: [
-            MenuItem(
+            ctx.MenuItem(
               label: 'הצג את כל המפרשים',
+              icon: state.activeCommentators.toSet().containsAll(
+                      state.availableCommentators)
+                  ? Icons.check
+                  : null,
               onSelected: () {
-                // 1. מפעילים את כל המפרשים הזמינים
+                final allActive = state.activeCommentators.toSet().containsAll(
+                    state.availableCommentators);
                 context.read<TextBookBloc>().add(
                       UpdateCommentators(
-                        List<String>.from(state.availableCommentators),
+                        allActive
+                            ? <String>[]
+                            : List<String>.from(state.availableCommentators),
                       ),
                     );
-
-                // 2. פותחים את סרגל הצד אם צריך
-                if (!state.showSplitView) {
-                  widget.openLeftPaneTab(2);
-                }
               },
             ),
-            const MenuDivider(),
-            ...state.availableCommentators.map(
-              (title) {
-                // בודקים אם הפרשן הנוכחי כבר פעיל
-                final bool isActive = state.activeCommentators.contains(title);
+            const ctx.MenuDivider(),
+            // ראשונים
+            ..._buildGroup(state.rishonim, state),
 
-                return MenuItem(
-                  label: title,
-                  // אם הפרשן פעיל, מציגים אייקון "וי". אחרת, לא מציגים אייקון.
-                  icon: isActive ? Icons.check : null,
-                  onSelected: () {
-                    // 1. בונים רשימה מעודכנת של פרשנים פעילים
-                    final List<String> current =
-                        List<String>.from(state.activeCommentators);
-                    current.contains(title)
-                        ? current.remove(title)
-                        : current.add(title);
+            // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
+            if (state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
+              const ctx.MenuDivider(),
 
-                    // 2. שולחים את האירוע ל-Bloc
-                    context.read<TextBookBloc>().add(UpdateCommentators(current));
+            // אחרונים
+            ..._buildGroup(state.acharonim, state),
 
-                    // 3. במצב שאינו Split-View – פותחים את סרגל הצד בכרטיסיית “פרשנות”
-                    if (!state.showSplitView) widget.openLeftPaneTab(2);
-                  },
-                );
-              },
-            ),
+            // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
+            if (state.acharonim.isNotEmpty &&
+                state.modernCommentators.isNotEmpty)
+              const ctx.MenuDivider(),
+
+            // מחברי זמננו
+            ..._buildGroup(state.modernCommentators, state),
+
+            // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
+            if ((state.rishonim.isNotEmpty ||
+                    state.acharonim.isNotEmpty ||
+                    state.modernCommentators.isNotEmpty) &&
+                ungrouped.isNotEmpty)
+              const ctx.MenuDivider(),
+
+            // הוסף את רשימת הפרשנים הלא משויכים
+            ..._buildGroup(ungrouped, state),
           ],
         ),
-        MenuItem.submenu(
+        ctx.MenuItem.submenu(
           label: 'קישורים',
           enabled: LinksViewer.getLinks(state).isNotEmpty, // <--- חדש
           items: LinksViewer.getLinks(state)
               .map(
-                (link) => MenuItem(
+                (link) => ctx.MenuItem(
                   label: link.heRef,
                   onSelected: () {
                     widget.openBookCallback(
@@ -114,10 +153,12 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                           title: utils.getTitleFromPath(link.path2),
                         ),
                         index: link.index2 - 1,
-                        openLeftPane: Settings.getValue<bool>(
-                              'key-default-sidebar-open',
-                            ) ??
-                            false,
+                        openLeftPane:
+                            (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false) ||
+                                (Settings.getValue<bool>(
+                                        'key-default-sidebar-open') ??
+                                    false),
                       ),
                     );
                   },
@@ -125,8 +166,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               )
               .toList(),
         ),
-        const MenuDivider(),
-        MenuItem(
+        const ctx.MenuDivider(),
+        ctx.MenuItem(
           label: 'בחר את כל הטקסט',
           onSelected: () =>
               _selectionKey.currentState?.selectableRegion.selectAll(),
@@ -145,56 +186,57 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           maxSpeed: 10000.0,
           curve: 10.0,
           accelerationFactor: 5,
-            child: SelectionArea(
-              key: _selectionKey,
-              contextMenuBuilder: (_, __) => const SizedBox.shrink(),
-              child: ContextMenuRegion( // <-- זה ה-Region היחיד שנשאר, במיקום הנכון
-                contextMenu: _buildContextMenu(state),
-                child: ScrollablePositionedList.builder(
-                  key: PageStorageKey(widget.tab),
-                  initialScrollIndex: state.visibleIndices.first,
-                  itemPositionsListener: state.positionsListener,
-                  itemScrollController: state.scrollController,
-                  scrollOffsetController: state.scrollOffsetController,
-                  itemCount: widget.data.length,
-                  itemBuilder: (context, index) {
-                  return BlocBuilder<SettingsBloc, SettingsState>(
-                    builder: (context, settingsState) {
-                      String data = widget.data[index];
-                      if (!settingsState.showTeamim) {
-                        data = utils.removeTeamim(data);
-                      }
+          child: SelectionArea(
+            key: _selectionKey,
+            contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+            child: ctx.ContextMenuRegion(
+              contextMenu: _buildContextMenu(state),
+              child: ScrollablePositionedList.builder(
+                key: PageStorageKey(widget.tab),
+                initialScrollIndex: state.visibleIndices.first,
+                itemPositionsListener: state.positionsListener,
+                itemScrollController: state.scrollController,
+                scrollOffsetController: state.scrollOffsetController,
+                itemCount: widget.data.length,
+                itemBuilder: (context, index) {
+                return BlocBuilder<SettingsBloc, SettingsState>(
+                        builder: (context, settingsState) {
+                          String data = widget.data[index];
+                          if (!settingsState.showTeamim) {
+                            data = utils.removeTeamim(data);
+                          }
 
-                      if (settingsState.replaceHolyNames) {
-                        data = utils.replaceHolyNames(data);
-                      }
-                      return InkWell(
-                        onTap: () => context.read<TextBookBloc>().add(
-                              UpdateSelectedIndex(index),
+                          if (settingsState.replaceHolyNames) {
+                            data = utils.replaceHolyNames(data);
+                          }
+                          return InkWell(
+                            onTap: () => context.read<TextBookBloc>().add(
+                                  UpdateSelectedIndex(index),
+                                ),
+                            child: Html(
+                              // remove nikud if needed
+                              data: state.removeNikud
+                                  ? utils.highLight(
+                                      utils.removeVolwels('$data\n'),
+                                      state.searchText,
+                                    )
+                                  : utils.highLight(
+                                      '$data\n', state.searchText),
+                              style: {
+                                'body': Style(
+                                  fontSize: FontSize(widget.textSize),
+                                  fontFamily: settingsState.fontFamily,
+                                  textAlign: TextAlign.justify,
+                                ),
+                              },
                             ),
-                        child: Html(
-                          // remove nikud if needed
-                          data: state.removeNikud
-                              ? utils.highLight(
-                                  utils.removeVolwels('$data\n'),
-                                  state.searchText,
-                                )
-                              : utils.highLight('$data\n', state.searchText),
-                          style: {
-                            'body': Style(
-                              fontSize: FontSize(widget.textSize),
-                              fontFamily: settingsState.fontFamily,
-                              textAlign: TextAlign.justify,
-                            ),
-                          },
-                        ),
-                      );
-                    },
+                          );
+                        },
                   );
                 },
               ),
             ),
-            ),
+          ),
         );
       },
     );

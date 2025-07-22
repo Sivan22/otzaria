@@ -123,6 +123,9 @@ class _FindRefScreenState extends State<FindRefScreen> {
                       itemCount: state.refs.length,
                       itemBuilder: (context, index) {
                         return ListTile(
+                            leading: state.refs[index].isPdf
+                                ? const Icon(Icons.picture_as_pdf)
+                                : null,
                             title: Text(state.refs[index].reference),
                             onTap: () {
                               TabsBloc tabsBloc = context.read<TabsBloc>();
@@ -135,18 +138,24 @@ class _FindRefScreenState extends State<FindRefScreen> {
                                         path: state.refs[index].filePath),
                                     pageNumber:
                                         state.refs[index].segment.toInt(),
-                                    openLeftPane: Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false)));
+                                    openLeftPane:
+                                        (Settings.getValue<bool>('key-pin-sidebar') ??
+                                                false) ||
+                                            (Settings.getValue<bool>(
+                                                    'key-default-sidebar-open') ??
+                                                false))));
                               } else {
                                 tabsBloc.add(AddTab(TextBookTab(
                                     book: TextBook(
                                       title: state.refs[index].title,
                                     ),
                                     index: state.refs[index].segment.toInt(),
-                                    openLeftPane: Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false)));
+                                    openLeftPane:
+                                        (Settings.getValue<bool>('key-pin-sidebar') ??
+                                                false) ||
+                                            (Settings.getValue<bool>(
+                                                    'key-default-sidebar-open') ??
+                                                false))));
                               }
                               navigationBloc
                                   .add(const NavigateToScreen(Screen.reading));

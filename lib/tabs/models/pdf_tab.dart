@@ -3,6 +3,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 /// Represents a tab with a PDF book.
 ///
@@ -52,16 +53,21 @@ class PdfBookTab extends OpenedTab {
   }) : super(book.title) {
     showLeftPane = ValueNotifier<bool>(openLeftPane);
     searchController.text = searchText;
+    pinLeftPane.value = Settings.getValue<bool>('key-pin-sidebar') ?? false;
   }
 
   /// Creates a new instance of [PdfBookTab] from a JSON map.
   ///
   /// The JSON map should have 'path' and 'pageNumber' keys.
   factory PdfBookTab.fromJson(Map<String, dynamic> json) {
+    final bool shouldOpenLeftPane =
+        (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false);
     return PdfBookTab(
         book:
             PdfBook(title: getTitleFromPath(json['path']), path: json['path']),
-        pageNumber: json['pageNumber']);
+        pageNumber: json['pageNumber'],
+        openLeftPane: shouldOpenLeftPane);
   }
 
   /// Converts the [PdfBookTab] instance into a JSON map.

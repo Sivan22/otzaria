@@ -16,11 +16,13 @@ class CommentaryContent extends StatefulWidget {
     required this.fontSize,
     required this.openBookCallback,
     required this.removeNikud,
+    this.searchQuery = '',
   });
   final bool removeNikud;
   final Link link;
   final double fontSize;
   final Function(TextBookTab) openBookCallback;
+  final String searchQuery;
 
   @override
   State<CommentaryContent> createState() => _CommentaryContentState();
@@ -43,7 +45,8 @@ class _CommentaryContentState extends State<CommentaryContent> {
           book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
           index: widget.link.index2 - 1,
           openLeftPane:
-              Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+              (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                  (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
         ));
       },
       child: FutureBuilder(
@@ -54,6 +57,7 @@ class _CommentaryContentState extends State<CommentaryContent> {
               if (widget.removeNikud) {
                 text = utils.removeVolwels(text);
               }
+              text = utils.highLight(text, widget.searchQuery);              
               return BlocBuilder<SettingsBloc, SettingsState>(
                 builder: (context, settingsState) {
                   return Html(data: text, style: {

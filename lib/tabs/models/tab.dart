@@ -18,6 +18,7 @@ abstract class OpenedTab {
       return TextBookTab(
         index: tab.index,
         book: tab.book,
+        searchText: tab.searchText,
         commentators: tab.commentators,
       );
     } else if (tab is PdfBookTab) {

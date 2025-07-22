@@ -83,10 +83,10 @@ class _LinksViewerState extends State<LinksViewer>
                           ),
                         ),
                         index: snapshot.data![index].index2 - 1,
-                        openLeftPane: Settings.getValue<bool>(
-                              'key-default-sidebar-open',
-                            ) ??
-                            false,
+                        openLeftPane:
+                            (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                                (Settings.getValue<bool>('key-default-sidebar-open') ??
+                                    false),
                       ),
                     );
                     if (MediaQuery.of(context).size.width < 600) {

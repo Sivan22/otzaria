@@ -127,6 +127,15 @@ class UpdateDefaultRemoveNikud extends SettingsEvent {
   List<Object?> get props => [defaultRemoveNikud];
 }
 
+class UpdateRemoveNikudFromTanach extends SettingsEvent {
+  final bool removeNikudFromTanach;
+
+  const UpdateRemoveNikudFromTanach(this.removeNikudFromTanach);
+
+  @override
+  List<Object?> get props => [removeNikudFromTanach];
+}
+
 class UpdateDefaultSidebarOpen extends SettingsEvent {
   final bool defaultSidebarOpen;
 
@@ -134,4 +143,13 @@ class UpdateDefaultSidebarOpen extends SettingsEvent {
 
   @override
   List<Object?> get props => [defaultSidebarOpen];
+}
+
+class UpdatePinSidebar extends SettingsEvent {
+  final bool pinSidebar;
+
+  const UpdatePinSidebar(this.pinSidebar);
+
+  @override
+  List<Object?> get props => [pinSidebar];
 }

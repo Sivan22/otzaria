@@ -22,8 +22,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateUseFastSearch>(_onUpdateUseFastSearch);
     on<UpdateReplaceHolyNames>(_onUpdateReplaceHolyNames);
     on<UpdateAutoUpdateIndex>(_onUpdateAutoUpdateIndex);
-    on<UpdateDefaultRemoveNikud>(_onUpdateDefaultRemoveNikud);    
+    on<UpdateDefaultRemoveNikud>(_onUpdateDefaultRemoveNikud);
+    on<UpdateRemoveNikudFromTanach>(_onUpdateRemoveNikudFromTanach);
     on<UpdateDefaultSidebarOpen>(_onUpdateDefaultSidebarOpen);
+    on<UpdatePinSidebar>(_onUpdatePinSidebar);
   }
 
   Future<void> _onLoadSettings(
@@ -44,8 +46,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       useFastSearch: settings['useFastSearch'],
       replaceHolyNames: settings['replaceHolyNames'],
       autoUpdateIndex: settings['autoUpdateIndex'],
-      defaultRemoveNikud: settings['defaultRemoveNikud'], 
-      defaultSidebarOpen: settings['defaultSidebarOpen'],     
+      defaultRemoveNikud: settings['defaultRemoveNikud'],
+      removeNikudFromTanach: settings['removeNikudFromTanach'],
+      defaultSidebarOpen: settings['defaultSidebarOpen'],
+      pinSidebar: settings['pinSidebar'],
     ));
   }
 
@@ -151,12 +155,28 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _repository.updateDefaultRemoveNikud(event.defaultRemoveNikud);
     emit(state.copyWith(defaultRemoveNikud: event.defaultRemoveNikud));
-  }  
+  }
+
+  Future<void> _onUpdateRemoveNikudFromTanach(
+    UpdateRemoveNikudFromTanach event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _repository.updateRemoveNikudFromTanach(event.removeNikudFromTanach);
+    emit(state.copyWith(removeNikudFromTanach: event.removeNikudFromTanach));
+  }
   Future<void> _onUpdateDefaultSidebarOpen(
     UpdateDefaultSidebarOpen event,
     Emitter<SettingsState> emit,
   ) async {
     await _repository.updateDefaultSidebarOpen(event.defaultSidebarOpen);
     emit(state.copyWith(defaultSidebarOpen: event.defaultSidebarOpen));
-  }  
+  }
+
+  Future<void> _onUpdatePinSidebar(
+    UpdatePinSidebar event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _repository.updatePinSidebar(event.pinSidebar);
+    emit(state.copyWith(pinSidebar: event.pinSidebar));
+  }
 }
