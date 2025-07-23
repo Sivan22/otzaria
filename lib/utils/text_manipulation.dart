@@ -34,7 +34,6 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-
 // Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
 final RegExp _holyNameRegex = RegExp(
   r"י([\p{Mn}]*)ה([\p{Mn}]*)ו([\p{Mn}]*)ה([\p{Mn}]*)",
@@ -65,8 +64,8 @@ String removeSectionNames(String s) => s
     .replaceAll('מאמר', '')
     .replaceAll('קטן', '')
     .replaceAll('משנה', '')
-    .replaceAll('י', '')
-    .replaceAll('ו', '')
+    .replaceAll(RegExp(r'(?<=[א-ת])י|י(?=[א-ת])'), '')
+    .replaceAll(RegExp(r'(?<=[א-ת])ו|ו(?=[א-ת])'), '')
     .replaceAll('"', '')
     .replaceAll("'", '')
     .replaceAll(',', '')
