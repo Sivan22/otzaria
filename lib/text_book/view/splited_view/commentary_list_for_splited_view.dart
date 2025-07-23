@@ -13,6 +13,7 @@ class CommentaryList extends StatefulWidget {
   final double fontSize;
   final int index;
   final bool showSplitView;
+  final VoidCallback? onClosePane;
 
   const CommentaryList({
     super.key,
@@ -20,6 +21,7 @@ class CommentaryList extends StatefulWidget {
     required this.fontSize,
     required this.index,
     required this.showSplitView,
+    this.onClosePane,
   });
 
   @override
@@ -51,28 +53,61 @@ class _CommentaryListState extends State<CommentaryList> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'חפש בתוך הפרשנים המוצגים...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'חפש בתוך הפרשנים המוצגים...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                          : null,
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() => _searchQuery = value);
+                    },
+                  ),
                 ),
-              ),
-              onChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    iconSize: 18,
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onClosePane,
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -117,4 +152,5 @@ class _CommentaryListState extends State<CommentaryList> {
         ],
       );
     });
-  }}
+  }
+}

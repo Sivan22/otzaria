@@ -1,56 +1,38 @@
 import 'package:otzaria/models/books.dart';
 
 /// Represents a bookmark in the application.
-///
-/// A `Bookmark` object has a [ref] which is a reference to a specific
-/// part of a text (can be a word, a phrase, a sentence, etc.), a [title]
-/// which is the name of the book, and an [index] which is the index
-/// of the bookmark in the text.
 class Bookmark {
-  /// The reference to a specific part of a text.
   final String ref;
-
-  //the book
   final Book book;
-
-  //the commentators to show
   final List<String> commentatorsToShow;
-
-  /// The index of the bookmark in the text.
   final int index;
 
-  /// Creates a new `Bookmark` instance.
-  ///
-  /// The [ref], [title], and [index] parameters must not be null.
-  Bookmark(
-      {required this.ref,
-      required this.book,
-      required this.index,
-      this.commentatorsToShow = const []});
+  /// A stable key for history management, unique per book title.
+  String get historyKey => book.title;
 
-  /// Creates a new `Bookmark` instance from a JSON object.
-  ///
-  /// The JSON object must have 'ref', 'title', and 'index' keys.
+  Bookmark({
+    required this.ref,
+    required this.book,
+    required this.index,
+    this.commentatorsToShow = const [],
+  });
+
   factory Bookmark.fromJson(Map<String, dynamic> json) {
+    final rawCommentators = json['commentatorsToShow'] as List<dynamic>?;
     return Bookmark(
       ref: json['ref'] as String,
       index: json['index'] as int,
       book: Book.fromJson(json['book'] as Map<String, dynamic>),
-      commentatorsToShow: (json['commentatorsToShow'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList(),
+      commentatorsToShow: (rawCommentators ?? []).map((e) => e.toString()).toList(),
     );
   }
 
-  /// Converts the `Bookmark` instance into a JSON object.
-  ///
-  /// Returns a JSON object with 'ref', 'title', and 'index' keys.
   Map<String, dynamic> toJson() {
     return {
       'ref': ref,
       'book': book.toJson(),
       'index': index,
-      'commentatorsToShow': commentatorsToShow
+      'commentatorsToShow': commentatorsToShow,
     };
   }
 }

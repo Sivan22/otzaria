@@ -18,6 +18,7 @@ class SettingsState extends Equatable {
   final bool removeNikudFromTanach;
   final bool defaultSidebarOpen;
   final bool pinSidebar;
+  final double sidebarWidth;
 
   const SettingsState({
     required this.isDarkMode,
@@ -36,6 +37,7 @@ class SettingsState extends Equatable {
     required this.removeNikudFromTanach,
     required this.defaultSidebarOpen,
     required this.pinSidebar,
+    required this.sidebarWidth,
   });
 
   factory SettingsState.initial() {
@@ -56,6 +58,7 @@ class SettingsState extends Equatable {
       removeNikudFromTanach: false,
       defaultSidebarOpen: false,
       pinSidebar: false,
+      sidebarWidth: 300,
     );
   }
 
@@ -76,6 +79,7 @@ class SettingsState extends Equatable {
     bool? removeNikudFromTanach,
     bool? defaultSidebarOpen,
     bool? pinSidebar,
+    double? sidebarWidth,
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -95,6 +99,7 @@ class SettingsState extends Equatable {
           removeNikudFromTanach ?? this.removeNikudFromTanach,
       defaultSidebarOpen: defaultSidebarOpen ?? this.defaultSidebarOpen,
       pinSidebar: pinSidebar ?? this.pinSidebar,
+      sidebarWidth: sidebarWidth ?? this.sidebarWidth,      
     );
   }
 
@@ -116,5 +121,6 @@ class SettingsState extends Equatable {
         removeNikudFromTanach,
         defaultSidebarOpen,
         pinSidebar,
+        sidebarWidth,        
       ];
 }

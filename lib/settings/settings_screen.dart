@@ -591,6 +591,51 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       leading: const Icon(Icons.bug_report),
                       activeColor: Theme.of(context).cardColor,
                     ),
+                    SimpleSettingsTile(
+                      title: 'איפוס הגדרות',
+                      subtitle:
+                          'פעולה זו תמחק את כל ההגדרות ותחזיר את התוכנה למצב התחלתי',
+                      leading: const Icon(Icons.restore, color: Colors.red),
+                      onTap: () async {
+                        // דיאלוג לאישור המשתמש
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('איפוס הגדרות?'),
+                            content: const Text(
+                                'כל ההגדרות האישיות שלך ימחקו. פעולה זו אינה הפיכה. האם להמשיך?'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('ביטול')),
+                              TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('אישור',
+                                      style: TextStyle(color: Colors.red))),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true && context.mounted) {
+                          Settings.clearCache();
+
+                          // הודעה למשתמש שנדרשת הפעלה מחדש
+                          await showDialog<void>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => AlertDialog(
+                                      title: const Text('ההגדרות אופסו'),
+                                      content: const Text(
+                                          'יש לסגור ולהפעיל מחדש את התוכנה כדי שהשינויים יכנסו לתוקף.'),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () => exit(0),
+                                            child: const Text('סגור את התוכנה'))
+                                      ]));
+                        }
+                      },
+                    ),
                     FutureBuilder(
                         future: PackageInfo.fromPlatform(),
                         builder: (context, snapshot) {
