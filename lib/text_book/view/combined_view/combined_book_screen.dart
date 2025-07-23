@@ -113,6 +113,7 @@ class _CombinedViewState extends State<CombinedView> {
             label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
           label: 'פרשנות',
+          enabled: state.availableCommentators.isNotEmpty, // <--- חדש
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
@@ -166,6 +167,7 @@ class _CombinedViewState extends State<CombinedView> {
         ),
         ctx.MenuItem.submenu(
           label: 'קישורים',
+          enabled: LinksViewer.getLinks(state).isNotEmpty, // <--- חדש
           items: LinksViewer.getLinks(state)
               .map(
                 (link) => ctx.MenuItem(

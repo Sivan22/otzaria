@@ -1000,6 +1000,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         }
       }
     });
+
     return ValueListenableBuilder<double>(
       valueListenable: _sidebarWidth,
       builder: (context, width, child) => AnimatedSize(
@@ -1008,6 +1009,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
           width: state.showLeftPane ? width : 0,
           child: Padding(
           padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+
           child: Column(
             children: [
               Row(
