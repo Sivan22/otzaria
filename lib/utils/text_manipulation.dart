@@ -34,7 +34,6 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-
 // Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
 final RegExp _holyNameRegex = RegExp(
   r"י([\p{Mn}]*)ה([\p{Mn}]*)ו([\p{Mn}]*)ה([\p{Mn}]*)",
@@ -56,17 +55,17 @@ String removeTeamim(String s) => s
     .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
 
 String removeSectionNames(String s) => s
-    .replaceAll('פרק ', '')
-    .replaceAll('פסוק ', '')
-    .replaceAll('פסקה ', '')
-    .replaceAll('סעיף ', '')
-    .replaceAll('סימן ', '')
-    .replaceAll('הלכה ', '')
-    .replaceAll('מאמר ', '')
-    .replaceAll('קטן ', '')
-    .replaceAll('משנה ', '')
-    .replaceAll('י', '')
-    .replaceAll('ו', '')
+    .replaceAll('פרק', '')
+    .replaceAll('פסוק', '')
+    .replaceAll('פסקה', '')
+    .replaceAll('סעיף', '')
+    .replaceAll('סימן', '')
+    .replaceAll('הלכה', '')
+    .replaceAll('מאמר', '')
+    .replaceAll('קטן', '')
+    .replaceAll('משנה', '')
+    .replaceAll(RegExp(r'(?<=[א-ת])י|י(?=[א-ת])'), '')
+    .replaceAll(RegExp(r'(?<=[א-ת])ו|ו(?=[א-ת])'), '')
     .replaceAll('"', '')
     .replaceAll("'", '')
     .replaceAll(',', '')
@@ -75,6 +74,12 @@ String removeSectionNames(String s) => s
 
 String replaceParaphrases(String s) {
   s = s
+      .replaceAll(' מהדורא תנינא', ' מהדו"ת')
+      .replaceAll(' מהדורא', ' מהדורה')
+      .replaceAll(' מהדורה', ' מהדורא')
+      .replaceAll(' פני', ' פני יהושע')
+      .replaceAll(' תניינא', ' תנינא')
+      .replaceAll(' תנינא', ' תניינא')
       .replaceAll(' אא', ' אשל אברהם')
       .replaceAll(' אבהע', ' אבן העזר')
       .replaceAll(' אבעז', ' אבן עזרא')
