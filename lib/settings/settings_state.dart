@@ -15,7 +15,9 @@ class SettingsState extends Equatable {
   final bool replaceHolyNames;
   final bool autoUpdateIndex;
   final bool defaultRemoveNikud;
+  final bool removeNikudFromTanach;
   final bool defaultSidebarOpen;
+  final bool pinSidebar;
 
   const SettingsState({
     required this.isDarkMode,
@@ -31,7 +33,9 @@ class SettingsState extends Equatable {
     required this.replaceHolyNames,
     required this.autoUpdateIndex,
     required this.defaultRemoveNikud,
-    required this.defaultSidebarOpen, 
+    required this.removeNikudFromTanach,
+    required this.defaultSidebarOpen,
+    required this.pinSidebar,
   });
 
   factory SettingsState.initial() {
@@ -49,7 +53,9 @@ class SettingsState extends Equatable {
       replaceHolyNames: true,
       autoUpdateIndex: true,
       defaultRemoveNikud: false,
-      defaultSidebarOpen: false,     
+      removeNikudFromTanach: false,
+      defaultSidebarOpen: false,
+      pinSidebar: false,
     );
   }
 
@@ -67,7 +73,9 @@ class SettingsState extends Equatable {
     bool? replaceHolyNames,
     bool? autoUpdateIndex,
     bool? defaultRemoveNikud,
-    bool? defaultSidebarOpen, 
+    bool? removeNikudFromTanach,
+    bool? defaultSidebarOpen,
+    bool? pinSidebar,
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -82,8 +90,11 @@ class SettingsState extends Equatable {
       useFastSearch: useFastSearch ?? this.useFastSearch,
       replaceHolyNames: replaceHolyNames ?? this.replaceHolyNames,
       autoUpdateIndex: autoUpdateIndex ?? this.autoUpdateIndex,
-      defaultRemoveNikud: defaultRemoveNikud ?? this.defaultRemoveNikud,  
-      defaultSidebarOpen: defaultSidebarOpen ?? this.defaultSidebarOpen,    
+      defaultRemoveNikud: defaultRemoveNikud ?? this.defaultRemoveNikud,
+      removeNikudFromTanach:
+          removeNikudFromTanach ?? this.removeNikudFromTanach,
+      defaultSidebarOpen: defaultSidebarOpen ?? this.defaultSidebarOpen,
+      pinSidebar: pinSidebar ?? this.pinSidebar,
     );
   }
 
@@ -102,6 +113,8 @@ class SettingsState extends Equatable {
         replaceHolyNames,
         autoUpdateIndex,
         defaultRemoveNikud,
-        defaultSidebarOpen,       
+        removeNikudFromTanach,
+        defaultSidebarOpen,
+        pinSidebar,
       ];
 }

@@ -58,11 +58,21 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         .join('&');
   }
 
-  @override
-  void initState() {
-    super.initState();
-    tabController = TabController(length: 4, vsync: this);
-  }
+    @override
+    void initState() {
+      super.initState();
+    
+      // אם יש טקסט חיפוש (searchText), נתחיל בלשונית 'חיפוש' (שנמצאת במקום ה-1)
+      // אחרת, נתחיל בלשונית 'ניווט' (שנמצאת במקום ה-0)
+      final int initialIndex = widget.tab.searchText.isNotEmpty ? 1 : 0;
+    
+      // יוצרים את בקר הלשוניות עם האינדקס ההתחלתי שקבענו
+      tabController = TabController(
+        length: 4, // יש 4 לשוניות
+        vsync: this,
+        initialIndex: initialIndex,
+      );   
+    }
 
   @override
   void dispose() {
@@ -84,13 +94,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         return BlocBuilder<TextBookBloc, TextBookState>(
           bloc: context.read<TextBookBloc>(),
           builder: (context, state) {
-            if (state is TextBookInitial) {
-              context.read<TextBookBloc>().add(LoadContent(
+          if (state is TextBookInitial) {
+            context.read<TextBookBloc>().add(
+              LoadContent(
                 fontSize: settingsState.fontSize,
-                showSplitView: false, // TODO: Add this to settings if needed
+                showSplitView: Settings.getValue<bool>('key-splited-view') ?? false,
                 removeNikud: settingsState.defaultRemoveNikud,
-              ));
-            }
+              ),
+            );
+          }
+
         if (state is TextBookInitial || state is TextBookLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -276,6 +289,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
               content: Text(
                 bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת',
               ),
+              duration: const Duration(milliseconds: 350),
             ),
           );
         }
@@ -702,7 +716,8 @@ $selectedText
         },
         child: NotificationListener<UserScrollNotification>(
           onNotification: (scrollNotification) {
-            if (!state.pinLeftPane) {
+            if (!(state.pinLeftPane ||
+                (Settings.getValue<bool>('key-pin-sidebar') ?? false))) {
               Future.microtask(() {
                 context.read<TextBookBloc>().add(const ToggleLeftPane(false));
               });
@@ -780,7 +795,7 @@ $selectedText
       child: SizedBox(
         width: state.showLeftPane ? 400 : 0,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: Column(
             children: [
               Row(
@@ -805,11 +820,15 @@ $selectedText
                   ),
                   if (MediaQuery.of(context).size.width >= 600)
                     IconButton(
-                      onPressed: () => context.read<TextBookBloc>().add(
-                            TogglePinLeftPane(!state.pinLeftPane),
-                          ),
+                      onPressed: (Settings.getValue<bool>('key-pin-sidebar') ??
+                              false)
+                          ? null
+                          : () => context.read<TextBookBloc>().add(
+                                TogglePinLeftPane(!state.pinLeftPane),
+                              ),
                       icon: const Icon(Icons.push_pin),
-                      isSelected: state.pinLeftPane,
+                      isSelected: state.pinLeftPane ||
+                          (Settings.getValue<bool>('key-pin-sidebar') ?? false),
                     ),
                 ],
               ),
@@ -845,15 +864,17 @@ $selectedText
     );
   }
 
-  Widget _buildSearchView(BuildContext context, TextBookLoaded state) {
-    return TextBookSearchView(
-      focusNode: textSearchFocusNode,
-      data: state.content.join('\n'),
-      scrollControler: state.scrollController,
-      closeLeftPaneCallback: () =>
-          context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
-    );
-  }
+    Widget _buildSearchView(BuildContext context, TextBookLoaded state) {
+      return TextBookSearchView(
+        focusNode: textSearchFocusNode,
+        data: state.content.join('\n'),
+        scrollControler: state.scrollController,
+        // הוא מעביר את טקסט החיפוש מה-state הנוכחי אל תוך רכיב החיפוש
+        initialQuery: state.searchText, 
+        closeLeftPaneCallback: () =>
+            context.read<TextBookBloc>().add(const ToggleLeftPane(false)),
+      );
+    }
 
   Widget _buildTocViewer(BuildContext context, TextBookLoaded state) {
     return TocViewer(

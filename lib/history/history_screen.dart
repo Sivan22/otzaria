@@ -21,19 +21,23 @@ class HistoryView extends StatelessWidget {
         ? PdfBookTab(
             book: book,
             pageNumber: index,
-            openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           )
         : TextBookTab(
             book: book as TextBook,
             index: index,
             commentators: commentators,
-            openLeftPane:
-                Settings.getValue<bool>('key-default-sidebar-open') ?? false,
+            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
           );
 
     context.read<TabsBloc>().add(AddTab(tab));
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
+    // Close the dialog if this view is displayed inside one
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -58,6 +62,9 @@ class HistoryView extends StatelessWidget {
               child: ListView.builder(
                 itemCount: state.history.length,
                 itemBuilder: (context, index) => ListTile(
+                  leading: state.history[index].book is PdfBook
+                      ? const Icon(Icons.picture_as_pdf)
+                      : null,
                   title: Text(state.history[index].ref),
                   onTap: () {
                     _openBook(

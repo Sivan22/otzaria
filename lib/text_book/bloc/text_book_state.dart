@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/links.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 abstract class TextBookState extends Equatable {
   final TextBook book;
@@ -16,11 +17,17 @@ abstract class TextBookState extends Equatable {
 }
 
 class TextBookInitial extends TextBookState {
+  final String searchText;
+
   const TextBookInitial(
-      super.book, super.index, super.showLeftPane, super.commentators);
+      super.book,
+      super.index,
+      super.showLeftPane,
+      super.commentators,
+      [this.searchText = '']);
 
   @override
-  List<Object?> get props => [book.title];
+  List<Object?> get props => [book.title, searchText];
 }
 
 class TextBookLoading extends TextBookState {
@@ -46,6 +53,9 @@ class TextBookLoaded extends TextBookState {
   final double fontSize;
   final bool showSplitView;
   final List<String> activeCommentators;
+  final List<String> rishonim;
+  final List<String> acharonim;
+  final List<String> modernCommentators;
   final List<String> availableCommentators;
   final List<Link> links;
   final List<TocEntry> tableOfContents;
@@ -68,6 +78,9 @@ class TextBookLoaded extends TextBookState {
     required this.fontSize,
     required this.showSplitView,
     required this.activeCommentators,
+      required this.rishonim,
+    required this.acharonim,
+    required this.modernCommentators,
     required this.availableCommentators,
     required this.links,
     required this.tableOfContents,
@@ -96,11 +109,14 @@ class TextBookLoaded extends TextBookState {
       showLeftPane: showLeftPane,
       showSplitView: splitView,
       activeCommentators: commentators ?? const [],
+      rishonim: const [],
+      acharonim: const [],
+      modernCommentators: const [],
       availableCommentators: const [],
       links: const [],
       tableOfContents: const [],
       removeNikud: false,
-      pinLeftPane: false,
+      pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
       searchText: '',
       scrollController: ItemScrollController(),
       scrollOffsetController: ScrollOffsetController(),
@@ -116,6 +132,9 @@ class TextBookLoaded extends TextBookState {
     bool? showLeftPane,
     bool? showSplitView,
     List<String>? activeCommentators,
+    List<String>? rishonim,
+    List<String>? acharonim,
+    List<String>? modernCommentators,
     List<String>? availableCommentators,
     List<Link>? links,
     List<TocEntry>? tableOfContents,
@@ -136,6 +155,9 @@ class TextBookLoaded extends TextBookState {
       showLeftPane: showLeftPane ?? this.showLeftPane,
       showSplitView: showSplitView ?? this.showSplitView,
       activeCommentators: activeCommentators ?? this.activeCommentators,
+      rishonim: rishonim ?? this.rishonim,
+      acharonim: acharonim ?? this.acharonim,
+      modernCommentators: modernCommentators ?? this.modernCommentators,
       availableCommentators:
           availableCommentators ?? this.availableCommentators,
       links: links ?? this.links,
@@ -161,6 +183,7 @@ class TextBookLoaded extends TextBookState {
         showLeftPane,
         showSplitView,
         activeCommentators.length,
+        rishonim, acharonim, modernCommentators,
         availableCommentators.length,
         links.length,
         tableOfContents.length,

@@ -4,6 +4,7 @@ import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/tab.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 /// Represents a tab that contains a text book.
 ///
@@ -15,6 +16,9 @@ class TextBookTab extends OpenedTab {
 
   /// The index of the scrollable list.
   int index;
+
+  /// The initial search text for this tab.
+  final String searchText;
 
   /// The bloc that manages the text book state and logic.
   late final TextBookBloc bloc;
@@ -30,7 +34,7 @@ class TextBookTab extends OpenedTab {
   TextBookTab({
     required this.book,
     required this.index,
-    String searchText = '',
+    this.searchText = '',
     this.commentators,
     bool openLeftPane = false,
     bool splitedView = true,
@@ -45,6 +49,7 @@ class TextBookTab extends OpenedTab {
         index,
         openLeftPane,
         commentators ?? [],
+        searchText,
       ),
     );
   }
@@ -54,6 +59,10 @@ class TextBookTab extends OpenedTab {
   /// The JSON map should have 'initalIndex', 'title', 'commentaries',
   /// and 'type' keys.
   factory TextBookTab.fromJson(Map<String, dynamic> json) {
+    final bool shouldOpenLeftPane =
+        (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+            (Settings.getValue<bool>('key-default-sidebar-open') ?? false);
+
     return TextBookTab(
       index: json['initalIndex'],
       book: TextBook(
@@ -61,6 +70,7 @@ class TextBookTab extends OpenedTab {
       ),
       commentators: List<String>.from(json['commentators']),
       splitedView: json['splitedView'],
+      openLeftPane: shouldOpenLeftPane,
     );
   }
 

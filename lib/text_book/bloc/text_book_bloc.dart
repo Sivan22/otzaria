@@ -4,6 +4,9 @@ import 'package:otzaria/text_book/text_book_repository.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
@@ -29,63 +32,82 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     LoadContent event,
     Emitter<TextBookState> emit,
   ) async {
-    if (state is TextBookLoading) {
+    // הגנה כדי לוודא שאנחנו מתחילים רק מהמצב ההתחלתי
+    if (state is! TextBookInitial) {
+      if (state is TextBookLoaded) {
+        emit(state);
+      }
       return;
     }
-    if (state is TextBookLoaded) {
-      emit(state);
-    }
+    // "הטלה" בטוחה של המצב למשתנה מקומי
+    final initial = state as TextBookInitial;
+    // שמירת הערכים הדרושים במשתנים מקומיים לפני פעולות אסינכרוניות
+    final book = initial.book;
+    final searchText = initial.searchText;
 
-    if (state is TextBookInitial) {
-      final book = state.book;
-      emit(TextBookLoading(
-          book, state.index, state.showLeftPane, state.commentators));
-      try {
-        final content = await _repository.getBookContent(book);
-        final links = await _repository.getBookLinks(book);
-        final tableOfContents = await _repository.getTableOfContents(book);
-        final availableCommentators =
-            await _repository.getAvailableCommentators(links);
+    emit(TextBookLoading(
+        book, initial.index, initial.showLeftPane, initial.commentators));
+    try {
+      final content = await _repository.getBookContent(book);
+      final links = await _repository.getBookLinks(book);
+      final tableOfContents = await _repository.getTableOfContents(book);
+      final availableCommentators =
+          await _repository.getAvailableCommentators(links);
+      // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
+      final eras = await utils.splitByEra(availableCommentators);
 
-        // Create controllers if this is the first load
-        final ItemScrollController scrollController = ItemScrollController();
-        final ScrollOffsetController scrollOffsetController =
-            ScrollOffsetController();
-        final ItemPositionsListener positionsListener =
-            ItemPositionsListener.create();
+      final defaultRemoveNikud =
+          Settings.getValue<bool>('key-default-nikud') ?? false;
+      final removeNikudFromTanach =
+          Settings.getValue<bool>('key-remove-nikud-tanach') ?? false;
+      final isTanach =
+          await FileSystemData.instance.isTanachBook(book.title);
+      final removeNikud =
+          defaultRemoveNikud && (removeNikudFromTanach || !isTanach);
 
-        // Set up position listener
-        positionsListener.itemPositions.addListener(() {
-          final visibleInecies = positionsListener.itemPositions.value
-              .map((e) => e.index)
-              .toList();
-          if (visibleInecies.isNotEmpty) {
-            add(UpdateVisibleIndecies(visibleInecies));
-          }
-        });
+      // Create controllers if this is the first load
+      final ItemScrollController scrollController = ItemScrollController();
+      final ScrollOffsetController scrollOffsetController =
+          ScrollOffsetController();
+      final ItemPositionsListener positionsListener =
+          ItemPositionsListener.create();
 
-        emit(TextBookLoaded(
-          book: state.book,
-          content: content.split('\n'),
-          links: links,
-          availableCommentators: availableCommentators,
-          tableOfContents: tableOfContents,
-          fontSize: event.fontSize,
-          showLeftPane: state.showLeftPane,
-          showSplitView: event.showSplitView,
-          activeCommentators: state.commentators,
-          removeNikud: event.removeNikud,
-          visibleIndices: [state.index],
-          pinLeftPane: false,
-          searchText: '',
-          scrollController: scrollController,
-          scrollOffsetController: scrollOffsetController,
-          positionsListener: positionsListener,
-        ));
-      } catch (e) {
-        emit(TextBookError(e.toString(), book, state.index, state.showLeftPane,
-            state.commentators));
-      }
+      // Set up position listener
+      positionsListener.itemPositions.addListener(() {
+        final visibleInecies = positionsListener.itemPositions.value
+            .map((e) => e.index)
+            .toList();
+        if (visibleInecies.isNotEmpty) {
+          add(UpdateVisibleIndecies(visibleInecies));
+        }
+      });
+
+      emit(TextBookLoaded(
+        book: book, // שימוש במשתנה המקומי
+        content: content.split('\n'),
+        links: links,
+        availableCommentators: availableCommentators,
+        tableOfContents: tableOfContents,
+        fontSize: event.fontSize,
+        // הצג את סרגל הצד אם ההגדרה דורשת זאת, או אם הגענו מחיפוש
+        showLeftPane: initial.showLeftPane || initial.searchText.isNotEmpty,
+        showSplitView: event.showSplitView,
+        activeCommentators: initial.commentators, // שימוש במשתנה המקומי
+        rishonim: eras['ראשונים']!,
+        acharonim: eras['אחרונים']!,
+        modernCommentators: eras['מחברי זמננו']!,
+        removeNikud: removeNikud,
+        visibleIndices: [initial.index], // שימוש במשתנה המקומי
+        pinLeftPane:
+            Settings.getValue<bool>('key-pin-sidebar') ?? false,
+        searchText: searchText,
+        scrollController: scrollController,
+        scrollOffsetController: scrollOffsetController,
+        positionsListener: positionsListener,
+      ));
+    } catch (e) {
+      emit(TextBookError(e.toString(), book, initial.index, initial.showLeftPane,
+          initial.commentators));
     }
   }
 

@@ -466,4 +466,23 @@ class FileSystemData {
     final titleToPath = await this.titleToPath;
     return titleToPath.keys.contains(title);
   }
+
+  /// Returns true if the book belongs to Tanach (Torah, Neviim or Ketuvim).
+  ///
+  /// The check is performed by examining the book path and verifying that it
+  /// resides under one of the Tanach directories.
+  Future<bool> isTanachBook(String title) async {
+    final path = await _getBookPath(title);
+    final normalized = path
+        .replaceAll('/', Platform.pathSeparator)
+        .replaceAll('\\', Platform.pathSeparator);
+    final tanachBase =
+        '${Platform.pathSeparator}אוצריא${Platform.pathSeparator}תנך${Platform.pathSeparator}';
+    final torah = tanachBase + 'תורה';
+    final neviim = tanachBase + 'נביאים';
+    final ktuvim = tanachBase + 'כתובים';
+    return normalized.contains(torah) ||
+        normalized.contains(neviim) ||
+        normalized.contains(ktuvim);
+  }
 }
