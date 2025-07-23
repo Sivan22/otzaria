@@ -795,7 +795,7 @@ $selectedText
       child: SizedBox(
         width: state.showLeftPane ? 400 : 0,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: Column(
             children: [
               Row(
