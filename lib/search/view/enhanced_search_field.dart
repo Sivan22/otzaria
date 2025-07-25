@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
@@ -87,8 +88,25 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   void _calculateWordPositionsSimple() {
     if (_textFieldKey.currentContext == null) return;
 
-    final renderBox = _textFieldKey.currentContext!.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
+    // 1. מאתרים את RenderEditable שבתוך ה‑TextField
+    RenderEditable? editable;
+    void _findEditable(RenderObject child) {
+      if (child is RenderEditable) {
+        editable = child;
+      } else {
+        child.visitChildren(_findEditable);
+      }
+    }
+
+    _textFieldKey.currentContext!
+        .findRenderObject()!
+        .visitChildren(_findEditable);
+    if (editable == null) return;
+
+    // 2. קואורדינטות בסיס
+    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stackBox == null) return;
+    final stackGlobal = stackBox.localToGlobal(Offset.zero);
 
     _wordPositions.clear();
 
@@ -98,51 +116,31 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       return;
     }
 
+    // 3. עבור כל מילה – מוצאים את Rect שלה בעזרת getEndpointsForSelection
     final words = text.trim().split(RegExp(r'\s+'));
-    const textStyle = TextStyle(fontSize: 16);
-
-    // גישה חדשה: נשתמש ב-getPositionForOffset כדי למצוא את המיקום המדויק של כל מילה
-    final textPainter = TextPainter(
-      text: TextSpan(text: text, style: textStyle),
-      textDirection: TextDirection.rtl,
-    )..layout();
-
-    final fieldWidth = renderBox.size.width;
-    final textStartX = _kInnerPadding + 48; // אחרי prefixIcon
-    final availableWidth = fieldWidth - textStartX - _kSuffixWidth - _kInnerPadding;
-    
-    // מיקום הטקסט בשדה (RTL)
-    final textX = textStartX + (availableWidth - textPainter.size.width);
-
-    // עכשיו נמצא את המיקום של כל מילה
     int currentIndex = 0;
-    
-    for (int i = 0; i < words.length; i++) {
-      final word = words[i];
-      
-      // מצא את תחילת המילה בטקסט
+    for (final word in words) {
       final wordStart = text.indexOf(word, currentIndex);
+      if (wordStart == -1) continue; // הגנה
       final wordEnd = wordStart + word.length;
-      
-      // השתמש ב-getOffsetForCaret כדי למצוא את המיקום הפיזי
-      final startOffset = textPainter.getOffsetForCaret(
-        TextPosition(offset: wordStart),
-        Rect.zero,
+
+      final endpoints = editable!.getEndpointsForSelection(
+          TextSelection(baseOffset: wordStart, extentOffset: wordEnd));
+      if (endpoints.length < 2) continue;
+
+      final left = endpoints[0].point.dx;
+      final right = endpoints[1].point.dx;
+      final centerLocal = Offset(
+        (left + right) / 2,
+        editable!.size.height + _kPlusYOffset,
       );
-      final endOffset = textPainter.getOffsetForCaret(
-        TextPosition(offset: wordEnd),
-        Rect.zero,
-      );
-      
-      // מרכז המילה
-      final wordCenterX = textX + (startOffset.dx + endOffset.dx) / 2;
-      
-      _wordPositions.add(Offset(
-        wordCenterX,
-        renderBox.size.height + _kPlusYOffset,
-      ));
-      
-      currentIndex = wordEnd + 1; // +1 לרווח
+
+      // 4. המרה לקואורדינטות של ה‑Stack
+      final centerGlobal = editable!.localToGlobal(centerLocal);
+      final centerInStack = centerGlobal - stackGlobal;
+
+      _wordPositions.add(centerInStack);
+      currentIndex = wordEnd + 1;
     }
 
     setState(() {});
