@@ -13,7 +13,7 @@ class _SearchOptionsDropdownState extends State<SearchOptionsDropdown> {
     'סיומות': false,
     'קידומות דקדוקיות': false,
     'סיומות דקדוקיות': false,
-    'כתיב חסר': false,
+    'כתיב מלא/חסר': false,
     'שורש': false,
   };
 
@@ -24,7 +24,8 @@ class _SearchOptionsDropdownState extends State<SearchOptionsDropdown> {
       tooltip: 'אפשרויות חיפוש',
       offset: const Offset(0, 40),
       constraints: const BoxConstraints(minWidth: 200, maxWidth: 250),
-      color: Theme.of(context).popupMenuTheme.color ?? Theme.of(context).canvasColor,
+      color: Theme.of(context).popupMenuTheme.color ??
+          Theme.of(context).canvasColor,
       itemBuilder: (BuildContext context) {
         return [
           // כותרת התפריט
@@ -43,65 +44,75 @@ class _SearchOptionsDropdownState extends State<SearchOptionsDropdown> {
           const PopupMenuDivider(),
           // האפשרויות
           ..._options.keys.map((String option) {
-          return PopupMenuItem<String>(
-            value: option,
-            enabled: false, // מונע סגירה של התפריט בלחיצה
-            child: StatefulBuilder(
-              builder: (BuildContext context, StateSetter setMenuState) {
-                return InkWell(
-                  onTap: () {
-                    setMenuState(() {
-                      _options[option] = !_options[option]!;
-                    });
-                    setState(() {}); // עדכון המצב הכללי
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            option,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
+            return PopupMenuItem<String>(
+              value: option,
+              enabled: false, // מונע סגירה של התפריט בלחיצה
+              child: StatefulBuilder(
+                builder: (BuildContext context, StateSetter setMenuState) {
+                  return InkWell(
+                    onTap: () {
+                      setMenuState(() {
+                        _options[option] = !_options[option]!;
+                      });
+                      setState(() {}); // עדכון המצב הכללי
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12.0, horizontal: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: _options[option]! 
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.grey.shade600,
-                              width: 2,
+                          const SizedBox(width: 16),
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: _options[option]!
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.grey.shade600,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                              color: _options[option]!
+                                  ? Theme.of(context)
+                                      .primaryColor
+                                      .withValues(alpha: 0.1)
+                                  : Colors.transparent,
                             ),
-                            borderRadius: BorderRadius.circular(4),
-                            color: _options[option]! 
-                                ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-                                : Colors.transparent,
+                            child: _options[option]!
+                                ? Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color ??
+                                        Theme.of(context).primaryColor,
+                                  )
+                                : null,
                           ),
-                          child: _options[option]!
-                              ? Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Theme.of(context).textTheme.bodyLarge?.color ?? Theme.of(context).primaryColor,
-                                )
-                              : null,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          );
-        }).toList(),
+                  );
+                },
+              ),
+            );
+          }).toList(),
         ];
       },
       onSelected: (String value) {

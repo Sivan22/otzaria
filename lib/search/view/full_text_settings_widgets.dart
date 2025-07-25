@@ -87,7 +87,7 @@ class NumOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 180,
+          width: 160,
           height: 52, // גובה קבוע
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -111,6 +111,56 @@ class NumOfResults extends StatelessWidget {
   }
 }
 
+class SearchTermsDisplay extends StatelessWidget {
+  const SearchTermsDisplay({
+    super.key,
+    required this.tab,
+  });
+
+  final SearchingTab tab;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        // חישוב רוחב מותאם לטקסט
+        final textLength = state.searchQuery.length;
+        const minWidth = 120.0; // רוחב מינימלי
+        const maxWidth = 300.0; // רוחב מקסימלי
+        final calculatedWidth = (textLength * 8.0 + 60).clamp(minWidth, maxWidth);
+        
+        return Container(
+          height: 52, // גובה קבוע כמו שאר הווידג'טים
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: minWidth,
+                maxWidth: calculatedWidth,
+              ),
+              child: TextField(
+                readOnly: true,
+                controller: TextEditingController(text: state.searchQuery),
+                textAlign: TextAlign.center, // ממרכז את הטקסט
+                decoration: const InputDecoration(
+                  labelText: 'מילות החיפוש',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                ),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class OrderOfResults extends StatelessWidget {
   const OrderOfResults({
     super.key,
@@ -124,7 +174,7 @@ class OrderOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 220, // רוחב גדול יותר לטקסט הארוך
+          width: 175, // רוחב גדול יותר לטקסט הארוך
           height: 52, // גובה קבוע כמו NumOfResults
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),

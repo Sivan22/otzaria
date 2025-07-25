@@ -265,20 +265,24 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
               // פס עליון עם הבקרות - גובה קבוע
               Container(
                 height: 60, // גובה קבוע
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: Row(
                   children: [
-                    const Spacer(), // דוחף הכל לצד ימין
+                    // מילות החיפוש - מקבל את כל המקום הנותר
+                    Expanded(child: SearchTermsDisplay(tab: widget.tab)),
                     // ספירת התוצאות במלבן
                     Container(
                       height: 52, // אותו גובה כמו הבקרות האחרות
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(4.0),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 8.0),
                         child: Center(
                           child: Text(
                             '${state.results.length} תוצאות מתוך ${state.totalResults}',
