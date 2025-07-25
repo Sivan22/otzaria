@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
+import 'package:otzaria/search/view/search_options_dropdown.dart';
 
 class TantivySearchField extends StatelessWidget {
   const TantivySearchField({
@@ -35,12 +36,18 @@ class TantivySearchField extends StatelessWidget {
             },
             icon: const Icon(Icons.search),
           ),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: () {
-              widget.tab.queryController.clear();
-              context.read<SearchBloc>().add(UpdateSearchQuery(''));
-            },
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SearchOptionsDropdown(),
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  widget.tab.queryController.clear();
+                  context.read<SearchBloc>().add(UpdateSearchQuery(''));
+                },
+              ),
+            ],
           ),
         ),
       ),
