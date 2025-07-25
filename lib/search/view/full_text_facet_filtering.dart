@@ -16,6 +16,21 @@ const double _kTreeLevelIndent = 10.0;
 const double _kMinQueryLength = 2;
 const double _kBackgroundOpacity = 0.1;
 
+/// A reusable divider widget that creates a line with a consistent height,
+/// color, and margin to match other dividers in the UI.
+class ThinDivider extends StatelessWidget {
+  const ThinDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1, // 1 logical pixel is sufficient here
+      color: Colors.grey.shade300,
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+    );
+  }
+}
+
 class SearchFacetFiltering extends StatefulWidget {
   final SearchingTab tab;
 
@@ -51,6 +66,14 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
     super.initState();
   }
 
+  void _onQueryChanged(String query) {
+    if (query.length >= _kMinQueryLength) {
+      context.read<SearchBloc>().add(UpdateFilterQuery(query));
+    } else if (query.isEmpty) {
+      context.read<SearchBloc>().add(ClearFilter());
+    }
+  }
+
   void _handleFacetToggle(BuildContext context, String facet) {
     final searchBloc = context.read<SearchBloc>();
     final state = searchBloc.state;
@@ -66,23 +89,30 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   }
 
   Widget _buildSearchField() {
-    return TextField(
-      controller: _filterQuery,
-      decoration: InputDecoration(
-        hintText: "איתור ספר...",
-        prefixIcon: const Icon(Icons.filter_list_alt),
-        suffixIcon: IconButton(
-          onPressed: _clearFilter,
-          icon: const Icon(Icons.close),
+    return Container(
+      height: 60, // Same height as the container on the right
+      alignment: Alignment.center, // Vertically centers the TextField
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: TextField(
+        controller: _filterQuery,
+        decoration: InputDecoration(
+          hintText: 'איתור ספר…',
+          prefixIcon: const Icon(Icons.filter_list_alt),
+          suffixIcon: IconButton(
+            onPressed: _clearFilter,
+            icon: const Icon(Icons.close),
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
+          ),
         ),
+        onChanged: _onQueryChanged,
       ),
-      onChanged: (query) {
-        if (query.length >= 3) {
-          context.read<SearchBloc>().add(UpdateFilterQuery(query));
-        } else if (query.isEmpty) {
-          context.read<SearchBloc>().add(ClearFilter());
-        }
-      },
     );
   }
 
@@ -127,9 +157,9 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
         final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
         return Builder(
           builder: (context) {
-            final count = context.read<SearchBloc>().countForFacet(facet);
+            final countFuture = context.read<SearchBloc>().countForFacet(facet);
             return FutureBuilder<int>(
-              future: count,
+              future: countFuture,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   return _buildBookTile(book, snapshot.data!, 0);
@@ -182,7 +212,6 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
             tilePadding: EdgeInsets.only(
               right: _kTreePadding + (level * _kTreeLevelIndent),
             ),
-            onExpansionChanged: (_) {},
             children: _buildCategoryChildren(category, level),
           ),
         );
@@ -193,10 +222,10 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   List<Widget> _buildCategoryChildren(Category category, int level) {
     return [
       ...category.subCategories.map((subCategory) {
-        final count =
+        final countFuture =
             context.read<SearchBloc>().countForFacet(subCategory.path);
         return FutureBuilder<int>(
-          future: count,
+          future: countFuture,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return _buildCategoryTile(subCategory, snapshot.data!, level + 1);
@@ -207,9 +236,9 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
       }),
       ...category.books.map((book) {
         final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-        final count = context.read<SearchBloc>().countForFacet(facet);
+        final countFuture = context.read<SearchBloc>().countForFacet(facet);
         return FutureBuilder<int>(
-          future: count,
+          future: countFuture,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return _buildBookTile(book, snapshot.data!, level + 1);
@@ -221,50 +250,54 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
     ];
   }
 
+  Widget _buildFacetTree() {
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      builder: (context, libraryState) {
+        if (libraryState.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (libraryState.error != null) {
+          return Center(child: Text('Error: ${libraryState.error}'));
+        }
+
+        if (_filterQuery.text.length >= _kMinQueryLength) {
+          return _buildBooksList(
+              context.read<SearchBloc>().state.filteredBooks ?? []);
+        }
+
+        if (libraryState.library == null) {
+          return const Center(child: Text('No library data available'));
+        }
+
+        final rootCategory = libraryState.library!;
+        final countFuture =
+            context.read<SearchBloc>().countForFacet(rootCategory.path);
+        return FutureBuilder<int>(
+          future: countFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return SingleChildScrollView(
+                key: PageStorageKey(widget.tab),
+                child: _buildCategoryTile(rootCategory, snapshot.data!, 0),
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Column(
       children: [
         _buildSearchField(),
+        const ThinDivider(), // Now perfectly aligned
         Expanded(
-          child: BlocBuilder<LibraryBloc, LibraryState>(
-            builder: (context, libraryState) {
-              if (libraryState.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (libraryState.error != null) {
-                return Center(child: Text('Error: ${libraryState.error}'));
-              }
-
-              if (_filterQuery.text.length >= _kMinQueryLength) {
-                return _buildBooksList(
-                    context.read<SearchBloc>().state.filteredBooks ?? []);
-              }
-
-              if (libraryState.library == null) {
-                return const Center(child: Text('No library data available'));
-              }
-
-              final rootCategory = libraryState.library!;
-              final count =
-                  context.read<SearchBloc>().countForFacet(rootCategory.path);
-              return FutureBuilder<int>(
-                future: count,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return SingleChildScrollView(
-                      key: PageStorageKey(widget.tab),
-                      child:
-                          _buildCategoryTile(rootCategory, snapshot.data!, 0),
-                    );
-                  }
-                  return const Center(child: CircularProgressIndicator());
-                },
-              );
-            },
-          ),
+          child: _buildFacetTree(),
         ),
       ],
     );

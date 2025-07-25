@@ -262,25 +262,43 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
 
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: Row(
-                    children: [
-                      Expanded(
+              // פס עליון עם הבקרות - גובה קבוע
+              Container(
+                height: 60, // גובה קבוע
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: Row(
+                  children: [
+                    const Spacer(), // דוחף הכל לצד ימין
+                    // ספירת התוצאות במלבן
+                    Container(
+                      height: 52, // אותו גובה כמו הבקרות האחרות
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(4.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                         child: Center(
                           child: Text(
                             '${state.results.length} תוצאות מתוך ${state.totalResults}',
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                       ),
-                      if (constrains.maxWidth > 450)
-                        OrderOfResults(widget: widget),
-                      if (constrains.maxWidth > 450)
-                        NumOfResults(tab: widget.tab),
-                    ],
-                  ),
+                    ),
+                    if (constrains.maxWidth > 450)
+                      OrderOfResults(widget: widget),
+                    if (constrains.maxWidth > 450)
+                      NumOfResults(tab: widget.tab),
+                  ],
                 ),
+              ),
+              // פס מפריד מתחת לשורת הבקרות
+              Container(
+                height: 1,
+                color: Colors.grey.shade300,
+                margin: const EdgeInsets.symmetric(horizontal: 8.0),
               ),
               Expanded(
                 child: ListView.builder(

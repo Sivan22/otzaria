@@ -163,6 +163,10 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                   width: 350,
                   child: SearchFacetFiltering(tab: widget.tab),
                 ),
+                Container(
+                  width: 1,
+                  color: Colors.grey.shade300,
+                ),
                 Expanded(
                   child: Builder(builder: (context) {
                     if (state.isLoading) {

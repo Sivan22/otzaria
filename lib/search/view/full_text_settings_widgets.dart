@@ -87,9 +87,10 @@ class NumOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 200,
+          width: 180,
+          height: 52, // גובה קבוע
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: SpinBox(
               value: state.numResults.toDouble(),
               onChanged: (value) => context
@@ -97,7 +98,11 @@ class NumOfResults extends StatelessWidget {
                   .add(UpdateNumResults(value.toInt())),
               min: 10,
               max: 10000,
-              decoration: const InputDecoration(labelText: 'מספר תוצאות'),
+              decoration: const InputDecoration(
+                labelText: 'מספר תוצאות',
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              ),
             ),
           ),
         );
@@ -119,25 +124,34 @@ class OrderOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 300,
-          child: Center(
-            child: DropdownButton<ResultsOrder>(
-                value: state.sortBy,
-                items: const [
-                  DropdownMenuItem(
-                    value: ResultsOrder.relevance,
-                    child: Text('מיון לפי רלוונטיות'),
-                  ),
-                  DropdownMenuItem(
-                    value: ResultsOrder.catalogue,
-                    child: Text('מיון לפי סדר קטלוגי'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    context.read<SearchBloc>().add(UpdateSortOrder(value));
-                  }
-                }),
+          width: 220, // רוחב גדול יותר לטקסט הארוך
+          height: 52, // גובה קבוע כמו NumOfResults
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: DropdownButtonFormField<ResultsOrder>(
+              value: state.sortBy,
+              decoration: const InputDecoration(
+                labelText: 'מיון',
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: ResultsOrder.relevance,
+                  child: Text('לפי רלוונטיות'),
+                ),
+                DropdownMenuItem(
+                  value: ResultsOrder.catalogue,
+                  child: Text('לפי סדר קטלוגי'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  context.read<SearchBloc>().add(UpdateSortOrder(value));
+                }
+              },
+            ),
           ),
         );
       },
