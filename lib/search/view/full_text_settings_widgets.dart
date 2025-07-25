@@ -119,16 +119,26 @@ class SearchTermsDisplay extends StatelessWidget {
 
   final SearchingTab tab;
 
+  String _getDisplayText(String originalQuery) {
+    // כרגע נציג את הטקסט המקורי
+    // בעתיד נוסיף כאן לוגיקה להצגת החלופות
+    // למשל: "מאימתי או מתי ו קורין או קוראין"
+    return originalQuery;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
-        // חישוב רוחב מותאם לטקסט
-        final textLength = state.searchQuery.length;
+        final displayText = _getDisplayText(state.searchQuery);
+
+        // חישוב רוחב מותאם לטקסט המלא (כולל חלופות)
+        final textLength = displayText.length;
         const minWidth = 120.0; // רוחב מינימלי
-        const maxWidth = 300.0; // רוחב מקסימלי
-        final calculatedWidth = (textLength * 8.0 + 60).clamp(minWidth, maxWidth);
-        
+        const maxWidth = 400.0; // רוחב מקסימלי מוגדל לחלופות
+        final calculatedWidth =
+            (textLength * 8.0 + 60).clamp(minWidth, maxWidth);
+
         return Container(
           height: 52, // גובה קבוע כמו שאר הווידג'טים
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -140,7 +150,7 @@ class SearchTermsDisplay extends StatelessWidget {
               ),
               child: TextField(
                 readOnly: true,
-                controller: TextEditingController(text: state.searchQuery),
+                controller: TextEditingController(text: displayText),
                 textAlign: TextAlign.center, // ממרכז את הטקסט
                 decoration: const InputDecoration(
                   labelText: 'מילות החיפוש',
