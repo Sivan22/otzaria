@@ -706,7 +706,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     הטקסט שבו נמצאה הטעות:
     $selectedText
 
-    פירוט הטעות:$detailsSection
+    פירוט הטעות:
+    $detailsSection
 
     ''';
   }
