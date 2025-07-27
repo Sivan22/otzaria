@@ -42,6 +42,7 @@ class _PlusButtonState extends State<_PlusButton> {
           width: 20,
           height: 20,
           decoration: BoxDecoration(
+            // --- תוקן כאן ---
             color: isHighlighted
                 ? primaryColor // מצב מודגש: צבע מלא
                 : primaryColor.withOpacity(0.5), // מצב רגיל: חצי שקוף
@@ -49,6 +50,7 @@ class _PlusButtonState extends State<_PlusButton> {
             boxShadow: [
               if (isHighlighted) // הוספת צל רק במצב מודגש
                 BoxShadow(
+                  // --- ותוקן גם כאן ---
                   color: Colors.black.withOpacity(0.3),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
@@ -69,12 +71,7 @@ class _PlusButtonState extends State<_PlusButton> {
 class _AlternativeField extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onRemove;
-
-  const _AlternativeField({
-    super.key,
-    required this.controller,
-    required this.onRemove,
-  });
+  const _AlternativeField({required this.controller, required this.onRemove});
 
   @override
   State<_AlternativeField> createState() => _AlternativeFieldState();
@@ -86,98 +83,77 @@ class _AlternativeFieldState extends State<_AlternativeField> {
   @override
   void initState() {
     super.initState();
-    // הבקשה הראשונית לפוקוס כשהשדה נוצר
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focus.requestFocus();
       }
     });
-    _focus.addListener(_handleFocus);
-  }
-
-  void _handleFocus() {
-    // איבוד / קבלת פוקוס משפיע רק על “עמעום”
-    setState(() {});
+    // מאזין לשינויי פוקוס כדי לעדכן את המראה (צל)
+    _focus.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
   void dispose() {
-    _focus.removeListener(_handleFocus);
+    _focus.removeListener(() {
+      setState(() {});
+    });
     _focus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool dim =
-        !_focus.hasFocus && widget.controller.text.trim().isNotEmpty;
-
-    return Material(
-      elevation: _focus.hasFocus ? 8 : 2,
-      borderRadius: BorderRadius.circular(8),
-      clipBehavior: Clip.hardEdge, // ☑ לא מאפשר לקו לרוץ “מאחורי” הרקע
-      color: Colors.white, // ☑ רקע לבן אטום
-      child: SizedBox(
-        width: 160, // טיפה רחב – הסתרת קו במלואו
-        height: 40,
-        child: TextField(
-          controller: widget.controller,
-          focusNode: _focus,
-          decoration: InputDecoration(
-            filled: true, // ☑ שכבת מילוי פנימית
-            fillColor: Colors.white,
-            hintText: 'מילה חילופית',
-            hintStyle: TextStyle(
-              fontSize: 12,
-              color: dim ? Colors.black45 : Colors.black54,
+    return Container(
+      width: 160,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _focus.hasFocus
+              ? Theme.of(context).primaryColor
+              : Theme.of(context).dividerColor,
+          width: _focus.hasFocus ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black.withOpacity(_focus.hasFocus ? 0.15 : 0.08),
+            blurRadius: _focus.hasFocus ? 6 : 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.close, size: 16),
+              onPressed: widget.onRemove,
+              splashRadius: 18,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color:
-                    Theme.of(context).dividerColor.withOpacity(dim ? 0.4 : 1.0),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color:
-                    Theme.of(context).dividerColor.withOpacity(dim ? 0.4 : 1.0),
-              ),
-            ),
-            suffixIcon: Material(
-              // ☑ ריפל ברור סביב ה‑X
-              type: MaterialType.transparency,
-              shape: const CircleBorder(),
-              child: InkResponse(
-                splashFactory: InkRipple.splashFactory,
-                onTap: widget.onRemove,
-                customBorder: const CircleBorder(),
-                splashColor: Theme.of(context).primaryColor.withOpacity(0.25),
-                highlightColor:
-                    Theme.of(context).primaryColor.withOpacity(0.12),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: dim ? Colors.black45 : Colors.black87,
-                  ),
+            Expanded(
+              child: TextField(
+                controller: widget.controller,
+                focusNode: _focus,
+                decoration: const InputDecoration(
+                  hintText: 'מילה חילופית',
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.only(right: 8, bottom: 4),
                 ),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                textAlign: TextAlign.right,
+                onSubmitted: (v) {
+                  if (v.trim().isEmpty) widget.onRemove();
+                },
               ),
             ),
-          ),
-          style: TextStyle(
-            fontSize: 12,
-            color: dim ? Colors.black54 : Colors.black87,
-          ),
-          textAlign: TextAlign.right,
-          onSubmitted: (_) {
-            if (widget.controller.text.trim().isEmpty) {
-              widget.onRemove();
-            }
-          },
+          ],
         ),
       ),
     );
@@ -199,30 +175,44 @@ class EnhancedSearchField extends StatefulWidget {
 class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   SearchQuery _searchQuery = SearchQuery();
   final GlobalKey _textFieldKey = GlobalKey();
+  // --- שלב 1: הוספת מפתח ל-Stack ---
   final GlobalKey _stackKey = GlobalKey();
   final List<Offset> _wordPositions = [];
   final Map<int, List<TextEditingController>> _alternativeControllers = {};
-  final Map<int, List<bool>> _showAlternativeFields = {};
 
-  static const double _kInnerPadding = 12; // padding סטנדרטי של TextField
-  static const double _kSuffixWidth = 100; // רוחב suffixIcon (תפריט + clear)
-  static const double _kPlusYOffset = 10; // כמה פיקסלים מתחת לשדה יופיע ה +
-  static const double _kPlusRadius = 10; // רדיוס העיגול (למרכז-top)
+  final Map<int, List<OverlayEntry>> _alternativeOverlays = {};
+  OverlayEntry? _searchOptionsOverlay;
+
+  static const double _kPlusYOffset = 10;
+  static const double _kPlusRadius = 10;
 
   @override
   void initState() {
     super.initState();
     widget.widget.tab.queryController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateWordPositionsSimple();
+      _calculateWordPositions();
     });
   }
 
   @override
   void dispose() {
+    _clearAllOverlays();
     widget.widget.tab.queryController.removeListener(_onTextChanged);
     _disposeControllers();
     super.dispose();
+  }
+
+  void _clearAllOverlays() {
+    for (final entries in _alternativeOverlays.values) {
+      for (final entry in entries) {
+        entry.remove();
+      }
+    }
+    _alternativeOverlays.clear();
+
+    _searchOptionsOverlay?.remove();
+    _searchOptionsOverlay = null;
   }
 
   void _disposeControllers() {
@@ -232,209 +222,156 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       }
     }
     _alternativeControllers.clear();
-    _showAlternativeFields.clear();
   }
 
   void _onTextChanged() {
+    _clearAllOverlays();
+
     final text = widget.widget.tab.queryController.text;
     setState(() {
       _searchQuery = SearchQuery.fromString(text);
       _updateAlternativeControllers();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateWordPositionsSimple();
+      _calculateWordPositions();
+      for (int i = 0; i < _searchQuery.terms.length; i++) {
+        for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
+          _showAlternativeOverlay(i, j);
+        }
+      }
     });
   }
 
   void _updateAlternativeControllers() {
     _disposeControllers();
-
     for (int i = 0; i < _searchQuery.terms.length; i++) {
-      _alternativeControllers[i] = [];
-      _showAlternativeFields[i] = [];
-
       final term = _searchQuery.terms[i];
-      for (int j = 0; j < term.alternatives.length; j++) {
-        _alternativeControllers[i]!
-            .add(TextEditingController(text: term.alternatives[j]));
-        _showAlternativeFields[i]!.add(true);
-      }
+      _alternativeControllers[i] = term.alternatives
+          .map((alt) => TextEditingController(text: alt))
+          .toList();
     }
   }
 
-  void _calculateWordPositionsSimple() {
+  // --- שלב 3: החלפת הלוגיקה של חישוב המיקום ---
+  void _calculateWordPositions() {
     if (_textFieldKey.currentContext == null) return;
 
-    // 1. מאתרים את RenderEditable שבתוך ה‑TextField
+    // 1. מוצאים את RenderEditable
     RenderEditable? editable;
-    void _findEditable(RenderObject child) {
+    void findEditable(RenderObject child) {
       if (child is RenderEditable) {
         editable = child;
       } else {
-        child.visitChildren(_findEditable);
+        child.visitChildren(findEditable);
       }
     }
-
     _textFieldKey.currentContext!
         .findRenderObject()!
-        .visitChildren(_findEditable);
+        .visitChildren(findEditable);
     if (editable == null) return;
 
-    // 2. קואורדינטות בסיס
-    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    // 2. בסיס ה‑Stack בגלובלי
+    final stackBox =
+        _stackKey.currentContext?.findRenderObject() as RenderBox?;
     if (stackBox == null) return;
-    final stackGlobal = stackBox.localToGlobal(Offset.zero);
+    final stackOrigin = stackBox.localToGlobal(Offset.zero);
 
+    // 3. מחשבים מרכז של כל מילה → גלובלי → יחסית ל‑Stack
     _wordPositions.clear();
-
     final text = widget.widget.tab.queryController.text;
     if (text.isEmpty) {
       setState(() {});
       return;
     }
 
-    // 3. עבור כל מילה – מוצאים את Rect שלה בעזרת getEndpointsForSelection
     final words = text.trim().split(RegExp(r'\s+'));
-    int currentIndex = 0;
-    for (final word in words) {
-      final wordStart = text.indexOf(word, currentIndex);
-      if (wordStart == -1) continue; // הגנה
-      final wordEnd = wordStart + word.length;
+    int idx = 0;
+    for (final w in words) {
+      final start = text.indexOf(w, idx);
+      if (start == -1) continue;
+      final end = start + w.length;
 
-      final endpoints = editable!.getEndpointsForSelection(
-          TextSelection(baseOffset: wordStart, extentOffset: wordEnd));
-      if (endpoints.length < 2) continue;
+      final pts = editable!.getEndpointsForSelection(
+        TextSelection(baseOffset: start, extentOffset: end),
+      );
+      if (pts.length < 2) continue;
 
-      final left = endpoints[0].point.dx;
-      final right = endpoints[1].point.dx;
-      final centerLocal = Offset(
-        (left + right) / 2,
+      final centerLocalX = (pts[0].point.dx + pts[1].point.dx) / 2;
+      final local = Offset(
+        centerLocalX,
         editable!.size.height + _kPlusYOffset,
       );
 
-      // 4. המרה לקואורדינטות של ה‑Stack
-      final centerGlobal = editable!.localToGlobal(centerLocal);
-      final centerInStack = centerGlobal - stackGlobal;
+      final global = editable!.localToGlobal(local);
+      final inStack = global - stackOrigin;
 
-      _wordPositions.add(centerInStack);
-      currentIndex = wordEnd + 1;
-    }
-
-    setState(() {});
-  }
-
-  void _calculateWordPositions() {
-    if (_textFieldKey.currentContext == null) return;
-
-    final renderBox =
-        _textFieldKey.currentContext!.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-
-    _wordPositions.clear();
-
-    final text = widget.widget.tab.queryController.text;
-    if (text.isEmpty) {
-      setState(() {}); // נקה את הכפתורים אם אין טקסט
-      return;
-    }
-
-    final words = text.trim().split(RegExp(r'\s+'));
-    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
-    if (stackBox == null) return;
-    final stackOffset = stackBox.localToGlobal(Offset.zero);
-
-    // נשתמש באותו סגנון טקסט כמו ב-TextField
-    const textStyle = TextStyle(fontSize: 16); // גודל ברירת מחדל של TextField
-
-    final tpWord = TextPainter(textDirection: TextDirection.rtl);
-    final tpSpace = TextPainter(
-      text: const TextSpan(text: ' ', style: textStyle),
-      textDirection: TextDirection.rtl,
-    )..layout();
-    final spaceWidth = tpSpace.size.width;
-
-    // התחל מהצד הימני, אחרי הכפתורים (suffixIcon)
-    double cursorX = renderBox.size.width - _kSuffixWidth - _kInnerPadding;
-
-    for (int i = 0; i < words.length; i++) {
-      final word = words[i];
-      tpWord
-        ..text = TextSpan(text: word, style: textStyle)
-        ..layout();
-
-      // מרכז המילה = תחילת המילה + חצי רוחב
-      // מוסיפים חצי רווח קודם (space/2) כדי לקבל “אמצע אופטי” מדויק ב‑RTL
-      final centerX = cursorX - tpWord.size.width / 2 + spaceWidth / 2;
-
-      final globalCenter = Offset(
-        renderBox.localToGlobal(Offset(centerX, 0)).dx,
-        renderBox.localToGlobal(Offset.zero).dy +
-            renderBox.size.height +
-            _kPlusYOffset,
-      );
-
-      _wordPositions.add(globalCenter - stackOffset);
-
-      // זזים אחורה: מילה + רווח, חוץ מהשמאלית‑ביותר (האחרונה בלולאה)
-      cursorX -= tpWord.size.width;
-      if (i < words.length - 1) {
-        cursorX -= spaceWidth;
-      }
+      _wordPositions.add(inStack);
+      idx = end + 1;
     }
 
     setState(() {});
   }
 
   void _addAlternative(int termIndex) {
-    if (termIndex >= _searchQuery.terms.length) return;
-
     setState(() {
-      // 1️⃣ קודם כול – נקה תיבות ריקות בכל המילים
-      _alternativeControllers.forEach((ti, list) {
-        for (int i = list.length - 1; i >= 0; i--) {
-          if (list[i].text.trim().isEmpty) {
-            list[i].dispose();
-            list.removeAt(i);
-            _showAlternativeFields[ti]?.removeAt(i);
-          }
-        }
-      });
-
-      // 2️⃣ הוסף תיבה חדשה למילה הנוכחית
       _alternativeControllers.putIfAbsent(termIndex, () => []);
-      _showAlternativeFields.putIfAbsent(termIndex, () => []);
-
+      final newIndex = _alternativeControllers[termIndex]!.length;
       _alternativeControllers[termIndex]!.add(TextEditingController());
-      _showAlternativeFields[termIndex]!.add(true);
+      _showAlternativeOverlay(termIndex, newIndex);
     });
   }
 
   void _removeAlternative(int termIndex, int altIndex) {
     setState(() {
-      if (_alternativeControllers[termIndex] != null &&
+      if (_alternativeOverlays.containsKey(termIndex) &&
+          altIndex < _alternativeOverlays[termIndex]!.length) {
+        _alternativeOverlays[termIndex]![altIndex].remove();
+        _alternativeOverlays[termIndex]!.removeAt(altIndex);
+      }
+      if (_alternativeControllers.containsKey(termIndex) &&
           altIndex < _alternativeControllers[termIndex]!.length) {
-        // עדכון המודל לפני הסרת הקונטרולר
-        final term = _searchQuery.terms[termIndex];
-        final updatedTerm = term.removeAlternative(altIndex);
-        _searchQuery = _searchQuery.updateTerm(termIndex, updatedTerm);
-
-        // הסרת הקונטרולר והשדה
         _alternativeControllers[termIndex]![altIndex].dispose();
         _alternativeControllers[termIndex]!.removeAt(altIndex);
-        _showAlternativeFields[termIndex]!.removeAt(altIndex);
       }
     });
   }
 
+  void _showAlternativeOverlay(int termIndex, int altIndex) {
+    final overlayState = Overlay.of(context);
+
+    final RenderBox? textFieldBox =
+        _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (textFieldBox == null) return;
+
+    final textFieldGlobalPosition = textFieldBox.localToGlobal(Offset.zero);
+    final wordRelativePosition = _wordPositions[termIndex];
+    final overlayPosition = textFieldGlobalPosition + wordRelativePosition;
+
+    final controller = _alternativeControllers[termIndex]![altIndex];
+
+    final entry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          left: overlayPosition.dx - 80,
+          top: overlayPosition.dy + 15 + (altIndex * 45.0),
+          child: _AlternativeField(
+            controller: controller,
+            onRemove: () => _removeAlternative(termIndex, altIndex),
+          ),
+        );
+      },
+    );
+
+    _alternativeOverlays.putIfAbsent(termIndex, () => []).add(entry);
+    overlayState.insert(entry);
+  }
+
   Widget _buildPlusButton(int termIndex, Offset position) {
-    // הכפתור "פעיל" אם יש לו לפחות שדה חלופי אחד פתוח.
     final bool isActive =
         _alternativeControllers[termIndex]?.isNotEmpty ?? false;
-
     return Positioned(
       left: position.dx - _kPlusRadius,
       top: position.dy - _kPlusRadius,
-      // שימוש בווידג'ט החדש
       child: _PlusButton(
         active: isActive,
         onTap: () => _addAlternative(termIndex),
@@ -442,33 +379,127 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     );
   }
 
-  Widget _buildAlternativeField(int termIndex, int altIndex) {
-    final controller = _alternativeControllers[termIndex]?[altIndex];
-    if (controller == null) return const SizedBox.shrink();
+  void _showSearchOptionsOverlay() {
+    if (_searchOptionsOverlay != null) return;
 
-    final wordPos = _wordPositions.length > termIndex
-        ? _wordPositions[termIndex]
-        : Offset.zero;
+    final overlayState = Overlay.of(context);
+    final RenderBox? textFieldBox =
+        _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (textFieldBox == null) return;
 
-    final topPosition = (wordPos.dy + 22) + (altIndex * 45.0);
+    final textFieldGlobalPosition = textFieldBox.localToGlobal(Offset.zero);
 
-    return Positioned(
-      left: wordPos.dx - 75,
-      top: topPosition,
-      child: _AlternativeField(
-        controller: controller,
-        onRemove: () => _removeAlternative(termIndex, altIndex),
+    _searchOptionsOverlay = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          left: textFieldGlobalPosition.dx,
+          top: textFieldGlobalPosition.dy + textFieldBox.size.height,
+          width: textFieldBox.size.width,
+          child: Container(
+            height: 48.0,
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border(
+                left: BorderSide(color: Colors.grey.shade400, width: 1),
+                right: BorderSide(color: Colors.grey.shade400, width: 1),
+                bottom: BorderSide(color: Colors.grey.shade400, width: 1),
+              ),
+            ),
+            child: Material(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 48.0, right: 16.0, top: 8.0, bottom: 8.0),
+                child: _buildSearchOptionsContent(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlayState.insert(_searchOptionsOverlay!);
+  }
+
+  Widget _buildSearchOptionsContent() {
+    const options = [
+      'קידומות',
+      'סיומות',
+      'קידומות דקדוקיות',
+      'סיומות דקדוקיות',
+      'כתיב מלא/חסר',
+      'שורש',
+    ];
+
+    return Wrap(
+      spacing: 16.0,
+      runSpacing: 8.0,
+      children: options.map((option) => _buildCheckbox(option)).toList(),
+    );
+  }
+
+  Widget _buildCheckbox(String option) {
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey.shade600,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(3),
+                color: Colors.transparent,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              option,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  void _hideSearchOptionsOverlay() {
+    _searchOptionsOverlay?.remove();
+    _searchOptionsOverlay = null;
+  }
+
+  void _toggleSearchOptions(bool isExpanded) {
+    if (isExpanded) {
+      _showSearchOptionsOverlay();
+    } else {
+      _hideSearchOptionsOverlay();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
+      // --- שלב 2: נתינת המפתח ל-Stack ---
       key: _stackKey,
       clipBehavior: Clip.none,
       children: [
-        // השדה הראשי - בגובה רגיל
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: TextField(
@@ -493,17 +524,14 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SearchOptionsDropdown(),
+                  SearchOptionsDropdown(
+                    onToggle: _toggleSearchOptions,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
                       widget.widget.tab.queryController.clear();
                       context.read<SearchBloc>().add(UpdateSearchQuery(''));
-                      setState(() {
-                        _searchQuery = SearchQuery();
-                        _updateAlternativeControllers();
-                        _wordPositions.clear();
-                      });
                     },
                   ),
                 ],
@@ -511,26 +539,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
             ),
           ),
         ),
-
-        // כפתורי הפלוס - צפים מעל השדה
         ..._wordPositions.asMap().entries.map((entry) {
-          final index = entry.key;
-          final position = entry.value;
-          if (index < _searchQuery.terms.length) {
-            return _buildPlusButton(index, position);
-          }
-          return const SizedBox.shrink();
-        }).toList(),
-
-        // שדות חילופיים - צפים מתחת לשדה
-        ..._alternativeControllers.entries.expand((entry) {
-          final termIndex = entry.key;
-          final controllers = entry.value;
-
-          return controllers.asMap().entries.map((controllerEntry) {
-            final altIndex = controllerEntry.key;
-            return _buildAlternativeField(termIndex, altIndex);
-          });
+          return _buildPlusButton(entry.key, entry.value);
         }).toList(),
       ],
     );
