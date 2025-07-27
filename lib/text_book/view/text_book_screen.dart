@@ -732,6 +732,14 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         encoding: utf8,
       );
 
+      // אם זה קובץ חדש, כתוב את השורה הראשונה עם הוראות השליחה
+      if (!exists) {
+        sink.writeln('יש לשלוח קובץ זה למייל: otzaria.200@gmail.com');
+        sink.writeln(''); // שורת רווח
+        sink.writeln(_reportSeparator);
+        sink.writeln(''); // שורת רווח
+      }
+
       // אם יש כבר תוכן קודם בקובץ קיים -> הוסף מפריד לפני הרשומה החדשה
       if (exists && (await file.length()) > 0) {
         sink.writeln(''); // שורת רווח
