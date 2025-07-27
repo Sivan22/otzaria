@@ -33,7 +33,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     // Check if indexing is in progress using the IndexingBloc
     final indexingState = context.read<IndexingBloc>().state;
     _showIndexWarning = indexingState is IndexingInProgress;
-    
+
     // Request focus on search field when the widget is first created
     _requestSearchFieldFocus();
   }
@@ -50,7 +50,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       if (mounted && widget.tab.searchFieldFocusNode.canRequestFocus) {
         // Check if this tab is the currently selected tab
         final tabsState = context.read<TabsBloc>().state;
-        if (tabsState.hasOpenTabs && 
+        if (tabsState.hasOpenTabs &&
             tabsState.currentTabIndex < tabsState.tabs.length &&
             tabsState.tabs[tabsState.currentTabIndex] == widget.tab) {
           widget.tab.searchFieldFocusNode.requestFocus();
@@ -61,8 +61,8 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
 
   void _onNavigationChanged(NavigationState state) {
     // Request focus when navigating to search screen
-    if (state.currentScreen == Screen.search
-    || state.currentScreen == Screen.reading) {
+    if (state.currentScreen == Screen.search ||
+        state.currentScreen == Screen.reading) {
       _requestSearchFieldFocus();
     }
   }
@@ -92,6 +92,9 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
               Expanded(child: TantivySearchField(widget: widget)),
             ],
           ),
+          // השורה התחתונה - מוצגת תמיד!
+          _buildBottomRow(state),
+          _buildDivider(),
           Expanded(
             child: Stack(
               children: [
@@ -157,34 +160,44 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       Expanded(
         child: BlocBuilder<SearchBloc, SearchState>(
           builder: (context, state) {
-            return Row(
+            return Column(
               children: [
-                SizedBox(
-                  width: 350,
-                  child: SearchFacetFiltering(tab: widget.tab),
-                ),
-                Container(
-                  width: 1,
-                  color: Colors.grey.shade300,
-                ),
+                // השורה התחתונה - מוצגת תמיד!
+                _buildBottomRow(state),
+                _buildDivider(),
                 Expanded(
-                  child: Builder(builder: (context) {
-                    if (state.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (state.searchQuery.isEmpty) {
-                      return const Center(child: Text("לא בוצע חיפוש"));
-                    }
-                    if (state.results.isEmpty) {
-                      return const Center(
-                          child: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('אין תוצאות'),
-                      ));
-                    }
-                    return TantivySearchResults(tab: widget.tab);
-                  }),
-                )
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 350,
+                        child: SearchFacetFiltering(tab: widget.tab),
+                      ),
+                      Container(
+                        width: 1,
+                        color: Colors.grey.shade300,
+                      ),
+                      Expanded(
+                        child: Builder(builder: (context) {
+                          if (state.isLoading) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                          if (state.searchQuery.isEmpty) {
+                            return const Center(child: Text("לא בוצע חיפוש"));
+                          }
+                          if (state.results.isEmpty) {
+                            return const Center(
+                                child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text('אין תוצאות'),
+                            ));
+                          }
+                          return TantivySearchResults(tab: widget.tab);
+                        }),
+                      )
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -203,6 +216,63 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
           widget.tab.isLeftPaneOpen.value = !widget.tab.isLeftPaneOpen.value;
         },
       ),
+    );
+  }
+
+  // השורה התחתונה שמוצגת תמיד
+  Widget _buildBottomRow(SearchState state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          height: 60, // גובה קבוע
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Row(
+            children: [
+              // מילות החיפוש - תופס את כל המקום הזמין
+              Expanded(
+                child: SearchTermsDisplay(tab: widget.tab),
+              ),
+              // ספירת התוצאות עם תווית
+              SizedBox(
+                width: 180, // רוחב קבוע כמו שאר הבקרות
+                height: 52, // אותו גובה כמו הבקרות האחרות
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'תוצאות חיפוש',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    ),
+                    child: Center(
+                      child: Text(
+                        state.results.isEmpty && state.searchQuery.isEmpty
+                            ? 'עדיין לא בוצע חיפוש'
+                            : '${state.results.length} מתוך ${state.totalResults}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (constraints.maxWidth > 450)
+                OrderOfResults(widget: TantivySearchResults(tab: widget.tab)),
+              if (constraints.maxWidth > 450) NumOfResults(tab: widget.tab),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // פס מפריד מתחת לשורה התחתונה
+  Widget _buildDivider() {
+    return Container(
+      height: 1,
+      color: Colors.grey.shade300,
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
     );
   }
 

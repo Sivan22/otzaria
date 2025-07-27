@@ -7,7 +7,7 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
-import 'package:otzaria/search/view/full_text_settings_widgets.dart';
+
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
@@ -246,69 +246,32 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
     return LayoutBuilder(builder: (context, constrains) {
       return BlocBuilder<SearchBloc, SearchState>(
         builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.searchQuery.isEmpty) {
-            return const Center(child: Text("לא בוצע חיפוש"));
-          }
-          if (state.results.isEmpty) {
-            return const Center(
-                child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('אין תוצאות'),
-            ));
-          }
+          // עכשיו רק מציגים את התוצאות - השורה התחתונה מוצגת במקום אחר
+          return _buildResultsContent(state, constrains);
+        },
+      );
+    });
+  }
 
-          return Column(
-            children: [
-              // פס עליון עם הבקרות - גובה קבוע
-              Container(
-                height: 60, // גובה קבוע
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: Row(
-                  children: [
-                    // מילות החיפוש - מקבל את כל המקום הנותר
-                    Expanded(child: SearchTermsDisplay(tab: widget.tab)),
-                    // ספירת התוצאות במלבן
-                    Container(
-                      height: 52, // אותו גובה כמו הבקרות האחרות
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 4.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(4.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12.0, vertical: 8.0),
-                        child: Center(
-                          child: Text(
-                            '${state.results.length} תוצאות מתוך ${state.totalResults}',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (constrains.maxWidth > 450)
-                      OrderOfResults(widget: widget),
-                    if (constrains.maxWidth > 450)
-                      NumOfResults(tab: widget.tab),
-                  ],
-                ),
-              ),
-              // פס מפריד מתחת לשורת הבקרות
-              Container(
-                height: 1,
-                color: Colors.grey.shade300,
-                margin: const EdgeInsets.symmetric(horizontal: 8.0),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: state.results.length,
-                  itemBuilder: (context, index) {
+  Widget _buildResultsContent(SearchState state, BoxConstraints constrains) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.searchQuery.isEmpty) {
+      return const Center(child: Text("לא בוצע חיפוש"));
+    }
+    if (state.results.isEmpty) {
+      return const Center(
+          child: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text('אין תוצאות'),
+      ));
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: state.results.length,
+      itemBuilder: (context, index) {
                     final result = state.results[index];
                     return BlocBuilder<SettingsBloc, SettingsState>(
                       builder: (context, settingsState) {
@@ -395,12 +358,6 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                       },
                     );
                   },
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    });
+                );
   }
 }

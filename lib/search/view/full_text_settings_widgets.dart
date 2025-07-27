@@ -111,13 +111,39 @@ class NumOfResults extends StatelessWidget {
   }
 }
 
-class SearchTermsDisplay extends StatelessWidget {
+class SearchTermsDisplay extends StatefulWidget {
   const SearchTermsDisplay({
     super.key,
     required this.tab,
   });
 
   final SearchingTab tab;
+
+  @override
+  State<SearchTermsDisplay> createState() => _SearchTermsDisplayState();
+}
+
+class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
+  int? _hoveredWordIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    // מאזין לשינויים בקונטרולר
+    widget.tab.queryController.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.tab.queryController.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    setState(() {
+      // עדכון התצוגה כשהטקסט משתנה
+    });
+  }
 
   String _getDisplayText(String originalQuery) {
     // כרגע נציג את הטקסט המקורי
@@ -126,44 +152,139 @@ class SearchTermsDisplay extends StatelessWidget {
     return originalQuery;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<SearchBloc, SearchState>(
-      builder: (context, state) {
-        final displayText = _getDisplayText(state.searchQuery);
+  List<String> _getWords(String text) {
+    // פיצול הטקסט למילים
+    return text.trim().split(RegExp(r'\s+'));
+  }
 
-        // חישוב רוחב מותאם לטקסט המלא (כולל חלופות)
-        final textLength = displayText.length;
-        const minWidth = 120.0; // רוחב מינימלי
-        const maxWidth = 400.0; // רוחב מקסימלי מוגדל לחלופות
-        final calculatedWidth =
-            (textLength * 8.0 + 60).clamp(minWidth, maxWidth);
+  Widget _buildSpacingButton(
+      {required VoidCallback onPressed, required bool isLeft}) {
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        iconSize: 12,
+        onPressed: onPressed,
+        icon: Icon(
+          isLeft ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_right,
+          color: Colors.blue,
+        ),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.blue.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+    );
+  }
 
-        return Container(
-          height: 52, // גובה קבוע כמו שאר הווידג'טים
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: minWidth,
-                maxWidth: calculatedWidth,
+  Widget _buildWordWithSpacing(String word, int index, int totalWords) {
+    final isFirst = index == 0;
+    final isLast = index == totalWords - 1;
+    final isHovered = _hoveredWordIndex == index;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredWordIndex = index),
+      onExit: (_) => setState(() => _hoveredWordIndex = null),
+      child: Container(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // כפתור שמאלי (רק למילים שאינן ראשונות או כשמרחפים)
+            if (!isFirst && isHovered)
+              _buildSpacingButton(
+                onPressed: () {
+                  // כאן נוסיף לוגיקה להוספת מרווח
+                  print('Add spacing before word: $word');
+                },
+                isLeft: true,
               ),
-              child: TextField(
-                readOnly: true,
-                controller: TextEditingController(text: displayText),
-                textAlign: TextAlign.center, // ממרכז את הטקסט
-                decoration: const InputDecoration(
-                  labelText: 'מילות החיפוש',
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                ),
+
+            // המילה עצמה
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: isHovered
+                  ? BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    )
+                  : null,
+              child: Text(
+                word,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
+
+            // כפתור ימני (רק למילים שאינן אחרונות או כשמרחפים)
+            if (!isLast && isHovered)
+              _buildSpacingButton(
+                onPressed: () {
+                  // כאן נוסיף לוגיקה להוספת מרווח
+                  print('Add spacing after word: $word');
+                },
+                isLeft: false,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        // נציג את הטקסט הנוכחי מהקונטרולר במקום מה-state
+        final displayText = _getDisplayText(widget.tab.queryController.text);
+
+        return Container(
+          height: 52, // גובה קבוע כמו שאר הווידג'טים
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // חישוב רוחב דינמי בהתבסס על אורך הטקסט
+              final textLength = displayText.length;
+              const minWidth = 120.0; // רוחב מינימלי גדול יותר
+              final maxWidth = constraints.maxWidth; // כל הרוחב הזמין
+
+              // חישוב רוחב בהתבסס על אורך הטקסט
+              final calculatedWidth = textLength == 0
+                  ? minWidth
+                  : (textLength * 8.0 + 40).clamp(minWidth, maxWidth);
+
+              return Align(
+                alignment: Alignment.center, // ממורכז תמיד
+                child: SizedBox(
+                  width: calculatedWidth,
+                  child: Scrollbar(
+                    thumbVisibility:
+                        displayText.isNotEmpty, // מציג פס גלילה רק כשיש טקסט
+                    child: TextField(
+                      readOnly: true,
+                      controller: TextEditingController(text: displayText),
+                      textAlign: TextAlign.center, // ממרכז את הטקסט
+                      maxLines: 1, // שורה אחת בלבד
+                      scrollPadding: EdgeInsets.zero, // מאפשר גלילה חלקה
+                      decoration: const InputDecoration(
+                        labelText: 'מילות החיפוש',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 8.0),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 13, // גופן קצת יותר קטן
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
