@@ -7,6 +7,183 @@ import 'package:otzaria/search/models/search_terms_model.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
 import 'package:otzaria/search/view/search_options_dropdown.dart';
 
+// הווידג'ט החדש לניהול מצבי הכפתור
+class _PlusButton extends StatefulWidget {
+  final bool active;
+  final VoidCallback onTap;
+
+  const _PlusButton({
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  State<_PlusButton> createState() => _PlusButtonState();
+}
+
+class _PlusButtonState extends State<_PlusButton> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isHighlighted = widget.active || _isHovering;
+    final primaryColor = Theme.of(context).primaryColor;
+
+    // MouseRegion מזהה ריחוף עכבר
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          // אנימציה למעבר חלק
+          duration: const Duration(milliseconds: 200),
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: isHighlighted
+                ? primaryColor // מצב מודגש: צבע מלא
+                : primaryColor.withOpacity(0.5), // מצב רגיל: חצי שקוף
+            shape: BoxShape.circle,
+            boxShadow: [
+              if (isHighlighted) // הוספת צל רק במצב מודגש
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+          ),
+          child: const Icon(
+            Icons.add,
+            size: 12,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AlternativeField extends StatefulWidget {
+  final TextEditingController controller;
+  final VoidCallback onRemove;
+
+  const _AlternativeField({
+    super.key,
+    required this.controller,
+    required this.onRemove,
+  });
+
+  @override
+  State<_AlternativeField> createState() => _AlternativeFieldState();
+}
+
+class _AlternativeFieldState extends State<_AlternativeField> {
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // הבקשה הראשונית לפוקוס כשהשדה נוצר
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focus.requestFocus();
+      }
+    });
+    _focus.addListener(_handleFocus);
+  }
+
+  void _handleFocus() {
+    // איבוד / קבלת פוקוס משפיע רק על “עמעום”
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_handleFocus);
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool dim =
+        !_focus.hasFocus && widget.controller.text.trim().isNotEmpty;
+
+    return Material(
+      elevation: _focus.hasFocus ? 8 : 2,
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.hardEdge, // ☑ לא מאפשר לקו לרוץ “מאחורי” הרקע
+      color: Colors.white, // ☑ רקע לבן אטום
+      child: SizedBox(
+        width: 160, // טיפה רחב – הסתרת קו במלואו
+        height: 40,
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focus,
+          decoration: InputDecoration(
+            filled: true, // ☑ שכבת מילוי פנימית
+            fillColor: Colors.white,
+            hintText: 'מילה חילופית',
+            hintStyle: TextStyle(
+              fontSize: 12,
+              color: dim ? Colors.black45 : Colors.black54,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color:
+                    Theme.of(context).dividerColor.withOpacity(dim ? 0.4 : 1.0),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color:
+                    Theme.of(context).dividerColor.withOpacity(dim ? 0.4 : 1.0),
+              ),
+            ),
+            suffixIcon: Material(
+              // ☑ ריפל ברור סביב ה‑X
+              type: MaterialType.transparency,
+              shape: const CircleBorder(),
+              child: InkResponse(
+                splashFactory: InkRipple.splashFactory,
+                onTap: widget.onRemove,
+                customBorder: const CircleBorder(),
+                splashColor: Theme.of(context).primaryColor.withOpacity(0.25),
+                highlightColor:
+                    Theme.of(context).primaryColor.withOpacity(0.12),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.close,
+                    size: 16,
+                    color: dim ? Colors.black45 : Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          style: TextStyle(
+            fontSize: 12,
+            color: dim ? Colors.black54 : Colors.black87,
+          ),
+          textAlign: TextAlign.right,
+          onSubmitted: (_) {
+            if (widget.controller.text.trim().isEmpty) {
+              widget.onRemove();
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class EnhancedSearchField extends StatefulWidget {
   final TantivyFullTextSearch widget;
 
@@ -29,7 +206,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   static const double _kInnerPadding = 12; // padding סטנדרטי של TextField
   static const double _kSuffixWidth = 100; // רוחב suffixIcon (תפריט + clear)
-  static const double _kPlusYOffset = 15; // כמה פיקסלים מתחת לשדה יופיע ה +
+  static const double _kPlusYOffset = 10; // כמה פיקסלים מתחת לשדה יופיע ה +
   static const double _kPlusRadius = 10; // רדיוס העיגול (למרכז-top)
 
   @override
@@ -209,118 +386,78 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _addAlternative(int termIndex) {
-    if (termIndex < _searchQuery.terms.length) {
-      setState(() {
-        if (_alternativeControllers[termIndex] == null) {
-          _alternativeControllers[termIndex] = [];
-          _showAlternativeFields[termIndex] = [];
-        }
+    if (termIndex >= _searchQuery.terms.length) return;
 
-        _alternativeControllers[termIndex]!.add(TextEditingController());
-        _showAlternativeFields[termIndex]!.add(true);
+    setState(() {
+      // 1️⃣ קודם כול – נקה תיבות ריקות בכל המילים
+      _alternativeControllers.forEach((ti, list) {
+        for (int i = list.length - 1; i >= 0; i--) {
+          if (list[i].text.trim().isEmpty) {
+            list[i].dispose();
+            list.removeAt(i);
+            _showAlternativeFields[ti]?.removeAt(i);
+          }
+        }
       });
-    }
+
+      // 2️⃣ הוסף תיבה חדשה למילה הנוכחית
+      _alternativeControllers.putIfAbsent(termIndex, () => []);
+      _showAlternativeFields.putIfAbsent(termIndex, () => []);
+
+      _alternativeControllers[termIndex]!.add(TextEditingController());
+      _showAlternativeFields[termIndex]!.add(true);
+    });
   }
 
   void _removeAlternative(int termIndex, int altIndex) {
     setState(() {
       if (_alternativeControllers[termIndex] != null &&
           altIndex < _alternativeControllers[termIndex]!.length) {
-        _alternativeControllers[termIndex]![altIndex].dispose();
-        _alternativeControllers[termIndex]!.removeAt(altIndex);
-        _showAlternativeFields[termIndex]!.removeAt(altIndex);
-
-        // עדכן את המודל
+        // עדכון המודל לפני הסרת הקונטרולר
         final term = _searchQuery.terms[termIndex];
         final updatedTerm = term.removeAlternative(altIndex);
         _searchQuery = _searchQuery.updateTerm(termIndex, updatedTerm);
+
+        // הסרת הקונטרולר והשדה
+        _alternativeControllers[termIndex]![altIndex].dispose();
+        _alternativeControllers[termIndex]!.removeAt(altIndex);
+        _showAlternativeFields[termIndex]!.removeAt(altIndex);
       }
     });
   }
 
   Widget _buildPlusButton(int termIndex, Offset position) {
+    // הכפתור "פעיל" אם יש לו לפחות שדה חלופי אחד פתוח.
+    final bool isActive =
+        _alternativeControllers[termIndex]?.isNotEmpty ?? false;
+
     return Positioned(
       left: position.dx - _kPlusRadius,
       top: position.dy - _kPlusRadius,
-      child: GestureDetector(
+      // שימוש בווידג'ט החדש
+      child: _PlusButton(
+        active: isActive,
         onTap: () => _addAlternative(termIndex),
-        child: Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.7),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.add,
-            size: 12,
-            color: Colors.white,
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildAlternativeField(int termIndex, int altIndex, double topOffset) {
+  Widget _buildAlternativeField(int termIndex, int altIndex) {
     final controller = _alternativeControllers[termIndex]?[altIndex];
     if (controller == null) return const SizedBox.shrink();
 
-    // חישוב מיקום נכון עבור RTL
-    final wordPosition = _wordPositions.length > termIndex
+    final wordPos = _wordPositions.length > termIndex
         ? _wordPositions[termIndex]
         : Offset.zero;
 
+    final topPosition = (wordPos.dy + 22) + (altIndex * 45.0);
+
     return Positioned(
-      right: MediaQuery.of(context).size.width -
-          wordPosition.dx -
-          75, // RTL positioning
-      top: topOffset,
-      child: Container(
-        width: 150,
-        height: 35,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'מילה חילופית',
-            border: InputBorder.none,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.close, size: 16),
-              onPressed: () => _removeAlternative(termIndex, altIndex),
-            ),
-          ),
-          style: const TextStyle(fontSize: 12),
-          textAlign: TextAlign.right, // RTL text alignment
-          onSubmitted: (value) {
-            if (value.isNotEmpty) {
-              setState(() {
-                final term = _searchQuery.terms[termIndex];
-                final updatedTerm = term.addAlternative(value);
-                _searchQuery = _searchQuery.updateTerm(termIndex, updatedTerm);
-              });
-            }
-          },
-        ),
+      left: wordPos.dx - 75,
+      top: topPosition,
+      child: _AlternativeField(
+        controller: controller,
+        onRemove: () => _removeAlternative(termIndex, altIndex),
       ),
     );
   }
@@ -390,31 +527,9 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
           final termIndex = entry.key;
           final controllers = entry.value;
 
-          // חשב כמה שדות פעילים יש כבר למילה הזו
-          int activeFieldsCount = 0;
-          for (int i = 0; i < controllers.length; i++) {
-            if (controllers[i].text.isNotEmpty ||
-                (_showAlternativeFields[termIndex]?[i] == true)) {
-              activeFieldsCount++;
-            }
-          }
-
-          return controllers.asMap().entries.where((controllerEntry) {
+          return controllers.asMap().entries.map((controllerEntry) {
             final altIndex = controllerEntry.key;
-            final controller = controllerEntry.value;
-
-            // הצג שדה אם:
-            // 1. יש בו תוכן
-            // 2. הוא השדה הפעיל הבא (רק אחד ריק בכל פעם)
-            if (controller.text.isNotEmpty) return true;
-            if (_showAlternativeFields[termIndex]?[altIndex] == true &&
-                altIndex == activeFieldsCount - 1) return true;
-
-            return false;
-          }).map((controllerEntry) {
-            final altIndex = controllerEntry.key;
-            final topOffset = 70.0 + (altIndex * 40.0); // מיקום אנכי
-            return _buildAlternativeField(termIndex, altIndex, topOffset);
+            return _buildAlternativeField(termIndex, altIndex);
           });
         }).toList(),
       ],
