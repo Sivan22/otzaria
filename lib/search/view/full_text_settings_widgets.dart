@@ -292,6 +292,64 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
   }
 }
 
+class AdvancedSearchToggle extends StatelessWidget {
+  const AdvancedSearchToggle({
+    super.key,
+    required this.tab,
+    required this.onChanged,
+  });
+
+  final SearchingTab tab;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 100, // רוחב צר יותר
+      height: 52, // גובה קבוע כמו שאר הבקרות
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceVariant, // צבע רקע לכל המלבן
+            border: Border.all(color: Theme.of(context).dividerColor),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Column(
+            children: [
+              // תווית עליונה
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Text(
+                  'חיפוש מתקדם',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              // הצ'קבוקס
+              Expanded(
+                child: Center(
+                  child: Checkbox(
+                    value: tab.isAdvancedSearchEnabled,
+                    onChanged: (value) => onChanged(value ?? true),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class OrderOfResults extends StatelessWidget {
   const OrderOfResults({
     super.key,

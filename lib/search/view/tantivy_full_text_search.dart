@@ -88,6 +88,18 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
           if (_showIndexWarning) _buildIndexWarning(),
           Row(
             children: [
+              // כפתור חיפוש מתקדם למסכים קטנים - מימין
+              SizedBox(
+                width: 70, // רוחב קטן יותר למסכים קטנים
+                child: AdvancedSearchToggle(
+                  tab: widget.tab,
+                  onChanged: (value) {
+                    setState(() {
+                      widget.tab.isAdvancedSearchEnabled = value;
+                    });
+                  },
+                ),
+              ),
               _buildMenuButton(),
               Expanded(child: TantivySearchField(widget: widget)),
             ],
@@ -150,6 +162,15 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
       Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // כפתור חיפוש מתקדם - מימין
+          AdvancedSearchToggle(
+            tab: widget.tab,
+            onChanged: (value) {
+              setState(() {
+                widget.tab.isAdvancedSearchEnabled = value;
+              });
+            },
+          ),
           Expanded(
             child: TantivySearchField(widget: widget),
           ),
@@ -228,9 +249,11 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           child: Row(
             children: [
-              // מילות החיפוש - תופס את כל המקום הזמין
+              // מילות החיפוש - תמיד תופס מקום, אבל מוסתר כשלא בחיפוש מתקדם
               Expanded(
-                child: SearchTermsDisplay(tab: widget.tab),
+                child: widget.tab.isAdvancedSearchEnabled
+                    ? SearchTermsDisplay(tab: widget.tab)
+                    : const SizedBox.shrink(), // מקום ריק שמחזיק את הפרופורציות
               ),
               // ספירת התוצאות עם תווית
               SizedBox(

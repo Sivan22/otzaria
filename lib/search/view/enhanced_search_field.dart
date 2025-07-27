@@ -346,6 +346,9 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   final Map<int, List<OverlayEntry>> _alternativeOverlays = {};
   OverlayEntry? _searchOptionsOverlay;
   int? _hoveredWordIndex;
+  
+  // מצב חיפוש מתקדם
+  bool _isAdvancedSearchEnabled = true;
   final Map<String, OverlayEntry> _spacingOverlays = {};
   final Map<String, TextEditingController> _spacingControllers = {};
 
@@ -802,9 +805,10 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SearchOptionsDropdown(
-                        onToggle: _toggleSearchOptions,
-                      ),
+                      if (widget.widget.tab.isAdvancedSearchEnabled)
+                        SearchOptionsDropdown(
+                          onToggle: _toggleSearchOptions,
+                        ),
                       IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
@@ -836,10 +840,14 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
             ),
           );
         }).toList(),
-        ..._wordPositions.asMap().entries.map((entry) {
-          return _buildPlusButton(entry.key, entry.value);
-        }).toList(),
-        ..._buildSpacingButtons(),
+        // כפתורי ה+ (רק בחיפוש מתקדם)
+        if (widget.widget.tab.isAdvancedSearchEnabled)
+          ..._wordPositions.asMap().entries.map((entry) {
+            return _buildPlusButton(entry.key, entry.value);
+          }).toList(),
+        // כפתורי המרווח (רק בחיפוש מתקדם)
+        if (widget.widget.tab.isAdvancedSearchEnabled)
+          ..._buildSpacingButtons(),
       ],
     );
   }
