@@ -21,6 +21,13 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<ResetSearch>(_onResetSearch);
     on<UpdateFilterQuery>(_onUpdateFilterQuery);
     on<ClearFilter>(_onClearFilter);
+
+    // Handlers חדשים לרגקס
+    on<ToggleRegex>(_onToggleRegex);
+    on<ToggleCaseSensitive>(_onToggleCaseSensitive);
+    on<ToggleMultiline>(_onToggleMultiline);
+    on<ToggleDotAll>(_onToggleDotAll);
+    on<ToggleUnicode>(_onToggleUnicode);
   }
   Future<void> _onUpdateSearchQuery(
     UpdateSearchQuery event,
@@ -122,7 +129,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     UpdateDistance event,
     Emitter<SearchState> emit,
   ) {
-    emit(state.copyWith(distance: event.distance));
+    final newConfig = state.configuration.copyWith(distance: event.distance);
+    emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }
 
@@ -130,7 +138,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     ToggleFuzzy event,
     Emitter<SearchState> emit,
   ) {
-    emit(state.copyWith(fuzzy: !state.fuzzy));
+    final newConfig = state.configuration.copyWith(fuzzy: !state.fuzzy);
+    emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }
 
@@ -149,7 +158,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final newFacets = List<String>.from(state.currentFacets);
     if (!newFacets.contains(event.facet)) {
       newFacets.add(event.facet);
-      emit(state.copyWith(currentFacets: newFacets));
+      final newConfig = state.configuration.copyWith(currentFacets: newFacets);
+      emit(state.copyWith(configuration: newConfig));
       add(UpdateSearchQuery(state.searchQuery));
     }
   }
@@ -161,7 +171,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final newFacets = List<String>.from(state.currentFacets);
     if (newFacets.contains(event.facet)) {
       newFacets.remove(event.facet);
-      emit(state.copyWith(currentFacets: newFacets));
+      final newConfig = state.configuration.copyWith(currentFacets: newFacets);
+      emit(state.copyWith(configuration: newConfig));
       add(UpdateSearchQuery(state.searchQuery));
     }
   }
@@ -170,7 +181,9 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     SetFacet event,
     Emitter<SearchState> emit,
   ) {
-    emit(state.copyWith(currentFacets: [event.facet]));
+    final newConfig =
+        state.configuration.copyWith(currentFacets: [event.facet]);
+    emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }
 
@@ -178,7 +191,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     UpdateSortOrder event,
     Emitter<SearchState> emit,
   ) {
-    emit(state.copyWith(sortBy: event.order));
+    final newConfig = state.configuration.copyWith(sortBy: event.order);
+    emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }
 
@@ -186,7 +200,9 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     UpdateNumResults event,
     Emitter<SearchState> emit,
   ) {
-    emit(state.copyWith(numResults: event.numResults));
+    final newConfig =
+        state.configuration.copyWith(numResults: event.numResults);
+    emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }
 
@@ -208,5 +224,53 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       fuzzy: state.fuzzy,
       distance: state.distance,
     );
+  }
+
+  // Handlers חדשים לרגקס
+  void _onToggleRegex(
+    ToggleRegex event,
+    Emitter<SearchState> emit,
+  ) {
+    final newConfig =
+        state.configuration.copyWith(regexEnabled: !state.regexEnabled);
+    emit(state.copyWith(configuration: newConfig));
+    add(UpdateSearchQuery(state.searchQuery));
+  }
+
+  void _onToggleCaseSensitive(
+    ToggleCaseSensitive event,
+    Emitter<SearchState> emit,
+  ) {
+    final newConfig =
+        state.configuration.copyWith(caseSensitive: !state.caseSensitive);
+    emit(state.copyWith(configuration: newConfig));
+    add(UpdateSearchQuery(state.searchQuery));
+  }
+
+  void _onToggleMultiline(
+    ToggleMultiline event,
+    Emitter<SearchState> emit,
+  ) {
+    final newConfig = state.configuration.copyWith(multiline: !state.multiline);
+    emit(state.copyWith(configuration: newConfig));
+    add(UpdateSearchQuery(state.searchQuery));
+  }
+
+  void _onToggleDotAll(
+    ToggleDotAll event,
+    Emitter<SearchState> emit,
+  ) {
+    final newConfig = state.configuration.copyWith(dotAll: !state.dotAll);
+    emit(state.copyWith(configuration: newConfig));
+    add(UpdateSearchQuery(state.searchQuery));
+  }
+
+  void _onToggleUnicode(
+    ToggleUnicode event,
+    Emitter<SearchState> emit,
+  ) {
+    final newConfig = state.configuration.copyWith(unicode: !state.unicode);
+    emit(state.copyWith(configuration: newConfig));
+    add(UpdateSearchQuery(state.searchQuery));
   }
 }
