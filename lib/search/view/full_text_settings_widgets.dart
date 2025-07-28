@@ -147,9 +147,52 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
 
   String _getDisplayText(String originalQuery) {
     // כרגע נציג את הטקסט המקורי
-    // בעתיד נוסיף כאן לוגיקה להצגת החלופות
+    // בעתיד נוסיף לוגיקה להצגת החלופות
     // למשל: "מאימתי או מתי ו קורין או קוראין"
     return originalQuery;
+  }
+
+  Widget _buildFormattedText(String text) {
+    print('_buildFormattedText called with: "$text"');
+    if (text.trim().isEmpty) return const SizedBox.shrink();
+
+    final words = text.trim().split(RegExp(r'\s+'));
+    final List<TextSpan> spans = [];
+    print('Words found: $words');
+
+    for (int i = 0; i < words.length; i++) {
+      // הוספת המילה המודגשת
+      spans.add(
+        TextSpan(
+          text: words[i],
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      );
+
+      // הוספת + בין המילים (לא אחרי המילה האחרונה)
+      if (i < words.length - 1) {
+        spans.add(
+          const TextSpan(
+            text: ' + ',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black, // שחור מודגש כמו שביקשת
+            ),
+          ),
+        );
+      }
+    }
+
+    print('Created ${spans.length} spans');
+    return RichText(
+      text: TextSpan(children: spans),
+      textAlign: TextAlign.center,
+    );
   }
 
   List<String> _getWords(String text) {
@@ -241,6 +284,8 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
       builder: (context, state) {
         // נציג את הטקסט הנוכחי מהקונטרולר במקום מה-state
         final displayText = _getDisplayText(widget.tab.queryController.text);
+        print(
+            'SearchTermsDisplay build called with displayText: "$displayText"');
 
         return Container(
           height: 52, // גובה קבוע כמו שאר הווידג'טים
@@ -261,25 +306,25 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
                 alignment: Alignment.center, // ממורכז תמיד
                 child: SizedBox(
                   width: calculatedWidth,
-                  child: Scrollbar(
-                    thumbVisibility:
-                        displayText.isNotEmpty, // מציג פס גלילה רק כשיש טקסט
-                    child: TextField(
-                      readOnly: true,
-                      controller: TextEditingController(text: displayText),
-                      textAlign: TextAlign.center, // ממרכז את הטקסט
-                      maxLines: 1, // שורה אחת בלבד
-                      scrollPadding: EdgeInsets.zero, // מאפשר גלילה חלקה
+                  height: 52, // גובה קבוע כמו שאר הבקרות
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 4.0),
+                    child: InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'מילות החיפוש',
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
                       ),
-                      style: const TextStyle(
-                        fontSize: 13, // גופן קצת יותר קטן
-                        fontWeight: FontWeight.w500,
-                      ),
+                      child: displayText.isEmpty
+                          ? const SizedBox.shrink()
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Center(
+                                child: _buildFormattedText(displayText),
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -309,40 +354,20 @@ class AdvancedSearchToggle extends StatelessWidget {
       height: 52, // גובה קבוע כמו שאר הבקרות
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceVariant, // צבע רקע לכל המלבן
-            border: Border.all(color: Theme.of(context).dividerColor),
-            borderRadius: BorderRadius.circular(4),
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            labelText: 'חיפוש מתקדם',
+            labelStyle: TextStyle(fontSize: 13), // גופן קטן יותר
+            border: OutlineInputBorder(),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
           ),
-          child: Column(
-            children: [
-              // תווית עליונה
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                child: Text(
-                  'חיפוש מתקדם',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              // הצ'קבוקס
-              Expanded(
-                child: Center(
-                  child: Checkbox(
-                    value: tab.isAdvancedSearchEnabled,
-                    onChanged: (value) => onChanged(value ?? true),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ),
-            ],
+          child: Center(
+            child: Checkbox(
+              value: tab.isAdvancedSearchEnabled,
+              onChanged: (value) => onChanged(value ?? true),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ),
       ),
