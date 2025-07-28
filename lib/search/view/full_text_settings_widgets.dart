@@ -170,6 +170,24 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
     return textPainter.width;
   }
 
+  // פונקציה להמרת מספרים לתת-כתב Unicode
+  String _convertToSubscript(String number) {
+    const Map<String, String> subscriptMap = {
+      '0': '₀',
+      '1': '₁',
+      '2': '₂',
+      '3': '₃',
+      '4': '₄',
+      '5': '₅',
+      '6': '₆',
+      '7': '₇',
+      '8': '₈',
+      '9': '₉',
+    };
+
+    return number.split('').map((char) => subscriptMap[char] ?? char).join();
+  }
+
   List<TextSpan> _buildFormattedTextSpans(String text, BuildContext context) {
     if (text.trim().isEmpty) return [const TextSpan(text: '')];
 
@@ -293,16 +311,52 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
 
       // הוספת + בין המילים (לא אחרי המילה האחרונה)
       if (i < words.length - 1) {
-        spans.add(
-          const TextSpan(
-            text: ' + ',
-            style: TextStyle(
-              fontSize: 16, // גופן גדול יותר ל-+
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+        // בדיקה אם יש מרווח מוגדר בין המילים
+        final spacingKey = '$i-${i + 1}';
+        final spacingValue = widget.tab.spacingValues[spacingKey];
+
+        if (spacingValue != null && spacingValue.isNotEmpty) {
+          // הצגת + עם המרווח מתחת
+          spans.add(const TextSpan(text: ' '));
+
+          // הוספת + עם המספר כתת-כתב
+          spans.add(
+            TextSpan(
+              text: '+',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
-          ),
-        );
+          );
+          // הוספת המספר כתת-כתב עם Unicode subscript characters
+          final subscriptValue = _convertToSubscript(spacingValue);
+          spans.add(
+            TextSpan(
+              text: subscriptValue,
+              style: TextStyle(
+                fontSize: 14, // גופן מעט יותר גדול למספר המרווח
+                fontWeight: FontWeight.normal,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          );
+
+          spans.add(const TextSpan(text: ' '));
+        } else {
+          // + רגיל ללא מרווח
+          spans.add(
+            const TextSpan(
+              text: ' + ',
+              style: TextStyle(
+                fontSize: 16, // גופן גדול יותר ל-+
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          );
+        }
       }
     }
 

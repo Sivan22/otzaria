@@ -148,6 +148,12 @@ class _SpacingFieldState extends State<_SpacingField> {
       }
     });
     _focus.addListener(_onFocusChanged);
+    // הוספת listener לשינויי טקסט כדי לעדכן את ה-opacity
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    setState(() {}); // עדכון המצב לשינוי opacity
   }
 
   void _onFocusChanged() {
@@ -161,68 +167,76 @@ class _SpacingFieldState extends State<_SpacingField> {
   @override
   void dispose() {
     _focus.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
     _focus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 65,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _focus.hasFocus
-              ? Theme.of(context).primaryColor
-              : Theme.of(context).dividerColor,
-          width: _focus.hasFocus ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                Colors.black.withValues(alpha: _focus.hasFocus ? 0.15 : 0.08),
-            blurRadius: _focus.hasFocus ? 6 : 3,
-            offset: const Offset(0, 2),
+    final bool hasText = widget.controller.text.trim().isNotEmpty;
+    final bool isInactive = !_focus.hasFocus && hasText;
+
+    return AnimatedOpacity(
+      opacity: isInactive ? 0.5 : 1.0, // חצי שקופה כשלא בפוקוס ויש טקסט
+      duration: const Duration(milliseconds: 200),
+      child: Container(
+        width: 45, // הצרה משמעותית מ-65 ל-45 (מתאים ל-2 ספרות)
+        height: 40,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _focus.hasFocus
+                ? Theme.of(context).primaryColor
+                : Theme.of(context).dividerColor,
+            width: _focus.hasFocus ? 1.5 : 1.0,
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        type: MaterialType.transparency,
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.close, size: 14),
-              onPressed: widget.onRemove,
-              splashRadius: 16,
-              padding: const EdgeInsets.only(left: 4, right: 2),
-              constraints: const BoxConstraints(),
-            ),
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                focusNode: _focus,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(2),
-                ],
-                decoration: const InputDecoration(
-                  hintText: 'מרווח',
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.only(right: 4, bottom: 4),
-                ),
-                style: const TextStyle(fontSize: 12, color: Colors.black87),
-                textAlign: TextAlign.right,
-                onSubmitted: (v) {
-                  if (v.trim().isEmpty) widget.onRemove();
-                },
-              ),
+          boxShadow: [
+            BoxShadow(
+              color:
+                  Colors.black.withValues(alpha: _focus.hasFocus ? 0.15 : 0.08),
+              blurRadius: _focus.hasFocus ? 6 : 3,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          type: MaterialType.transparency,
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close, size: 14),
+                onPressed: widget.onRemove,
+                splashRadius: 16,
+                padding: const EdgeInsets.only(left: 4, right: 2),
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: TextField(
+                  controller: widget.controller,
+                  focusNode: _focus,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(2),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: 'מרווח',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.only(right: 4, bottom: 4),
+                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  textAlign: TextAlign.right,
+                  onSubmitted: (v) {
+                    if (v.trim().isEmpty) widget.onRemove();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -685,11 +699,15 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       _wordPositions[leftIndex].dy - _kSpacingYOffset,
     );
     final overlayPos = textFieldGlobal + midpoint;
-    final controller =
-        _spacingControllers.putIfAbsent(key, () => TextEditingController());
+    final controller = _spacingControllers.putIfAbsent(key, () {
+      final newController = TextEditingController();
+      // הוספת listener לעדכון המידע ב-tab כשהטקסט משתנה
+      newController.addListener(() => _updateSpacingInTab());
+      return newController;
+    });
     final entry = OverlayEntry(
       builder: (_) => Positioned(
-        left: overlayPos.dx - 32.5,
+        left: overlayPos.dx - 22.5, // מרכוז התיבה החדשה (45/2 = 22.5)
         top: overlayPos.dy - 50,
         child: _SpacingField(
           controller: controller,
@@ -707,6 +725,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     _spacingOverlays.remove(key);
     _spacingControllers[key]?.dispose();
     _spacingControllers.remove(key);
+    // עדכון המידע ב-tab אחרי הסרת המרווח
+    _updateSpacingInTab();
   }
 
   void _removeSpacingOverlayIfEmpty(String key) {
@@ -956,6 +976,19 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     }
     // עדכון התצוגה
     widget.widget.tab.alternativeWordsChanged.value++;
+    widget.widget.tab.searchOptionsChanged.value++;
+  }
+
+  void _updateSpacingInTab() {
+    // עדכון המרווחים ב-tab
+    widget.widget.tab.spacingValues.clear();
+    for (String key in _spacingControllers.keys) {
+      final spacingText = _spacingControllers[key]!.text.trim();
+      if (spacingText.isNotEmpty) {
+        widget.widget.tab.spacingValues[key] = spacingText;
+      }
+    }
+    // עדכון התצוגה
     widget.widget.tab.searchOptionsChanged.value++;
   }
 
