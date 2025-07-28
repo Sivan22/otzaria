@@ -442,11 +442,11 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
                     SwitchSettingsTile(
-                      title: 'סינכרון אוטומטי',
+                      title: 'סינכרון הספרייה באופן אוטומטי',
                       leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
-                      enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
+                      enabledLabel: 'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
