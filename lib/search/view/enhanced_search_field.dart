@@ -6,7 +6,6 @@ import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
 import 'package:otzaria/search/models/search_terms_model.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
-import 'package:otzaria/search/view/search_options_dropdown.dart';
 
 // הווידג'ט החדש לניהול מצבי הכפתור
 class _PlusButton extends StatefulWidget {
@@ -353,9 +352,6 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   OverlayEntry? _searchOptionsOverlay;
   int? _hoveredWordIndex;
 
-  // מפה שמחזיקה אפשרויות לכל מילה (לא static כדי שתתנקה כשהווידג'ט נהרס)
-  final Map<String, Map<String, bool>> _wordOptions = {};
-
   final Map<String, OverlayEntry> _spacingOverlays = {};
   final Map<String, TextEditingController> _spacingControllers = {};
 
@@ -391,30 +387,30 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
         .removeListener(_onCursorPositionChanged);
     _disposeControllers();
     // ניקוי אפשרויות החיפוש כשסוגרים את המסך
-    _wordOptions.clear();
+    widget.widget.tab.searchOptions.clear();
     super.dispose();
   }
 
-void _clearAllOverlays({bool keepSearchDrawer = false}) {
-  // ניקוי אלטרנטיבות ומרווחים
-  for (final entries in _alternativeOverlays.values) {
-    for (final entry in entries) {
+  void _clearAllOverlays({bool keepSearchDrawer = false}) {
+    // ניקוי אלטרנטיבות ומרווחים
+    for (final entries in _alternativeOverlays.values) {
+      for (final entry in entries) {
+        entry.remove();
+      }
+    }
+    _alternativeOverlays.clear();
+
+    for (final entry in _spacingOverlays.values) {
       entry.remove();
     }
-  }
-  _alternativeOverlays.clear();
-  
-  for (final entry in _spacingOverlays.values) {
-    entry.remove();
-  }
-  _spacingOverlays.clear();
+    _spacingOverlays.clear();
 
-  // סגירת מגירת האפשרויות רק אם לא ביקשנו לשמור אותה
-  if (!keepSearchDrawer) {
-    _searchOptionsOverlay?.remove();
-    _searchOptionsOverlay = null;
+    // סגירת מגירת האפשרויות רק אם לא ביקשנו לשמור אותה
+    if (!keepSearchDrawer) {
+      _searchOptionsOverlay?.remove();
+      _searchOptionsOverlay = null;
+    }
   }
-}
 
   void _disposeControllers() {
     for (final controllers in _alternativeControllers.values) {
@@ -429,43 +425,43 @@ void _clearAllOverlays({bool keepSearchDrawer = false}) {
     _spacingControllers.clear();
   }
 
-void _onTextChanged() {
-  // בודקים אם המגירה הייתה פתוחה לפני השינוי
-  final bool drawerWasOpen = _searchOptionsOverlay != null;
+  void _onTextChanged() {
+    // בודקים אם המגירה הייתה פתוחה לפני השינוי
+    final bool drawerWasOpen = _searchOptionsOverlay != null;
 
-  // מנקים את כל הבועות, אבל משאירים את המגירה פתוחה אם היא הייתה פתוחה
-  _clearAllOverlays(keepSearchDrawer: drawerWasOpen);
+    // מנקים את כל הבועות, אבל משאירים את המגירה פתוחה אם היא הייתה פתוחה
+    _clearAllOverlays(keepSearchDrawer: drawerWasOpen);
 
-  final text = widget.widget.tab.queryController.text;
+    final text = widget.widget.tab.queryController.text;
 
-  // אם שדה החיפוש התרוקן, נסגור את המגירה בכל זאת
-  if (text.trim().isEmpty && drawerWasOpen) {
-    _hideSearchOptionsOverlay();
-    _notifyDropdownClosed();
-    // יוצאים מהפונקציה כדי לא להמשיך
-    return;
-  }
+    // אם שדה החיפוש התרוקן, נסגור את המגירה בכל זאת
+    if (text.trim().isEmpty && drawerWasOpen) {
+      _hideSearchOptionsOverlay();
+      _notifyDropdownClosed();
+      // יוצאים מהפונקציה כדי לא להמשיך
+      return;
+    }
 
-  setState(() {
-    _searchQuery = SearchQuery.fromString(text);
-    _updateAlternativeControllers();
-  });
+    setState(() {
+      _searchQuery = SearchQuery.fromString(text);
+      _updateAlternativeControllers();
+    });
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _calculateWordPositions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateWordPositions();
 
-    for (int i = 0; i < _searchQuery.terms.length; i++) {
-      for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
-        _showAlternativeOverlay(i, j);
+      for (int i = 0; i < _searchQuery.terms.length; i++) {
+        for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
+          _showAlternativeOverlay(i, j);
+        }
       }
-    }
 
-    // אם המגירה הייתה פתוחה, מרעננים את התוכן שלה
-    if (drawerWasOpen) {
-      _updateSearchOptionsOverlay();
-    }
-  });
-}
+      // אם המגירה הייתה פתוחה, מרעננים את התוכן שלה
+      if (drawerWasOpen) {
+        _updateSearchOptionsOverlay();
+      }
+    });
+  }
 
   void _onCursorPositionChanged() {
     // עדכון המגירה כשהסמן זז (אם היא פתוחה)
@@ -855,7 +851,8 @@ void _onTextChanged() {
     return _SearchOptionsContent(
       currentWord: wordInfo['word'],
       wordIndex: wordInfo['index'],
-      wordOptions: _wordOptions,
+      wordOptions: widget.widget.tab.searchOptions,
+      onOptionsChanged: _onSearchOptionsChanged,
       key: ValueKey(
           '${wordInfo['word']}_${wordInfo['index']}'), // מפתח ייחודי לעדכון
     );
@@ -904,6 +901,16 @@ void _onTextChanged() {
   }
 
   bool get _isSearchOptionsVisible => _searchOptionsOverlay != null;
+
+  void _onSearchOptionsChanged() {
+    // עדכון התצוגה כשמשתמש משנה אפשרויות
+    setState(() {
+      // זה יגרום לעדכון של התצוגה
+    });
+
+    // עדכון ה-notifier כדי שהתצוגה של מילות החיפוש תתעדכן
+    widget.widget.tab.searchOptionsChanged.value++;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -981,11 +988,13 @@ void _onTextChanged() {
                       children: [
                         if (widget.widget.tab.isAdvancedSearchEnabled)
                           IconButton(
-                            onPressed: () => _toggleSearchOptions(!_isSearchOptionsVisible),
+                            onPressed: () =>
+                                _toggleSearchOptions(!_isSearchOptionsVisible),
                             icon: const Icon(Icons.keyboard_arrow_down),
-                            focusNode: FocusNode(             // <-- התוספת המרכזית
-                              canRequestFocus: false,         // מונע מהכפתור לבקש פוקוס
-                              skipTraversal: true,            // מדלג עליו בניווט מקלדת
+                            focusNode: FocusNode(
+                              // <-- התוספת המרכזית
+                              canRequestFocus: false, // מונע מהכפתור לבקש פוקוס
+                              skipTraversal: true, // מדלג עליו בניווט מקלדת
                             ),
                           ),
                         IconButton(
@@ -1042,12 +1051,14 @@ class _SearchOptionsContent extends StatefulWidget {
   final String currentWord;
   final int wordIndex;
   final Map<String, Map<String, bool>> wordOptions;
+  final VoidCallback? onOptionsChanged;
 
   const _SearchOptionsContent({
     super.key,
     required this.currentWord,
     required this.wordIndex,
     required this.wordOptions,
+    this.onOptionsChanged,
   });
 
   @override

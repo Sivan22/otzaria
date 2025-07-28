@@ -15,6 +15,12 @@ class SearchingTab extends OpenedTab {
   
   // מצב חיפוש מתקדם
   bool isAdvancedSearchEnabled = true;
+  
+  // אפשרויות חיפוש לכל מילה (מילה_אינדקס -> אפשרויות)
+  final Map<String, Map<String, bool>> searchOptions = {};
+  
+  // notifier לעדכון התצוגה כשמשתמש משנה אפשרויות
+  final ValueNotifier<int> searchOptionsChanged = ValueNotifier(0);
 
   SearchingTab(
     super.title,
@@ -33,6 +39,7 @@ class SearchingTab extends OpenedTab {
   @override
   void dispose() {
     searchFieldFocusNode.dispose();
+    searchOptionsChanged.dispose();
     super.dispose();
   }
 
