@@ -124,8 +124,6 @@ class SearchTermsDisplay extends StatefulWidget {
 }
 
 class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
-  int? _hoveredWordIndex;
-
   @override
   void initState() {
     super.initState();
@@ -138,6 +136,8 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
   void _listenToSearchOptions() {
     // מאזין לשינויים באפשרויות החיפוש
     widget.tab.searchOptionsChanged.addListener(_onSearchOptionsChanged);
+    // מאזין לשינויים במילים החילופיות
+    widget.tab.alternativeWordsChanged.addListener(_onAlternativeWordsChanged);
   }
 
   void _onSearchOptionsChanged() {
@@ -147,23 +147,30 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
     });
   }
 
-  double _calculateFormattedTextWidth(String text) {
+  void _onAlternativeWordsChanged() {
+    // עדכון התצוגה כשמשתמש משנה מילים חילופיות
+    setState(() {
+      // זה יגרום לעדכון של התצוגה
+    });
+  }
+
+  double _calculateFormattedTextWidth(String text, BuildContext context) {
     if (text.trim().isEmpty) return 0;
 
     // יצירת TextSpan עם הטקסט המעוצב
-    final spans = _buildFormattedTextSpans(text);
-    
+    final spans = _buildFormattedTextSpans(text, context);
+
     // שימוש ב-TextPainter למדידת הרוחב האמיתי
     final textPainter = TextPainter(
       text: TextSpan(children: spans),
       textDirection: TextDirection.rtl,
     );
-    
+
     textPainter.layout();
     return textPainter.width;
   }
 
-  List<TextSpan> _buildFormattedTextSpans(String text) {
+  List<TextSpan> _buildFormattedTextSpans(String text, BuildContext context) {
     if (text.trim().isEmpty) return [const TextSpan(text: '')];
 
     final words = text.trim().split(RegExp(r'\s+'));
@@ -188,76 +195,97 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
       final wordKey = '${word}_$i';
-      
+
       // בדיקה אם יש אפשרויות למילה הזו
       final wordOptions = widget.tab.searchOptions[wordKey];
       final selectedOptions = wordOptions?.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList() ?? [];
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList() ??
+          [];
 
-      if (selectedOptions.isNotEmpty) {
-        // הפרדה בין קידומות לסיומות
-        final prefixes = selectedOptions
-            .where((opt) => !suffixOptions.contains(opt))
-            .map((opt) => optionAbbreviations[opt] ?? opt)
-            .toList();
-        
-        final suffixes = selectedOptions
-            .where((opt) => suffixOptions.contains(opt))
-            .map((opt) => optionAbbreviations[opt] ?? opt)
-            .toList();
+      // בדיקה אם יש מילים חילופיות למילה הזו
+      final alternativeWords = widget.tab.alternativeWords[i] ?? [];
 
-        // הוספת קידומות לפני המילה
-        if (prefixes.isNotEmpty) {
-          spans.add(
-            TextSpan(
-              text: '(${prefixes.join(',')})',
-              style: const TextStyle(
-                fontSize: 10, // גופן קטן יותר לקיצורים
-                fontWeight: FontWeight.normal,
-                color: Colors.blue,
-              ),
-            ),
-          );
-          spans.add(const TextSpan(text: ' '));
-        }
-        
-        // הוספת המילה המודגשת
+      // הפרדה בין קידומות לסיומות
+      final prefixes = selectedOptions
+          .where((opt) => !suffixOptions.contains(opt))
+          .map((opt) => optionAbbreviations[opt] ?? opt)
+          .toList();
+
+      final suffixes = selectedOptions
+          .where((opt) => suffixOptions.contains(opt))
+          .map((opt) => optionAbbreviations[opt] ?? opt)
+          .toList();
+
+      // הוספת קידומות לפני המילה
+      if (prefixes.isNotEmpty) {
         spans.add(
           TextSpan(
-            text: word,
-            style: const TextStyle(
-              fontSize: 16, // גופן גדול יותר למילים
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+            text: '(${prefixes.join(',')})',
+            style: TextStyle(
+              fontSize: 10, // גופן קטן יותר לקיצורים
+              fontWeight: FontWeight.normal,
+              color: Theme.of(context).primaryColor,
             ),
           ),
         );
-        
-        // הוספת סיומות אחרי המילה
-        if (suffixes.isNotEmpty) {
+        spans.add(const TextSpan(text: ' '));
+      }
+
+      // הוספת המילה המודגשת
+      spans.add(
+        TextSpan(
+          text: word,
+          style: const TextStyle(
+            fontSize: 16, // גופן גדול יותר למילים
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      );
+
+      // הוספת מילים חילופיות אם יש
+      if (alternativeWords.isNotEmpty) {
+        for (final altWord in alternativeWords) {
+          // הוספת "או" בצבע הסיומות
           spans.add(const TextSpan(text: ' '));
           spans.add(
             TextSpan(
-              text: '(${suffixes.join(',')})',
-              style: const TextStyle(
-                fontSize: 10, // גופן קטן יותר לקיצורים
+              text: 'או',
+              style: TextStyle(
+                fontSize: 12,
                 fontWeight: FontWeight.normal,
-                color: Colors.blue,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          );
+          spans.add(const TextSpan(text: ' '));
+
+          // הוספת המילה החילופית המודגשת
+          spans.add(
+            TextSpan(
+              text: altWord,
+              style: const TextStyle(
+                fontSize: 16, // גופן גדול יותר למילים
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
               ),
             ),
           );
         }
-      } else {
-        // אין אפשרויות - רק המילה המודגשת
+      }
+
+      // הוספת סיומות אחרי המילה (והמילים החילופיות)
+      if (suffixes.isNotEmpty) {
+        spans.add(const TextSpan(text: ' '));
         spans.add(
           TextSpan(
-            text: word,
-            style: const TextStyle(
-              fontSize: 16, // גופן גדול יותר למילים
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+            text: '(${suffixes.join(',')})',
+            style: TextStyle(
+              fontSize: 10, // גופן קטן יותר לקיצורים
+              fontWeight: FontWeight.normal,
+              color: Theme.of(context).primaryColor,
             ),
           ),
         );
@@ -285,6 +313,8 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
   void dispose() {
     widget.tab.queryController.removeListener(_onTextChanged);
     widget.tab.searchOptionsChanged.removeListener(_onSearchOptionsChanged);
+    widget.tab.alternativeWordsChanged
+        .removeListener(_onAlternativeWordsChanged);
     super.dispose();
   }
 
@@ -301,96 +331,13 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
     return originalQuery;
   }
 
-  Widget _buildFormattedText(String text) {
+  Widget _buildFormattedText(String text, BuildContext context) {
     if (text.trim().isEmpty) return const SizedBox.shrink();
 
-    final spans = _buildFormattedTextSpans(text);
+    final spans = _buildFormattedTextSpans(text, context);
     return RichText(
       text: TextSpan(children: spans),
       textAlign: TextAlign.center,
-    );
-  }
-
-  List<String> _getWords(String text) {
-    // פיצול הטקסט למילים
-    return text.trim().split(RegExp(r'\s+'));
-  }
-
-  Widget _buildSpacingButton(
-      {required VoidCallback onPressed, required bool isLeft}) {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        iconSize: 12,
-        onPressed: onPressed,
-        icon: Icon(
-          isLeft ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_right,
-          color: Colors.blue,
-        ),
-        style: IconButton.styleFrom(
-          backgroundColor: Colors.blue.withOpacity(0.1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWordWithSpacing(String word, int index, int totalWords) {
-    final isFirst = index == 0;
-    final isLast = index == totalWords - 1;
-    final isHovered = _hoveredWordIndex == index;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredWordIndex = index),
-      onExit: (_) => setState(() => _hoveredWordIndex = null),
-      child: Container(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // כפתור שמאלי (רק למילים שאינן ראשונות או כשמרחפים)
-            if (!isFirst && isHovered)
-              _buildSpacingButton(
-                onPressed: () {
-                  // כאן נוסיף לוגיקה להוספת מרווח
-                  print('Add spacing before word: $word');
-                },
-                isLeft: true,
-              ),
-
-            // המילה עצמה
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: isHovered
-                  ? BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    )
-                  : null,
-              child: Text(
-                word,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-
-            // כפתור ימני (רק למילים שאינן אחרונות או כשמרחפים)
-            if (!isLast && isHovered)
-              _buildSpacingButton(
-                onPressed: () {
-                  // כאן נוסיף לוגיקה להוספת מרווח
-                  print('Add spacing after word: $word');
-                },
-                isLeft: false,
-              ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -400,53 +347,49 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
       builder: (context, state) {
         // נציג את הטקסט הנוכחי מהקונטרולר במקום מה-state
         final displayText = _getDisplayText(widget.tab.queryController.text);
-        print(
-            'SearchTermsDisplay build called with displayText: "$displayText"');
 
-        return Container(
-          height: 52, // גובה קבוע כמו שאר הווידג'טים
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // חישוב רוחב דינמי בהתבסס על אורך הטקסט המעוצב
-              const minWidth = 120.0; // רוחב מינימלי גדול יותר
-              final maxWidth = constraints.maxWidth; // כל הרוחב הזמין
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            // חישוב רוחב דינמי בהתבסס על אורך הטקסט המעוצב
+            const minWidth = 120.0; // רוחב מינימלי גדול יותר
+            final maxWidth = constraints.maxWidth; // כל הרוחב הזמין
 
-              // חישוב רוחב בהתבסס על הרוחב האמיתי של הטקסט המעוצב
-              final formattedTextWidth = _calculateFormattedTextWidth(displayText);
-              final calculatedWidth = formattedTextWidth == 0
-                  ? minWidth
-                  : (formattedTextWidth + 40).clamp(minWidth, maxWidth); // מרווח מותאם לגופן הגדול
+            // חישוב רוחב בהתבסס על הרוחב האמיתי של הטקסט המעוצב
+            final formattedTextWidth =
+                _calculateFormattedTextWidth(displayText, context);
+            final calculatedWidth = formattedTextWidth == 0
+                ? minWidth
+                : (formattedTextWidth + 40)
+                    .clamp(minWidth, maxWidth); // מרווח מותאם לגופן הגדול
 
-              return Align(
-                alignment: Alignment.center, // ממורכז תמיד
-                child: SizedBox(
-                  width: calculatedWidth,
-                  height: 52, // גובה קבוע כמו שאר הבקרות
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 4.0),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'מילות החיפוש',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 8.0, vertical: 4.0), // פחות padding אנכי
-                      ),
-                      child: displayText.isEmpty
-                          ? const SizedBox.shrink()
-                          : SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Center(
-                                child: _buildFormattedText(displayText),
-                              ),
-                            ),
+            return Align(
+              alignment: Alignment.center, // ממורכז תמיד
+              child: SizedBox(
+                width: calculatedWidth,
+                height: 52, // גובה קבוע כמו שאר הבקרות
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'מילות החיפוש',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 8.0), // padding מותאם
                     ),
+                    child: displayText.isEmpty
+                        ? const SizedBox.shrink()
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Center(
+                              child: _buildFormattedText(displayText, context),
+                            ),
+                          ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );

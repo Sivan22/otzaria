@@ -12,15 +12,21 @@ class SearchingTab extends OpenedTab {
   final ValueNotifier<bool> isLeftPaneOpen = ValueNotifier(true);
   final ItemScrollController scrollController = ItemScrollController();
   List<Book> allBooks = [];
-  
+
   // מצב חיפוש מתקדם
   bool isAdvancedSearchEnabled = true;
-  
+
   // אפשרויות חיפוש לכל מילה (מילה_אינדקס -> אפשרויות)
   final Map<String, Map<String, bool>> searchOptions = {};
-  
+
+  // מילים חילופיות לכל מילה (אינדקס_מילה -> רשימת מילים חילופיות)
+  final Map<int, List<String>> alternativeWords = {};
+
   // notifier לעדכון התצוגה כשמשתמש משנה אפשרויות
   final ValueNotifier<int> searchOptionsChanged = ValueNotifier(0);
+
+  // notifier לעדכון התצוגה כשמשתמש משנה מילים חילופיות
+  final ValueNotifier<int> alternativeWordsChanged = ValueNotifier(0);
 
   SearchingTab(
     super.title,
@@ -40,6 +46,7 @@ class SearchingTab extends OpenedTab {
   void dispose() {
     searchFieldFocusNode.dispose();
     searchOptionsChanged.dispose();
+    alternativeWordsChanged.dispose();
     super.dispose();
   }
 

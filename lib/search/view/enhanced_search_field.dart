@@ -256,6 +256,12 @@ class _AlternativeFieldState extends State<_AlternativeField> {
       }
     });
     _focus.addListener(_onFocusChanged);
+    // הוספת listener לשינויי טקסט כדי לעדכן את ה-opacity
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    setState(() {}); // עדכון המצב לשינוי opacity
   }
 
   void _onFocusChanged() {
@@ -269,61 +275,75 @@ class _AlternativeFieldState extends State<_AlternativeField> {
   @override
   void dispose() {
     _focus.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
     _focus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _focus.hasFocus
-              ? Theme.of(context).primaryColor
-              : Theme.of(context).dividerColor,
-          width: _focus.hasFocus ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                Colors.black.withValues(alpha: _focus.hasFocus ? 0.15 : 0.08),
-            blurRadius: _focus.hasFocus ? 6 : 3,
-            offset: const Offset(0, 2),
+    final bool hasText = widget.controller.text.trim().isNotEmpty;
+    final bool isInactive = !_focus.hasFocus && hasText;
+
+    return AnimatedOpacity(
+      opacity: isInactive ? 0.5 : 1.0, // חצי שקופה כשלא בפוקוס ויש טקסט
+      duration: const Duration(milliseconds: 200),
+      child: Container(
+        width: 70, // הצרה עוד יותר - מ-120 ל-100
+        height: 40,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _focus.hasFocus
+                ? Theme.of(context).primaryColor
+                : Theme.of(context).dividerColor,
+            width: _focus.hasFocus ? 1.5 : 1.0,
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        type: MaterialType.transparency,
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.close, size: 16),
-              onPressed: widget.onRemove,
-              splashRadius: 18,
-            ),
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                focusNode: _focus,
-                decoration: const InputDecoration(
-                  hintText: 'מילה חילופית',
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.only(right: 8, bottom: 4),
-                ),
-                style: const TextStyle(fontSize: 12, color: Colors.black87),
-                textAlign: TextAlign.right,
-                onSubmitted: (v) {
-                  if (v.trim().isEmpty) widget.onRemove();
-                },
-              ),
+          boxShadow: [
+            BoxShadow(
+              color:
+                  Colors.black.withValues(alpha: _focus.hasFocus ? 0.15 : 0.08),
+              blurRadius: _focus.hasFocus ? 6 : 3,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          type: MaterialType.transparency,
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close, size: 14),
+                onPressed: widget.onRemove,
+                splashRadius: 16,
+                padding: const EdgeInsets.only(left: 4, right: 2),
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: TextField(
+                  controller: widget.controller,
+                  focusNode: _focus,
+                  inputFormatters: [
+                    // הגבלה למילה אחת - מניעת רווחים
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: 'מילה חילופית',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.only(right: 4, bottom: 4),
+                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  textAlign: TextAlign.right,
+                  onSubmitted: (v) {
+                    if (v.trim().isEmpty) widget.onRemove();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -484,9 +504,12 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     _disposeControllers();
     for (int i = 0; i < _searchQuery.terms.length; i++) {
       final term = _searchQuery.terms[i];
-      _alternativeControllers[i] = term.alternatives
-          .map((alt) => TextEditingController(text: alt))
-          .toList();
+      _alternativeControllers[i] = term.alternatives.map((alt) {
+        final controller = TextEditingController(text: alt);
+        // הוספת listener לעדכון המידע ב-tab כשהטקסט משתנה
+        controller.addListener(() => _updateAlternativeWordsInTab());
+        return controller;
+      }).toList();
     }
   }
 
@@ -563,9 +586,13 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
         return;
       }
       final newIndex = _alternativeControllers[termIndex]!.length;
-      _alternativeControllers[termIndex]!.add(TextEditingController());
+      final controller = TextEditingController();
+      // הוספת listener לעדכון המידע ב-tab כשהטקסט משתנה
+      controller.addListener(() => _updateAlternativeWordsInTab());
+      _alternativeControllers[termIndex]!.add(controller);
       _showAlternativeOverlay(termIndex, newIndex);
     });
+    _updateAlternativeWordsInTab();
   }
 
   void _removeAlternative(int termIndex, int altIndex) {
@@ -582,6 +609,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       }
       _refreshAlternativeOverlays(termIndex);
     });
+    // עדכון המידע ב-tab אחרי הסרת החלופה
+    _updateAlternativeWordsInTab();
   }
 
   void _checkAndRemoveEmptyField(int termIndex, int altIndex) {
@@ -615,7 +644,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     final entry = OverlayEntry(
       builder: (context) {
         return Positioned(
-          left: overlayPosition.dx - 80,
+          left: overlayPosition.dx -
+              35, // מרכוז התיבה (70/2 = 35) מתחת לכפתור ה-+
           top: overlayPosition.dy + 15 + (altIndex * 45.0),
           child: _AlternativeField(
             controller: controller,
@@ -912,6 +942,23 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     widget.widget.tab.searchOptionsChanged.value++;
   }
 
+  void _updateAlternativeWordsInTab() {
+    // עדכון המילים החילופיות ב-tab
+    widget.widget.tab.alternativeWords.clear();
+    for (int termIndex in _alternativeControllers.keys) {
+      final alternatives = _alternativeControllers[termIndex]!
+          .map((controller) => controller.text.trim())
+          .where((text) => text.isNotEmpty)
+          .toList();
+      if (alternatives.isNotEmpty) {
+        widget.widget.tab.alternativeWords[termIndex] = alternatives;
+      }
+    }
+    // עדכון התצוגה
+    widget.widget.tab.alternativeWordsChanged.value++;
+    widget.widget.tab.searchOptionsChanged.value++;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -1096,6 +1143,8 @@ class _SearchOptionsContentState extends State<_SearchOptionsContent> {
         setState(() {
           currentOptions[option] = !currentOptions[option]!;
         });
+        // עדכון מיידי של התצוגה
+        widget.onOptionsChanged?.call();
       },
       borderRadius: BorderRadius.circular(4),
       child: Padding(
