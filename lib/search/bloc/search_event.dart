@@ -18,7 +18,8 @@ class UpdateSearchQuery extends SearchEvent {
   final String query;
   final Map<String, String>? customSpacing;
   final Map<int, List<String>>? alternativeWords;
-  UpdateSearchQuery(this.query, {this.customSpacing, this.alternativeWords});
+  final Map<String, Map<String, bool>>? searchOptions;
+  UpdateSearchQuery(this.query, {this.customSpacing, this.alternativeWords, this.searchOptions});
 }
 
 class UpdateDistance extends SearchEvent {
