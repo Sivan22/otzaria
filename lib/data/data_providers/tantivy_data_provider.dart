@@ -52,22 +52,22 @@ class TantivyDataProvider {
     //test the engine
     engine.then((value) {
       try {
-        print('🧪 בודק מנוע חיפוש...');
+        // Test the search engine
         value
             .search(
                 regexTerms: ['a'],
                 limit: 10,
                 slop: 0,
-                maxExpansions: 0,
+                maxExpansions: 10,
                 facets: ["/"],
                 order: ResultsOrder.catalogue)
             .then((results) {
-          print('🧪 בדיקת מנוע הצליחה - נמצאו ${results.length} תוצאות');
+          // Engine test successful
         }).catchError((e) {
-          print('❌ שגיאה בבדיקת מנוע: $e');
+          // Log engine test error
         });
       } catch (e) {
-        print('❌ שגיאה בבדיקת מנוע (sync): $e');
+        // Log sync engine test error
         if (e.toString() ==
             "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
           resetIndex(indexPath);
@@ -106,33 +106,45 @@ class TantivyDataProvider {
       {bool fuzzy = false, int distance = 2}) async {
     final index = await engine;
 
-    print('🔢 CountTexts: מתחיל ספירה');
-    print('🔢 Query: "$query"');
-    print('🔢 Facets: $facets');
+    // Debug: CountTexts for "$query"
 
     // המרת החיפוש הפשוט לפורמט החדש - ללא רגקס אמיתי!
     List<String> regexTerms;
     if (!fuzzy) {
-      // חיפוש מדוייק - ננסה בלי מירכאות תחילה
-      regexTerms = [query];
+      // חיפוש מדוייק - נפצל למילים אם יש יותר ממילה אחת
+      final words = query.trim().split(RegExp(r'\s+'));
+      if (words.length > 1) {
+        regexTerms = words;
+      } else {
+        regexTerms = [query];
+      }
     } else {
       // חיפוש מקורב - נשתמש במילים בודדות
       regexTerms = query.trim().split(RegExp(r'\s+'));
     }
 
-    print('🔢 RegexTerms: $regexTerms');
+    // חישוב maxExpansions בהתבסס על סוג החיפוש
+    int maxExpansions;
+    if (fuzzy) {
+      maxExpansions = 50; // חיפוש מקורב
+    } else if (regexTerms.length > 1) {
+      maxExpansions = 100; // חיפוש של כמה מילים - צריך expansions גבוה יותר
+    } else {
+      maxExpansions = 10; // מילה אחת - expansions נמוך
+    }
+
+    // Debug: RegexTerms: $regexTerms, MaxExpansions: $maxExpansions
 
     try {
       final count = await index.count(
           regexTerms: regexTerms,
           facets: facets,
           slop: distance,
-          maxExpansions: fuzzy ? 50 : 0);
+          maxExpansions: maxExpansions);
 
-      print('🔢 ספירה: נמצאו $count תוצאות');
       return count;
     } catch (e) {
-      print('❌ שגיאה בספירה: $e');
+      // Log error in production
       rethrow;
     }
   }

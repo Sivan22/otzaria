@@ -42,7 +42,7 @@ class FuzzyToggle extends StatelessWidget {
   }
 }
 
-class FuzzyDistance extends StatelessWidget {
+class FuzzyDistance extends StatefulWidget {
   const FuzzyDistance({
     super.key,
     required this.tab,
@@ -51,21 +51,56 @@ class FuzzyDistance extends StatelessWidget {
   final SearchingTab tab;
 
   @override
+  State<FuzzyDistance> createState() => _FuzzyDistanceState();
+}
+
+class _FuzzyDistanceState extends State<FuzzyDistance> {
+  @override
+  void initState() {
+    super.initState();
+    // מאזין לשינויים במרווחים המותאמים אישית
+    widget.tab.spacingValuesChanged.addListener(_onSpacingChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.tab.spacingValuesChanged.removeListener(_onSpacingChanged);
+    super.dispose();
+  }
+
+  void _onSpacingChanged() {
+    setState(() {
+      // עדכון התצוגה כשמשתמש משנה מרווחים
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
+        // בדיקה אם יש מרווחים מותאמים אישית
+        final hasCustomSpacing = widget.tab.spacingValues.isNotEmpty;
+        final isEnabled = !state.fuzzy && !hasCustomSpacing;
+        
         return SizedBox(
           width: 200,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: SpinBox(
-              enabled: !state.fuzzy,
-              decoration: const InputDecoration(labelText: 'מרווח בין מילים'),
+              enabled: isEnabled,
+              decoration: InputDecoration(
+                labelText: hasCustomSpacing 
+                    ? 'מרווח בין מילים (מושבת - יש מרווחים מותאמים)'
+                    : 'מרווח בין מילים',
+                labelStyle: TextStyle(
+                  color: hasCustomSpacing ? Colors.grey : null,
+                ),
+              ),
               min: 0,
               max: 30,
               value: state.distance.toDouble(),
-              onChanged: (value) =>
-                  context.read<SearchBloc>().add(UpdateDistance(value.toInt())),
+              onChanged: isEnabled ? (value) =>
+                  context.read<SearchBloc>().add(UpdateDistance(value.toInt())) : null,
             ),
           ),
         );

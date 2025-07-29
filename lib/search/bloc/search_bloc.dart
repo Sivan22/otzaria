@@ -71,6 +71,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         fuzzy: state.fuzzy,
         distance: state.distance,
         order: state.sortBy,
+        customSpacing: event.customSpacing,
       );
 
       emit(state.copyWith(

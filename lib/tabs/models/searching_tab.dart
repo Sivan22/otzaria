@@ -31,6 +31,9 @@ class SearchingTab extends OpenedTab {
   // notifier לעדכון התצוגה כשמשתמש משנה מילים חילופיות
   final ValueNotifier<int> alternativeWordsChanged = ValueNotifier(0);
 
+  // notifier לעדכון התצוגה כשמשתמש משנה מרווחים
+  final ValueNotifier<int> spacingValuesChanged = ValueNotifier(0);
+
   SearchingTab(
     super.title,
     String? searchText,
@@ -50,6 +53,7 @@ class SearchingTab extends OpenedTab {
     searchFieldFocusNode.dispose();
     searchOptionsChanged.dispose();
     alternativeWordsChanged.dispose();
+    spacingValuesChanged.dispose();
     super.dispose();
   }
 

@@ -990,6 +990,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     }
     // עדכון התצוגה
     widget.widget.tab.searchOptionsChanged.value++;
+    widget.widget.tab.spacingValuesChanged.value++;
   }
 
   @override
@@ -1048,7 +1049,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                     });
                   },
                   onSubmitted: (e) {
-                    context.read<SearchBloc>().add(UpdateSearchQuery(e));
+                    context.read<SearchBloc>().add(UpdateSearchQuery(e, 
+                        customSpacing: widget.widget.tab.spacingValues));
                     widget.widget.tab.isLeftPaneOpen.value = false;
                   },
                   decoration: InputDecoration(
@@ -1058,7 +1060,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                     prefixIcon: IconButton(
                       onPressed: () {
                         context.read<SearchBloc>().add(UpdateSearchQuery(
-                            widget.widget.tab.queryController.text));
+                            widget.widget.tab.queryController.text,
+                            customSpacing: widget.widget.tab.spacingValues));
                       },
                       icon: const Icon(Icons.search),
                     ),
