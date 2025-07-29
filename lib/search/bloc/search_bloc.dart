@@ -72,6 +72,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         distance: state.distance,
         order: state.sortBy,
         customSpacing: event.customSpacing,
+        alternativeWords: event.alternativeWords,
       );
 
       emit(state.copyWith(

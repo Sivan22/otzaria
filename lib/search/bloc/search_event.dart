@@ -17,7 +17,8 @@ class ClearFilter extends SearchEvent {
 class UpdateSearchQuery extends SearchEvent {
   final String query;
   final Map<String, String>? customSpacing;
-  UpdateSearchQuery(this.query, {this.customSpacing});
+  final Map<int, List<String>>? alternativeWords;
+  UpdateSearchQuery(this.query, {this.customSpacing, this.alternativeWords});
 }
 
 class UpdateDistance extends SearchEvent {

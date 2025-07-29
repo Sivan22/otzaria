@@ -1050,7 +1050,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                   },
                   onSubmitted: (e) {
                     context.read<SearchBloc>().add(UpdateSearchQuery(e, 
-                        customSpacing: widget.widget.tab.spacingValues));
+                        customSpacing: widget.widget.tab.spacingValues,
+                        alternativeWords: widget.widget.tab.alternativeWords));
                     widget.widget.tab.isLeftPaneOpen.value = false;
                   },
                   decoration: InputDecoration(
@@ -1061,7 +1062,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                       onPressed: () {
                         context.read<SearchBloc>().add(UpdateSearchQuery(
                             widget.widget.tab.queryController.text,
-                            customSpacing: widget.widget.tab.spacingValues));
+                            customSpacing: widget.widget.tab.spacingValues,
+                            alternativeWords: widget.widget.tab.alternativeWords));
                       },
                       icon: const Icon(Icons.search),
                     ),

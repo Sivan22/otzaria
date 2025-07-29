@@ -57,13 +57,26 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
     final plainText =
         html_parser.parse(fullHtml).documentElement?.text.trim() ?? '';
 
-    // 2. חילוץ מילות החיפוש
-    final searchTerms = query
+    // 2. חילוץ מילות החיפוש כולל מילים חילופיות
+    final originalWords = query
         .trim()
         .replaceAll(RegExp(r'[~"*\(\)]'), ' ')
         .split(RegExp(r'\s+'))
         .where((s) => s.isNotEmpty)
         .toList();
+    
+    // הוספת מילים חילופיות למילות החיפוש
+    final searchTerms = <String>[];
+    for (int i = 0; i < originalWords.length; i++) {
+      final word = originalWords[i];
+      searchTerms.add(word);
+      
+      // הוספת מילים חילופיות אם יש
+      final alternatives = widget.tab.alternativeWords[i];
+      if (alternatives != null && alternatives.isNotEmpty) {
+        searchTerms.addAll(alternatives);
+      }
+    }
 
     if (searchTerms.isEmpty || plainText.isEmpty) {
       return [TextSpan(text: plainText, style: defaultStyle)];
