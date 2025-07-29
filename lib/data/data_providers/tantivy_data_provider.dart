@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:hive/hive.dart';
+import 'package:otzaria/search/search_repository.dart';
 
 /// A singleton class that manages search functionality using Tantivy search engine.
 ///
@@ -35,7 +36,7 @@ class TantivyDataProvider {
             Platform.pathSeparator +
             'ref_index';
 
-    engine = SearchEngine.newInstance(path: indexPath);
+    engine = Future.value(SearchEngine(path: indexPath));
 
     try {
       refEngine = ReferenceSearchEngine(path: refIndexPath);
@@ -51,13 +52,22 @@ class TantivyDataProvider {
     //test the engine
     engine.then((value) {
       try {
-        value.search(
-            query: 'a',
-            limit: 10,
-            fuzzy: false,
-            facets: ["/"],
-            order: ResultsOrder.catalogue);
+        print('🧪 בודק מנוע חיפוש...');
+        value
+            .search(
+                regexTerms: ['a'],
+                limit: 10,
+                slop: 0,
+                maxExpansions: 0,
+                facets: ["/"],
+                order: ResultsOrder.catalogue)
+            .then((results) {
+          print('🧪 בדיקת מנוע הצליחה - נמצאו ${results.length} תוצאות');
+        }).catchError((e) {
+          print('❌ שגיאה בבדיקת מנוע: $e');
+        });
       } catch (e) {
+        print('❌ שגיאה בבדיקת מנוע (sync): $e');
         if (e.toString() ==
             "PanicException(Failed to create index: SchemaError(\"An index exists but the schema does not match.\"))") {
           resetIndex(indexPath);
@@ -95,10 +105,36 @@ class TantivyDataProvider {
   Future<int> countTexts(String query, List<String> books, List<String> facets,
       {bool fuzzy = false, int distance = 2}) async {
     final index = await engine;
+
+    print('🔢 CountTexts: מתחיל ספירה');
+    print('🔢 Query: "$query"');
+    print('🔢 Facets: $facets');
+
+    // המרת החיפוש הפשוט לפורמט החדש - ללא רגקס אמיתי!
+    List<String> regexTerms;
     if (!fuzzy) {
-      query = distance > 0 ? '"$query"~$distance' : '"$query"';
+      // חיפוש מדוייק - ננסה בלי מירכאות תחילה
+      regexTerms = [query];
+    } else {
+      // חיפוש מקורב - נשתמש במילים בודדות
+      regexTerms = query.trim().split(RegExp(r'\s+'));
     }
-    return index.count(query: query, facets: facets, fuzzy: fuzzy);
+
+    print('🔢 RegexTerms: $regexTerms');
+
+    try {
+      final count = await index.count(
+          regexTerms: regexTerms,
+          facets: facets,
+          slop: distance,
+          maxExpansions: fuzzy ? 50 : 0);
+
+      print('🔢 ספירה: נמצאו $count תוצאות');
+      return count;
+    } catch (e) {
+      print('❌ שגיאה בספירה: $e');
+      rethrow;
+    }
   }
 
   Future<void> resetIndex(String indexPath) async {
@@ -118,9 +154,11 @@ class TantivyDataProvider {
   /// Returns a Stream of search results that can be listened to for real-time updates
   Stream<List<SearchResult>> searchTextsStream(
       String query, List<String> facets, int limit, bool fuzzy) async* {
-    final index = await engine;
-    yield* index.searchStream(
-        query: query, facets: facets, limit: limit, fuzzy: fuzzy);
+    // הפונקציה הזו לא נתמכת במנוע החדש - נחזיר תוצאה חד-פעמית
+    final searchRepository = SearchRepository();
+    final results =
+        await searchRepository.searchTexts(query, facets, limit, fuzzy: fuzzy);
+    yield results;
   }
 
   Future<List<ReferenceSearchResult>> searchRefs(
