@@ -65,7 +65,6 @@ class QuickFontSelector extends StatelessWidget {
                   child: Text(
                     'גופנים אישיים:',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                     textAlign: TextAlign.right,
