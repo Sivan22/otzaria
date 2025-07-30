@@ -6,6 +6,8 @@ import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
 import 'package:otzaria/search/models/search_terms_model.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
+import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
+import 'package:otzaria/navigation/bloc/navigation_state.dart';
 
 // הווידג'ט החדש לניהול מצבי הכפתור
 class _PlusButton extends StatefulWidget {
@@ -419,25 +421,191 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     widget.widget.tab.queryController.removeListener(_onTextChanged);
     widget.widget.tab.searchFieldFocusNode
         .removeListener(_onCursorPositionChanged);
-    _disposeControllers();
+    _disposeControllers(); // במצב dispose אנחנו רוצים למחוק הכל
     // ניקוי אפשרויות החיפוש כשסוגרים את המסך
     widget.widget.tab.searchOptions.clear();
     super.dispose();
   }
 
-  void _clearAllOverlays({bool keepSearchDrawer = false}) {
-    // ניקוי אלטרנטיבות ומרווחים
-    for (final entries in _alternativeOverlays.values) {
-      for (final entry in entries) {
-        entry.remove();
+  // שמירת נתונים לפני ניקוי
+  void _saveDataToTab() {
+    // שמירת מילים חילופיות
+    widget.widget.tab.alternativeWords.clear();
+    for (int termIndex in _alternativeControllers.keys) {
+      final alternatives = _alternativeControllers[termIndex]!
+          .map((controller) => controller.text.trim())
+          .where((text) => text.isNotEmpty)
+          .toList();
+      if (alternatives.isNotEmpty) {
+        widget.widget.tab.alternativeWords[termIndex] = alternatives;
       }
     }
-    _alternativeOverlays.clear();
 
-    for (final entry in _spacingOverlays.values) {
-      entry.remove();
+    // שמירת מרווחים
+    widget.widget.tab.spacingValues.clear();
+    for (String key in _spacingControllers.keys) {
+      final spacingText = _spacingControllers[key]!.text.trim();
+      if (spacingText.isNotEmpty) {
+        widget.widget.tab.spacingValues[key] = spacingText;
+      }
     }
-    _spacingOverlays.clear();
+  }
+
+  // שחזור נתונים מה-tab
+  void _restoreDataFromTab() {
+    // ניקוי controllers קיימים לפני השחזור
+    _disposeControllers();
+
+    // עדכון ה-searchQuery מהטקסט הנוכחי
+    final text = widget.widget.tab.queryController.text;
+    if (text.isNotEmpty) {
+      _searchQuery = SearchQuery.fromString(text);
+    }
+
+    // שחזור מילים חילופיות
+    for (final entry in widget.widget.tab.alternativeWords.entries) {
+      final termIndex = entry.key;
+      final alternatives = entry.value;
+
+      _alternativeControllers[termIndex] = alternatives.map((alt) {
+        final controller = TextEditingController(text: alt);
+        controller.addListener(() => _updateAlternativeWordsInTab());
+        return controller;
+      }).toList();
+    }
+
+    // שחזור מרווחים
+    for (final entry in widget.widget.tab.spacingValues.entries) {
+      final key = entry.key;
+      final value = entry.value;
+
+      final controller = TextEditingController(text: value);
+      controller.addListener(() => _updateSpacingInTab());
+      _spacingControllers[key] = controller;
+    }
+  }
+
+  // הצגת בועות שחוזרו
+  void _showRestoredBubbles() {
+    // הצגת מילים חילופיות
+    for (final entry in _alternativeControllers.entries) {
+      final termIndex = entry.key;
+      final controllers = entry.value;
+      for (int j = 0; j < controllers.length; j++) {
+        if (termIndex < _wordPositions.length) {
+          _showAlternativeOverlay(termIndex, j);
+        }
+      }
+    }
+
+    // הצגת מרווחים
+    for (final key in _spacingControllers.keys) {
+      final parts = key.split('-');
+      if (parts.length == 2) {
+        final leftIndex = int.tryParse(parts[0]);
+        final rightIndex = int.tryParse(parts[1]);
+        if (leftIndex != null &&
+            rightIndex != null &&
+            leftIndex < _wordPositions.length &&
+            rightIndex < _wordPositions.length) {
+          _showSpacingOverlay(leftIndex, rightIndex);
+        }
+      }
+    }
+  }
+
+  // ניקוי נתונים לא רלוונטיים כשהמילים משתנות
+  void _cleanupIrrelevantData(Set<String> newWords) {
+    // ניקוי אפשרויות חיפוש למילים שלא קיימות יותר
+    final searchOptionsKeysToRemove = <String>[];
+    for (final key in widget.widget.tab.searchOptions.keys) {
+      final parts = key.split('_');
+      if (parts.isNotEmpty) {
+        final word = parts[0];
+        if (!newWords.contains(word)) {
+          searchOptionsKeysToRemove.add(key);
+        }
+      }
+    }
+
+    for (final key in searchOptionsKeysToRemove) {
+      widget.widget.tab.searchOptions.remove(key);
+    }
+  }
+
+  void _clearAllOverlays(
+      {bool keepSearchDrawer = false, bool keepFilledBubbles = false}) {
+    // ניקוי אלטרנטיבות - רק אם לא ביקשנו לשמור בועות מלאות או אם הן ריקות
+    if (!keepFilledBubbles) {
+      for (final entries in _alternativeOverlays.values) {
+        for (final entry in entries) {
+          entry.remove();
+        }
+      }
+      _alternativeOverlays.clear();
+    } else {
+      // שמירה רק על בועות עם טקסט
+      final keysToRemove = <int>[];
+      for (final termIndex in _alternativeOverlays.keys) {
+        final controllers = _alternativeControllers[termIndex] ?? [];
+        final overlays = _alternativeOverlays[termIndex] ?? [];
+
+        final indicesToRemove = <int>[];
+        for (int i = 0; i < controllers.length; i++) {
+          if (controllers[i].text.trim().isEmpty) {
+            if (i < overlays.length) {
+              overlays[i].remove();
+              indicesToRemove.add(i);
+            }
+          }
+        }
+
+        // הסרה בסדר הפוך כדי לא לפגוע באינדקסים
+        for (int i = indicesToRemove.length - 1; i >= 0; i--) {
+          final indexToRemove = indicesToRemove[i];
+          if (indexToRemove < overlays.length) {
+            overlays.removeAt(indexToRemove);
+          }
+          if (indexToRemove < controllers.length) {
+            controllers[indexToRemove].dispose();
+            controllers.removeAt(indexToRemove);
+          }
+        }
+
+        if (overlays.isEmpty) {
+          keysToRemove.add(termIndex);
+        }
+      }
+
+      for (final key in keysToRemove) {
+        _alternativeOverlays.remove(key);
+        _alternativeControllers.remove(key);
+      }
+    }
+
+    // ניקוי מרווחים - רק אם לא ביקשנו לשמור בועות מלאות או אם הן ריקות
+    if (!keepFilledBubbles) {
+      for (final entry in _spacingOverlays.values) {
+        entry.remove();
+      }
+      _spacingOverlays.clear();
+    } else {
+      // שמירה רק על בועות עם טקסט
+      final keysToRemove = <String>[];
+      for (final key in _spacingOverlays.keys) {
+        final controller = _spacingControllers[key];
+        if (controller == null || controller.text.trim().isEmpty) {
+          _spacingOverlays[key]?.remove();
+          keysToRemove.add(key);
+        }
+      }
+
+      for (final key in keysToRemove) {
+        _spacingOverlays.remove(key);
+        _spacingControllers[key]?.dispose();
+        _spacingControllers.remove(key);
+      }
+    }
 
     // סגירת מגירת האפשרויות רק אם לא ביקשנו לשמור אותה
     if (!keepSearchDrawer) {
@@ -446,27 +614,84 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     }
   }
 
-  void _disposeControllers() {
-    for (final controllers in _alternativeControllers.values) {
-      for (final controller in controllers) {
+  void _disposeControllers({bool keepFilledControllers = false}) {
+    if (!keepFilledControllers) {
+      // מחיקה מלאה של כל ה-controllers
+      for (final controllers in _alternativeControllers.values) {
+        for (final controller in controllers) {
+          controller.dispose();
+        }
+      }
+      _alternativeControllers.clear();
+      for (final controller in _spacingControllers.values) {
         controller.dispose();
       }
+      _spacingControllers.clear();
+    } else {
+      // מחיקה רק של controllers ריקים
+      final alternativeKeysToRemove = <int>[];
+      for (final entry in _alternativeControllers.entries) {
+        final termIndex = entry.key;
+        final controllers = entry.value;
+        final indicesToRemove = <int>[];
+
+        for (int i = 0; i < controllers.length; i++) {
+          if (controllers[i].text.trim().isEmpty) {
+            controllers[i].dispose();
+            indicesToRemove.add(i);
+          }
+        }
+
+        // הסרה בסדר הפוך
+        for (int i = indicesToRemove.length - 1; i >= 0; i--) {
+          controllers.removeAt(indicesToRemove[i]);
+        }
+
+        if (controllers.isEmpty) {
+          alternativeKeysToRemove.add(termIndex);
+        }
+      }
+
+      for (final key in alternativeKeysToRemove) {
+        _alternativeControllers.remove(key);
+      }
+
+      // מחיקת spacing controllers ריקים
+      final spacingKeysToRemove = <String>[];
+      for (final entry in _spacingControllers.entries) {
+        if (entry.value.text.trim().isEmpty) {
+          entry.value.dispose();
+          spacingKeysToRemove.add(entry.key);
+        }
+      }
+
+      for (final key in spacingKeysToRemove) {
+        _spacingControllers.remove(key);
+      }
     }
-    _alternativeControllers.clear();
-    for (final controller in _spacingControllers.values) {
-      controller.dispose();
-    }
-    _spacingControllers.clear();
   }
 
   void _onTextChanged() {
     // בודקים אם המגירה הייתה פתוחה לפני השינוי
     final bool drawerWasOpen = _searchOptionsOverlay != null;
 
-    // מנקים את כל הבועות, אבל משאירים את המגירה פתוחה אם היא הייתה פתוחה
-    _clearAllOverlays(keepSearchDrawer: drawerWasOpen);
-
     final text = widget.widget.tab.queryController.text;
+
+    // בדיקה אם המילים השתנו באופן משמעותי - אם כן, נקה נתונים ישנים
+    final newWords =
+        text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toSet();
+    final oldWords = _searchQuery.terms.map((t) => t.word).toSet();
+
+    final bool wordsChangedSignificantly =
+        !newWords.containsAll(oldWords) || !oldWords.containsAll(newWords);
+
+    if (wordsChangedSignificantly) {
+      // אם המילים השתנו משמעותית, נקה נתונים ישנים שלא רלוונטיים
+      _cleanupIrrelevantData(newWords);
+    }
+
+    // מנקים את כל הבועות, אבל שומרים על בועות עם טקסט ועל המגירה אם הייתה פתוחה
+    _clearAllOverlays(keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
 
     // אם שדה החיפוש התרוקן, נסגור את המגירה בכל זאת
     if (text.trim().isEmpty && drawerWasOpen) {
@@ -484,9 +709,46 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculateWordPositions();
 
+      // הצגת alternatives מה-SearchQuery
       for (int i = 0; i < _searchQuery.terms.length; i++) {
         for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
           _showAlternativeOverlay(i, j);
+        }
+      }
+
+      // הצגת alternatives קיימים שנשמרו
+      for (final entry in _alternativeControllers.entries) {
+        final termIndex = entry.key;
+        final controllers = entry.value;
+        for (int j = 0; j < controllers.length; j++) {
+          if (controllers[j].text.trim().isNotEmpty) {
+            // בדיקה שהבועה לא מוצגת כבר
+            final existingOverlays = _alternativeOverlays[termIndex] ?? [];
+            if (j >= existingOverlays.length) {
+              _showAlternativeOverlay(termIndex, j);
+            }
+          }
+        }
+      }
+
+      // הצגת spacing overlays קיימים
+      for (final entry in _spacingControllers.entries) {
+        final key = entry.key;
+        final controller = entry.value;
+        if (controller.text.trim().isNotEmpty &&
+            !_spacingOverlays.containsKey(key)) {
+          // פירוק המפתח לאינדקסים
+          final parts = key.split('-');
+          if (parts.length == 2) {
+            final leftIndex = int.tryParse(parts[0]);
+            final rightIndex = int.tryParse(parts[1]);
+            if (leftIndex != null &&
+                rightIndex != null &&
+                leftIndex < _wordPositions.length &&
+                rightIndex < _wordPositions.length) {
+              _showSpacingOverlay(leftIndex, rightIndex);
+            }
+          }
         }
       }
 
@@ -515,15 +777,49 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _updateAlternativeControllers() {
-    _disposeControllers();
+    // שמירה על controllers קיימים שיש בהם טקסט
+    final Map<int, List<TextEditingController>> existingControllers = {};
+    for (final entry in _alternativeControllers.entries) {
+      final termIndex = entry.key;
+      final controllers = entry.value;
+      final controllersWithText =
+          controllers.where((c) => c.text.trim().isNotEmpty).toList();
+      if (controllersWithText.isNotEmpty) {
+        existingControllers[termIndex] = controllersWithText;
+      }
+    }
+
+    // מחיקת controllers ריקים בלבד
+    for (final entry in _alternativeControllers.entries) {
+      final controllers = entry.value;
+      for (final controller in controllers) {
+        if (controller.text.trim().isEmpty) {
+          controller.dispose();
+        }
+      }
+    }
+
+    // איפוס המפה
+    _alternativeControllers.clear();
+
+    // החזרת controllers עם טקסט
+    _alternativeControllers.addAll(existingControllers);
+
+    // הוספת controllers חדשים מה-SearchQuery
     for (int i = 0; i < _searchQuery.terms.length; i++) {
       final term = _searchQuery.terms[i];
-      _alternativeControllers[i] = term.alternatives.map((alt) {
-        final controller = TextEditingController(text: alt);
-        // הוספת listener לעדכון המידע ב-tab כשהטקסט משתנה
-        controller.addListener(() => _updateAlternativeWordsInTab());
-        return controller;
-      }).toList();
+      _alternativeControllers.putIfAbsent(i, () => []);
+
+      // הוספת alternatives מה-SearchQuery שלא קיימים כבר
+      for (final alt in term.alternatives) {
+        final existingTexts =
+            _alternativeControllers[i]!.map((c) => c.text).toList();
+        if (!existingTexts.contains(alt)) {
+          final controller = TextEditingController(text: alt);
+          controller.addListener(() => _updateAlternativeWordsInTab());
+          _alternativeControllers[i]!.add(controller);
+        }
+      }
     }
   }
 
@@ -590,6 +886,17 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
       idx = end;
     }
+
+if (text.isNotEmpty && _wordPositions.isEmpty) {
+// החישוב נכשל למרות שיש טקסט. ננסה שוב ב-frame הבא.
+WidgetsBinding.instance.addPostFrameCallback((_) {
+if (mounted) { // ודא שהווידג'ט עדיין קיים
+_calculateWordPositions();
+}
+});
+return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מידע שגוי
+}
+
     setState(() {});
   }
 
@@ -647,6 +954,23 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _showAlternativeOverlay(int termIndex, int altIndex) {
+    // בדיקה שהאינדקסים תקינים
+    if (termIndex >= _wordPositions.length ||
+        !_alternativeControllers.containsKey(termIndex) ||
+        altIndex >= _alternativeControllers[termIndex]!.length) {
+      return;
+    }
+
+    // בדיקה שהבועה לא מוצגת כבר
+    final existingOverlays = _alternativeOverlays[termIndex];
+    if (existingOverlays != null &&
+        altIndex < existingOverlays.length &&
+        mounted && // ודא שה-State עדיין קיים
+        Overlay.of(context).mounted && // ודא שה-Overlay קיים
+        existingOverlays[altIndex].mounted) { // ודא שהבועה הספציפית הזו עדיין על המסך
+      return; // אם הבועה כבר קיימת ומוצגת, אל תעשה כלום
+    }
+
     final overlayState = Overlay.of(context);
     final RenderBox? textFieldBox =
         _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
@@ -689,6 +1013,13 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   void _showSpacingOverlay(int leftIndex, int rightIndex) {
     final key = _spaceKey(leftIndex, rightIndex);
     if (_spacingOverlays.containsKey(key)) return;
+
+    // בדיקה שהאינדקסים תקינים
+    if (leftIndex >= _wordRightEdges.length ||
+        rightIndex >= _wordLeftEdges.length) {
+      return;
+    }
+
     final overlayState = Overlay.of(context);
     final RenderBox? textFieldBox =
         _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
@@ -995,142 +1326,176 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      key: _stackKey,
-      clipBehavior: Clip.none,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: _kSearchFieldMinWidth,
-                minHeight: _kControlHeight,
-              ),
-              child: KeyboardListener(
-                focusNode: FocusNode(),
-                onKeyEvent: (KeyEvent event) {
-                  // עדכון המגירה כשמשתמשים בחצים במקלדת
-                  if (event is KeyDownEvent) {
-                    final isArrowKey =
-                        event.logicalKey.keyLabel == 'Arrow Left' ||
-                            event.logicalKey.keyLabel == 'Arrow Right' ||
-                            event.logicalKey.keyLabel == 'Arrow Up' ||
-                            event.logicalKey.keyLabel == 'Arrow Down';
+    return BlocListener<NavigationBloc, NavigationState>(
+      listener: (context, state) {
+        // כשעוברים ממסך החיפוש למסך אחר, שמור נתונים ונקה את כל הבועות
+        if (state.currentScreen != Screen.search) {
+          _saveDataToTab();
+          _clearAllOverlays();
+          } else if (state.currentScreen == Screen.search) {
+            // כשחוזרים למסך החיפוש, שחזר את הנתונים והצג את הבועות
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _restoreDataFromTab(); // 1. שחזר את תוכן הבועות מהזיכרון
+              // עיכוב נוסף כדי לוודא שהטקסט מעודכן
+              Future.delayed(const Duration(milliseconds: 50), () { // השאר את העיכוב הקטן הזה
+                if (mounted) {
+                  _calculateWordPositions(); // 2. חשב מיקומים (עכשיו זה יעבוד)
+                  _showRestoredBubbles();  // 3. הצג את הבועות המשוחזרות
+                }
+            });
+          });
+        }
+      },
+      child: Stack(
+        key: _stackKey,
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: _kSearchFieldMinWidth,
+                  minHeight: _kControlHeight,
+                ),
+                child: KeyboardListener(
+                  focusNode: FocusNode(),
+                  onKeyEvent: (KeyEvent event) {
+                    // עדכון המגירה כשמשתמשים בחצים במקלדת
+                    if (event is KeyDownEvent) {
+                      final isArrowKey =
+                          event.logicalKey.keyLabel == 'Arrow Left' ||
+                              event.logicalKey.keyLabel == 'Arrow Right' ||
+                              event.logicalKey.keyLabel == 'Arrow Up' ||
+                              event.logicalKey.keyLabel == 'Arrow Down';
 
-                    if (isArrowKey) {
+                      if (isArrowKey) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (_searchOptionsOverlay != null) {
+                            _updateSearchOptionsOverlay();
+                          }
+                        });
+                      }
+                    }
+                  },
+                  child: TextField(
+                    key: _textFieldKey,
+                    focusNode: widget.widget.tab.searchFieldFocusNode,
+                    controller: widget.widget.tab.queryController,
+                    onTap: () {
+                      // עדכון המגירה כשלוחצים בשדה הטקסט
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (_searchOptionsOverlay != null) {
                           _updateSearchOptionsOverlay();
                         }
                       });
-                    }
-                  }
-                },
-                child: TextField(
-                  key: _textFieldKey,
-                  focusNode: widget.widget.tab.searchFieldFocusNode,
-                  controller: widget.widget.tab.queryController,
-                  onTap: () {
-                    // עדכון המגירה כשלוחצים בשדה הטקסט
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_searchOptionsOverlay != null) {
-                        _updateSearchOptionsOverlay();
-                      }
-                    });
-                  },
-                  onChanged: (text) {
-                    // עדכון המגירה כשהטקסט משתנה
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_searchOptionsOverlay != null) {
-                        _updateSearchOptionsOverlay();
-                      }
-                    });
-                  },
-                  onSubmitted: (e) {
-                    context.read<SearchBloc>().add(UpdateSearchQuery(e,
-                        customSpacing: widget.widget.tab.spacingValues,
-                        alternativeWords: widget.widget.tab.alternativeWords,
-                        searchOptions: widget.widget.tab.searchOptions));
-                    widget.widget.tab.isLeftPaneOpen.value = false;
-                  },
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    hintText: "חפש כאן..",
-                    labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
-                    prefixIcon: IconButton(
-                      onPressed: () {
-                        context.read<SearchBloc>().add(UpdateSearchQuery(
-                            widget.widget.tab.queryController.text,
-                            customSpacing: widget.widget.tab.spacingValues,
-                            alternativeWords:
-                                widget.widget.tab.alternativeWords,
-                            searchOptions: widget.widget.tab.searchOptions));
-                      },
-                      icon: const Icon(Icons.search),
-                    ),
-                    // החלף את כל ה-Row הקיים בזה:
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.widget.tab.isAdvancedSearchEnabled)
-                          IconButton(
-                            onPressed: () =>
-                                _toggleSearchOptions(!_isSearchOptionsVisible),
-                            icon: const Icon(Icons.keyboard_arrow_down),
-                            focusNode: FocusNode(
-                              // <-- התוספת המרכזית
-                              canRequestFocus: false, // מונע מהכפתור לבקש פוקוס
-                              skipTraversal: true, // מדלג עליו בניווט מקלדת
+                    },
+                    onChanged: (text) {
+                      // עדכון המגירה כשהטקסט משתנה
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_searchOptionsOverlay != null) {
+                          _updateSearchOptionsOverlay();
+                        }
+                      });
+                    },
+                    onSubmitted: (e) {
+                      context.read<SearchBloc>().add(UpdateSearchQuery(e,
+                          customSpacing: widget.widget.tab.spacingValues,
+                          alternativeWords: widget.widget.tab.alternativeWords,
+                          searchOptions: widget.widget.tab.searchOptions));
+                      widget.widget.tab.isLeftPaneOpen.value = false;
+                    },
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      hintText: "חפש כאן..",
+                      labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
+                      prefixIcon: IconButton(
+                        onPressed: () {
+                          context.read<SearchBloc>().add(UpdateSearchQuery(
+                              widget.widget.tab.queryController.text,
+                              customSpacing: widget.widget.tab.spacingValues,
+                              alternativeWords:
+                                  widget.widget.tab.alternativeWords,
+                              searchOptions: widget.widget.tab.searchOptions));
+                        },
+                        icon: const Icon(Icons.search),
+                      ),
+                      // החלף את כל ה-Row הקיים בזה:
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.widget.tab.isAdvancedSearchEnabled)
+                            IconButton(
+                              onPressed: () => _toggleSearchOptions(
+                                  !_isSearchOptionsVisible),
+                              icon: const Icon(Icons.keyboard_arrow_down),
+                              focusNode: FocusNode(
+                                // <-- התוספת המרכזית
+                                canRequestFocus:
+                                    false, // מונע מהכפתור לבקש פוקוס
+                                skipTraversal: true, // מדלג עליו בניווט מקלדת
+                              ),
                             ),
+                          IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              // ניקוי מלא של כל הנתונים
+                              widget.widget.tab.queryController.clear();
+                              widget.widget.tab.searchOptions.clear();
+                              widget.widget.tab.alternativeWords.clear();
+                              widget.widget.tab.spacingValues.clear();
+                              _clearAllOverlays();
+                              _disposeControllers();
+                              setState(() {
+                                _searchQuery = SearchQuery();
+                                _wordPositions.clear();
+                                _wordLeftEdges.clear();
+                                _wordRightEdges.clear();
+                              });
+                              context
+                                  .read<SearchBloc>()
+                                  .add(UpdateSearchQuery(''));
+                            },
                           ),
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            widget.widget.tab.queryController.clear();
-                            context
-                                .read<SearchBloc>()
-                                .add(UpdateSearchQuery(''));
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        // אזורי ריחוף על המילים - רק בחלק העליון
-        ..._wordPositions.asMap().entries.map((entry) {
-          final wordIndex = entry.key;
-          final position = entry.value;
-          return Positioned(
-            left: position.dx - 30,
-            top: position.dy - 47, // יותר למעלה כדי לא לחסום את שדה החיפוש
-            child: MouseRegion(
-              onEnter: (_) => setState(() => _hoveredWordIndex = wordIndex),
-              onExit: (_) => setState(() => _hoveredWordIndex = null),
-              child: IgnorePointer(
-                child: Container(
-                  width: 60,
-                  height: 20, // גובה קטן יותר
-                  color: Colors.transparent,
+          // אזורי ריחוף על המילים - רק בחלק העליון
+          ..._wordPositions.asMap().entries.map((entry) {
+            final wordIndex = entry.key;
+            final position = entry.value;
+            return Positioned(
+              left: position.dx - 30,
+              top: position.dy - 47, // יותר למעלה כדי לא לחסום את שדה החיפוש
+              child: MouseRegion(
+                onEnter: (_) => setState(() => _hoveredWordIndex = wordIndex),
+                onExit: (_) => setState(() => _hoveredWordIndex = null),
+                child: IgnorePointer(
+                  child: Container(
+                    width: 60,
+                    height: 20, // גובה קטן יותר
+                    color: Colors.transparent,
+                  ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
-        // כפתורי ה+ (רק בחיפוש מתקדם)
-        if (widget.widget.tab.isAdvancedSearchEnabled)
-          ..._wordPositions.asMap().entries.map((entry) {
-            return _buildPlusButton(entry.key, entry.value);
+            );
           }).toList(),
-        // כפתורי המרווח (רק בחיפוש מתקדם)
-        if (widget.widget.tab.isAdvancedSearchEnabled)
-          ..._buildSpacingButtons(),
-      ],
+          // כפתורי ה+ (רק בחיפוש מתקדם)
+          if (widget.widget.tab.isAdvancedSearchEnabled)
+            ..._wordPositions.asMap().entries.map((entry) {
+              return _buildPlusButton(entry.key, entry.value);
+            }).toList(),
+          // כפתורי המרווח (רק בחיפוש מתקדם)
+          if (widget.widget.tab.isAdvancedSearchEnabled)
+            ..._buildSpacingButtons(),
+        ],
+      ),
     );
   }
 }
