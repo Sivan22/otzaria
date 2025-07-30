@@ -81,7 +81,7 @@ class _FuzzyDistanceState extends State<FuzzyDistance> {
         // בדיקה אם יש מרווחים מותאמים אישית
         final hasCustomSpacing = widget.tab.spacingValues.isNotEmpty;
         final isEnabled = !state.fuzzy && !hasCustomSpacing;
-        
+
         return SizedBox(
           width: 200,
           child: Padding(
@@ -89,7 +89,7 @@ class _FuzzyDistanceState extends State<FuzzyDistance> {
             child: SpinBox(
               enabled: isEnabled,
               decoration: InputDecoration(
-                labelText: hasCustomSpacing 
+                labelText: hasCustomSpacing
                     ? 'מרווח בין מילים (מושבת - יש מרווחים מותאמים)'
                     : 'מרווח בין מילים',
                 labelStyle: TextStyle(
@@ -99,8 +99,11 @@ class _FuzzyDistanceState extends State<FuzzyDistance> {
               min: 0,
               max: 30,
               value: state.distance.toDouble(),
-              onChanged: isEnabled ? (value) =>
-                  context.read<SearchBloc>().add(UpdateDistance(value.toInt())) : null,
+              onChanged: isEnabled
+                  ? (value) => context
+                      .read<SearchBloc>()
+                      .add(UpdateDistance(value.toInt()))
+                  : null,
             ),
           ),
         );
@@ -236,7 +239,7 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
       'קידומות דקדוקיות': 'קד',
       'סיומות דקדוקיות': 'סד',
       'כתיב מלא/חסר': 'מח',
-      'שורש': 'ש',
+      'חלק ממילה': 'ש',
     };
 
     // אפשרויות שמופיעות אחרי המילה (סיומות)

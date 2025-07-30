@@ -5,7 +5,7 @@ class SearchOptionsDropdown extends StatefulWidget {
   final bool isExpanded;
 
   const SearchOptionsDropdown({
-    super.key, 
+    super.key,
     this.onToggle,
     this.isExpanded = false,
   });
@@ -54,9 +54,9 @@ class _SearchOptionsDropdownState extends State<SearchOptionsDropdown> {
 class SearchOptionsRow extends StatefulWidget {
   final bool isVisible;
   final String? currentWord; // המילה הנוכחית
-  
+
   const SearchOptionsRow({
-    super.key, 
+    super.key,
     required this.isVisible,
     this.currentWord,
   });
@@ -68,15 +68,15 @@ class SearchOptionsRow extends StatefulWidget {
 class _SearchOptionsRowState extends State<SearchOptionsRow> {
   // מפה שמחזיקה אפשרויות לכל מילה
   static final Map<String, Map<String, bool>> _wordOptions = {};
-  
+
   // רשימת האפשרויות הזמינות
   static const List<String> _availableOptions = [
     'קידומות',
-    'סיומות', 
+    'סיומות',
     'קידומות דקדוקיות',
     'סיומות דקדוקיות',
     'כתיב מלא/חסר',
-    'שורש',
+    'חלק ממילה',
   ];
 
   Map<String, bool> _getCurrentWordOptions() {
@@ -84,25 +84,25 @@ class _SearchOptionsRowState extends State<SearchOptionsRow> {
     if (currentWord == null || currentWord.isEmpty) {
       return Map.fromIterable(_availableOptions, value: (_) => false);
     }
-    
+
     // אם אין אפשרויות למילה הזו, ניצור אותן
     if (!_wordOptions.containsKey(currentWord)) {
-      _wordOptions[currentWord] = Map.fromIterable(_availableOptions, value: (_) => false);
+      _wordOptions[currentWord] =
+          Map.fromIterable(_availableOptions, value: (_) => false);
     }
-    
+
     return _wordOptions[currentWord]!;
   }
 
   Widget _buildCheckbox(String option) {
     final currentOptions = _getCurrentWordOptions();
-    
+
     return InkWell(
       onTap: () {
         setState(() {
           final currentWord = widget.currentWord;
           if (currentWord != null && currentWord.isNotEmpty) {
             currentOptions[option] = !currentOptions[option]!;
-
           }
         });
       },

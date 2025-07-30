@@ -1049,7 +1049,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                     });
                   },
                   onSubmitted: (e) {
-                    context.read<SearchBloc>().add(UpdateSearchQuery(e, 
+                    context.read<SearchBloc>().add(UpdateSearchQuery(e,
                         customSpacing: widget.widget.tab.spacingValues,
                         alternativeWords: widget.widget.tab.alternativeWords,
                         searchOptions: widget.widget.tab.searchOptions));
@@ -1064,7 +1064,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                         context.read<SearchBloc>().add(UpdateSearchQuery(
                             widget.widget.tab.queryController.text,
                             customSpacing: widget.widget.tab.spacingValues,
-                            alternativeWords: widget.widget.tab.alternativeWords,
+                            alternativeWords:
+                                widget.widget.tab.alternativeWords,
                             searchOptions: widget.widget.tab.searchOptions));
                       },
                       icon: const Icon(Icons.search),
@@ -1160,7 +1161,7 @@ class _SearchOptionsContentState extends State<_SearchOptionsContent> {
     'קידומות דקדוקיות',
     'סיומות דקדוקיות',
     'כתיב מלא/חסר',
-    'שורש',
+    'חלק ממילה',
   ];
 
   String get _wordKey => '${widget.currentWord}_${widget.wordIndex}';
