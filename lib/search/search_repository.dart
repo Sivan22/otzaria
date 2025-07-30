@@ -113,6 +113,7 @@ class SearchRepository {
       final hasSuffix = wordOptions['סיומות'] == true;
       final hasGrammaticalPrefixes = wordOptions['קידומות דקדוקיות'] == true;
       final hasGrammaticalSuffixes = wordOptions['סיומות דקדוקיות'] == true;
+      final hasFullPartialSpelling = wordOptions['כתיב מלא/חסר'] == true;
 
       // קבלת מילים חילופיות
       final alternatives = alternativeWords?[i];
@@ -132,39 +133,50 @@ class SearchRepository {
         final allVariations = <String>{};
 
         for (final option in validOptions) {
-          // קביעת הווריאציות לפי האפשרויות שנבחרו
-          if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
-            // שתי האפשרויות יחד
-            allVariations.addAll(
-                HebrewMorphology.generateFullMorphologicalVariations(option));
-          } else if (hasGrammaticalPrefixes) {
-            // רק קידומות דקדוקיות
-            allVariations
-                .addAll(HebrewMorphology.generatePrefixVariations(option));
-          } else if (hasGrammaticalSuffixes) {
-            // רק סיומות דקדוקיות
-            allVariations
-                .addAll(HebrewMorphology.generateSuffixVariations(option));
-          } else if (hasPrefix) {
-            // קידומות רגילות
-            allVariations.add('.*${RegExp.escape(option)}');
-          } else if (hasSuffix) {
-            // סיומות רגילות
-            allVariations.add('${RegExp.escape(option)}.*');
-          } else {
-            // ללא אפשרויות מיוחדות
-            allVariations.add(option);
+          List<String> baseVariations = [option];
+
+          // אם יש כתיב מלא/חסר, נוצר את כל הווריאציות של כתיב
+          if (hasFullPartialSpelling) {
+            baseVariations =
+                HebrewMorphology.generateFullPartialSpellingVariations(option);
+          }
+
+          // עבור כל וריאציה של כתיב, מוסיפים את האפשרויות הדקדוקיות
+          for (final baseVariation in baseVariations) {
+            if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
+              // שתי האפשרויות יחד
+              allVariations.addAll(
+                  HebrewMorphology.generateFullMorphologicalVariations(
+                      baseVariation));
+            } else if (hasGrammaticalPrefixes) {
+              // רק קידומות דקדוקיות
+              allVariations.addAll(
+                  HebrewMorphology.generatePrefixVariations(baseVariation));
+            } else if (hasGrammaticalSuffixes) {
+              // רק סיומות דקדוקיות
+              allVariations.addAll(
+                  HebrewMorphology.generateSuffixVariations(baseVariation));
+            } else if (hasPrefix) {
+              // קידומות רגילות
+              allVariations.add('.*' + RegExp.escape(baseVariation));
+            } else if (hasSuffix) {
+              // סיומות רגילות
+              allVariations.add(RegExp.escape(baseVariation) + '.*');
+            } else {
+              // ללא אפשרויות מיוחדות - מילה מדויקת
+              allVariations.add(RegExp.escape(baseVariation));
+            }
           }
         }
 
-        // בניית הרגקס הסופי מכל הווריאציות
-        final regexPattern = allVariations.length == 1
+        // במקום רגקס מורכב, נוסיף כל וריאציה בנפרד
+        final finalPattern = allVariations.length == 1
             ? allVariations.first
             : '(${allVariations.join('|')})';
 
-        regexTerms.add(regexPattern);
+        regexTerms.add(finalPattern);
         print(
-            '🔄 מילה $i: $regexPattern (קידומות: $hasPrefix, סיומות: $hasSuffix, קידומות דקדוקיות: $hasGrammaticalPrefixes, סיומות דקדוקיות: $hasGrammaticalSuffixes)');
+            '🔄 מילה $i: $finalPattern (קידומות: $hasPrefix, סיומות: $hasSuffix, קידומות דקדוקיות: $hasGrammaticalPrefixes, סיומות דקדוקיות: $hasGrammaticalSuffixes, כתיב מלא/חסר: $hasFullPartialSpelling)');
       } else {
         // fallback למילה המקורית
         regexTerms.add(word);

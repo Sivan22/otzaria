@@ -29,6 +29,53 @@ class TantivySearchResults extends StatefulWidget {
 }
 
 class _TantivySearchResultsState extends State<TantivySearchResults> {
+  // פונקציה עזר ליצירת וריאציות כתיב מלא/חסר
+  List<String> _generateFullPartialSpellingVariations(String word) {
+    if (word.isEmpty) return [word];
+
+    final variations = <String>{word}; // המילה המקורית
+
+    // מוצא את כל המיקומים של י, ו, וגרשיים
+    final chars = word.split('');
+    final optionalIndices = <int>[];
+
+    // מוצא אינדקסים של תווים שיכולים להיות אופציונליים
+    for (int i = 0; i < chars.length; i++) {
+      if (chars[i] == 'י' ||
+          chars[i] == 'ו' ||
+          chars[i] == "'" ||
+          chars[i] == '"') {
+        optionalIndices.add(i);
+      }
+    }
+
+    // יוצר את כל הצירופים האפשריים (2^n אפשרויות)
+    final numCombinations = 1 << optionalIndices.length; // 2^n
+
+    for (int combination = 0; combination < numCombinations; combination++) {
+      final variant = <String>[];
+
+      for (int i = 0; i < chars.length; i++) {
+        final optionalIndex = optionalIndices.indexOf(i);
+
+        if (optionalIndex != -1) {
+          // זה תו אופציונלי - בודק אם לכלול אותו בצירוף הזה
+          final shouldInclude = (combination & (1 << optionalIndex)) != 0;
+          if (shouldInclude) {
+            variant.add(chars[i]);
+          }
+        } else {
+          // תו רגיל - תמיד כולל
+          variant.add(chars[i]);
+        }
+      }
+
+      variations.add(variant.join(''));
+    }
+
+    return variations.toList();
+  }
+
   // פונקציה לחישוב כמה תווים יכולים להיכנס בשורה אחת
   int _calculateCharsPerLine(double availableWidth, TextStyle textStyle) {
     final textPainter = TextPainter(
@@ -64,17 +111,48 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
         .split(RegExp(r'\s+'))
         .where((s) => s.isNotEmpty)
         .toList();
-    
-    // הוספת מילים חילופיות למילות החיפוש
+
+    // הוספת מילים חילופיות ווריאציות כתיב מלא/חסר למילות החיפוש
     final searchTerms = <String>[];
     for (int i = 0; i < originalWords.length; i++) {
       final word = originalWords[i];
-      searchTerms.add(word);
-      
+      final wordKey = '${word}_$i';
+
+      // בדיקת אפשרויות החיפוש למילה הזו
+      final wordOptions = widget.tab.searchOptions[wordKey] ?? {};
+      final hasFullPartialSpelling = wordOptions['כתיב מלא/חסר'] == true;
+
+      if (hasFullPartialSpelling) {
+        // אם יש כתיב מלא/חסר, נוסיף את כל הווריאציות
+        try {
+          // ייבוא דינמי של HebrewMorphology
+          final variations = _generateFullPartialSpellingVariations(word);
+          searchTerms.addAll(variations);
+        } catch (e) {
+          // אם יש בעיה, נוסיף לפחות את המילה המקורית
+          searchTerms.add(word);
+        }
+      } else {
+        // אם אין כתיב מלא/חסר, נוסיף את המילה המקורית
+        searchTerms.add(word);
+      }
+
       // הוספת מילים חילופיות אם יש
       final alternatives = widget.tab.alternativeWords[i];
       if (alternatives != null && alternatives.isNotEmpty) {
-        searchTerms.addAll(alternatives);
+        if (hasFullPartialSpelling) {
+          // אם יש כתיב מלא/חסר, נוסיף גם את הווריאציות של המילים החילופיות
+          for (final alt in alternatives) {
+            try {
+              final altVariations = _generateFullPartialSpellingVariations(alt);
+              searchTerms.addAll(altVariations);
+            } catch (e) {
+              searchTerms.add(alt);
+            }
+          }
+        } else {
+          searchTerms.addAll(alternatives);
+        }
       }
     }
 
@@ -285,92 +363,84 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
       shrinkWrap: true,
       itemCount: state.results.length,
       itemBuilder: (context, index) {
-                    final result = state.results[index];
-                    return BlocBuilder<SettingsBloc, SettingsState>(
-                      builder: (context, settingsState) {
-                        String titleText =
-                            '[תוצאה ${index + 1}] ${result.reference}';
-                        String rawHtml = result.text;
-                        if (settingsState.replaceHolyNames) {
-                          titleText = utils.replaceHolyNames(titleText);
-                          rawHtml = utils.replaceHolyNames(rawHtml);
-                        }
+        final result = state.results[index];
+        return BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settingsState) {
+            String titleText = '[תוצאה ${index + 1}] ${result.reference}';
+            String rawHtml = result.text;
+            if (settingsState.replaceHolyNames) {
+              titleText = utils.replaceHolyNames(titleText);
+              rawHtml = utils.replaceHolyNames(rawHtml);
+            }
 
-                        // חישוב רוחב זמין לטקסט (מינוס אייקון ו-padding)
-                        final availableWidth = constrains.maxWidth -
-                            (result.isPdf
-                                ? 56.0
-                                : 16.0) - // רוחב האייקון או padding
-                            32.0; // padding נוסף של ListTile
+            // חישוב רוחב זמין לטקסט (מינוס אייקון ו-padding)
+            final availableWidth = constrains.maxWidth -
+                (result.isPdf ? 56.0 : 16.0) - // רוחב האייקון או padding
+                32.0; // padding נוסף של ListTile
 
-                        // Create the snippet using the new robust function
-                        final snippetSpans = createSnippetSpans(
-                          rawHtml,
-                          state.searchQuery,
-                          TextStyle(
-                            fontSize: settingsState.fontSize,
-                            fontFamily: settingsState.fontFamily,
-                          ),
-                          TextStyle(
-                            fontSize: settingsState.fontSize,
-                            fontFamily: settingsState.fontFamily,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          availableWidth,
-                        );
+            // Create the snippet using the new robust function
+            final snippetSpans = createSnippetSpans(
+              rawHtml,
+              state.searchQuery,
+              TextStyle(
+                fontSize: settingsState.fontSize,
+                fontFamily: settingsState.fontFamily,
+              ),
+              TextStyle(
+                fontSize: settingsState.fontSize,
+                fontFamily: settingsState.fontFamily,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+              availableWidth,
+            );
 
-                        return ListTile(
-                          leading: result.isPdf
-                              ? const Icon(Icons.picture_as_pdf)
-                              : null,
-                          onTap: () {
-                            if (result.isPdf) {
-                              context.read<TabsBloc>().add(AddTab(
-                                    PdfBookTab(
-                                      book: PdfBook(
-                                          title: result.title,
-                                          path: result.filePath),
-                                      pageNumber: result.segment.toInt() + 1,
-                                      searchText:
-                                          widget.tab.queryController.text,
-                                      openLeftPane: (Settings.getValue<bool>(
-                                                  'key-pin-sidebar') ??
-                                              false) ||
-                                          (Settings.getValue<bool>(
-                                                  'key-default-sidebar-open') ??
-                                              false),
-                                    ),
-                                  ));
-                            } else {
-                              context.read<TabsBloc>().add(AddTab(
-                                    TextBookTab(
-                                        book: TextBook(
-                                          title: result.title,
-                                        ),
-                                        index: result.segment.toInt(),
-                                        searchText:
-                                            widget.tab.queryController.text,
-                                        openLeftPane: (Settings.getValue<bool>(
-                                                    'key-pin-sidebar') ??
-                                                false) ||
-                                            (Settings.getValue<bool>(
-                                                    'key-default-sidebar-open') ??
-                                                false)),
-                                  ));
-                            }
-                          },
-                          title: Text(titleText),
-                          subtitle: Text.rich(
-                            TextSpan(children: snippetSpans),
-                            maxLines: null, // אין הגבלה על מספר השורות!
-                            textAlign: TextAlign.justify,
-                            textDirection: TextDirection.rtl,
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
+            return ListTile(
+              leading: result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
+              onTap: () {
+                if (result.isPdf) {
+                  context.read<TabsBloc>().add(AddTab(
+                        PdfBookTab(
+                          book: PdfBook(
+                              title: result.title, path: result.filePath),
+                          pageNumber: result.segment.toInt() + 1,
+                          searchText: widget.tab.queryController.text,
+                          openLeftPane:
+                              (Settings.getValue<bool>('key-pin-sidebar') ??
+                                      false) ||
+                                  (Settings.getValue<bool>(
+                                          'key-default-sidebar-open') ??
+                                      false),
+                        ),
+                      ));
+                } else {
+                  context.read<TabsBloc>().add(AddTab(
+                        TextBookTab(
+                            book: TextBook(
+                              title: result.title,
+                            ),
+                            index: result.segment.toInt(),
+                            searchText: widget.tab.queryController.text,
+                            openLeftPane:
+                                (Settings.getValue<bool>('key-pin-sidebar') ??
+                                        false) ||
+                                    (Settings.getValue<bool>(
+                                            'key-default-sidebar-open') ??
+                                        false)),
+                      ));
+                }
+              },
+              title: Text(titleText),
+              subtitle: Text.rich(
+                TextSpan(children: snippetSpans),
+                maxLines: null, // אין הגבלה על מספר השורות!
+                textAlign: TextAlign.justify,
+                textDirection: TextDirection.rtl,
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }
