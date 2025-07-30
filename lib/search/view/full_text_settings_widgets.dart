@@ -162,9 +162,12 @@ class SearchTermsDisplay extends StatefulWidget {
 }
 
 class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
+  late ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
     // מאזין לשינויים בקונטרולר
     widget.tab.queryController.addListener(_onTextChanged);
     // מאזין לשינויים באפשרויות החיפוש
@@ -202,10 +205,11 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
     final textPainter = TextPainter(
       text: TextSpan(children: spans),
       textDirection: TextDirection.rtl,
+      maxLines: 1,
     );
 
-    textPainter.layout();
-    return textPainter.width;
+    textPainter.layout(maxWidth: double.infinity);
+    return textPainter.size.width;
   }
 
   // פונקציה להמרת מספרים לתת-כתב Unicode
@@ -359,9 +363,9 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
 
           // הוספת + עם המספר כתת-כתב
           spans.add(
-            TextSpan(
+            const TextSpan(
               text: '+',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -403,6 +407,7 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     widget.tab.queryController.removeListener(_onTextChanged);
     widget.tab.searchOptionsChanged.removeListener(_onSearchOptionsChanged);
     widget.tab.alternativeWordsChanged
@@ -442,42 +447,74 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            // חישוב רוחב דינמי בהתבסס על אורך הטקסט המעוצב
-            const minWidth = 120.0; // רוחב מינימלי גדול יותר
-            final maxWidth = constraints.maxWidth; // כל הרוחב הזמין
+            // הגדרת רוחב מינימלי ומקסימלי
+            const minWidth = 150.0; // רוחב מינימלי
+            final maxWidth =
+                constraints.maxWidth - 20; // כל הרוחב הזמין פחות מרווח
 
             // חישוב רוחב בהתבסס על הרוחב האמיתי של הטקסט המעוצב
-            final formattedTextWidth =
-                _calculateFormattedTextWidth(displayText, context);
-            final calculatedWidth = formattedTextWidth == 0
-                ? minWidth
-                : (formattedTextWidth + 40)
-                    .clamp(minWidth, maxWidth); // מרווח מותאם לגופן הגדול
+            final formattedTextWidth = displayText.isEmpty
+                ? 0
+                : _calculateFormattedTextWidth(displayText, context);
+
+            // חישוב רוחב סופי
+            double calculatedWidth;
+            if (displayText.isEmpty) {
+              calculatedWidth = minWidth;
+            } else {
+              // הוספת מרווח נוסף לטקסט (padding + border + scroll space)
+              final textWithPadding = formattedTextWidth + 60;
+              calculatedWidth =
+                  textWithPadding.clamp(minWidth, maxWidth).toDouble();
+            }
 
             return Align(
-              alignment: Alignment.center, // ממורכז תמיד
-              child: SizedBox(
+              alignment: Alignment.center, // ממורכז במרכז המסך
+              child: Container(
                 width: calculatedWidth,
                 height: 52, // גובה קבוע כמו שאר הבקרות
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, vertical: 4.0),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'מילות החיפוש',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 8.0), // padding מותאם
-                    ),
-                    child: displayText.isEmpty
-                        ? const SizedBox.shrink()
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Center(
-                              child: _buildFormattedText(displayText, context),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'מילות החיפוש',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  ),
+                  child: displayText.isEmpty
+                      ? const SizedBox(
+                          width: double.infinity,
+                          child: Center(
+                            child: Text(
+                              '',
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                  ),
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          height: double.infinity,
+                          child: formattedTextWidth <= (calculatedWidth - 60)
+                              ? Center(
+                                  child:
+                                      _buildFormattedText(displayText, context),
+                                )
+                              : Scrollbar(
+                                  controller: _scrollController,
+                                  thumbVisibility: true,
+                                  trackVisibility: true,
+                                  child: SingleChildScrollView(
+                                    controller: _scrollController,
+                                    scrollDirection: Axis.horizontal,
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: _buildFormattedText(
+                                          displayText, context),
+                                    ),
+                                  ),
+                                ),
+                        ),
                 ),
               ),
             );

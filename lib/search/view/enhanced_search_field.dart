@@ -1211,18 +1211,13 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
   Widget _buildSearchOptionsContent() {
     final wordInfo = _getCurrentWordInfo();
 
-    // אם אין מילה נוכחית, נציג הודעה
+    // אם אין מילה נוכחית, נציג הודעה המתאימה
     if (wordInfo == null ||
         wordInfo['word'] == null ||
         wordInfo['word'].isEmpty) {
-      final text = widget.widget.tab.queryController.text;
-      final message = text.trim().isEmpty
-          ? 'הקלד טקסט ומקם את הסמן על מילה לבחירת אפשרויות'
-          : 'מקם את הסמן על מילה לבחירת אפשרויות';
-
       return Center(
         child: Text(
-          message,
+          'הקלד או הצב את הסמן על מילה כלשהיא, כדי לבחור אפשרויות חיפוש',
           style: const TextStyle(fontSize: 12, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
@@ -1254,28 +1249,8 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
 
   void _toggleSearchOptions(bool isExpanded) {
     if (isExpanded) {
-      // בדיקה שיש טקסט בשדה החיפוש ושהסמן על מילה
-      final text = widget.widget.tab.queryController.text.trim();
-      final wordInfo = _getCurrentWordInfo();
-
-      if (text.isNotEmpty &&
-          wordInfo != null &&
-          wordInfo['word'] != null &&
-          wordInfo['word'].isNotEmpty) {
-        _showSearchOptionsOverlay();
-      } else {
-        // אם אין טקסט או הסמן לא על מילה, עדכן את המצב של הכפתור
-        setState(() {
-          // זה יגרום לכפתור לחזור למצב לא לחוץ
-        });
-
-        // הצגת הודעה קצרה למשתמש (אופציונלי)
-        if (text.isEmpty) {
-          // יכול להוסיף כאן הודעה שצריך להקליד טקסט
-        } else {
-          // יכול להוסיף כאן הודעה שצריך למקם את הסמן על מילה
-        }
-      }
+      // פתיחת המגירה תמיד, ללא תלות בטקסט או מיקום הסמן
+      _showSearchOptionsOverlay();
     } else {
       _hideSearchOptionsOverlay();
     }
