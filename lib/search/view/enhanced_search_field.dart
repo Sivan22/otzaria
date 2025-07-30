@@ -771,8 +771,20 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   void _updateSearchOptionsOverlay() {
     // עדכון המגירה אם היא פתוחה
     if (_searchOptionsOverlay != null) {
+      // שמירת מיקום הסמן לפני העדכון
+      final currentSelection = widget.widget.tab.queryController.selection;
+
       _hideSearchOptionsOverlay();
       _showSearchOptionsOverlay();
+
+      // החזרת מיקום הסמן אחרי העדכון
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          print(
+              'DEBUG: Restoring cursor position in update: ${currentSelection.baseOffset}');
+          widget.widget.tab.queryController.selection = currentSelection;
+        }
+      });
     }
   }
 
@@ -887,15 +899,16 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       idx = end;
     }
 
-if (text.isNotEmpty && _wordPositions.isEmpty) {
+    if (text.isNotEmpty && _wordPositions.isEmpty) {
 // החישוב נכשל למרות שיש טקסט. ננסה שוב ב-frame הבא.
-WidgetsBinding.instance.addPostFrameCallback((_) {
-if (mounted) { // ודא שהווידג'ט עדיין קיים
-_calculateWordPositions();
-}
-});
-return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מידע שגוי
-}
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // ודא שהווידג'ט עדיין קיים
+          _calculateWordPositions();
+        }
+      });
+      return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מידע שגוי
+    }
 
     setState(() {});
   }
@@ -967,7 +980,8 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
         altIndex < existingOverlays.length &&
         mounted && // ודא שה-State עדיין קיים
         Overlay.of(context).mounted && // ודא שה-Overlay קיים
-        existingOverlays[altIndex].mounted) { // ודא שהבועה הספציפית הזו עדיין על המסך
+        existingOverlays[altIndex].mounted) {
+      // ודא שהבועה הספציפית הזו עדיין על המסך
       return; // אם הבועה כבר קיימת ומוצגת, אל תעשה כלום
     }
 
@@ -1096,11 +1110,18 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
 
   void _showSearchOptionsOverlay() {
     if (_searchOptionsOverlay != null) return;
+
+    // שמירת מיקום הסמן הנוכחי
+    final currentSelection = widget.widget.tab.queryController.selection;
+    print('DEBUG: Saving cursor position: ${currentSelection.baseOffset}');
+
     final overlayState = Overlay.of(context);
     final RenderBox? textFieldBox =
         _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
     if (textFieldBox == null) return;
     final textFieldGlobalPosition = textFieldBox.localToGlobal(Offset.zero);
+
+    // יצירת ה-overlay עם delay קטן כדי לוודא שהוא מוכן לקבל לחיצות
     _searchOptionsOverlay = OverlayEntry(
       builder: (context) {
         return Listener(
@@ -1156,8 +1177,8 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
                       bottom: BorderSide(color: Colors.grey.shade400, width: 1),
                     ),
                   ),
-                  child: Material(
-                    color: Theme.of(context).scaffoldBackgroundColor,
+                  child: IgnorePointer(
+                    ignoring: false,
                     child: Padding(
                       padding: const EdgeInsets.only(
                           left: 48.0, right: 16.0, top: 8.0, bottom: 8.0),
@@ -1172,6 +1193,18 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
       },
     );
     overlayState.insert(_searchOptionsOverlay!);
+
+    // החזרת מיקום הסמן אחרי יצירת ה-overlay
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.widget.tab.queryController.selection = currentSelection;
+      }
+    });
+
+    // וידוא שה-overlay מוכן לקבל לחיצות
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ה-overlay כעת מוכן לקבל לחיצות
+    });
   }
 
   // המילה הנוכחית (לפי מיקום הסמן)
@@ -1307,16 +1340,17 @@ return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מי�
         if (state.currentScreen != Screen.search) {
           _saveDataToTab();
           _clearAllOverlays();
-          } else if (state.currentScreen == Screen.search) {
-            // כשחוזרים למסך החיפוש, שחזר את הנתונים והצג את הבועות
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _restoreDataFromTab(); // 1. שחזר את תוכן הבועות מהזיכרון
-              // עיכוב נוסף כדי לוודא שהטקסט מעודכן
-              Future.delayed(const Duration(milliseconds: 50), () { // השאר את העיכוב הקטן הזה
-                if (mounted) {
-                  _calculateWordPositions(); // 2. חשב מיקומים (עכשיו זה יעבוד)
-                  _showRestoredBubbles();  // 3. הצג את הבועות המשוחזרות
-                }
+        } else if (state.currentScreen == Screen.search) {
+          // כשחוזרים למסך החיפוש, שחזר את הנתונים והצג את הבועות
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _restoreDataFromTab(); // 1. שחזר את תוכן הבועות מהזיכרון
+            // עיכוב נוסף כדי לוודא שהטקסט מעודכן
+            Future.delayed(const Duration(milliseconds: 50), () {
+              // השאר את העיכוב הקטן הזה
+              if (mounted) {
+                _calculateWordPositions(); // 2. חשב מיקומים (עכשיו זה יעבוד)
+                _showRestoredBubbles(); // 3. הצג את הבועות המשוחזרות
+              }
             });
           });
         }
@@ -1519,59 +1553,63 @@ class _SearchOptionsContentState extends State<_SearchOptionsContent> {
   Widget _buildCheckbox(String option) {
     final currentOptions = _getCurrentWordOptions();
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          currentOptions[option] = !currentOptions[option]!;
-        });
-        // עדכון מיידי של התצוגה
-        widget.onOptionsChanged?.call();
-      },
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                border: Border.all(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTapDown: (details) {
+          setState(() {
+            currentOptions[option] = !currentOptions[option]!;
+          });
+          // עדכון מיידי של התצוגה
+          widget.onOptionsChanged?.call();
+        },
+        borderRadius: BorderRadius.circular(4),
+        canRequestFocus: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: currentOptions[option]!
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey.shade600,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(3),
                   color: currentOptions[option]!
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade600,
-                  width: 2,
+                      ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                      : Colors.transparent,
                 ),
-                borderRadius: BorderRadius.circular(3),
-                color: currentOptions[option]!
-                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-                    : Colors.transparent,
+                child: currentOptions[option]!
+                    ? Icon(
+                        Icons.check,
+                        size: 14,
+                        color: Theme.of(context).primaryColor,
+                      )
+                    : null,
               ),
-              child: currentOptions[option]!
-                  ? Icon(
-                      Icons.check,
-                      size: 14,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 6),
-            Align(
-              alignment: Alignment.center,
-              child: Text(
-                option,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  height: 1.0,
+              const SizedBox(width: 6),
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    height: 1.0,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

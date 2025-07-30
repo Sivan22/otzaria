@@ -97,60 +97,64 @@ class _SearchOptionsRowState extends State<SearchOptionsRow> {
   Widget _buildCheckbox(String option) {
     final currentOptions = _getCurrentWordOptions();
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          final currentWord = widget.currentWord;
-          if (currentWord != null && currentWord.isNotEmpty) {
-            currentOptions[option] = !currentOptions[option]!;
-          }
-        });
-      },
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                border: Border.all(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            final currentWord = widget.currentWord;
+            if (currentWord != null && currentWord.isNotEmpty) {
+              currentOptions[option] = !currentOptions[option]!;
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(4),
+        canRequestFocus: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: currentOptions[option]!
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey.shade600,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(3),
                   color: currentOptions[option]!
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade600,
-                  width: 2,
+                      ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                      : Colors.transparent,
                 ),
-                borderRadius: BorderRadius.circular(3),
-                color: currentOptions[option]!
-                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-                    : Colors.transparent,
+                child: currentOptions[option]!
+                    ? Icon(
+                        Icons.check,
+                        size: 14,
+                        color: Theme.of(context).primaryColor,
+                      )
+                    : null,
               ),
-              child: currentOptions[option]!
-                  ? Icon(
-                      Icons.check,
-                      size: 14,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 6),
-            Align(
-              alignment: Alignment.center,
-              child: Text(
-                option,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  height: 1.0, // מבטיח שהטקסט לא יהיה גבוה מדי
+              const SizedBox(width: 6),
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    height: 1.0, // מבטיח שהטקסט לא יהיה גבוה מדי
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
