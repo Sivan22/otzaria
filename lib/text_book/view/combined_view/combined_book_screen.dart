@@ -18,6 +18,8 @@ import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
+import 'package:otzaria/utils/font_utils.dart';
+import 'package:otzaria/widgets/current_font_provider.dart';
 
 class CombinedView extends StatefulWidget {
   CombinedView({
@@ -28,6 +30,7 @@ class CombinedView extends StatefulWidget {
     required this.textSize,
     required this.showSplitedView,
     required this.tab,
+    this.customFontFamily,
   });
 
   final List<String> data;
@@ -36,6 +39,7 @@ class CombinedView extends StatefulWidget {
   final ValueNotifier<bool> showSplitedView;
   final double textSize;
   final TextBookTab tab;
+  final String? customFontFamily;
 
   @override
   State<CombinedView> createState() => _CombinedViewState();
@@ -44,6 +48,34 @@ class CombinedView extends StatefulWidget {
 class _CombinedViewState extends State<CombinedView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
+
+  String _getEffectiveFontFamily(BuildContext context, SettingsState settingsState) {
+    // בדיקה אם יש גופן נוכחי מה-Provider
+    final fontProvider = CurrentFontProvider.of(context);
+    final currentFont = fontProvider?.currentFont ?? widget.customFontFamily;
+    
+    if (currentFont != null) {
+      final fallbackFont = FontUtils.getFallbackFont(
+        currentFont,
+        settingsState.customFonts,
+      );
+      
+      if (fallbackFont != null) {
+        return fallbackFont;
+      }
+      
+      return FontUtils.getFontFamilyForDisplay(
+        currentFont,
+        settingsState.customFonts,
+      );
+    }
+    
+    // fallback לגופן הגלובלי
+    return FontUtils.getFontFamilyForDisplay(
+      settingsState.fontFamily,
+      settingsState.customFonts,
+    );
+  }
 
   /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת, כולל כפתור הצג/הסתר הכל
   List<ctx.MenuItem<void>> _buildGroup(
@@ -277,7 +309,7 @@ class _CombinedViewState extends State<CombinedView> {
             style: {
               'body': Style(
                   fontSize: FontSize(widget.textSize),
-                  fontFamily: settingsState.fontFamily,
+                  fontFamily: _getEffectiveFontFamily(context, settingsState),
                   textAlign: TextAlign.justify),
             },
           );
