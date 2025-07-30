@@ -1,4 +1,5 @@
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
+import 'package:otzaria/search/utils/hebrew_morphology.dart';
 import 'package:search_engine/search_engine.dart';
 
 /// Performs a search operation across indexed texts.
@@ -110,6 +111,8 @@ class SearchRepository {
       final wordOptions = searchOptions?[wordKey] ?? {};
       final hasPrefix = wordOptions['קידומות'] == true;
       final hasSuffix = wordOptions['סיומות'] == true;
+      final hasGrammaticalPrefixes = wordOptions['קידומות דקדוקיות'] == true;
+      final hasGrammaticalSuffixes = wordOptions['סיומות דקדוקיות'] == true;
 
       // קבלת מילים חילופיות
       final alternatives = alternativeWords?[i];
@@ -125,22 +128,43 @@ class SearchRepository {
           allOptions.where((w) => w.trim().isNotEmpty).toList();
 
       if (validOptions.isNotEmpty) {
-        // בניית רגקס לכל אפשרות עם קידומות/סיומות
-        final regexOptions = validOptions.map((option) {
-          String pattern = option;
-          if (hasPrefix) pattern = '.*$pattern';
-          if (hasSuffix) pattern = '$pattern.*';
-          return pattern;
-        }).toList();
+        // בניית רשימת כל האפשרויות לכל מילה
+        final allVariations = <String>{};
 
-        // בניית הרגקס הסופי
-        final regexPattern = regexOptions.length == 1
-            ? regexOptions.first
-            : '(${regexOptions.join('|')})';
+        for (final option in validOptions) {
+          // קביעת הווריאציות לפי האפשרויות שנבחרו
+          if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
+            // שתי האפשרויות יחד
+            allVariations.addAll(
+                HebrewMorphology.generateFullMorphologicalVariations(option));
+          } else if (hasGrammaticalPrefixes) {
+            // רק קידומות דקדוקיות
+            allVariations
+                .addAll(HebrewMorphology.generatePrefixVariations(option));
+          } else if (hasGrammaticalSuffixes) {
+            // רק סיומות דקדוקיות
+            allVariations
+                .addAll(HebrewMorphology.generateSuffixVariations(option));
+          } else if (hasPrefix) {
+            // קידומות רגילות
+            allVariations.add('.*${RegExp.escape(option)}');
+          } else if (hasSuffix) {
+            // סיומות רגילות
+            allVariations.add('${RegExp.escape(option)}.*');
+          } else {
+            // ללא אפשרויות מיוחדות
+            allVariations.add(option);
+          }
+        }
+
+        // בניית הרגקס הסופי מכל הווריאציות
+        final regexPattern = allVariations.length == 1
+            ? allVariations.first
+            : '(${allVariations.join('|')})';
 
         regexTerms.add(regexPattern);
         print(
-            '🔄 מילה $i: $regexPattern (קידומות: $hasPrefix, סיומות: $hasSuffix)');
+            '🔄 מילה $i: $regexPattern (קידומות: $hasPrefix, סיומות: $hasSuffix, קידומות דקדוקיות: $hasGrammaticalPrefixes, סיומות דקדוקיות: $hasGrammaticalSuffixes)');
       } else {
         // fallback למילה המקורית
         regexTerms.add(word);
