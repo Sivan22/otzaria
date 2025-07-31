@@ -361,6 +361,17 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                                                 false)),
                                   ));
                             }
+                            
+                            // Store reference to search field focus node for later use
+                            final searchFieldFocusNode = widget.tab.searchFieldFocusNode;
+                            
+                            // Request focus back to search field after opening a result
+                            // This helps maintain focus when user returns to search tab after viewing a result
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              if (searchFieldFocusNode.canRequestFocus) {
+                                searchFieldFocusNode.requestFocus();
+                              }
+                            });
                           },
                           title: Text(titleText),
                           subtitle: Text.rich(
