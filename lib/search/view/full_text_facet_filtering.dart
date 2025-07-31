@@ -135,7 +135,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                 ? Theme.of(context)
                     .colorScheme
                     .surfaceTint
-                    .withOpacity(_kBackgroundOpacity)
+                    .withValues(alpha: _kBackgroundOpacity)
                 : null,
             title: Text("${book.title} ($count)"),
             onTap: () => HardwareKeyboard.instance.isControlPressed
@@ -149,22 +149,29 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   }
 
   Widget _buildBooksList(List<Book> books) {
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: books.length,
-      itemBuilder: (context, index) {
-        final book = books[index];
-        final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-        return Builder(
-          builder: (context) {
-            final countFuture = context.read<SearchBloc>().countForFacet(facet);
-            return FutureBuilder<int>(
-              future: countFuture,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return _buildBookTile(book, snapshot.data!, 0);
-                }
-                return const SizedBox.shrink();
+    return BlocBuilder<SearchBloc, SearchState>(
+      builder: (context, state) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: books.length,
+          itemBuilder: (context, index) {
+            final book = books[index];
+            final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+            return Builder(
+              builder: (context) {
+                final countFuture =
+                    context.read<SearchBloc>().countForFacet(facet);
+                return FutureBuilder<int>(
+                  key: ValueKey(
+                      '${state.searchQuery}_$facet'), // מפתח שמשתנה עם החיפוש
+                  future: countFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return _buildBookTile(book, snapshot.data!, 0);
+                    }
+                    return const SizedBox.shrink();
+                  },
+                );
               },
             );
           },
@@ -189,13 +196,13 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                 ? Theme.of(context)
                     .colorScheme
                     .surfaceTint
-                    .withOpacity(_kBackgroundOpacity)
+                    .withValues(alpha: _kBackgroundOpacity)
                 : null,
             collapsedBackgroundColor: isSelected
                 ? Theme.of(context)
                     .colorScheme
                     .surfaceTint
-                    .withOpacity(_kBackgroundOpacity)
+                    .withValues(alpha: _kBackgroundOpacity)
                 : null,
             leading: const Icon(Icons.chevron_right_rounded),
             trailing: const SizedBox.shrink(),
@@ -222,28 +229,41 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   List<Widget> _buildCategoryChildren(Category category, int level) {
     return [
       ...category.subCategories.map((subCategory) {
-        final countFuture =
-            context.read<SearchBloc>().countForFacet(subCategory.path);
-        return FutureBuilder<int>(
-          future: countFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return _buildCategoryTile(subCategory, snapshot.data!, level + 1);
-            }
-            return const SizedBox.shrink();
+        return BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            final countFuture =
+                context.read<SearchBloc>().countForFacet(subCategory.path);
+            return FutureBuilder<int>(
+              key: ValueKey(
+                  '${state.searchQuery}_${subCategory.path}'), // מפתח שמשתנה עם החיפוש
+              future: countFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return _buildCategoryTile(
+                      subCategory, snapshot.data!, level + 1);
+                }
+                return const SizedBox.shrink();
+              },
+            );
           },
         );
       }),
       ...category.books.map((book) {
-        final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-        final countFuture = context.read<SearchBloc>().countForFacet(facet);
-        return FutureBuilder<int>(
-          future: countFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return _buildBookTile(book, snapshot.data!, level + 1);
-            }
-            return const SizedBox.shrink();
+        return BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+            final countFuture = context.read<SearchBloc>().countForFacet(facet);
+            return FutureBuilder<int>(
+              key: ValueKey(
+                  '${state.searchQuery}_$facet'), // מפתח שמשתנה עם החיפוש
+              future: countFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return _buildBookTile(book, snapshot.data!, level + 1);
+                }
+                return const SizedBox.shrink();
+              },
+            );
           },
         );
       }),
@@ -270,19 +290,25 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
           return const Center(child: Text('No library data available'));
         }
 
-        final rootCategory = libraryState.library!;
-        final countFuture =
-            context.read<SearchBloc>().countForFacet(rootCategory.path);
-        return FutureBuilder<int>(
-          future: countFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return SingleChildScrollView(
-                key: PageStorageKey(widget.tab),
-                child: _buildCategoryTile(rootCategory, snapshot.data!, 0),
-              );
-            }
-            return const Center(child: CircularProgressIndicator());
+        return BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, searchState) {
+            final rootCategory = libraryState.library!;
+            final countFuture =
+                context.read<SearchBloc>().countForFacet(rootCategory.path);
+            return FutureBuilder<int>(
+              key: ValueKey(
+                  '${searchState.searchQuery}_${rootCategory.path}'), // מפתח שמשתנה עם החיפוש
+              future: countFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return SingleChildScrollView(
+                    key: PageStorageKey(widget.tab),
+                    child: _buildCategoryTile(rootCategory, snapshot.data!, 0),
+                  );
+                }
+                return const Center(child: CircularProgressIndicator());
+              },
+            );
           },
         );
       },
