@@ -196,7 +196,7 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
   }
 
   double _calculateFormattedTextWidth(String text, BuildContext context) {
-    if (text.trim().isEmpty) return 0;
+    if (text.trim().isEmpty) return 0.0;
 
     // יצירת TextSpan עם הטקסט המעוצב
     final spans = _buildFormattedTextSpans(text, context);
@@ -447,23 +447,21 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            // הגדרת רוחב מינימלי ומקסימלי
-            const minWidth = 150.0; // רוחב מינימלי
-            final maxWidth =
-                constraints.maxWidth - 20; // כל הרוחב הזמין פחות מרווח
+            const double desiredMinWidth = 150.0;
+            final double maxWidth = constraints.maxWidth - 20;
+            final double minWidth = desiredMinWidth.clamp(0.0, maxWidth);
 
-            // חישוב רוחב בהתבסס על הרוחב האמיתי של הטקסט המעוצב
-            final formattedTextWidth = displayText.isEmpty
-                ? 0
+            final double formattedTextWidth = displayText.isEmpty
+                ? 0.0 // ודא שגם כאן זה double
                 : _calculateFormattedTextWidth(displayText, context);
 
-            // חישוב רוחב סופי
             double calculatedWidth;
             if (displayText.isEmpty) {
               calculatedWidth = minWidth;
             } else {
-              // הוספת מרווח נוסף לטקסט (padding + border + scroll space)
               final textWithPadding = formattedTextWidth + 60;
+
+              // התיקון: מוסיפים .toDouble() כדי להבטיח המרה בטוחה
               calculatedWidth =
                   textWithPadding.clamp(minWidth, maxWidth).toDouble();
             }
