@@ -50,6 +50,7 @@ class SearchState {
   // Getters לנוחות גישה להגדרות (backward compatibility)
   int get distance => configuration.distance;
   bool get fuzzy => configuration.fuzzy;
+  bool get isAdvancedSearchEnabled => configuration.isAdvancedSearchEnabled;
   List<String> get currentFacets => configuration.currentFacets;
   ResultsOrder get sortBy => configuration.sortBy;
   int get numResults => configuration.numResults;

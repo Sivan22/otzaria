@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
+import 'package:otzaria/search/bloc/search_state.dart';
 import 'package:otzaria/search/models/search_terms_model.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
@@ -1431,18 +1432,23 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (widget.widget.tab.isAdvancedSearchEnabled)
-                            IconButton(
-                              onPressed: () => _toggleSearchOptions(
-                                  !_isSearchOptionsVisible),
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              focusNode: FocusNode(
-                                // <-- התוספת המרכזית
-                                canRequestFocus:
-                                    false, // מונע מהכפתור לבקש פוקוס
-                                skipTraversal: true, // מדלג עליו בניווט מקלדת
-                              ),
-                            ),
+                          BlocBuilder<SearchBloc, SearchState>(
+                            builder: (context, state) {
+                              if (!state.isAdvancedSearchEnabled)
+                                return const SizedBox.shrink();
+                              return IconButton(
+                                onPressed: () => _toggleSearchOptions(
+                                    !_isSearchOptionsVisible),
+                                icon: const Icon(Icons.keyboard_arrow_down),
+                                focusNode: FocusNode(
+                                  // <-- התוספת המרכזית
+                                  canRequestFocus:
+                                      false, // מונע מהכפתור לבקש פוקוס
+                                  skipTraversal: true, // מדלג עליו בניווט מקלדת
+                                ),
+                              );
+                            },
+                          ),
                           IconButton(
                             icon: const Icon(Icons.clear),
                             onPressed: () {
@@ -1493,13 +1499,11 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
             );
           }).toList(),
           // כפתורי ה+ (רק בחיפוש מתקדם)
-          if (widget.widget.tab.isAdvancedSearchEnabled)
-            ..._wordPositions.asMap().entries.map((entry) {
-              return _buildPlusButton(entry.key, entry.value);
-            }).toList(),
+          ..._wordPositions.asMap().entries.map((entry) {
+            return _buildPlusButton(entry.key, entry.value);
+          }).toList(),
           // כפתורי המרווח (רק בחיפוש מתקדם)
-          if (widget.widget.tab.isAdvancedSearchEnabled)
-            ..._buildSpacingButtons(),
+          ..._buildSpacingButtons(),
         ],
       ),
     );

@@ -19,7 +19,8 @@ class UpdateSearchQuery extends SearchEvent {
   final Map<String, String>? customSpacing;
   final Map<int, List<String>>? alternativeWords;
   final Map<String, Map<String, bool>>? searchOptions;
-  UpdateSearchQuery(this.query, {this.customSpacing, this.alternativeWords, this.searchOptions});
+  UpdateSearchQuery(this.query,
+      {this.customSpacing, this.alternativeWords, this.searchOptions});
 }
 
 class UpdateDistance extends SearchEvent {
@@ -27,7 +28,7 @@ class UpdateDistance extends SearchEvent {
   UpdateDistance(this.distance);
 }
 
-class ToggleFuzzy extends SearchEvent {}
+class ToggleSearchMode extends SearchEvent {}
 
 class UpdateBooksToSearch extends SearchEvent {
   final Set<Book> books;

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
+import 'package:otzaria/search/models/search_configuration.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/search/search_repository.dart';
@@ -11,7 +12,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   SearchBloc() : super(const SearchState()) {
     on<UpdateSearchQuery>(_onUpdateSearchQuery);
     on<UpdateDistance>(_onUpdateDistance);
-    on<ToggleFuzzy>(_onToggleFuzzy);
+    on<ToggleSearchMode>(_onToggleSearchMode);
     on<UpdateBooksToSearch>(_onUpdateBooksToSearch);
     on<AddFacet>(_onAddFacet);
     on<RemoveFacet>(_onRemoveFacet);
@@ -137,11 +138,25 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     add(UpdateSearchQuery(state.searchQuery));
   }
 
-  void _onToggleFuzzy(
-    ToggleFuzzy event,
+  void _onToggleSearchMode(
+    ToggleSearchMode event,
     Emitter<SearchState> emit,
   ) {
-    final newConfig = state.configuration.copyWith(fuzzy: !state.fuzzy);
+    // מעבר בין שלושת המצבים: מתקדם -> מדוייק -> מקורב -> מתקדם
+    SearchMode newMode;
+    switch (state.configuration.searchMode) {
+      case SearchMode.advanced:
+        newMode = SearchMode.exact;
+        break;
+      case SearchMode.exact:
+        newMode = SearchMode.fuzzy;
+        break;
+      case SearchMode.fuzzy:
+        newMode = SearchMode.advanced;
+        break;
+    }
+
+    final newConfig = state.configuration.copyWith(searchMode: newMode);
     emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }

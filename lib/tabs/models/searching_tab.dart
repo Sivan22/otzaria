@@ -13,9 +13,6 @@ class SearchingTab extends OpenedTab {
   final ItemScrollController scrollController = ItemScrollController();
   List<Book> allBooks = [];
 
-  // מצב חיפוש מתקדם
-  bool isAdvancedSearchEnabled = true;
-
   // אפשרויות חיפוש לכל מילה (מילה_אינדקס -> אפשרויות)
   final Map<String, Map<String, bool>> searchOptions = {};
 
@@ -60,7 +57,6 @@ class SearchingTab extends OpenedTab {
   @override
   factory SearchingTab.fromJson(Map<String, dynamic> json) {
     final tab = SearchingTab(json['title'], json['searchText']);
-    tab.isAdvancedSearchEnabled = json['isAdvancedSearchEnabled'] ?? true;
     return tab;
   }
 
@@ -69,7 +65,6 @@ class SearchingTab extends OpenedTab {
     return {
       'title': title,
       'searchText': queryController.text,
-      'isAdvancedSearchEnabled': isAdvancedSearchEnabled,
       'type': 'SearchingTabWindow'
     };
   }

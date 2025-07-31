@@ -143,7 +143,7 @@ class CustomSearchConfiguration {
       dotAll: true,
       unicode: true,
       distance: 1,
-      fuzzy: false,
+      searchMode: SearchMode.exact,
       numResults: 50,
     );
   }
@@ -152,7 +152,7 @@ class CustomSearchConfiguration {
   static SearchConfiguration fuzzySearch() {
     return const SearchConfiguration(
       regexEnabled: false,
-      fuzzy: true,
+      searchMode: SearchMode.fuzzy,
       distance: 3,
       numResults: 200,
     );

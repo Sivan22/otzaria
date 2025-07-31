@@ -1,11 +1,18 @@
 import 'package:search_engine/search_engine.dart';
 
+/// מצבי החיפוש השונים
+enum SearchMode {
+  advanced, // חיפוש מתקדם
+  exact, // חיפוש מדוייק
+  fuzzy, // חיפוש מקורב
+}
+
 /// מחלקה שמרכזת את כל הגדרות החיפוש במקום אחד
 /// כוללת הגדרות קיימות והגדרות עתידיות לרגקס
 class SearchConfiguration {
   // הגדרות חיפוש קיימות
   final int distance;
-  final bool fuzzy;
+  final SearchMode searchMode;
   final ResultsOrder sortBy;
   final int numResults;
   final List<String> currentFacets;
@@ -20,7 +27,7 @@ class SearchConfiguration {
   const SearchConfiguration({
     // ערכי ברירת מחדל קיימים
     this.distance = 2,
-    this.fuzzy = false,
+    this.searchMode = SearchMode.advanced,
     this.sortBy = ResultsOrder.catalogue,
     this.numResults = 100,
     this.currentFacets = const ["/"],
@@ -36,7 +43,7 @@ class SearchConfiguration {
   /// יוצר עותק עם שינויים
   SearchConfiguration copyWith({
     int? distance,
-    bool? fuzzy,
+    SearchMode? searchMode,
     ResultsOrder? sortBy,
     int? numResults,
     List<String>? currentFacets,
@@ -48,7 +55,7 @@ class SearchConfiguration {
   }) {
     return SearchConfiguration(
       distance: distance ?? this.distance,
-      fuzzy: fuzzy ?? this.fuzzy,
+      searchMode: searchMode ?? this.searchMode,
       sortBy: sortBy ?? this.sortBy,
       numResults: numResults ?? this.numResults,
       currentFacets: currentFacets ?? this.currentFacets,
@@ -64,7 +71,7 @@ class SearchConfiguration {
   Map<String, dynamic> toMap() {
     return {
       'distance': distance,
-      'fuzzy': fuzzy,
+      'searchMode': searchMode.index,
       'sortBy': sortBy.index,
       'numResults': numResults,
       'currentFacets': currentFacets,
@@ -80,7 +87,7 @@ class SearchConfiguration {
   factory SearchConfiguration.fromMap(Map<String, dynamic> map) {
     return SearchConfiguration(
       distance: map['distance'] ?? 2,
-      fuzzy: map['fuzzy'] ?? false,
+      searchMode: SearchMode.values[map['searchMode'] ?? 0],
       sortBy: ResultsOrder.values[map['sortBy'] ?? 0],
       numResults: map['numResults'] ?? 100,
       currentFacets: List<String>.from(map['currentFacets'] ?? ["/"]),
@@ -105,12 +112,16 @@ class SearchConfiguration {
     return flags;
   }
 
+  // Getters לתאימות לאחור
+  bool get fuzzy => searchMode == SearchMode.fuzzy;
+  bool get isAdvancedSearchEnabled => searchMode == SearchMode.advanced;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is SearchConfiguration &&
         other.distance == distance &&
-        other.fuzzy == fuzzy &&
+        other.searchMode == searchMode &&
         other.sortBy == sortBy &&
         other.numResults == numResults &&
         other.currentFacets.toString() == currentFacets.toString() &&
@@ -125,7 +136,7 @@ class SearchConfiguration {
   int get hashCode {
     return Object.hash(
       distance,
-      fuzzy,
+      searchMode,
       sortBy,
       numResults,
       currentFacets,
@@ -141,7 +152,7 @@ class SearchConfiguration {
   String toString() {
     return 'SearchConfiguration('
         'distance: $distance, '
-        'fuzzy: $fuzzy, '
+        'searchMode: $searchMode, '
         'sortBy: $sortBy, '
         'numResults: $numResults, '
         'facets: $currentFacets, '

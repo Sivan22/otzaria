@@ -4,13 +4,14 @@ import 'package:flutter_spinbox/flutter_spinbox.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_event.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
+import 'package:otzaria/search/models/search_configuration.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/search/view/tantivy_search_results.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
-class FuzzyToggle extends StatelessWidget {
-  const FuzzyToggle({
+class SearchModeToggle extends StatelessWidget {
+  const SearchModeToggle({
     super.key,
     required this.tab,
   });
@@ -21,19 +22,32 @@ class FuzzyToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
+        int currentIndex;
+        switch (state.configuration.searchMode) {
+          case SearchMode.advanced:
+            currentIndex = 0;
+            break;
+          case SearchMode.exact:
+            currentIndex = 1;
+            break;
+          case SearchMode.fuzzy:
+            currentIndex = 2;
+            break;
+        }
+
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: ToggleSwitch(
-            minWidth: 150,
+            minWidth: 108,
             minHeight: 45,
             inactiveBgColor: Colors.grey,
             inactiveFgColor: Colors.white,
-            initialLabelIndex: state.fuzzy ? 1 : 0,
-            totalSwitches: 2,
-            labels: const ['חיפוש מדוייק', 'חיפוש מקורב'],
+            initialLabelIndex: currentIndex,
+            totalSwitches: 3,
+            labels: const ['חיפוש מתקדם', 'חיפוש מדוייק', 'חיפוש מקורב'],
             radiusStyle: true,
             onToggle: (index) {
-              context.read<SearchBloc>().add(ToggleFuzzy());
+              context.read<SearchBloc>().add(ToggleSearchMode());
             },
           ),
         );
@@ -83,14 +97,14 @@ class _FuzzyDistanceState extends State<FuzzyDistance> {
         final isEnabled = !state.fuzzy && !hasCustomSpacing;
 
         return SizedBox(
-          width: 200,
+          width: 160,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: SpinBox(
               enabled: isEnabled,
               decoration: InputDecoration(
                 labelText: hasCustomSpacing
-                    ? 'מרווח בין מילים (מושבת - יש מרווחים מותאמים)'
+                    ? 'מרווח בין מילים (מושבת)'
                     : 'מרווח בין מילים',
                 labelStyle: TextStyle(
                   color: hasCustomSpacing ? Colors.grey : null,
@@ -125,7 +139,7 @@ class NumOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 160,
+          width: 150,
           height: 52, // גובה קבוע
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -519,44 +533,6 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
           },
         );
       },
-    );
-  }
-}
-
-class AdvancedSearchToggle extends StatelessWidget {
-  const AdvancedSearchToggle({
-    super.key,
-    required this.tab,
-    required this.onChanged,
-  });
-
-  final SearchingTab tab;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 100, // רוחב צר יותר
-      height: 52, // גובה קבוע כמו שאר הבקרות
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: InputDecorator(
-          decoration: const InputDecoration(
-            labelText: 'חיפוש מתקדם',
-            labelStyle: TextStyle(fontSize: 13), // גופן קטן יותר
-            border: OutlineInputBorder(),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-          ),
-          child: Center(
-            child: Checkbox(
-              value: tab.isAdvancedSearchEnabled,
-              onChanged: (value) => onChanged(value ?? true),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
