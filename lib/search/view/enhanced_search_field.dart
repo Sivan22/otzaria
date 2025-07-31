@@ -1111,42 +1111,34 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   void _showSearchOptionsOverlay() {
     if (_searchOptionsOverlay != null) return;
 
-    // שמירת מיקום הסמן הנוכחי
     final currentSelection = widget.widget.tab.queryController.selection;
-    print('DEBUG: Saving cursor position: ${currentSelection.baseOffset}');
-
     final overlayState = Overlay.of(context);
     final RenderBox? textFieldBox =
         _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
     if (textFieldBox == null) return;
     final textFieldGlobalPosition = textFieldBox.localToGlobal(Offset.zero);
 
-    // יצירת ה-overlay עם delay קטן כדי לוודא שהוא מוכן לקבל לחיצות
     _searchOptionsOverlay = OverlayEntry(
       builder: (context) {
         return Listener(
           behavior: HitTestBehavior.translucent,
           onPointerDown: (PointerDownEvent event) {
-            // בדיקה אם הלחיצה היא מחוץ לאזור שדה החיפוש והמגירה
             final clickPosition = event.position;
-
-            // אזור שדה החיפוש (מורחב כדי לכלול את כל האזור כולל הכפתורים)
             final textFieldRect = Rect.fromLTWH(
-              textFieldGlobalPosition.dx - 20, // מרווח נוסף משמאל
-              textFieldGlobalPosition.dy - 20, // מרווח נוסף מלמעלה
-              textFieldBox.size.width + 40, // רוחב מורחב יותר
-              textFieldBox.size.height + 40, // גובה מורחב יותר
+              textFieldGlobalPosition.dx,
+              textFieldGlobalPosition.dy,
+              textFieldBox.size.width,
+              textFieldBox.size.height,
             );
 
-            // אזור המגירה (מורחב מעט)
+            // אזור המגירה המשוער - אנחנו לא יודעים את הגובה המדויק אז ניקח טווח סביר
             final drawerRect = Rect.fromLTWH(
-              textFieldGlobalPosition.dx - 10,
-              textFieldGlobalPosition.dy + textFieldBox.size.height - 5,
-              textFieldBox.size.width + 20,
-              50.0, // גובה מורחב
+              textFieldGlobalPosition.dx,
+              textFieldGlobalPosition.dy + textFieldBox.size.height,
+              textFieldBox.size.width,
+              120.0, // גובה משוער מקסימלי לשתי שורות
             );
 
-            // אם הלחיצה מחוץ לשני האזורים, סגור את המגירה
             if (!textFieldRect.contains(clickPosition) &&
                 !drawerRect.contains(clickPosition)) {
               _hideSearchOptionsOverlay();
@@ -1155,30 +1147,35 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
           },
           child: Stack(
             children: [
-              // המגירה עצמה
               Positioned(
                 left: textFieldGlobalPosition.dx,
                 top: textFieldGlobalPosition.dy + textFieldBox.size.height,
                 width: textFieldBox.size.width,
-                child: Container(
-                  height: 40.0,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                // ======== התיקון מתחיל כאן ========
+                child: AnimatedSize(
+                  // 1. עוטפים ב-AnimatedSize
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    // height: 40.0, // 2. מסירים את הגובה הקבוע
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border(
+                        left: BorderSide(color: Colors.grey.shade400, width: 1),
+                        right:
+                            BorderSide(color: Colors.grey.shade400, width: 1),
+                        bottom:
+                            BorderSide(color: Colors.grey.shade400, width: 1),
                       ),
-                    ],
-                    border: Border(
-                      left: BorderSide(color: Colors.grey.shade400, width: 1),
-                      right: BorderSide(color: Colors.grey.shade400, width: 1),
-                      bottom: BorderSide(color: Colors.grey.shade400, width: 1),
                     ),
-                  ),
-                  child: IgnorePointer(
-                    ignoring: false,
                     child: Padding(
                       padding: const EdgeInsets.only(
                           left: 48.0, right: 16.0, top: 8.0, bottom: 8.0),
@@ -1617,11 +1614,59 @@ class _SearchOptionsContentState extends State<_SearchOptionsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 16.0,
-      runSpacing: 8.0,
-      children:
-          _availableOptions.map((option) => _buildCheckbox(option)).toList(),
+    // 1. נקודת ההכרעה: מה הרוחב המינימלי שדרוש כדי להציג הכל בשורה אחת?
+    // אפשר לשחק עם הערך הזה, אבל 650 הוא נקודת התחלה טובה.
+    const double singleRowThreshold = 650.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // constraints.maxWidth נותן לנו את הרוחב הזמין האמיתי למגירה
+        final availableWidth = constraints.maxWidth;
+
+        // 2. אם המסך רחב מספיק - נשתמש ב-Wrap (שיראה כמו שורה אחת)
+        if (availableWidth >= singleRowThreshold) {
+          return Wrap(
+            spacing: 16.0,
+            runSpacing: 8.0,
+            alignment: WrapAlignment.center, // מרכוז יפה של הפריטים
+            children: _availableOptions
+                .map((option) => _buildCheckbox(option))
+                .toList(),
+          );
+        }
+        // 3. אם המסך צר מדי - נעבור לתצוגת טורים מסודרת
+        else {
+          // מחלקים את רשימת האפשרויות לשתי עמודות
+          final int middle = (_availableOptions.length / 2).ceil();
+          final List<String> column1Options =
+              _availableOptions.sublist(0, middle);
+          final List<String> column2Options = _availableOptions.sublist(middle);
+
+          // פונקציית עזר לבניית עמודה
+          Widget buildColumn(List<String> options) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: options
+                  .map((option) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        child: _buildCheckbox(option),
+                      ))
+                  .toList(),
+            );
+          }
+
+          // מחזירים שורה שמכילה את שתי העמודות
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildColumn(column1Options),
+              buildColumn(column2Options),
+            ],
+          );
+        }
+      },
     );
   }
 }

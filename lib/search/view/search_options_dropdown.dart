@@ -160,55 +160,48 @@ class _SearchOptionsRowState extends State<SearchOptionsRow> {
     );
   }
 
+// lib\search\view\search_options_dropdown.dart
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
+    return AnimatedSize(
+      // הוחלף מ-AnimatedContainer
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      height: widget.isVisible ? 40.0 : 0.0,
-      width: double.infinity,
-      child: widget.isVisible
-          ? ColoredBox(
-              color: Colors.white, // רקע אטום מלא
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  border: Border(
-                    left: BorderSide(color: Colors.grey.shade400, width: 1),
-                    right: BorderSide(color: Colors.grey.shade400, width: 1),
-                    bottom: BorderSide(color: Colors.grey.shade400, width: 1),
-                  ),
-                ),
-                child: ColoredBox(
-                  color: Colors.white, // עוד שכבת רקע אטום
-                  child: Material(
-                    color: Colors.white,
-                    child: ColoredBox(
-                      color: Colors.white, // שכבה נוספת
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            left: 48.0, right: 16.0, top: 8.0, bottom: 8.0),
-                        child: Wrap(
-                          spacing: 16.0,
-                          runSpacing: 8.0,
-                          children: _availableOptions
-                              .map((option) => _buildCheckbox(option))
-                              .toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+      alignment: Alignment.topCenter,
+      child: Visibility(
+        visible: widget.isVisible,
+        maintainState: true, // שומר את המצב של ה-Checkboxes גם כשהמגירה סגורה
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15), // צל מעודן יותר
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-            )
-          : const SizedBox.shrink(),
+            ],
+            border: Border(
+              left: BorderSide(color: Colors.grey.shade300),
+              right: BorderSide(color: Colors.grey.shade300),
+              bottom: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                left: 48.0, right: 16.0, top: 8.0, bottom: 8.0),
+            child: Wrap(
+              spacing: 16.0, // רווח אופקי בין אלמנטים
+              runSpacing: 8.0, // רווח אנכי בין שורות (זה המפתח!)
+              children: _availableOptions
+                  .map((option) => _buildCheckbox(option))
+                  .toList(),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
