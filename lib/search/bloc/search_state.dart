@@ -11,6 +11,9 @@ class SearchState {
   final String searchQuery;
   final int totalResults;
 
+  // מידע על ספירות לכל facet - מתעדכן עם כל חיפוש
+  final Map<String, int> facetCounts;
+
   // הגדרות החיפוש מרוכזות במחלקה נפרדת
   final SearchConfiguration configuration;
 
@@ -22,6 +25,7 @@ class SearchState {
     this.totalResults = 0,
     this.filterQuery,
     this.filteredBooks,
+    this.facetCounts = const {},
     this.configuration = const SearchConfiguration(),
   });
 
@@ -33,6 +37,7 @@ class SearchState {
     int? totalResults,
     String? filterQuery,
     List<Book>? filteredBooks,
+    Map<String, int>? facetCounts,
     SearchConfiguration? configuration,
   }) {
     return SearchState(
@@ -43,6 +48,7 @@ class SearchState {
       totalResults: totalResults ?? this.totalResults,
       filterQuery: filterQuery,
       filteredBooks: filteredBooks,
+      facetCounts: facetCounts ?? this.facetCounts,
       configuration: configuration ?? this.configuration,
     );
   }

@@ -256,7 +256,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                     child: Center(
                       child: Text(
                         state.results.isEmpty && state.searchQuery.isEmpty
-                            ? 'עדיין לא בוצע חיפוש'
+                            ? 'עוד לא בוצע חיפוש'
                             : '${state.results.length} מתוך ${state.totalResults}',
                         style: const TextStyle(fontSize: 14),
                       ),

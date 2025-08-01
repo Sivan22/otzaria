@@ -42,7 +42,52 @@ class SearchingTab extends OpenedTab {
   }
 
   Future<int> countForFacet(String facet) {
-    return searchBloc.countForFacet(facet);
+    return searchBloc.countForFacet(
+      facet,
+      customSpacing: spacingValues,
+      alternativeWords: alternativeWords,
+      searchOptions: searchOptions,
+    );
+  }
+
+  /// ספירה מקבצת של תוצאות עבור מספר facets בבת אחת - לשיפור ביצועים
+  Future<Map<String, int>> countForMultipleFacets(List<String> facets) {
+    return searchBloc.countForMultipleFacets(
+      facets,
+      customSpacing: spacingValues,
+      alternativeWords: alternativeWords,
+      searchOptions: searchOptions,
+    );
+  }
+
+  /// ספירה חכמה - מחזירה תוצאות מהירות מה-state או מבצעת ספירה
+  Future<int> countForFacetCached(String facet) async {
+    // קודם נבדוק אם יש ספירה ב-state של ה-bloc (כולל 0)
+    final stateCount = searchBloc.getFacetCountFromState(facet);
+    if (searchBloc.state.facetCounts.containsKey(facet)) {
+      print('💾 Cache hit for $facet: $stateCount');
+      return stateCount;
+    }
+
+    print('🔄 Cache miss for $facet, performing direct count...');
+    print(
+        '📍 Stack trace: ${StackTrace.current.toString().split('\n').take(5).join('\n')}');
+    final stopwatch = Stopwatch()..start();
+    // אם אין ב-state, נבצע ספירה ישירה
+    final result = await countForFacet(facet);
+    stopwatch.stop();
+    print(
+        '⏱️ Direct count for $facet took ${stopwatch.elapsedMilliseconds}ms: $result');
+
+    // Update SearchBloc state cache
+    searchBloc.add(UpdateFacetCounts({facet: result}));
+
+    return result;
+  }
+
+  /// מחזיר ספירה סינכרונית מה-state (אם קיימת)
+  int getFacetCountFromState(String facet) {
+    return searchBloc.getFacetCountFromState(facet);
   }
 
   @override

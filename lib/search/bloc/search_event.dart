@@ -72,3 +72,9 @@ class ToggleMultiline extends SearchEvent {}
 class ToggleDotAll extends SearchEvent {}
 
 class ToggleUnicode extends SearchEvent {}
+
+// Event פנימי לעדכון facet counts
+class UpdateFacetCounts extends SearchEvent {
+  final Map<String, int> facetCounts;
+  UpdateFacetCounts(this.facetCounts);
+}

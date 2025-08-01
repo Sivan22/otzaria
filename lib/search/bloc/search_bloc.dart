@@ -29,6 +29,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<ToggleMultiline>(_onToggleMultiline);
     on<ToggleDotAll>(_onToggleDotAll);
     on<ToggleUnicode>(_onToggleUnicode);
+    on<UpdateFacetCounts>(_onUpdateFacetCounts);
   }
   Future<void> _onUpdateSearchQuery(
     UpdateSearchQuery event,
@@ -43,9 +44,13 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       return;
     }
 
+    // Clear global cache for new search
+    TantivyDataProvider.clearGlobalCache();
+
     emit(state.copyWith(
       searchQuery: event.query,
       isLoading: true,
+      facetCounts: {}, // Clear facet counts for new search
     ));
 
     final booksToSearch = state.booksToSearch.map((e) => e.title).toList();
@@ -57,6 +62,9 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         state.currentFacets,
         fuzzy: state.fuzzy,
         distance: state.distance,
+        customSpacing: event.customSpacing,
+        alternativeWords: event.alternativeWords,
+        searchOptions: event.searchOptions,
       );
 
       // If no results with current facets, try root facet
@@ -81,7 +89,12 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         results: results,
         totalResults: totalResults,
         isLoading: false,
+        facetCounts: {}, // Start with empty facet counts, will be filled by individual requests
       ));
+
+      // Prefetch disabled - too slow and causes duplicates
+      // _prefetchCommonFacetCounts(event.query, event.customSpacing,
+      //     event.alternativeWords, event.searchOptions);
     } catch (e) {
       emit(state.copyWith(
         results: [],
@@ -231,17 +244,82 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     emit(const SearchState());
   }
 
-  Future<int> countForFacet(String facet) async {
+  Future<int> countForFacet(
+    String facet, {
+    Map<String, String>? customSpacing,
+    Map<int, List<String>>? alternativeWords,
+    Map<String, Map<String, bool>>? searchOptions,
+  }) async {
     if (state.searchQuery.isEmpty) {
       return 0;
     }
+
+    // קודם נבדוק אם יש לנו את הספירה ב-state
+    if (state.facetCounts.containsKey(facet)) {
+      return state.facetCounts[facet]!;
+    }
+
+    // אם אין, נבצע ספירה ישירה (fallback)
     return TantivyDataProvider.instance.countTexts(
       state.searchQuery.replaceAll('"', '\\"'),
       state.booksToSearch.map((e) => e.title).toList(),
       [facet],
       fuzzy: state.fuzzy,
       distance: state.distance,
+      customSpacing: customSpacing,
+      alternativeWords: alternativeWords,
+      searchOptions: searchOptions,
     );
+  }
+
+  /// ספירה מקבצת של תוצאות עבור מספר facets בבת אחת - לשיפור ביצועים
+  Future<Map<String, int>> countForMultipleFacets(
+    List<String> facets, {
+    Map<String, String>? customSpacing,
+    Map<int, List<String>>? alternativeWords,
+    Map<String, Map<String, bool>>? searchOptions,
+  }) async {
+    if (state.searchQuery.isEmpty) {
+      return {for (final facet in facets) facet: 0};
+    }
+
+    // קודם נבדוק כמה facets יש לנו כבר ב-state
+    final results = <String, int>{};
+    final missingFacets = <String>[];
+
+    for (final facet in facets) {
+      if (state.facetCounts.containsKey(facet)) {
+        results[facet] = state.facetCounts[facet]!;
+      } else {
+        missingFacets.add(facet);
+      }
+    }
+
+    // אם יש facets חסרים, נבצע ספירה רק עבורם
+    if (missingFacets.isNotEmpty) {
+      final missingResults =
+          await TantivyDataProvider.instance.countTextsForMultipleFacets(
+        state.searchQuery.replaceAll('"', '\\"'),
+        state.booksToSearch.map((e) => e.title).toList(),
+        missingFacets,
+        fuzzy: state.fuzzy,
+        distance: state.distance,
+        customSpacing: customSpacing,
+        alternativeWords: alternativeWords,
+        searchOptions: searchOptions,
+      );
+      results.addAll(missingResults);
+    }
+
+    return results;
+  }
+
+  /// מחזיר ספירה סינכרונית מה-state (אם קיימת)
+  int getFacetCountFromState(String facet) {
+    final result = state.facetCounts[facet] ?? 0;
+    print(
+        '🔍 getFacetCountFromState($facet) = $result, cache has ${state.facetCounts.length} entries');
+    return result;
   }
 
   // Handlers חדשים לרגקס
@@ -290,5 +368,20 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final newConfig = state.configuration.copyWith(unicode: !state.unicode);
     emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
+  }
+
+  void _onUpdateFacetCounts(
+    UpdateFacetCounts event,
+    Emitter<SearchState> emit,
+  ) {
+    print(
+        '📝 Updating facet counts: ${event.facetCounts.entries.where((e) => e.value > 0).map((e) => '${e.key}: ${e.value}').join(', ')}');
+    final newFacetCounts = {...state.facetCounts, ...event.facetCounts};
+    emit(state.copyWith(
+      facetCounts: newFacetCounts,
+    ));
+    print('📊 Total facets in state: ${newFacetCounts.length}');
+    print(
+        '📋 All cached facets: ${newFacetCounts.keys.take(10).join(', ')}...');
   }
 }

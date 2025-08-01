@@ -117,7 +117,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   }
 
   Widget _buildBookTile(Book book, int count, int level) {
-    if (count <= 0) {
+    if (count == 0) {
       return const SizedBox.shrink();
     }
 
@@ -137,7 +137,20 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                     .surfaceTint
                     .withValues(alpha: _kBackgroundOpacity)
                 : null,
-            title: Text("${book.title} ($count)"),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                    child:
+                        Text("${book.title} ${count == -1 ? '' : '($count)'}")),
+                if (count == -1)
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 1.5),
+                  ),
+              ],
+            ),
             onTap: () => HardwareKeyboard.instance.isControlPressed
                 ? _handleFacetToggle(context, facet)
                 : _setFacet(context, facet),
@@ -151,29 +164,35 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   Widget _buildBooksList(List<Book> books) {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
-        return ListView.builder(
-          shrinkWrap: true,
-          itemCount: books.length,
-          itemBuilder: (context, index) {
-            final book = books[index];
-            final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-            return Builder(
-              builder: (context) {
-                final countFuture =
-                    context.read<SearchBloc>().countForFacet(facet);
-                return FutureBuilder<int>(
-                  key: ValueKey(
-                      '${state.searchQuery}_$facet'), // מפתח שמשתנה עם החיפוש
-                  future: countFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return _buildBookTile(book, snapshot.data!, 0);
-                    }
-                    return const SizedBox.shrink();
-                  },
-                );
-              },
-            );
+        // יצירת רשימת כל ה-facets בבת אחת
+        final facets = books
+            .map(
+                (book) => "/${book.topics.replaceAll(', ', '/')}/${book.title}")
+            .toList();
+
+        // ספירה מקבצת של כל ה-facets
+        final countsFuture = widget.tab.countForMultipleFacets(facets);
+
+        return FutureBuilder<Map<String, int>>(
+          key: ValueKey(
+              '${state.searchQuery}_books_batch'), // מפתח שמשתנה עם החיפוש
+          future: countsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              final counts = snapshot.data!;
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: books.length,
+                itemBuilder: (context, index) {
+                  final book = books[index];
+                  final facet =
+                      "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+                  final count = counts[facet] ?? 0;
+                  return _buildBookTile(book, count, 0);
+                },
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
           },
         );
       },
@@ -181,7 +200,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   }
 
   Widget _buildCategoryTile(Category category, int count, int level) {
-    if (count <= 0) {
+    if (count == 0) {
       return const SizedBox.shrink();
     }
 
@@ -214,7 +233,20 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                     : _setFacet(context, category.path),
                 onDoubleTap: () => _handleFacetToggle(context, category.path),
                 onLongPress: () => _handleFacetToggle(context, category.path),
-                child: Text("${category.title} ($count)")),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                        child: Text(
+                            "${category.title} ${count == -1 ? '' : '($count)'}")),
+                    if (count == -1)
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      ),
+                  ],
+                )),
             initiallyExpanded: level == 0,
             tilePadding: EdgeInsets.only(
               right: _kTreePadding + (level * _kTreeLevelIndent),
@@ -232,7 +264,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
         return BlocBuilder<SearchBloc, SearchState>(
           builder: (context, state) {
             final countFuture =
-                context.read<SearchBloc>().countForFacet(subCategory.path);
+                widget.tab.countForFacetCached(subCategory.path);
             return FutureBuilder<int>(
               key: ValueKey(
                   '${state.searchQuery}_${subCategory.path}'), // מפתח שמשתנה עם החיפוש
@@ -242,7 +274,8 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                   return _buildCategoryTile(
                       subCategory, snapshot.data!, level + 1);
                 }
-                return const SizedBox.shrink();
+                // במקום shrink, נציג placeholder עם ספינר קטן
+                return _buildCategoryTile(subCategory, -1, level + 1);
               },
             );
           },
@@ -252,7 +285,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
         return BlocBuilder<SearchBloc, SearchState>(
           builder: (context, state) {
             final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-            final countFuture = context.read<SearchBloc>().countForFacet(facet);
+            final countFuture = widget.tab.countForFacetCached(facet);
             return FutureBuilder<int>(
               key: ValueKey(
                   '${state.searchQuery}_$facet'), // מפתח שמשתנה עם החיפוש
@@ -261,7 +294,8 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                 if (snapshot.hasData) {
                   return _buildBookTile(book, snapshot.data!, level + 1);
                 }
-                return const SizedBox.shrink();
+                // במקום shrink, נציג placeholder עם ספינר קטן
+                return _buildBookTile(book, -1, level + 1);
               },
             );
           },
@@ -294,7 +328,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
           builder: (context, searchState) {
             final rootCategory = libraryState.library!;
             final countFuture =
-                context.read<SearchBloc>().countForFacet(rootCategory.path);
+                widget.tab.countForFacetCached(rootCategory.path);
             return FutureBuilder<int>(
               key: ValueKey(
                   '${searchState.searchQuery}_${rootCategory.path}'), // מפתח שמשתנה עם החיפוש
