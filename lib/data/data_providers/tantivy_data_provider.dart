@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
@@ -188,8 +189,9 @@ class TantivyDataProvider {
     }
 
     // חישוב maxExpansions בהתבסס על סוג החיפוש
-    final int maxExpansions =
-        _calculateMaxExpansionsForCount(fuzzy, regexTerms.length);
+    final int maxExpansions = _calculateMaxExpansionsForCount(
+        fuzzy, regexTerms.length,
+        searchOptions: searchOptions, words: words);
 
     try {
       final count = await index.count(
@@ -306,8 +308,16 @@ class TantivyDataProvider {
           // אם יש כתיב מלא/חסר, נוצר את כל הווריאציות של כתיב
           if (hasFullPartialSpelling) {
             try {
-              // ייבוא דינמי של HebrewMorphology
-              baseVariations = _generateFullPartialSpellingVariations(option);
+              // הגבלה למילים קצרות - כתיב מלא/חסר יכול ליצור הרבה וריאציות
+              if (option.length <= 3) {
+                // למילים קצרות, נגביל את מספר הוריאציות
+                final allSpellingVariations =
+                    _generateFullPartialSpellingVariations(option);
+                // נקח רק את ה-5 הראשונות כדי למנוע יותר מדי expansions
+                baseVariations = allSpellingVariations.take(5).toList();
+              } else {
+                baseVariations = _generateFullPartialSpellingVariations(option);
+              }
             } catch (e) {
               // אם יש בעיה, נוסיף לפחות את המילה המקורית
               baseVariations = [option];
@@ -317,21 +327,61 @@ class TantivyDataProvider {
           // עבור כל וריאציה של כתיב, מוסיפים את האפשרויות הדקדוקיות
           for (final baseVariation in baseVariations) {
             if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
-              // שתי האפשרויות יחד - נוסיף את כל הווריאציות הדקדוקיות
-              allVariations
-                  .addAll(_generateFullMorphologicalVariations(baseVariation));
+              // שתי האפשרויות יחד - הגבלה למילים קצרות
+              if (baseVariation.length <= 2) {
+                // למילים קצרות, נשתמש ברגקס קומפקטי במקום רשימת וריאציות
+                allVariations
+                    .add(_createFullMorphologicalRegexPattern(baseVariation));
+              } else {
+                allVariations.addAll(
+                    _generateFullMorphologicalVariations(baseVariation));
+              }
             } else if (hasGrammaticalPrefixes) {
-              // רק קידומות דקדוקיות
-              allVariations.addAll(_generatePrefixVariations(baseVariation));
+              // רק קידומות דקדוקיות - הגבלה למילים קצרות
+              if (baseVariation.length <= 2) {
+                // למילים קצרות, נשתמש ברגקס קומפקטי
+                allVariations.add(_createPrefixRegexPattern(baseVariation));
+              } else {
+                allVariations.addAll(_generatePrefixVariations(baseVariation));
+              }
             } else if (hasGrammaticalSuffixes) {
-              // רק סיומות דקדוקיות
-              allVariations.addAll(_generateSuffixVariations(baseVariation));
+              // רק סיומות דקדוקיות - הגבלה למילים קצרות
+              if (baseVariation.length <= 2) {
+                // למילים קצרות, נשתמש ברגקס קומפקטי
+                allVariations.add(_createSuffixRegexPattern(baseVariation));
+              } else {
+                allVariations.addAll(_generateSuffixVariations(baseVariation));
+              }
             } else if (hasPrefix) {
-              // קידומות רגילות
-              allVariations.add('.*${RegExp.escape(baseVariation)}');
+              // קידומות רגילות - הגבלה חכמה לפי אורך המילה
+              if (baseVariation.length <= 1) {
+                // מילה של תו אחד - הגבלה קיצונית (מקסימום 5 תווים קידומת)
+                allVariations.add('.{1,5}${RegExp.escape(baseVariation)}');
+              } else if (baseVariation.length <= 2) {
+                // מילה של 2 תווים - הגבלה בינונית (מקסימום 4 תווים קידומת)
+                allVariations.add('.{1,4}${RegExp.escape(baseVariation)}');
+              } else if (baseVariation.length <= 3) {
+                // מילה של 3 תווים - הגבלה קלה (מקסימום 3 תווים קידומת)
+                allVariations.add('.{1,3}${RegExp.escape(baseVariation)}');
+              } else {
+                // מילה ארוכה - ללא הגבלה
+                allVariations.add('.*${RegExp.escape(baseVariation)}');
+              }
             } else if (hasSuffix) {
-              // סיומות רגילות
-              allVariations.add('${RegExp.escape(baseVariation)}.*');
+              // סיומות רגילות - הגבלה חכמה לפי אורך המילה
+              if (baseVariation.length <= 1) {
+                // מילה של תו אחד - הגבלה קיצונית (מקסימום 7 תווים סיומת)
+                allVariations.add('${RegExp.escape(baseVariation)}.{1,7}');
+              } else if (baseVariation.length <= 2) {
+                // מילה של 2 תווים - הגבלה בינונית (מקסימום 6 תווים סיומת)
+                allVariations.add('${RegExp.escape(baseVariation)}.{1,6}');
+              } else if (baseVariation.length <= 3) {
+                // מילה של 3 תווים - הגבלה קלה (מקסימום 5 תווים סיומת)
+                allVariations.add('${RegExp.escape(baseVariation)}.{1,5}');
+              } else {
+                // מילה ארוכה - ללא הגבלה
+                allVariations.add('${RegExp.escape(baseVariation)}.*');
+              }
             } else {
               // ללא אפשרויות מיוחדות - מילה מדויקת
               allVariations.add(RegExp.escape(baseVariation));
@@ -339,10 +389,15 @@ class TantivyDataProvider {
           }
         }
 
+        // הגבלה על מספר הוריאציות הכולל למילה אחת
+        final limitedVariations = allVariations.length > 20
+            ? allVariations.take(20).toList()
+            : allVariations.toList();
+
         // במקום רגקס מורכב, נוסיף כל וריאציה בנפרד
-        final finalPattern = allVariations.length == 1
-            ? allVariations.first
-            : '(${allVariations.join('|')})';
+        final finalPattern = limitedVariations.length == 1
+            ? limitedVariations.first
+            : '(${limitedVariations.join('|')})';
 
         regexTerms.add(finalPattern);
       } else {
@@ -355,9 +410,41 @@ class TantivyDataProvider {
   }
 
   /// מחשב את maxExpansions בהתבסס על סוג החיפוש
-  int _calculateMaxExpansionsForCount(bool fuzzy, int termCount) {
+  int _calculateMaxExpansionsForCount(bool fuzzy, int termCount,
+      {Map<String, Map<String, bool>>? searchOptions, List<String>? words}) {
+    // בדיקה אם יש חיפוש עם סיומות או קידומות ואיזה מילים
+    bool hasSuffixOrPrefix = false;
+    int shortestWordLength = 10; // ערך התחלתי גבוה
+
+    if (searchOptions != null && words != null) {
+      for (int i = 0; i < words.length; i++) {
+        final word = words[i];
+        final wordKey = '${word}_$i';
+        final wordOptions = searchOptions[wordKey] ?? {};
+
+        if (wordOptions['סיומות'] == true ||
+            wordOptions['קידומות'] == true ||
+            wordOptions['קידומות דקדוקיות'] == true ||
+            wordOptions['סיומות דקדוקיות'] == true) {
+          hasSuffixOrPrefix = true;
+          shortestWordLength = math.min(shortestWordLength, word.length);
+        }
+      }
+    }
+
     if (fuzzy) {
       return 50; // חיפוש מקורב
+    } else if (hasSuffixOrPrefix) {
+      // התאמת המגבלה לפי אורך המילה הקצרה ביותר עם אפשרויות מתקדמות
+      if (shortestWordLength <= 1) {
+        return 2000; // מילה של תו אחד - הגבלה קיצונית
+      } else if (shortestWordLength <= 2) {
+        return 3000; // מילה של 2 תווים - הגבלה בינונית
+      } else if (shortestWordLength <= 3) {
+        return 4000; // מילה של 3 תווים - הגבלה קלה
+      } else {
+        return 5000; // מילה ארוכה - הגבלה מלאה
+      }
     } else if (termCount > 1) {
       return 100; // חיפוש של כמה מילים - צריך expansions גבוה יותר
     } else {
@@ -509,8 +596,9 @@ class TantivyDataProvider {
       effectiveSlop = distance;
     }
 
-    final int maxExpansions =
-        _calculateMaxExpansionsForCount(fuzzy, regexTerms.length);
+    final int maxExpansions = _calculateMaxExpansionsForCount(
+        fuzzy, regexTerms.length,
+        searchOptions: searchOptions, words: words);
 
     // ביצוע ספירה עבור כל facet - בזה אחר זה (לא במקביל כי זה לא עובד)
     int processedCount = 0;
@@ -571,5 +659,33 @@ class TantivyDataProvider {
     await refIndex.clear();
     booksDone.clear();
     saveBooksDoneToDisk();
+  }
+
+  // פונקציות עזר ליצירת regex קומפקטי לחיפושים דקדוקיים
+
+  /// יוצר דפוס רגקס קומפקטי לחיפוש מילה עם קידומות דקדוקיות
+  String _createPrefixRegexPattern(String word) {
+    if (word.isEmpty) return word;
+    // שימוש בתבנית קבועה ויעילה - מוגבלת לקידומות נפוצות
+    return r'(ו|מ|כ|ב|ש|ל|ה|ד)?(כ|ב|ש|ל|ה|ד)?(ה)?' + RegExp.escape(word);
+  }
+
+  /// יוצר דפוס רגקס קומפקטי לחיפוש מילה עם סיומות דקדוקיות
+  String _createSuffixRegexPattern(String word) {
+    if (word.isEmpty) return word;
+    // שימוש בתבנית קבועה ויעילה - מוגבלת לסיומות נפוצות
+    const suffixPattern =
+        r'(ות|ים|יה|יו|יך|ינו|יכם|יכן|יהם|יהן|י|ך|ו|ה|נו|כם|כן|ם|ן)?';
+    return RegExp.escape(word) + suffixPattern;
+  }
+
+  /// יוצר דפוס רגקס קומפקטי לחיפוש מילה עם קידומות וסיומות דקדוקיות יחד
+  String _createFullMorphologicalRegexPattern(String word) {
+    if (word.isEmpty) return word;
+    // שילוב של קידומות וסיומות - מוגבל לנפוצות ביותר
+    const prefixPattern = r'(ו|מ|כ|ב|ש|ל|ה|ד)?(כ|ב|ש|ל|ה|ד)?(ה)?';
+    const suffixPattern =
+        r'(ות|ים|יה|יו|יך|ינו|יכם|יכן|יהם|יהן|י|ך|ו|ה|נו|כם|כן|ם|ן)?';
+    return prefixPattern + RegExp.escape(word) + suffixPattern;
   }
 }
