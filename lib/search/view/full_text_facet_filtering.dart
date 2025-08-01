@@ -11,8 +11,8 @@ import 'package:otzaria/library/models/library.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 
 // Constants
-const double _kTreePadding = 6.0;
-const double _kTreeLevelIndent = 10.0;
+const double _kTreePadding = 15.0;
+const double _kTreeLevelIndent = 3.0;
 const double _kMinQueryLength = 2;
 const double _kBackgroundOpacity = 0.1;
 
@@ -48,6 +48,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   @override
   bool get wantKeepAlive => true;
   final TextEditingController _filterQuery = TextEditingController();
+  final Map<String, bool> _expansionState = {};
 
   @override
   void dispose() {
@@ -200,59 +201,104 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   }
 
   Widget _buildCategoryTile(Category category, int count, int level) {
-    if (count == 0) {
-      return const SizedBox.shrink();
-    }
+    if (count == 0) return const SizedBox.shrink();
 
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         final isSelected = state.currentFacets.contains(category.path);
-        return Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            key: PageStorageKey(category.path),
-            backgroundColor: isSelected
-                ? Theme.of(context)
-                    .colorScheme
-                    .surfaceTint
-                    .withValues(alpha: _kBackgroundOpacity)
-                : null,
-            collapsedBackgroundColor: isSelected
-                ? Theme.of(context)
-                    .colorScheme
-                    .surfaceTint
-                    .withValues(alpha: _kBackgroundOpacity)
-                : null,
-            leading: const Icon(Icons.chevron_right_rounded),
-            trailing: const SizedBox.shrink(),
-            iconColor: Theme.of(context).colorScheme.primary,
-            collapsedIconColor: Theme.of(context).colorScheme.primary,
-            title: GestureDetector(
-                onTap: () => HardwareKeyboard.instance.isControlPressed
-                    ? _handleFacetToggle(context, category.path)
-                    : _setFacet(context, category.path),
-                onDoubleTap: () => _handleFacetToggle(context, category.path),
-                onLongPress: () => _handleFacetToggle(context, category.path),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Expanded(
-                        child: Text(
-                            "${category.title} ${count == -1 ? '' : '($count)'}")),
-                    if (count == -1)
-                      const SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 1.5),
+        final primaryColor = Theme.of(context).colorScheme.primary;
+        final isExpanded = _expansionState[category.path] ?? level == 0;
+
+        void toggle() {
+          setState(() {
+            _expansionState[category.path] = !isExpanded;
+          });
+        }
+
+        return Column(
+          children: [
+            // ─────────── שורת-הכותרת ───────────
+            Container(
+              color: isSelected
+                  ? Theme.of(context)
+                      .colorScheme
+                      .surfaceTint
+                      .withOpacity(_kBackgroundOpacity)
+                  : null,
+              child: Row(
+                textDirection:
+                    TextDirection.rtl, // RTL: הטקסט מימין, המספר משמאל
+                children: [
+                  // אזור-החץ – רוחב ~1 ס"מ
+                  SizedBox(
+                    width: 40,
+                    height: 48,
+                    child: InkWell(
+                      onTap: toggle,
+                      child: Icon(
+                        isExpanded
+                            ? Icons.expand_more // חץ מטה כשהשורה פתוחה
+                            : Icons.chevron_right_rounded,
+                        color: primaryColor,
                       ),
-                  ],
-                )),
-            initiallyExpanded: level == 0,
-            tilePadding: EdgeInsets.only(
-              right: _kTreePadding + (level * _kTreeLevelIndent),
+                    ),
+                  ),
+
+                  // פס-הפרדה אפור דק
+                  Container(width: 1, height: 32, color: Colors.grey.shade300),
+
+                  // השורה עצמה
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => HardwareKeyboard.instance.isControlPressed
+                          ? _handleFacetToggle(context, category.path)
+                          : _setFacet(context, category.path),
+                      onDoubleTap: () =>
+                          _handleFacetToggle(context, category.path),
+                      onLongPress: () =>
+                          _handleFacetToggle(context, category.path),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: _kTreePadding + (level * _kTreeLevelIndent),
+                          top: 8,
+                          bottom: 8,
+                        ),
+                        child: Row(
+                          textDirection: TextDirection.rtl,
+                          children: [
+                            // כותרת הקטגוריה
+                            Expanded(child: Text(category.title)),
+                            // המספר – בקצה השמאלי
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Text(count == -1 ? '' : '($count)'),
+                            ),
+                            if (count == -1)
+                              const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 1.5),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            children: _buildCategoryChildren(category, level),
-          ),
+
+            // ─────────── ילדים ───────────
+            if (isExpanded)
+              Padding(
+                padding: EdgeInsets.only(
+                    right: _kTreePadding +
+                        (level * _kTreeLevelIndent)), // הזחה פנימה
+                child:
+                    Column(children: _buildCategoryChildren(category, level)),
+              ),
+          ],
         );
       },
     );

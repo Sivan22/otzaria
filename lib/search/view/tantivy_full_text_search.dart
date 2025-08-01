@@ -169,7 +169,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 350,
+                        width: 235,
                         child: SearchFacetFiltering(tab: widget.tab),
                       ),
                       Container(
