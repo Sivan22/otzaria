@@ -18,8 +18,11 @@ import 'package:otzaria/search/view/full_text_search_screen.dart';
 import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
+import 'package:otzaria/workspaces/bloc/workspace_bloc.dart';
+import 'package:otzaria/workspaces/bloc/workspace_event.dart';
 import 'package:otzaria/history/history_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/widgets/workspace_icon_button.dart';
 
 
 class ReadingScreen extends StatefulWidget {
@@ -35,6 +38,12 @@ class _ReadingScreenState extends State<ReadingScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // וודא שה-WorkspaceBloc נטען
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<WorkspaceBloc>().add(LoadWorkspaces());
+      }
+    });
   }
 
   @override
@@ -56,13 +65,19 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<TabsBloc, TabsState>(
-      listener: (context, state) {
-        if(state.hasOpenTabs) {
-          context.read<HistoryBloc>().add(CaptureStateForHistory(state.currentTab!));
-        }
-      },
-      listenWhen: (previous, current) => previous.currentTabIndex != current.currentTabIndex,
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<TabsBloc, TabsState>(
+          listener: (context, state) {
+            if(state.hasOpenTabs) {
+              context.read<HistoryBloc>().add(CaptureStateForHistory(state.currentTab!));
+            }
+            // עדכון WorkspaceBloc כשמשנים tabs
+            context.read<WorkspaceBloc>().add(LoadWorkspaces());
+          },
+          listenWhen: (previous, current) => previous.currentTabIndex != current.currentTabIndex,
+        ),
+      ],
       child: BlocBuilder<TabsBloc, TabsState>(
         builder: (context, state) {
           if (!state.hasOpenTabs) {
@@ -130,22 +145,28 @@ class _ReadingScreenState extends State<ReadingScreen>
     
               return Scaffold(
                 appBar: AppBar(
-                  title: Container(
-                    constraints: const BoxConstraints(maxHeight: 50),
-                    child: TabBar(
-                      controller: controller,
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.center,
-                      tabs: state.tabs
-                          .map((tab) => _buildTab(context, tab, state))
-                          .toList(),
-                    ),
+                  title: Row(
+                    children: [
+                      WorkspaceIconButton(
+                        onPressed: () => _showSaveWorkspaceDialog(context),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 50),
+                          child: TabBar(
+                            controller: controller,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.center,
+                            tabs: state.tabs
+                                .map((tab) => _buildTab(context, tab, state))
+                                .toList(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  leading: IconButton(
-                    icon: const Icon(Icons.add_to_queue),
-                    tooltip: 'החלף שולחן עבודה',
-                    onPressed: () => _showSaveWorkspaceDialog(context),
-                  ),
+                  automaticallyImplyLeading: false,
                 ),
                 body: SizedBox.fromSize(
                   size: MediaQuery.of(context).size,

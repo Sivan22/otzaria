@@ -90,6 +90,8 @@ class _FindRefScreenState extends State<FindRefScreen> {
                     focusRepository.findRefSearchController.clear();
                     BlocProvider.of<FindRefBloc>(context)
                         .add(ClearSearchRequested());
+                    // Keep focus on search field after clearing
+                    focusRepository.findRefSearchFocusNode.requestFocus();
                   },
                 ),
               ),

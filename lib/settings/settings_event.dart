@@ -162,3 +162,34 @@ class UpdateSidebarWidth extends SettingsEvent {
   @override
   List<Object?> get props => [sidebarWidth];
 }
+
+class LoadCustomFonts extends SettingsEvent {}
+
+class AddCustomFont extends SettingsEvent {
+  final String filePath;
+  final String displayName;
+
+  const AddCustomFont(this.filePath, this.displayName);
+
+  @override
+  List<Object?> get props => [filePath, displayName];
+}
+
+class RemoveCustomFont extends SettingsEvent {
+  final String fontId;
+
+  const RemoveCustomFont(this.fontId);
+
+  @override
+  List<Object?> get props => [fontId];
+}
+
+class RenameCustomFont extends SettingsEvent {
+  final String fontId;
+  final String newName;
+
+  const RenameCustomFont(this.fontId, this.newName);
+
+  @override
+  List<Object?> get props => [fontId, newName];
+}

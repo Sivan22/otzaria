@@ -74,6 +74,8 @@ void main() {
             defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
             pinSidebar: mockSettings['pinSidebar'] as bool,
             sidebarWidth: mockSettings['sidebarWidth'] as double,
+            customFonts: const [],
+            isLoadingCustomFonts: false,
           ),
         ],
         verify: (_) {

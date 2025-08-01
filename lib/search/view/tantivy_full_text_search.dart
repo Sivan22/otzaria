@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_bloc.dart';
 import 'package:otzaria/indexing/bloc/indexing_state.dart';
@@ -6,6 +7,7 @@ import 'package:otzaria/search/bloc/search_bloc.dart';
 import 'package:otzaria/search/bloc/search_state.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_state.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/search/view/full_text_settings_widgets.dart';
@@ -21,15 +23,19 @@ class TantivyFullTextSearch extends StatefulWidget {
 }
 
 class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   @override
   bool get wantKeepAlive => true;
 
   bool _showIndexWarning = false;
+  late FocusNode _screenFocusNode;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _screenFocusNode = FocusNode();
+    
     // Check if indexing is in progress using the IndexingBloc
     final indexingState = context.read<IndexingBloc>().state;
     _showIndexWarning = indexingState is IndexingInProgress;
@@ -39,12 +45,42 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _screenFocusNode.dispose();
+    super.dispose();
+  }
+
+  /// Handles app lifecycle changes and requests focus when app becomes active.
+  /// This helps when user returns from another application.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Request focus when app becomes active again
+    if (state == AppLifecycleState.resumed) {
+      // Add delay to ensure the app is fully active
+      _requestSearchFieldFocusWithDelay(500);
+    }
+  }
+
+  /// Handles window metrics changes (e.g., window becomes active).
+  /// This provides additional coverage for focus restoration.
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    // Request focus when window metrics change (e.g., window becomes active)
+    _requestSearchFieldFocusWithDelay(200);
+  }
+
+  @override
   void didUpdateWidget(TantivyFullTextSearch oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Request focus when switching back to this tab
     _requestSearchFieldFocus();
   }
 
+  /// Requests focus for the search field if this tab is currently active.
+  /// This ensures the search field is focused when the user returns to the search tab.
   void _requestSearchFieldFocus() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && widget.tab.searchFieldFocusNode.canRequestFocus) {
@@ -53,12 +89,28 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
         if (tabsState.hasOpenTabs && 
             tabsState.currentTabIndex < tabsState.tabs.length &&
             tabsState.tabs[tabsState.currentTabIndex] == widget.tab) {
-          widget.tab.searchFieldFocusNode.requestFocus();
+          // Add a small delay to ensure the UI is fully rendered
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted && widget.tab.searchFieldFocusNode.canRequestFocus) {
+              widget.tab.searchFieldFocusNode.requestFocus();
+            }
+          });
         }
       }
     });
   }
 
+  /// Helper method to request search field focus with a custom delay.
+  /// Used for different scenarios like tab switching, app lifecycle changes, etc.
+  void _requestSearchFieldFocusWithDelay([int milliseconds = 300]) {
+    Future.delayed(Duration(milliseconds: milliseconds), () {
+      if (mounted) {
+        _requestSearchFieldFocus();
+      }
+    });
+  }
+
+  /// Handles navigation changes and requests focus when navigating to search screen.
   void _onNavigationChanged(NavigationState state) {
     // Request focus when navigating to search screen
     if (state.currentScreen == Screen.search
@@ -67,16 +119,57 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
     }
   }
 
+  /// Handles tab changes and requests focus when this search tab becomes active.
+  /// This is the main fix for the issue where focus is lost when returning to search tab.
+  void _onTabChanged(TabsState state) {
+    // Request focus when this tab becomes the current tab
+    if (state.hasOpenTabs && 
+        state.currentTabIndex < state.tabs.length &&
+        state.tabs[state.currentTabIndex] == widget.tab) {
+      // Add a longer delay to ensure tab switching animation is complete
+      _requestSearchFieldFocusWithDelay(300);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return BlocListener<NavigationBloc, NavigationState>(
-      listener: (context, state) => _onNavigationChanged(state),
-      child: Scaffold(
-        body: LayoutBuilder(builder: (context, constraints) {
-          if (constraints.maxWidth < 800) return _buildForSmallScreens();
-          return _buildForWideScreens();
-        }),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<NavigationBloc, NavigationState>(
+          listener: (context, state) => _onNavigationChanged(state),
+        ),
+        BlocListener<TabsBloc, TabsState>(
+          listener: (context, state) => _onTabChanged(state),
+        ),
+      ],
+      child: GestureDetector(
+        onTap: () {
+          // Request focus when user taps anywhere in the search screen
+          _requestSearchFieldFocus();
+        },
+        child: KeyboardListener(
+          focusNode: _screenFocusNode,
+          autofocus: false,
+          onKeyEvent: (KeyEvent event) {
+            // Handle keyboard shortcuts for tab navigation
+            if (event is KeyDownEvent) {
+              final isCtrlPressed = HardwareKeyboard.instance.isControlPressed;
+              final isTabPressed = event.logicalKey == LogicalKeyboardKey.tab;
+              
+              if (isCtrlPressed && isTabPressed) {
+                // Tab navigation occurred, request focus after a delay
+                _requestSearchFieldFocusWithDelay(400);
+              }
+            }
+          },
+          child: Scaffold(
+            body: LayoutBuilder(builder: (context, constraints) {
+              if (constraints.maxWidth < 800) return _buildForSmallScreens();
+              return _buildForWideScreens();
+            }),
+          ),
+        ),
       ),
     );
   }

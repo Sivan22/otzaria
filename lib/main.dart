@@ -28,6 +28,7 @@ import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_event.dart';
 import 'package:otzaria/settings/settings_repository.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/services/custom_fonts_service.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/tabs_repository.dart';
 import 'package:otzaria/workspaces/bloc/workspace_bloc.dart';
@@ -92,6 +93,7 @@ void main() async {
           BlocProvider<SettingsBloc>(
             create: (context) => SettingsBloc(
               repository: SettingsRepository(),
+              customFontsService: CustomFontsService.instance,
             )..add(LoadSettings()),
           ),
           BlocProvider<LibraryBloc>(
@@ -148,6 +150,15 @@ Future<void> initialize() async {
   await initHive();
   await createDirs();
   await loadCerts();
+  
+  // Initialize custom fonts service
+  try {
+    await CustomFontsService.instance.initializeCustomFonts();
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error initializing custom fonts: $e');
+    }
+  }
 }
 
 /// Creates the necessary directory structure for the application.

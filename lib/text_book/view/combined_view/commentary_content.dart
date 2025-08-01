@@ -8,6 +8,8 @@ import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/utils/font_utils.dart';
+import 'package:otzaria/widgets/current_font_provider.dart';
 
 class CommentaryContent extends StatefulWidget {
   const CommentaryContent({
@@ -17,12 +19,14 @@ class CommentaryContent extends StatefulWidget {
     required this.openBookCallback,
     required this.removeNikud,
     this.searchQuery = '',
+    this.customFontFamily,
   });
   final bool removeNikud;
   final Link link;
   final double fontSize;
   final Function(TextBookTab) openBookCallback;
   final String searchQuery;
+  final String? customFontFamily;
 
   @override
   State<CommentaryContent> createState() => _CommentaryContentState();
@@ -30,6 +34,34 @@ class CommentaryContent extends StatefulWidget {
 
 class _CommentaryContentState extends State<CommentaryContent> {
   late Future<String> content;
+
+  String _getEffectiveFontFamily(BuildContext context, SettingsState settingsState) {
+    // בדיקה אם יש גופן נוכחי מה-Provider
+    final fontProvider = CurrentFontProvider.of(context);
+    final currentFont = fontProvider?.currentFont ?? widget.customFontFamily;
+    
+    if (currentFont != null) {
+      final fallbackFont = FontUtils.getFallbackFont(
+        currentFont,
+        settingsState.customFonts,
+      );
+      
+      if (fallbackFont != null) {
+        return fallbackFont;
+      }
+      
+      return FontUtils.getFontFamilyForDisplay(
+        currentFont,
+        settingsState.customFonts,
+      );
+    }
+    
+    // fallback לגופן הגלובלי
+    return FontUtils.getFontFamilyForDisplay(
+      settingsState.fontFamily,
+      settingsState.customFonts,
+    );
+  }
 
   @override
   void initState() {
@@ -63,7 +95,7 @@ class _CommentaryContentState extends State<CommentaryContent> {
                   return Html(data: text, style: {
                     'body': Style(
                         fontSize: FontSize(widget.fontSize / 1.2),
-                        fontFamily: settingsState.fontFamily,
+                        fontFamily: _getEffectiveFontFamily(context, settingsState),
                         textAlign: TextAlign.justify),
                   });
                 },
