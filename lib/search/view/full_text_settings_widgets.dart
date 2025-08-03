@@ -47,7 +47,21 @@ class SearchModeToggle extends StatelessWidget {
             labels: const ['חיפוש מתקדם', 'חיפוש מדוייק', 'חיפוש מקורב'],
             radiusStyle: true,
             onToggle: (index) {
-              context.read<SearchBloc>().add(ToggleSearchMode());
+              SearchMode newMode;
+              switch (index) {
+                case 0:
+                  newMode = SearchMode.advanced;
+                  break;
+                case 1:
+                  newMode = SearchMode.exact;
+                  break;
+                case 2:
+                  newMode = SearchMode.fuzzy;
+                  break;
+                default:
+                  newMode = SearchMode.advanced;
+              }
+              context.read<SearchBloc>().add(SetSearchMode(newMode));
             },
           ),
         );

@@ -1,4 +1,5 @@
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/search/models/search_configuration.dart';
 import 'package:search_engine/search_engine.dart';
 
 abstract class SearchEvent {
@@ -29,6 +30,11 @@ class UpdateDistance extends SearchEvent {
 }
 
 class ToggleSearchMode extends SearchEvent {}
+
+class SetSearchMode extends SearchEvent {
+  final SearchMode searchMode;
+  SetSearchMode(this.searchMode);
+}
 
 class UpdateBooksToSearch extends SearchEvent {
   final Set<Book> books;

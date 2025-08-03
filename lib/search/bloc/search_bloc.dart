@@ -13,6 +13,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<UpdateSearchQuery>(_onUpdateSearchQuery);
     on<UpdateDistance>(_onUpdateDistance);
     on<ToggleSearchMode>(_onToggleSearchMode);
+    on<SetSearchMode>(_onSetSearchMode);
     on<UpdateBooksToSearch>(_onUpdateBooksToSearch);
     on<AddFacet>(_onAddFacet);
     on<RemoveFacet>(_onRemoveFacet);
@@ -171,6 +172,16 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
 
     final newConfig = state.configuration.copyWith(searchMode: newMode);
+    emit(state.copyWith(configuration: newConfig));
+    add(UpdateSearchQuery(state.searchQuery));
+  }
+
+  void _onSetSearchMode(
+    SetSearchMode event,
+    Emitter<SearchState> emit,
+  ) {
+    final newConfig =
+        state.configuration.copyWith(searchMode: event.searchMode);
     emit(state.copyWith(configuration: newConfig));
     add(UpdateSearchQuery(state.searchQuery));
   }

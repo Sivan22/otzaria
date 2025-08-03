@@ -360,11 +360,10 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
     }
 
     // תמיד נשתמש ב-ListView גם לתוצאה אחת - כך היא תופיע למעלה
-    return Align(
-      alignment: Alignment.topCenter,
+    return Container(
+      clipBehavior: Clip.hardEdge,
+      decoration: const BoxDecoration(),
       child: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(), // מונע גלילה כפולה
         itemCount: state.results.length,
         itemBuilder: (context, index) {
           final result = state.results[index];
@@ -372,21 +371,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
             builder: (context, settingsState) {
               String titleText = '[תוצאה ${index + 1}] ${result.reference}';
               String rawHtml = result.text;
-              print(
-                  '🎯 Search result: title="${result.title}", reference="${result.reference}"');
-              // בואו נבדוק אם יש לתוצאה facet - נבדוק את כל השדות
-              try {
-                print('🎯 Result details:');
-                print('  - title: ${result.title}');
-                print('  - reference: ${result.reference}');
-                print('  - segment: ${result.segment}');
-                print('  - isPdf: ${result.isPdf}');
-                print('  - filePath: ${result.filePath}');
-                // אולי יש שדה topics או facet
-                print('  - toString: ${result.toString()}');
-              } catch (e) {
-                print('🎯 Error getting result details: $e');
-              }
+              // Debug info removed for production
               if (settingsState.replaceHolyNames) {
                 titleText = utils.replaceHolyNames(titleText);
                 rawHtml = utils.replaceHolyNames(rawHtml);
@@ -414,47 +399,51 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                 availableWidth,
               );
 
-              return ListTile(
-                leading: result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
-                onTap: () {
-                  if (result.isPdf) {
-                    context.read<TabsBloc>().add(AddTab(
-                          PdfBookTab(
-                            book: PdfBook(
-                                title: result.title, path: result.filePath),
-                            pageNumber: result.segment.toInt() + 1,
-                            searchText: widget.tab.queryController.text,
-                            openLeftPane:
-                                (Settings.getValue<bool>('key-pin-sidebar') ??
-                                        false) ||
-                                    (Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false),
-                          ),
-                        ));
-                  } else {
-                    context.read<TabsBloc>().add(AddTab(
-                          TextBookTab(
-                              book: TextBook(
-                                title: result.title,
-                              ),
-                              index: result.segment.toInt(),
+              return Material(
+                clipBehavior: Clip.hardEdge,
+                child: ListTile(
+                  leading:
+                      result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
+                  onTap: () {
+                    if (result.isPdf) {
+                      context.read<TabsBloc>().add(AddTab(
+                            PdfBookTab(
+                              book: PdfBook(
+                                  title: result.title, path: result.filePath),
+                              pageNumber: result.segment.toInt() + 1,
                               searchText: widget.tab.queryController.text,
                               openLeftPane:
                                   (Settings.getValue<bool>('key-pin-sidebar') ??
                                           false) ||
                                       (Settings.getValue<bool>(
                                               'key-default-sidebar-open') ??
-                                          false)),
-                        ));
-                  }
-                },
-                title: Text(titleText),
-                subtitle: Text.rich(
-                  TextSpan(children: snippetSpans),
-                  maxLines: null, // אין הגבלה על מספר השורות!
-                  textAlign: TextAlign.justify,
-                  textDirection: TextDirection.rtl,
+                                          false),
+                            ),
+                          ));
+                    } else {
+                      context.read<TabsBloc>().add(AddTab(
+                            TextBookTab(
+                                book: TextBook(
+                                  title: result.title,
+                                ),
+                                index: result.segment.toInt(),
+                                searchText: widget.tab.queryController.text,
+                                openLeftPane: (Settings.getValue<bool>(
+                                            'key-pin-sidebar') ??
+                                        false) ||
+                                    (Settings.getValue<bool>(
+                                            'key-default-sidebar-open') ??
+                                        false)),
+                          ));
+                    }
+                  },
+                  title: Text(titleText),
+                  subtitle: Text.rich(
+                    TextSpan(children: snippetSpans),
+                    maxLines: null, // אין הגבלה על מספר השורות!
+                    textAlign: TextAlign.justify,
+                    textDirection: TextDirection.rtl,
+                  ),
                 ),
               );
             },
