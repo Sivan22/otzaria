@@ -44,79 +44,85 @@ class FileSystemData {
   /// Reads the library from the configured path and combines it with metadata
   /// to create a full [Library] object containing all categories and books.
   Future<Library> getLibrary() async {
-  // --- הגדרת נתיבים ---
-  final cachePath = '$libraryPath${Platform.pathSeparator}library_cache.json';
-  final cacheFile = File(cachePath);
-  final metadataPath = '$libraryPath${Platform.pathSeparator}metadata.json';
-  final metadataFile = File(metadataPath);
+    // --- הגדרת נתיבים ---
+    final cachePath = '$libraryPath${Platform.pathSeparator}library_cache.json';
+    final cacheFile = File(cachePath);
+    final metadataPath = '$libraryPath${Platform.pathSeparator}metadata.json';
+    final metadataFile = File(metadataPath);
 
-  // --- בדיקת תוקף המטמון ---
-  bool isCacheValid = await cacheFile.exists();
+    // --- בדיקת תוקף המטמון ---
+    bool isCacheValid = await cacheFile.exists();
 
-  if (isCacheValid) {
-    try {
-      final cacheLastModified = await cacheFile.stat();
-      final libraryDirLastModified = await Directory(libraryPath).stat();
+    if (isCacheValid) {
+      try {
+        final cacheLastModified = await cacheFile.stat();
 
-      // 2. בדוק אם המטמון ישן יותר משינוי במבנה תיקיית הספרייה (הוספה/מחיקה)
-      if (cacheLastModified.modified.isBefore(libraryDirLastModified.modified)) {
-        isCacheValid = false; // אם כן, המטמון לא תקין
-      }
-
-      // 3. בדוק אם המטמון ישן יותר מקובץ המטא-דאטה
-      if (isCacheValid && await metadataFile.exists()) {
-        final metadataLastModified = await metadataFile.stat();
-        if (cacheLastModified.modified.isBefore(metadataLastModified.modified)) {
-          isCacheValid = false; // אם כן, המטמון לא תקין
+        // בדיקה רקורסיבית של כל התיקיות והקבצים בספרייה
+        final libraryDir =
+            Directory('$libraryPath${Platform.pathSeparator}אוצריא');
+        if (await libraryDir.exists()) {
+          await for (FileSystemEntity entity
+              in libraryDir.list(recursive: true)) {
+            final entityStat = await entity.stat();
+            if (cacheLastModified.modified.isBefore(entityStat.modified)) {
+              isCacheValid = false;
+              break;
+            }
+          }
         }
-      }
-    } catch (_) {
-      isCacheValid = false; // אם יש שגיאה בבדיקה, נניח שהמטמון לא תקין
-    }
-  }
 
-  // --- טעינה מהמטמון (רק אם הוא קיים ותקין) ---
-  if (isCacheValid) {
+        // 3. בדוק אם המטמון ישן יותר מקובץ המטא-דאטה
+        if (isCacheValid && await metadataFile.exists()) {
+          final metadataLastModified = await metadataFile.stat();
+          if (cacheLastModified.modified
+              .isBefore(metadataLastModified.modified)) {
+            isCacheValid = false; // אם כן, המטמון לא תקין
+          }
+        }
+      } catch (_) {
+        isCacheValid = false; // אם יש שגיאה בבדיקה, נניח שהמטמון לא תקין
+      }
+    }
+
+    // --- טעינה מהמטמון (רק אם הוא קיים ותקין) ---
+    if (isCacheValid) {
+      try {
+        final jsonString = await cacheFile.readAsString();
+        final jsonMap = await Isolate.run(() => jsonDecode(jsonString));
+
+        // טוען את הנתיבים מהמטמון
+        titleToPath = Future.value(
+            Map<String, String>.from(jsonMap['titleToPath'] ?? {}));
+
+        // תמיד טוען את המטא-דאטה מחדש מהקובץ כדי להבטיח עדכניות
+        metadata = _getMetadata();
+
+        return Library.fromJson(Map<String, dynamic>.from(jsonMap['library']));
+      } catch (_) {
+        // אם יש שגיאה בקריאה מהמטמון, נסרוק מחדש
+      }
+    }
+
+    // --- סריקה מלאה (אם המטמון לא קיים או לא תקין) ---
+    titleToPath = _getTitleToPath();
+    metadata = _getMetadata();
+    final lib = await _getLibraryFromDirectory(
+        '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
+
+    // --- יצירת קובץ מטמון חדש ---
     try {
-      final jsonString = await cacheFile.readAsString();
-      final jsonMap = await Isolate.run(() => jsonDecode(jsonString));
-
-      // טוען גם את הנתיבים וגם את המטא-דאטה מהמטמון
-      titleToPath = Future.value(Map<String, String>.from(jsonMap['titleToPath'] ?? {}));
-      
-      // המפתח 'metadata' עדיין לא קיים במטמונים ישנים, לכן צריך בדיקה
-      if (jsonMap.containsKey('metadata')) {
-        metadata = Future.value(Map<String, Map<String, dynamic>>.from(jsonMap['metadata']));
-      } else {
-        metadata = _getMetadata(); // טעינה רגילה אם המפתח חסר
-      }
-
-      return Library.fromJson(Map<String, dynamic>.from(jsonMap['library']));
+      final jsonMap = {
+        'library': lib.toJson(),
+        'titleToPath': await titleToPath,
+        // לא שומרים את המטא-דאטה במטמון כדי שתיטען תמיד מחדש
+      };
+      await cacheFile.writeAsString(jsonEncode(jsonMap));
     } catch (_) {
-      // אם יש שגיאה בקריאה מהמטמון, נסרוק מחדש
+      // מתעלם משגיאות כתיבה למטמון
     }
+
+    return lib;
   }
-
-  // --- סריקה מלאה (אם המטמון לא קיים או לא תקין) ---
-  titleToPath = _getTitleToPath();
-  metadata = _getMetadata();
-  final lib = await _getLibraryFromDirectory(
-      '$libraryPath${Platform.pathSeparator}אוצריא', await metadata);
-
-  // --- יצירת קובץ מטמון חדש ---
-  try {
-    final jsonMap = {
-      'library': lib.toJson(),
-      'titleToPath': await titleToPath,
-      'metadata': await metadata,
-    };
-    await cacheFile.writeAsString(jsonEncode(jsonMap));
-  } catch (_) {
-    // מתעלם משגיאות כתיבה למטמון
-  }
-
-  return lib;
-}
 
   /// Recursively builds the library structure from a directory.
   ///
@@ -293,19 +299,19 @@ class FileSystemData {
           if (!RegExp(r'^\d+$').hasMatch(bookId)) continue;
           String? localPath;
 
-          if (hebrewBooksPath != null ) {
+          if (hebrewBooksPath != null) {
             localPath =
                 '$hebrewBooksPath${Platform.pathSeparator}Hebrewbooks_org_$bookId.pdf';
-            if (! File(localPath).existsSync()) {
-              localPath =   '$hebrewBooksPath${Platform.pathSeparator}$bookId.pdf';    
-              if (! File(localPath).existsSync()) {
+            if (!File(localPath).existsSync()) {
+              localPath =
+                  '$hebrewBooksPath${Platform.pathSeparator}$bookId.pdf';
+              if (!File(localPath).existsSync()) {
                 localPath = null;
-              }          
+              }
             }
-              
           }
 
-          if (localPath != null ) {
+          if (localPath != null) {
             // If local file exists, add as PdfBook
             books.add(PdfBook(
               title: row[1].toString(),
@@ -533,6 +539,21 @@ class FileSystemData {
   Future<bool> bookExists(String title) async {
     final titleToPath = await this.titleToPath;
     return titleToPath.keys.contains(title);
+  }
+
+  /// Clears the library cache to force a full rescan on next load.
+  /// Useful for development and troubleshooting.
+  Future<void> clearCache() async {
+    try {
+      final cachePath =
+          '$libraryPath${Platform.pathSeparator}library_cache.json';
+      final cacheFile = File(cachePath);
+      if (await cacheFile.exists()) {
+        await cacheFile.delete();
+      }
+    } catch (_) {
+      // מתעלם משגיאות מחיקה
+    }
   }
 
   /// Returns true if the book belongs to Tanach (Torah, Neviim or Ketuvim).
