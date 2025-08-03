@@ -341,12 +341,6 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
           final topicsOnlyFacet = categoryPath;
           final titleOnlyFacet = "/${book.title}";
 
-          print(
-              '🔍 Checking facets for book "${book.title}" in category "${category.path}":');
-          print('  - Full: $fullFacet');
-          print('  - Topics only: $topicsOnlyFacet');
-          print('  - Title only: $titleOnlyFacet');
-
           // ננסה קודם עם ה-facet המלא
           final countFuture = widget.tab.countForFacetCached(fullFacet);
           return FutureBuilder<int>(
@@ -355,7 +349,6 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 final count = snapshot.data!;
-                print('📊 Count for "${book.title}" ($fullFacet): $count');
 
                 // אם יש תוצאות, נציג את הספר
                 if (count > 0 || count == -1) {
@@ -370,8 +363,6 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                   builder: (context, topicsSnapshot) {
                     if (topicsSnapshot.hasData) {
                       final topicsCount = topicsSnapshot.data!;
-                      print(
-                          '📊 Count for "${book.title}" ($topicsOnlyFacet): $topicsCount');
 
                       if (topicsCount > 0 || topicsCount == -1) {
                         // יש תוצאות בקטגוריה, אבל לא בספר הספציפי
@@ -386,8 +377,6 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                         builder: (context, titleSnapshot) {
                           if (titleSnapshot.hasData) {
                             final titleCount = titleSnapshot.data!;
-                            print(
-                                '📊 Count for "${book.title}" ($titleOnlyFacet): $titleCount');
 
                             if (titleCount > 0 || titleCount == -1) {
                               return _buildBookTile(book, titleCount, level + 1,

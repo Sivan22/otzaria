@@ -20,6 +20,7 @@ class SettingsRepository {
   static const String keyDefaultSidebarOpen = 'key-default-sidebar-open';
   static const String keyPinSidebar = 'key-pin-sidebar';
   static const String keySidebarWidth = 'key-sidebar-width';
+  static const String keyFacetFilteringWidth = 'key-facet-filtering-width';
 
   final SettingsWrapper _settings;
 
@@ -29,7 +30,7 @@ class SettingsRepository {
   Future<Map<String, dynamic>> loadSettings() async {
     // Initialize default settings to disk if needed
     await _initializeDefaultsIfNeeded();
-    
+
     return {
       'isDarkMode': _settings.getValue<bool>(keyDarkMode, defaultValue: false),
       'seedColor': ColorUtils.colorFromString(
@@ -88,6 +89,8 @@ class SettingsRepository {
       ),
       'sidebarWidth':
           _settings.getValue<double>(keySidebarWidth, defaultValue: 300),
+      'facetFilteringWidth':
+          _settings.getValue<double>(keyFacetFilteringWidth, defaultValue: 235),
     };
   }
 
@@ -142,9 +145,11 @@ class SettingsRepository {
   Future<void> updateDefaultRemoveNikud(bool value) async {
     await _settings.setValue(keyDefaultNikud, value);
   }
+
   Future<void> updateRemoveNikudFromTanach(bool value) async {
     await _settings.setValue(keyRemoveNikudFromTanach, value);
   }
+
   Future<void> updateDefaultSidebarOpen(bool value) async {
     await _settings.setValue(keyDefaultSidebarOpen, value);
   }
@@ -157,6 +162,10 @@ class SettingsRepository {
     await _settings.setValue(keySidebarWidth, value);
   }
 
+  Future<void> updateFacetFilteringWidth(double value) async {
+    await _settings.setValue(keyFacetFilteringWidth, value);
+  }
+
   /// Initialize default settings to disk if this is the first app launch
   Future<void> _initializeDefaultsIfNeeded() async {
     if (await _checkIfDefaultsNeeded()) {
@@ -167,7 +176,8 @@ class SettingsRepository {
   /// Check if default settings need to be initialized
   Future<bool> _checkIfDefaultsNeeded() async {
     // Use a dedicated flag to track initialization
-    return !_settings.getValue<bool>('settings_initialized', defaultValue: false);
+    return !_settings.getValue<bool>('settings_initialized',
+        defaultValue: false);
   }
 
   /// Write all default settings to persistent storage
@@ -189,7 +199,8 @@ class SettingsRepository {
     await _settings.setValue(keyDefaultSidebarOpen, false);
     await _settings.setValue(keyPinSidebar, false);
     await _settings.setValue(keySidebarWidth, 300.0);
-    
+    await _settings.setValue(keyFacetFilteringWidth, 235.0);
+
     // Mark as initialized
     await _settings.setValue('settings_initialized', true);
   }

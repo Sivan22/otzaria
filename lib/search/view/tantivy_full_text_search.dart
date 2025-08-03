@@ -12,6 +12,7 @@ import 'package:otzaria/search/view/full_text_settings_widgets.dart';
 import 'package:otzaria/search/view/tantivy_search_field.dart';
 import 'package:otzaria/search/view/tantivy_search_results.dart';
 import 'package:otzaria/search/view/full_text_facet_filtering.dart';
+import 'package:otzaria/widgets/resizable_facet_filtering.dart';
 
 class TantivyFullTextSearch extends StatefulWidget {
   final SearchingTab tab;
@@ -168,14 +169,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
                 Expanded(
                   child: Row(
                     children: [
-                      SizedBox(
-                        width: 235,
-                        child: SearchFacetFiltering(tab: widget.tab),
-                      ),
-                      Container(
-                        width: 1,
-                        color: Colors.grey.shade300,
-                      ),
+                      ResizableFacetFiltering(tab: widget.tab),
                       Expanded(
                         child: Builder(builder: (context) {
                           if (state.isLoading) {

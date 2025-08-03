@@ -27,6 +27,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateDefaultSidebarOpen>(_onUpdateDefaultSidebarOpen);
     on<UpdatePinSidebar>(_onUpdatePinSidebar);
     on<UpdateSidebarWidth>(_onUpdateSidebarWidth);
+    on<UpdateFacetFilteringWidth>(_onUpdateFacetFilteringWidth);
   }
 
   Future<void> _onLoadSettings(
@@ -51,7 +52,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       removeNikudFromTanach: settings['removeNikudFromTanach'],
       defaultSidebarOpen: settings['defaultSidebarOpen'],
       pinSidebar: settings['pinSidebar'],
-      sidebarWidth: settings['sidebarWidth'],      
+      sidebarWidth: settings['sidebarWidth'],
+      facetFilteringWidth: settings['facetFilteringWidth'],
     ));
   }
 
@@ -166,6 +168,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     await _repository.updateRemoveNikudFromTanach(event.removeNikudFromTanach);
     emit(state.copyWith(removeNikudFromTanach: event.removeNikudFromTanach));
   }
+
   Future<void> _onUpdateDefaultSidebarOpen(
     UpdateDefaultSidebarOpen event,
     Emitter<SettingsState> emit,
@@ -188,5 +191,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _repository.updateSidebarWidth(event.sidebarWidth);
     emit(state.copyWith(sidebarWidth: event.sidebarWidth));
+  }
+
+  Future<void> _onUpdateFacetFilteringWidth(
+    UpdateFacetFilteringWidth event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _repository.updateFacetFilteringWidth(event.facetFilteringWidth);
+    emit(state.copyWith(facetFilteringWidth: event.facetFilteringWidth));
   }
 }

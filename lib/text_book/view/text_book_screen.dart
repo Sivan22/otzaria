@@ -591,7 +591,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'פירוט הטעות (אופציונלי):',
+                        'פירוט הטעות (חובה לפרט מהי הטעות, בלא פירוט לא נוכל לטפל):',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -1007,73 +1007,75 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         child: SizedBox(
           width: state.showLeftPane ? width : 0,
           child: Padding(
-          padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TabBar(
-                      tabs: const [
-                        Tab(text: 'ניווט'),
-                        Tab(text: 'חיפוש'),
-                        Tab(text: 'פרשנות'),
-                        Tab(text: 'קישורים'),
-                      ],
-                      controller: tabController,
-                      onTap: (value) {
-                        if (value == 1 && !Platform.isAndroid) {
-                          textSearchFocusNode.requestFocus();
-                        } else if (value == 0 && !Platform.isAndroid) {
-                          navigationSearchFocusNode.requestFocus();
-                        }
-                      },
-                    ),
-                  ),
-                  if (MediaQuery.of(context).size.width >= 600)
-                    IconButton(
-                      onPressed:
-                          (Settings.getValue<bool>('key-pin-sidebar') ?? false)
-                              ? null
-                              : () => context.read<TextBookBloc>().add(
-                                    TogglePinLeftPane(!state.pinLeftPane),
-                                  ),
-                      icon: const Icon(Icons.push_pin),
-                      isSelected: state.pinLeftPane ||
-                          (Settings.getValue<bool>('key-pin-sidebar') ?? false),
-                    ),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: tabController,
+            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    _buildTocViewer(context, state),
-                    CallbackShortcuts(
-                      bindings: <ShortcutActivator, VoidCallback>{
-                        LogicalKeySet(
-                          LogicalKeyboardKey.control,
-                          LogicalKeyboardKey.keyF,
-                        ): () {
-                          context.read<TextBookBloc>().add(
-                                const ToggleLeftPane(true),
-                              );
-                          tabController.index = 1;
-                          textSearchFocusNode.requestFocus();
+                    Expanded(
+                      child: TabBar(
+                        tabs: const [
+                          Tab(text: 'ניווט'),
+                          Tab(text: 'חיפוש'),
+                          Tab(text: 'פרשנות'),
+                          Tab(text: 'קישורים'),
+                        ],
+                        controller: tabController,
+                        onTap: (value) {
+                          if (value == 1 && !Platform.isAndroid) {
+                            textSearchFocusNode.requestFocus();
+                          } else if (value == 0 && !Platform.isAndroid) {
+                            navigationSearchFocusNode.requestFocus();
+                          }
                         },
-                      },
-                      child: _buildSearchView(context, state),
+                      ),
                     ),
-                    _buildCommentaryView(),
-                    _buildLinkView(context, state),
+                    if (MediaQuery.of(context).size.width >= 600)
+                      IconButton(
+                        onPressed:
+                            (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false)
+                                ? null
+                                : () => context.read<TextBookBloc>().add(
+                                      TogglePinLeftPane(!state.pinLeftPane),
+                                    ),
+                        icon: const Icon(Icons.push_pin),
+                        isSelected: state.pinLeftPane ||
+                            (Settings.getValue<bool>('key-pin-sidebar') ??
+                                false),
+                      ),
                   ],
                 ),
-              ),
-            ],
+                Expanded(
+                  child: TabBarView(
+                    controller: tabController,
+                    children: [
+                      _buildTocViewer(context, state),
+                      CallbackShortcuts(
+                        bindings: <ShortcutActivator, VoidCallback>{
+                          LogicalKeySet(
+                            LogicalKeyboardKey.control,
+                            LogicalKeyboardKey.keyF,
+                          ): () {
+                            context.read<TextBookBloc>().add(
+                                  const ToggleLeftPane(true),
+                                );
+                            tabController.index = 1;
+                            textSearchFocusNode.requestFocus();
+                          },
+                        },
+                        child: _buildSearchView(context, state),
+                      ),
+                      _buildCommentaryView(),
+                      _buildLinkView(context, state),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
