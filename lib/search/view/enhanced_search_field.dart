@@ -1246,10 +1246,10 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     if (wordInfo == null ||
         wordInfo['word'] == null ||
         wordInfo['word'].isEmpty) {
-      return Center(
+      return const Center(
         child: Text(
           'הקלד או הצב את הסמן על מילה כלשהיא, כדי לבחור אפשרויות חיפוש',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(fontSize: 12, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
       );

@@ -44,6 +44,7 @@ void main() {
         'defaultSidebarOpen': true,
         'pinSidebar': true,
         'sidebarWidth': 300.0,
+        'facetFilteringWidth': 235.0,
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -74,6 +75,7 @@ void main() {
             defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
             pinSidebar: mockSettings['pinSidebar'] as bool,
             sidebarWidth: mockSettings['sidebarWidth'] as double,
+            facetFilteringWidth: mockSettings['facetFilteringWidth'] as double,
           ),
         ],
         verify: (_) {
