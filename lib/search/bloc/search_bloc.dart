@@ -139,6 +139,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     emit(state.copyWith(
       filterQuery: null,
       filteredBooks: null,
+      facetCounts: {}, // ניקוי ספירות הפאסטים כשמנקים את הסינון
     ));
   }
 
@@ -260,7 +261,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
 
     // אם אין, נבצע ספירה ישירה (fallback)
-    return TantivyDataProvider.instance.countTexts(
+    print('🔢 Counting texts for facet: $facet');
+    print('🔢 Query: ${state.searchQuery}');
+    print(
+        '🔢 Books to search: ${state.booksToSearch.map((e) => e.title).toList()}');
+    final result = await TantivyDataProvider.instance.countTexts(
       state.searchQuery.replaceAll('"', '\\"'),
       state.booksToSearch.map((e) => e.title).toList(),
       [facet],
@@ -270,6 +275,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       alternativeWords: alternativeWords,
       searchOptions: searchOptions,
     );
+    print('🔢 Count result for $facet: $result');
+    return result;
   }
 
   /// ספירה מקבצת של תוצאות עבור מספר facets בבת אחת - לשיפור ביצועים
@@ -376,12 +383,18 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   ) {
     print(
         '📝 Updating facet counts: ${event.facetCounts.entries.where((e) => e.value > 0).map((e) => '${e.key}: ${e.value}').join(', ')}');
-    final newFacetCounts = {...state.facetCounts, ...event.facetCounts};
+    final newFacetCounts = event.facetCounts.isEmpty
+        ? <String, int>{} // אם מעבירים מפה ריקה, מנקים הכל
+        : {...state.facetCounts, ...event.facetCounts};
     emit(state.copyWith(
       facetCounts: newFacetCounts,
     ));
     print('📊 Total facets in state: ${newFacetCounts.length}');
-    print(
-        '📋 All cached facets: ${newFacetCounts.keys.take(10).join(', ')}...');
+    if (newFacetCounts.isNotEmpty) {
+      print(
+          '📋 All cached facets: ${newFacetCounts.keys.take(10).join(', ')}...');
+    } else {
+      print('🧹 Facet counts cleared');
+    }
   }
 }

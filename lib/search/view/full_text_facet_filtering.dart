@@ -117,12 +117,15 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
     );
   }
 
-  Widget _buildBookTile(Book book, int count, int level) {
+  Widget _buildBookTile(Book book, int count, int level,
+      {String? categoryPath}) {
     if (count == 0) {
       return const SizedBox.shrink();
     }
 
-    final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+    // בניית facet נכון על בסיס נתיב הקטגוריה
+    final facet =
+        categoryPath != null ? "$categoryPath/${book.title}" : "/${book.title}";
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         final isSelected = state.currentFacets.contains(facet);
@@ -166,10 +169,8 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         // יצירת רשימת כל ה-facets בבת אחת
-        final facets = books
-            .map(
-                (book) => "/${book.topics.replaceAll(', ', '/')}/${book.title}")
-            .toList();
+        // עבור רשימת ספרים מסוננת, נשתמש בשם הספר בלבד
+        final facets = books.map((book) => "/${book.title}").toList();
 
         // ספירה מקבצת של כל ה-facets
         final countsFuture = widget.tab.countForMultipleFacets(facets);
@@ -186,8 +187,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                 itemCount: books.length,
                 itemBuilder: (context, index) {
                   final book = books[index];
-                  final facet =
-                      "/${book.topics.replaceAll(', ', '/')}/${book.title}";
+                  final facet = "/${book.title}";
                   final count = counts[facet] ?? 0;
                   return _buildBookTile(book, count, 0);
                 },
@@ -223,7 +223,7 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
                   ? Theme.of(context)
                       .colorScheme
                       .surfaceTint
-                      .withOpacity(_kBackgroundOpacity)
+                      .withValues(alpha: _kBackgroundOpacity)
                   : null,
               child: Row(
                 textDirection:
@@ -305,49 +305,112 @@ class _SearchFacetFilteringState extends State<SearchFacetFiltering>
   }
 
   List<Widget> _buildCategoryChildren(Category category, int level) {
-    return [
-      ...category.subCategories.map((subCategory) {
-        return BlocBuilder<SearchBloc, SearchState>(
-          builder: (context, state) {
-            final countFuture =
-                widget.tab.countForFacetCached(subCategory.path);
-            return FutureBuilder<int>(
-              key: ValueKey(
-                  '${state.searchQuery}_${subCategory.path}'), // מפתח שמשתנה עם החיפוש
-              future: countFuture,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return _buildCategoryTile(
-                      subCategory, snapshot.data!, level + 1);
+    final List<Widget> children = [];
+
+    // הוספת תת-קטגוריות
+    for (final subCategory in category.subCategories) {
+      children.add(BlocBuilder<SearchBloc, SearchState>(
+        builder: (context, state) {
+          final countFuture = widget.tab.countForFacetCached(subCategory.path);
+          return FutureBuilder<int>(
+            key: ValueKey('${state.searchQuery}_${subCategory.path}'),
+            future: countFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final count = snapshot.data!;
+                // מציגים את הקטגוריה רק אם יש בה תוצאות או אם אנחנו בטעינה
+                if (count > 0 || count == -1) {
+                  return _buildCategoryTile(subCategory, count, level + 1);
                 }
-                // במקום shrink, נציג placeholder עם ספינר קטן
-                return _buildCategoryTile(subCategory, -1, level + 1);
-              },
-            );
-          },
-        );
-      }),
-      ...category.books.map((book) {
-        return BlocBuilder<SearchBloc, SearchState>(
-          builder: (context, state) {
-            final facet = "/${book.topics.replaceAll(', ', '/')}/${book.title}";
-            final countFuture = widget.tab.countForFacetCached(facet);
-            return FutureBuilder<int>(
-              key: ValueKey(
-                  '${state.searchQuery}_$facet'), // מפתח שמשתנה עם החיפוש
-              future: countFuture,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return _buildBookTile(book, snapshot.data!, level + 1);
+                return const SizedBox.shrink();
+              }
+              return _buildCategoryTile(subCategory, -1, level + 1);
+            },
+          );
+        },
+      ));
+    }
+
+    // הוספת ספרים
+    for (final book in category.books) {
+      children.add(BlocBuilder<SearchBloc, SearchState>(
+        builder: (context, state) {
+          // בניית facet נכון על בסיס נתיב הקטגוריה
+          final categoryPath = category.path;
+          final fullFacet = "$categoryPath/${book.title}";
+          final topicsOnlyFacet = categoryPath;
+          final titleOnlyFacet = "/${book.title}";
+
+          print(
+              '🔍 Checking facets for book "${book.title}" in category "${category.path}":');
+          print('  - Full: $fullFacet');
+          print('  - Topics only: $topicsOnlyFacet');
+          print('  - Title only: $titleOnlyFacet');
+
+          // ננסה קודם עם ה-facet המלא
+          final countFuture = widget.tab.countForFacetCached(fullFacet);
+          return FutureBuilder<int>(
+            key: ValueKey('${state.searchQuery}_$fullFacet'),
+            future: countFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final count = snapshot.data!;
+                print('📊 Count for "${book.title}" ($fullFacet): $count');
+
+                // אם יש תוצאות, נציג את הספר
+                if (count > 0 || count == -1) {
+                  return _buildBookTile(book, count, level + 1,
+                      categoryPath: category.path);
                 }
-                // במקום shrink, נציג placeholder עם ספינר קטן
-                return _buildBookTile(book, -1, level + 1);
-              },
-            );
-          },
-        );
-      }),
-    ];
+
+                // אם אין תוצאות עם ה-facet המלא, ננסה עם topics בלבד
+                return FutureBuilder<int>(
+                  key: ValueKey('${state.searchQuery}_$topicsOnlyFacet'),
+                  future: widget.tab.countForFacetCached(topicsOnlyFacet),
+                  builder: (context, topicsSnapshot) {
+                    if (topicsSnapshot.hasData) {
+                      final topicsCount = topicsSnapshot.data!;
+                      print(
+                          '📊 Count for "${book.title}" ($topicsOnlyFacet): $topicsCount');
+
+                      if (topicsCount > 0 || topicsCount == -1) {
+                        // יש תוצאות בקטגוריה, אבל לא בספר הספציפי
+                        // לא נציג את הספר כי זה יגרום להצגת ספרים ללא תוצאות
+                        return const SizedBox.shrink();
+                      }
+
+                      // ננסה עם שם הספר בלבד
+                      return FutureBuilder<int>(
+                        key: ValueKey('${state.searchQuery}_$titleOnlyFacet'),
+                        future: widget.tab.countForFacetCached(titleOnlyFacet),
+                        builder: (context, titleSnapshot) {
+                          if (titleSnapshot.hasData) {
+                            final titleCount = titleSnapshot.data!;
+                            print(
+                                '📊 Count for "${book.title}" ($titleOnlyFacet): $titleCount');
+
+                            if (titleCount > 0 || titleCount == -1) {
+                              return _buildBookTile(book, titleCount, level + 1,
+                                  categoryPath: category.path);
+                            }
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      );
+                    }
+                    return _buildBookTile(book, -1, level + 1);
+                  },
+                );
+              }
+              return _buildBookTile(book, -1, level + 1,
+                  categoryPath: category.path);
+            },
+          );
+        },
+      ));
+    }
+
+    return children;
   }
 
   Widget _buildFacetTree() {
