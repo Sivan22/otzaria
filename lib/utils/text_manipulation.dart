@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 String stripHtmlIfNeeded(String text) {
@@ -30,10 +31,55 @@ String getTitleFromPath(String path) {
 }
 
 Future<bool> hasTopic(String title, String topic) async {
+  // First try to load CSV data
+  try {
+    final libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
+    final csvPath =
+        '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}סדר הדורות.csv';
+    final csvFile = File(csvPath);
+
+    print('DEBUG: Checking CSV for title: $title, topic: $topic');
+    print('DEBUG: CSV path: $csvPath');
+    print('DEBUG: CSV exists: ${await csvFile.exists()}');
+
+    if (await csvFile.exists()) {
+      final csvString = await csvFile.readAsString();
+      final lines = csvString.split('\n');
+      print('DEBUG: CSV has ${lines.length} lines');
+
+      // Skip header and search for the book
+      for (int i = 1; i < lines.length; i++) {
+        final parts = lines[i].split(',');
+        if (parts.isNotEmpty && parts[0].trim() == title) {
+          print('DEBUG: Found book in CSV: $title');
+          // Found the book, check if topic matches generation or category
+          if (parts.length >= 3) {
+            final generation = parts[1].trim();
+            final category = parts[2].trim();
+            print('DEBUG: Book generation: $generation, category: $category');
+            final result = generation == topic || category == topic;
+            print('DEBUG: Topic match result: $result');
+            return result;
+          }
+        }
+      }
+
+      // Book not found in CSV, it's "פרשנים נוספים"
+      print('DEBUG: Book not found in CSV, checking if topic is פרשנים נוספים');
+      return topic == 'פרשנים נוספים';
+    } else {
+      print('DEBUG: CSV file does not exist, falling back to path-based check');
+    }
+  } catch (e) {
+    print('DEBUG: Error reading CSV: $e');
+    // If CSV fails, fall back to path-based check
+  }
+
+  // Fallback to original path-based logic
+  print('DEBUG: Using fallback path-based logic');
   final titleToPath = await FileSystemData.instance.titleToPath;
   return titleToPath[title]?.contains(topic) ?? false;
 }
-
 
 // Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
 final RegExp _holyNameRegex = RegExp(
@@ -345,22 +391,34 @@ String replaceParaphrases(String s) {
 Future<Map<String, List<String>>> splitByEra(
   List<String> titles,
 ) async {
-  // יוצרים מבנה נתונים ריק לכל שלוש הקטגוריות
+  // יוצרים מבנה נתונים ריק לכל הקטגוריות
   final Map<String, List<String>> byEra = {
+    'תורה שבכתב': [],
+    'חזל': [],
     'ראשונים': [],
     'אחרונים': [],
     'מחברי זמננו': [],
+    'פרשנים נוספים': [],
   };
 
   // ממיינים כל פרשן לקטגוריה הראשונה שמתאימה לו
   for (final t in titles) {
-    if (await hasTopic(t, 'ראשונים')) {
+    if (await hasTopic(t, 'תורה שבכתב')) {
+      byEra['תורה שבכתב']!.add(t);
+    } else if (await hasTopic(t, 'חזל')) {
+      byEra['חזל']!.add(t);
+    } else if (await hasTopic(t, 'ראשונים')) {
       byEra['ראשונים']!.add(t);
     } else if (await hasTopic(t, 'אחרונים')) {
       byEra['אחרונים']!.add(t);
     } else if (await hasTopic(t, 'מחברי זמננו')) {
       byEra['מחברי זמננו']!.add(t);
+    } else {
+      // כל ספר שלא נמצא בקטגוריות הקודמות יוכנס ל"פרשנים נוספים"
+      byEra['פרשנים נוספים']!.add(t);
     }
   }
+
+  // מחזירים את כל הקטגוריות, גם אם הן ריקות
   return byEra;
 }
