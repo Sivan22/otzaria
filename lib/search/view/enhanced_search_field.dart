@@ -1622,27 +1622,64 @@ class _SearchOptionsContentState extends State<_SearchOptionsContent> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. נקודת ההכרעה: מה הרוחב המינימלי שדרוש כדי להציג הכל בשורה אחת?
-    // אפשר לשחק עם הערך הזה, אבל 650 הוא נקודת התחלה טובה.
-    const double singleRowThreshold = 650.0;
+    // נקודות ההכרעה לתצוגות שונות
+    const double singleRowThreshold = 650.0; // רוחב מינימלי לשורה אחת
+    const double threeColumnsThreshold = 450.0; // רוחב מינימלי ל-3 טורים
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // constraints.maxWidth נותן לנו את הרוחב הזמין האמיתי למגירה
         final availableWidth = constraints.maxWidth;
 
-        // 2. אם המסך רחב מספיק - נשתמש ב-Wrap (שיראה כמו שורה אחת)
+        // 1. אם המסך רחב מספיק - נשתמש ב-Wrap (שיראה כמו שורה אחת)
         if (availableWidth >= singleRowThreshold) {
           return Wrap(
             spacing: 16.0,
             runSpacing: 8.0,
-            alignment: WrapAlignment.center, // מרכוז יפה של הפריטים
+            alignment: WrapAlignment.center,
             children: _availableOptions
                 .map((option) => _buildCheckbox(option))
                 .toList(),
           );
         }
-        // 3. אם המסך צר מדי - נעבור לתצוגת טורים מסודרת
+        // 2. אם יש מקום ל-3 טורים - נחלק ל-3
+        else if (availableWidth >= threeColumnsThreshold) {
+          // מחלקים את רשימת האפשרויות לשלושה טורים
+          final int itemsPerColumn = (_availableOptions.length / 3).ceil();
+          final List<String> column1Options =
+              _availableOptions.take(itemsPerColumn).toList();
+          final List<String> column2Options = _availableOptions
+              .skip(itemsPerColumn)
+              .take(itemsPerColumn)
+              .toList();
+          final List<String> column3Options =
+              _availableOptions.skip(itemsPerColumn * 2).toList();
+
+          // פונקציית עזר לבניית עמודה
+          Widget buildColumn(List<String> options) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: options
+                  .map((option) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        child: _buildCheckbox(option),
+                      ))
+                  .toList(),
+            );
+          }
+
+          // מחזירים שורה שמכילה את שלושת הטורים
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildColumn(column1Options),
+              buildColumn(column2Options),
+              buildColumn(column3Options),
+            ],
+          );
+        }
+        // 3. אם המסך צר מדי - נעבור לתצוגת 2 טורים
         else {
           // מחלקים את רשימת האפשרויות לשתי עמודות
           final int middle = (_availableOptions.length / 2).ceil();
