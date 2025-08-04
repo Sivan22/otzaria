@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:otzaria/history/bloc/history_bloc.dart';
+import 'package:otzaria/history/bloc/history_event.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/search/bloc/search_bloc.dart';
@@ -1496,6 +1498,9 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                       });
                     },
                     onSubmitted: (e) {
+                      context
+                          .read<HistoryBloc>()
+                          .add(AddHistory(widget.widget.tab));
                       context.read<SearchBloc>().add(UpdateSearchQuery(e,
                           customSpacing: widget.widget.tab.spacingValues,
                           alternativeWords: widget.widget.tab.alternativeWords,
@@ -1508,6 +1513,9 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                       labelText: "לחיפוש הקש אנטר או לחץ על סמל החיפוש",
                       prefixIcon: IconButton(
                         onPressed: () {
+                          context
+                              .read<HistoryBloc>()
+                              .add(AddHistory(widget.widget.tab));
                           context.read<SearchBloc>().add(UpdateSearchQuery(
                               widget.widget.tab.queryController.text,
                               customSpacing: widget.widget.tab.spacingValues,

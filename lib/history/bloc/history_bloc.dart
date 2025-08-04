@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/bookmarks/models/bookmark.dart';
+import 'package:otzaria/models/books.dart';
 import 'package:otzaria/history/bloc/history_event.dart';
 import 'package:otzaria/history/bloc/history_state.dart';
 import 'package:otzaria/history/history_repository.dart';
@@ -63,7 +64,23 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
   }
 
   Future<Bookmark?> _bookmarkFromTab(OpenedTab tab) async {
-    if (tab is SearchingTab) return null;
+    if (tab is SearchingTab) {
+      final searchingTab = tab;
+      final text = searchingTab.queryController.text;
+      if (text.trim().isEmpty) return null;
+
+      final formattedQuery = _buildFormattedQuery(searchingTab);
+
+      return Bookmark(
+        ref: formattedQuery,
+        book: TextBook(title: text), // Use the original text for the book title
+        index: 0, // No specific index for a search
+        isSearch: true,
+        searchOptions: searchingTab.searchOptions,
+        alternativeWords: searchingTab.alternativeWords,
+        spacingValues: searchingTab.spacingValues,
+      );
+    }
 
     if (tab is TextBookTab) {
       final blocState = tab.bloc.state;
@@ -88,6 +105,84 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
       );
     }
     return null;
+  }
+
+  String _buildFormattedQuery(SearchingTab tab) {
+    final text = tab.queryController.text;
+    if (text.trim().isEmpty) return '';
+
+    final words = text.trim().split(RegExp(r'\\s+'));
+    final List<String> parts = [];
+
+    const Map<String, String> optionAbbreviations = {
+      'קידומות': 'ק',
+      'סיומות': 'ס',
+      'קידומות דקדוקיות': 'קד',
+      'סיומות דקדוקיות': 'סד',
+      'כתיב מלא/חסר': 'מח',
+      'חלק ממילה': 'ש',
+    };
+
+    const Set<String> suffixOptions = {
+      'סיומות',
+      'סיומות דקדוקיות',
+    };
+
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      final wordKey = '${word}_$i';
+
+      final wordOptions = tab.searchOptions[wordKey];
+      final selectedOptions = wordOptions?.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList() ??
+          [];
+
+      final alternativeWords = tab.alternativeWords[i] ?? [];
+
+      final prefixes = selectedOptions
+          .where((opt) => !suffixOptions.contains(opt))
+          .map((opt) => optionAbbreviations[opt] ?? opt)
+          .toList();
+
+      final suffixes = selectedOptions
+          .where((opt) => suffixOptions.contains(opt))
+          .map((opt) => optionAbbreviations[opt] ?? opt)
+          .toList();
+
+      String wordPart = '';
+      if (prefixes.isNotEmpty) {
+        wordPart += '(${prefixes.join(',')})';
+      }
+      wordPart += word;
+
+      if (alternativeWords.isNotEmpty) {
+        wordPart += ' או ${alternativeWords.join(' או ')}';
+      }
+
+      if (suffixes.isNotEmpty) {
+        wordPart += '(${suffixes.join(',')})';
+      }
+
+      parts.add(wordPart);
+    }
+
+    String result = '';
+    for (int i = 0; i < parts.length; i++) {
+      result += parts[i];
+      if (i < parts.length - 1) {
+        final spacingKey = '$i-${i + 1}';
+        final spacingValue = tab.spacingValues[spacingKey];
+        if (spacingValue != null && spacingValue.isNotEmpty) {
+          result += ' +$spacingValue ';
+        } else {
+          result += ' + ';
+        }
+      }
+    }
+
+    return result;
   }
 
   Future<void> _onCaptureStateForHistory(
