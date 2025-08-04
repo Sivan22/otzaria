@@ -91,11 +91,11 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         showLeftPane: initial.showLeftPane || initial.searchText.isNotEmpty,
         showSplitView: event.showSplitView,
         activeCommentators: initial.commentators, // שימוש במשתנה המקומי
-        torahShebichtav: eras['תורה שבכתב']!,
-        chazal: eras['חזל']!,
-        rishonim: eras['ראשונים']!,
-        acharonim: eras['אחרונים']!,
-        modernCommentators: eras['מחברי זמננו']!,
+        torahShebichtav: eras['תורה שבכתב'] ?? [],
+        chazal: eras['חז"ל'] ?? [],
+        rishonim: eras['ראשונים'] ?? [],
+        acharonim: eras['אחרונים'] ?? [],
+        modernCommentators: eras['מחברי זמננו'] ?? [],
         removeNikud: removeNikud,
         visibleIndices: [initial.index], // שימוש במשתנה המקומי
         pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
