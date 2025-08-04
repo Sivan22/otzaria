@@ -393,7 +393,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                 TextStyle(
                   fontSize: settingsState.fontSize,
                   fontFamily: settingsState.fontFamily,
-                  color: Colors.red,
+                  color: const Color(0xFFD32F2F), // צבע אדום חזק יותר
                   fontWeight: FontWeight.bold,
                 ),
                 availableWidth,

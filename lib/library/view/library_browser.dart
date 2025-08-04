@@ -27,6 +27,10 @@ import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 import 'package:otzaria/library/view/grid_items.dart';
 import 'package:otzaria/library/view/otzar_book_dialog.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
+import 'package:otzaria/history/history_dialog.dart';
+import 'package:otzaria/history/bloc/history_bloc.dart';
+import 'package:otzaria/history/bloc/history_event.dart';
+import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({Key? key}) : super(key: key);
@@ -118,6 +122,16 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             onPressed: () =>
                                 _showSwitchWorkspaceDialog(context),
                           ),
+                          IconButton(
+                            icon: const Icon(Icons.history),
+                            tooltip: 'הצג היסטוריה',
+                            onPressed: () => _showHistoryDialog(context),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.bookmark),
+                            tooltip: 'הצג מועדפים',
+                            onPressed: () => _showBookmarksDialog(context),
+                          ),
                         ],
                       ),
                     ),
@@ -184,9 +198,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
               Expanded(
                 child: TextField(
                   controller: focusRepository.librarySearchController,
-                  focusNode: context
-                      .read<FocusRepository>()
-                      .librarySearchFocusNode,
+                  focusNode:
+                      context.read<FocusRepository>().librarySearchFocusNode,
                   autofocus: true,
                   decoration: InputDecoration(
                     constraints: const BoxConstraints(maxWidth: 400),
@@ -253,9 +266,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
     final allTopics = _getAllTopics(state.searchResults!);
 
-    final relevantTopics = categoryTopics
-        .where((element) => allTopics.contains(element))
-        .toList();
+    final relevantTopics =
+        categoryTopics.where((element) => allTopics.contains(element)).toList();
 
     return FilterListWidget<String>(
       hideSearchField: true,
@@ -279,13 +291,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
         child: Chip(
           label: Text(item),
-          backgroundColor: isSelected!
-              ? Theme.of(context).colorScheme.secondary
-              : null,
+          backgroundColor:
+              isSelected! ? Theme.of(context).colorScheme.secondary : null,
           labelStyle: TextStyle(
-            color: isSelected
-                ? Theme.of(context).colorScheme.onSecondary
-                : null,
+            color:
+                isSelected ? Theme.of(context).colorScheme.onSecondary : null,
             fontSize: 11,
           ),
           labelPadding: const EdgeInsets.all(0),
@@ -421,28 +431,30 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _openBook(Book book) {
     if (book is PdfBook) {
       context.read<TabsBloc>().add(
-        AddTab(
-          PdfBookTab(
-            book: book,
-            pageNumber: 1,
-            openLeftPane:
-                (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
-          ),
-        ),
-      );
+            AddTab(
+              PdfBookTab(
+                book: book,
+                pageNumber: 1,
+                openLeftPane:
+                    (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                        (Settings.getValue<bool>('key-default-sidebar-open') ??
+                            false),
+              ),
+            ),
+          );
     } else if (book is TextBook) {
       context.read<TabsBloc>().add(
-        AddTab(
-          TextBookTab(
-            book: book,
-            index: 0,
-            openLeftPane:
-                (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
-          ),
-        ),
-      );
+            AddTab(
+              TextBookTab(
+                book: book,
+                index: 0,
+                openLeftPane:
+                    (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                        (Settings.getValue<bool>('key-default-sidebar-open') ??
+                            false),
+              ),
+            ),
+          );
     }
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
   }
@@ -485,8 +497,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   onChanged: (bool? value) {
                     setState(() {
                       context.read<SettingsBloc>().add(
-                        UpdateShowOtzarHachochma(value!),
-                      );
+                            UpdateShowOtzarHachochma(value!),
+                          );
                       _update(context, state, settingsState);
                     });
                   },
@@ -497,8 +509,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   onChanged: (bool? value) {
                     setState(() {
                       context.read<SettingsBloc>().add(
-                        UpdateShowHebrewBooks(value!),
-                      );
+                            UpdateShowHebrewBooks(value!),
+                          );
                       _update(context, state, settingsState);
                     });
                   },
@@ -525,16 +537,16 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     SettingsState settingsState,
   ) {
     context.read<LibraryBloc>().add(
-      UpdateSearchQuery(
-        context.read<FocusRepository>().librarySearchController.text,
-      ),
-    );
+          UpdateSearchQuery(
+            context.read<FocusRepository>().librarySearchController.text,
+          ),
+        );
     context.read<LibraryBloc>().add(
-      SearchBooks(
-        showHebrewBooks: settingsState.showHebrewBooks,
-        showOtzarHachochma: settingsState.showOtzarHachochma,
-      ),
-    );
+          SearchBooks(
+            showHebrewBooks: settingsState.showHebrewBooks,
+            showOtzarHachochma: settingsState.showOtzarHachochma,
+          ),
+        );
     setState(() {});
     _refocusSearchBar();
   }
@@ -542,5 +554,20 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _refocusSearchBar({bool selectAll = false}) {
     final focusRepository = context.read<FocusRepository>();
     focusRepository.requestLibrarySearchFocus(selectAll: selectAll);
+  }
+
+  void _showHistoryDialog(BuildContext context) {
+    context.read<HistoryBloc>().add(FlushHistory());
+    showDialog(
+      context: context,
+      builder: (context) => const HistoryDialog(),
+    );
+  }
+
+  void _showBookmarksDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const BookmarksDialog(),
+    );
   }
 }

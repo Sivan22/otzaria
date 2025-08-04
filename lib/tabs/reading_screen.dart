@@ -19,8 +19,8 @@ import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
 import 'package:otzaria/history/history_dialog.dart';
+import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -58,11 +58,14 @@ class _ReadingScreenState extends State<ReadingScreen>
   Widget build(BuildContext context) {
     return BlocListener<TabsBloc, TabsState>(
       listener: (context, state) {
-        if(state.hasOpenTabs) {
-          context.read<HistoryBloc>().add(CaptureStateForHistory(state.currentTab!));
+        if (state.hasOpenTabs) {
+          context
+              .read<HistoryBloc>()
+              .add(CaptureStateForHistory(state.currentTab!));
         }
       },
-      listenWhen: (previous, current) => previous.currentTabIndex != current.currentTabIndex,
+      listenWhen: (previous, current) =>
+          previous.currentTabIndex != current.currentTabIndex,
       child: BlocBuilder<TabsBloc, TabsState>(
         builder: (context, state) {
           if (!state.hasOpenTabs) {
@@ -98,6 +101,15 @@ class _ReadingScreenState extends State<ReadingScreen>
                     padding: const EdgeInsets.all(8.0),
                     child: TextButton(
                       onPressed: () {
+                        _showBookmarksDialog(context);
+                      },
+                      child: const Text('הצג מועדפים'),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      onPressed: () {
                         _showSaveWorkspaceDialog(context);
                       },
                       child: const Text('החלף שולחן עבודה'),
@@ -107,7 +119,7 @@ class _ReadingScreenState extends State<ReadingScreen>
               ),
             );
           }
-    
+
           return Builder(
             builder: (context) {
               final controller = TabController(
@@ -115,19 +127,18 @@ class _ReadingScreenState extends State<ReadingScreen>
                 vsync: this,
                 initialIndex: state.currentTabIndex,
               );
-    
+
               controller.addListener(() {
                 if (controller.indexIsChanging &&
                     state.currentTabIndex < state.tabs.length) {
-                  context
-                      .read<HistoryBloc>()
-                      .add(CaptureStateForHistory(state.tabs[state.currentTabIndex]));
+                  context.read<HistoryBloc>().add(CaptureStateForHistory(
+                      state.tabs[state.currentTabIndex]));
                 }
                 if (controller.index != state.currentTabIndex) {
                   context.read<TabsBloc>().add(SetCurrentTab(controller.index));
                 }
               });
-    
+
               return Scaffold(
                 appBar: AppBar(
                   title: Container(
@@ -188,8 +199,8 @@ class _ReadingScreenState extends State<ReadingScreen>
     }
     return const SizedBox.shrink();
   }
-  
-    Widget _buildTab(BuildContext context, OpenedTab tab, TabsState state) {
+
+  Widget _buildTab(BuildContext context, OpenedTab tab, TabsState state) {
     return Listener(
       onPointerDown: (PointerDownEvent event) {
         if (event.buttons == 4) {
@@ -283,9 +294,10 @@ class _ReadingScreenState extends State<ReadingScreen>
                         child: Text(truncate(tab.title, 12))),
                   Tooltip(
                     preferBelow: false,
-                    message: (Settings.getValue<String>('key-shortcut-close-tab') ??
-                            'ctrl+w')
-                        .toUpperCase(),
+                    message:
+                        (Settings.getValue<String>('key-shortcut-close-tab') ??
+                                'ctrl+w')
+                            .toUpperCase(),
                     child: IconButton(
                       onPressed: () => closeTab(tab, context),
                       icon: const Icon(Icons.close, size: 10),
@@ -350,6 +362,13 @@ class _ReadingScreenState extends State<ReadingScreen>
     showDialog(
       context: context,
       builder: (context) => const HistoryDialog(),
+    );
+  }
+
+  void _showBookmarksDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const BookmarksDialog(),
     );
   }
 }
