@@ -38,47 +38,88 @@ Future<bool> hasTopic(String title, String topic) async {
         '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}סדר הדורות.csv';
     final csvFile = File(csvPath);
 
-    print('DEBUG: Checking CSV for title: $title, topic: $topic');
-    print('DEBUG: CSV path: $csvPath');
-    print('DEBUG: CSV exists: ${await csvFile.exists()}');
-
     if (await csvFile.exists()) {
       final csvString = await csvFile.readAsString();
       final lines = csvString.split('\n');
-      print('DEBUG: CSV has ${lines.length} lines');
 
       // Skip header and search for the book
       for (int i = 1; i < lines.length; i++) {
-        final parts = lines[i].split(',');
+        final line = lines[i].trim();
+        if (line.isEmpty) continue;
+
+        // Parse CSV line properly - handle commas inside quoted fields
+        final parts = _parseCsvLine(line);
         if (parts.isNotEmpty && parts[0].trim() == title) {
-          print('DEBUG: Found book in CSV: $title');
-          // Found the book, check if topic matches generation or category
-          if (parts.length >= 3) {
+          // Found the book, check if topic matches generation
+          if (parts.length >= 2) {
             final generation = parts[1].trim();
-            final category = parts[2].trim();
-            print('DEBUG: Book generation: $generation, category: $category');
-            final result = generation == topic || category == topic;
-            print('DEBUG: Topic match result: $result');
-            return result;
+
+            // Map the CSV generation to our categories
+            final mappedCategory = _mapGenerationToCategory(generation);
+            return mappedCategory == topic;
           }
         }
       }
 
       // Book not found in CSV, it's "פרשנים נוספים"
-      print('DEBUG: Book not found in CSV, checking if topic is פרשנים נוספים');
       return topic == 'פרשנים נוספים';
-    } else {
-      print('DEBUG: CSV file does not exist, falling back to path-based check');
     }
   } catch (e) {
-    print('DEBUG: Error reading CSV: $e');
     // If CSV fails, fall back to path-based check
   }
 
   // Fallback to original path-based logic
-  print('DEBUG: Using fallback path-based logic');
   final titleToPath = await FileSystemData.instance.titleToPath;
   return titleToPath[title]?.contains(topic) ?? false;
+}
+
+// Helper function to parse CSV line with proper comma handling
+List<String> _parseCsvLine(String line) {
+  final List<String> result = [];
+  bool inQuotes = false;
+  String currentField = '';
+
+  for (int i = 0; i < line.length; i++) {
+    final char = line[i];
+
+    if (char == '"') {
+      // Handle escaped quotes (double quotes)
+      if (i + 1 < line.length && line[i + 1] == '"' && inQuotes) {
+        currentField += '"';
+        i++; // Skip the next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char == ',' && !inQuotes) {
+      result.add(currentField.trim());
+      currentField = '';
+    } else {
+      currentField += char;
+    }
+  }
+
+  // Add the last field
+  result.add(currentField.trim());
+
+  return result;
+}
+
+// Helper function to map CSV generation to our categories
+String _mapGenerationToCategory(String generation) {
+  switch (generation) {
+    case 'תורה שבכתב':
+      return 'תורה שבכתב';
+    case 'חז"ל':
+      return 'חז"ל';
+    case 'ראשונים':
+      return 'ראשונים';
+    case 'אחרונים':
+      return 'אחרונים';
+    case 'מחברי זמננו':
+      return 'מחברי זמננו';
+    default:
+      return 'פרשנים נוספים';
+  }
 }
 
 // Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
@@ -391,10 +432,10 @@ String replaceParaphrases(String s) {
 Future<Map<String, List<String>>> splitByEra(
   List<String> titles,
 ) async {
-  // יוצרים מבנה נתונים ריק לכל הקטגוריות
+  // יוצרים מבנה נתונים ריק לכל הקטגוריות החדשות
   final Map<String, List<String>> byEra = {
     'תורה שבכתב': [],
-    'חזל': [],
+    'חז"ל': [],
     'ראשונים': [],
     'אחרונים': [],
     'מחברי זמננו': [],
@@ -405,8 +446,8 @@ Future<Map<String, List<String>>> splitByEra(
   for (final t in titles) {
     if (await hasTopic(t, 'תורה שבכתב')) {
       byEra['תורה שבכתב']!.add(t);
-    } else if (await hasTopic(t, 'חזל')) {
-      byEra['חזל']!.add(t);
+    } else if (await hasTopic(t, 'חז"ל')) {
+      byEra['חז"ל']!.add(t);
     } else if (await hasTopic(t, 'ראשונים')) {
       byEra['ראשונים']!.add(t);
     } else if (await hasTopic(t, 'אחרונים')) {

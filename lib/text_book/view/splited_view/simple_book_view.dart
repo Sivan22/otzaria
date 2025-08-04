@@ -109,7 +109,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         ctx.MenuItem(
             label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
-          label: 'פרשנות',
+          label: 'מפרשים',
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',

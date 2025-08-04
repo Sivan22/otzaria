@@ -20,10 +20,7 @@ class TextBookInitial extends TextBookState {
   final String searchText;
 
   const TextBookInitial(
-      super.book,
-      super.index,
-      super.showLeftPane,
-      super.commentators,
+      super.book, super.index, super.showLeftPane, super.commentators,
       [this.searchText = '']);
 
   @override
@@ -53,6 +50,8 @@ class TextBookLoaded extends TextBookState {
   final double fontSize;
   final bool showSplitView;
   final List<String> activeCommentators;
+  final List<String> torahShebichtav;
+  final List<String> chazal;
   final List<String> rishonim;
   final List<String> acharonim;
   final List<String> modernCommentators;
@@ -78,7 +77,9 @@ class TextBookLoaded extends TextBookState {
     required this.fontSize,
     required this.showSplitView,
     required this.activeCommentators,
-      required this.rishonim,
+    required this.torahShebichtav,
+    required this.chazal,
+    required this.rishonim,
     required this.acharonim,
     required this.modernCommentators,
     required this.availableCommentators,
@@ -109,6 +110,8 @@ class TextBookLoaded extends TextBookState {
       showLeftPane: showLeftPane,
       showSplitView: splitView,
       activeCommentators: commentators ?? const [],
+      torahShebichtav: const [],
+      chazal: const [],
       rishonim: const [],
       acharonim: const [],
       modernCommentators: const [],
@@ -132,6 +135,8 @@ class TextBookLoaded extends TextBookState {
     bool? showLeftPane,
     bool? showSplitView,
     List<String>? activeCommentators,
+    List<String>? torahShebichtav,
+    List<String>? chazal,
     List<String>? rishonim,
     List<String>? acharonim,
     List<String>? modernCommentators,
@@ -155,6 +160,8 @@ class TextBookLoaded extends TextBookState {
       showLeftPane: showLeftPane ?? this.showLeftPane,
       showSplitView: showSplitView ?? this.showSplitView,
       activeCommentators: activeCommentators ?? this.activeCommentators,
+      torahShebichtav: torahShebichtav ?? this.torahShebichtav,
+      chazal: chazal ?? this.chazal,
       rishonim: rishonim ?? this.rishonim,
       acharonim: acharonim ?? this.acharonim,
       modernCommentators: modernCommentators ?? this.modernCommentators,
@@ -183,7 +190,11 @@ class TextBookLoaded extends TextBookState {
         showLeftPane,
         showSplitView,
         activeCommentators.length,
-        rishonim, acharonim, modernCommentators,
+        torahShebichtav,
+        chazal,
+        rishonim,
+        acharonim,
+        modernCommentators,
         availableCommentators.length,
         links.length,
         tableOfContents.length,

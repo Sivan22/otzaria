@@ -60,8 +60,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           Settings.getValue<bool>('key-default-nikud') ?? false;
       final removeNikudFromTanach =
           Settings.getValue<bool>('key-remove-nikud-tanach') ?? false;
-      final isTanach =
-          await FileSystemData.instance.isTanachBook(book.title);
+      final isTanach = await FileSystemData.instance.isTanachBook(book.title);
       final removeNikud =
           defaultRemoveNikud && (removeNikudFromTanach || !isTanach);
 
@@ -74,9 +73,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
 
       // Set up position listener
       positionsListener.itemPositions.addListener(() {
-        final visibleInecies = positionsListener.itemPositions.value
-            .map((e) => e.index)
-            .toList();
+        final visibleInecies =
+            positionsListener.itemPositions.value.map((e) => e.index).toList();
         if (visibleInecies.isNotEmpty) {
           add(UpdateVisibleIndecies(visibleInecies));
         }
@@ -93,21 +91,22 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         showLeftPane: initial.showLeftPane || initial.searchText.isNotEmpty,
         showSplitView: event.showSplitView,
         activeCommentators: initial.commentators, // שימוש במשתנה המקומי
+        torahShebichtav: eras['תורה שבכתב']!,
+        chazal: eras['חזל']!,
         rishonim: eras['ראשונים']!,
         acharonim: eras['אחרונים']!,
         modernCommentators: eras['מחברי זמננו']!,
         removeNikud: removeNikud,
         visibleIndices: [initial.index], // שימוש במשתנה המקומי
-        pinLeftPane:
-            Settings.getValue<bool>('key-pin-sidebar') ?? false,
+        pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
         searchText: searchText,
         scrollController: scrollController,
         scrollOffsetController: scrollOffsetController,
         positionsListener: positionsListener,
       ));
     } catch (e) {
-      emit(TextBookError(e.toString(), book, initial.index, initial.showLeftPane,
-          initial.commentators));
+      emit(TextBookError(e.toString(), book, initial.index,
+          initial.showLeftPane, initial.commentators));
     }
   }
 
@@ -191,7 +190,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
 
       int? index = currentState.selectedIndex;
       if (!event.visibleIndecies.contains(index)) {
-        index = null;      }
+        index = null;
+      }
 
       emit(currentState.copyWith(
           visibleIndices: event.visibleIndecies,

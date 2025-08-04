@@ -1025,7 +1025,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                                       textAlign: TextAlign.center))),
                           Tab(
                               child: Center(
-                                  child: Text('פרשנות',
+                                  child: Text('מפרשים',
                                       textAlign: TextAlign.center))),
                           Tab(
                               child: Center(

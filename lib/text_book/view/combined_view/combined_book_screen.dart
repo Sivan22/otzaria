@@ -95,6 +95,8 @@ class _CombinedViewState extends State<CombinedView> {
 
     // 2. זיהוי פרשנים שכבר שויכו לקבוצה
     final Set<String> alreadyListed = {
+      ...state.torahShebichtav,
+      ...state.chazal,
       ...state.rishonim,
       ...state.acharonim,
       ...state.modernCommentators,
@@ -112,7 +114,7 @@ class _CombinedViewState extends State<CombinedView> {
         ctx.MenuItem(
             label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
-          label: 'פרשנות',
+          label: 'מפרשים',
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
@@ -135,6 +137,20 @@ class _CombinedViewState extends State<CombinedView> {
               },
             ),
             const ctx.MenuDivider(),
+            // תורה שבכתב
+            ..._buildGroup('תורה שבכתב', state.torahShebichtav, state),
+
+            // מוסיפים קו הפרדה רק אם יש גם תורה שבכתב וגם חזל
+            if (state.torahShebichtav.isNotEmpty && state.chazal.isNotEmpty)
+              const ctx.MenuDivider(),
+
+            // חזל
+            ..._buildGroup('חז"ל', state.chazal, state),
+
+            // מוסיפים קו הפרדה רק אם יש גם חזל וגם ראשונים
+            if (state.chazal.isNotEmpty && state.rishonim.isNotEmpty)
+              const ctx.MenuDivider(),
+
             // ראשונים
             ..._buildGroup('ראשונים', state.rishonim, state),
 
@@ -154,7 +170,9 @@ class _CombinedViewState extends State<CombinedView> {
             ..._buildGroup('מחברי זמננו', state.modernCommentators, state),
 
             // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
-            if ((state.rishonim.isNotEmpty ||
+            if ((state.torahShebichtav.isNotEmpty ||
+                    state.chazal.isNotEmpty ||
+                    state.rishonim.isNotEmpty ||
                     state.acharonim.isNotEmpty ||
                     state.modernCommentators.isNotEmpty) &&
                 ungrouped.isNotEmpty)
