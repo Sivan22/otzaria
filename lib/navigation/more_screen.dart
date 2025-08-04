@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'calendar_widget.dart';
+import 'calendar_cubit.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends StatefulWidget {
   const MoreScreen({Key? key}) : super(key: key);
 
   @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  Widget? currentWidget;
+
+  @override
   Widget build(BuildContext context) {
+    // אם currentWidget אינו null, הצג אותו. אחרת, הצג את התפריט.
+    if (currentWidget != null) {
+      return currentWidget!;
+    }
+
+    // זהו מסך התפריט הראשי
     return Scaffold(
       appBar: AppBar(
         title: const Text('עוד'),
@@ -13,14 +29,14 @@ class MoreScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end, // מיושר לימין
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             _buildToolItem(
               context,
               icon: Icons.calendar_today,
               title: 'לוח שנה',
               subtitle: 'לוח שנה עברי ולועזי',
-              onTap: () => _showComingSoon(context, 'לוח שנה'),
+              onTap: () => _showCalendar(),
             ),
             const SizedBox(height: 16),
             _buildToolItem(
@@ -44,7 +60,115 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
-  /// כרטיס קטן מיושר לימין
+  // פונקציה זו בונה את מסך לוח השנה
+  void _showCalendar() {
+    setState(() {
+      currentWidget = BlocProvider(
+        create: (context) => CalendarCubit(),
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                setState(() {
+                  currentWidget = null; // חזור למסך התפריט
+                });
+              },
+            ),
+            title: BlocBuilder<CalendarCubit, CalendarState>(
+              builder: (context, state) {
+                switch (state.calendarType) {
+                  case CalendarType.hebrew:
+                    return const Text('לוח שנה עברי');
+                  case CalendarType.gregorian:
+                    return const Text('לוח שנה לועזי');
+                  case CalendarType.combined:
+                    return const Text('לוח שנה משולב');
+                }
+              },
+            ),
+            centerTitle: true,
+            actions: [
+              Builder(
+                builder: (context) {
+                  return IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () => _showSettingsDialog(context),
+                  );
+                }
+              ),
+            ],
+          ),
+          body: const CalendarWidget(),
+        ),
+      );
+    });
+  }
+
+  // פונקציה זו מציגה את דיאלוג ההגדרות
+  void _showSettingsDialog(BuildContext context) {
+    final calendarCubit = context.read<CalendarCubit>();
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return BlocBuilder<CalendarCubit, CalendarState>(
+          bloc: calendarCubit,
+          builder: (context, state) {
+            return AlertDialog(
+              title: const Text('הגדרות לוח שנה'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<CalendarType>(
+                    title: const Text('לוח עברי'),
+                    value: CalendarType.hebrew,
+                    groupValue: state.calendarType,
+                    onChanged: (value) {
+                      if (value != null) {
+                        calendarCubit.changeCalendarType(value);
+                      }
+                      Navigator.of(dialogContext).pop();
+                    },
+                  ),
+                  RadioListTile<CalendarType>(
+                    title: const Text('לוח לועזי'),
+                    value: CalendarType.gregorian,
+                    groupValue: state.calendarType,
+                    onChanged: (value) {
+                       if (value != null) {
+                        calendarCubit.changeCalendarType(value);
+                      }
+                      Navigator.of(dialogContext).pop();
+                    },
+                  ),
+                  RadioListTile<CalendarType>(
+                    title: const Text('לוח משולב'),
+                    value: CalendarType.combined,
+                    groupValue: state.calendarType,
+                    onChanged: (value) {
+                       if (value != null) {
+                        calendarCubit.changeCalendarType(value);
+                      }
+                      Navigator.of(dialogContext).pop();
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('סגור'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // שאר הפונקציות נשארות כפי שהיו
   Widget _buildToolItem(
     BuildContext context, {
     required IconData icon,
@@ -53,12 +177,12 @@ class MoreScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Align(
-      alignment: Alignment.centerRight, // מצמיד לימין
+      alignment: Alignment.centerRight,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          width: 110, // רוחב צר - כמו הסרגל הצדדי
+          width: 110,
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -72,8 +196,7 @@ class MoreScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 title,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 2),
