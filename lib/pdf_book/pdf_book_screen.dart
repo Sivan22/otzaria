@@ -512,10 +512,15 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           child: TabBar(
                             controller: _leftPaneTabController,
                             tabs: const [
-                              Tab(text: 'ניווט'),
-                              Tab(text: 'חיפוש'),
-                              Tab(text: 'דפים'),
+                              Tab(child: Center(child: Text('ניווט', textAlign: TextAlign.center))),
+                              Tab(child: Center(child: Text('חיפוש', textAlign: TextAlign.center))),
+                              Tab(child: Center(child: Text('דפים', textAlign: TextAlign.center))),
                             ],
+                            isScrollable: false,
+                            tabAlignment: TabAlignment.fill,
+                            padding: EdgeInsets.zero,
+                            indicatorPadding: EdgeInsets.zero,
+                            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
                           ),
                         ),
                       ),

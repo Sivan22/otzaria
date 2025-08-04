@@ -1015,12 +1015,29 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                     Expanded(
                       child: TabBar(
                         tabs: const [
-                          Tab(text: 'ניווט'),
-                          Tab(text: 'חיפוש'),
-                          Tab(text: 'פרשנות'),
-                          Tab(text: 'קישורים'),
+                          Tab(
+                              child: Center(
+                                  child: Text('ניווט',
+                                      textAlign: TextAlign.center))),
+                          Tab(
+                              child: Center(
+                                  child: Text('חיפוש',
+                                      textAlign: TextAlign.center))),
+                          Tab(
+                              child: Center(
+                                  child: Text('פרשנות',
+                                      textAlign: TextAlign.center))),
+                          Tab(
+                              child: Center(
+                                  child: Text('קישורים',
+                                      textAlign: TextAlign.center))),
                         ],
                         controller: tabController,
+                        isScrollable: false,
+                        tabAlignment: TabAlignment.fill,
+                        padding: EdgeInsets.zero,
+                        indicatorPadding: EdgeInsets.zero,
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
                         onTap: (value) {
                           if (value == 1 && !Platform.isAndroid) {
                             textSearchFocusNode.requestFocus();
