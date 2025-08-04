@@ -151,17 +151,19 @@ class _SpacingFieldState extends State<_SpacingField> {
       }
     });
     _focus.addListener(_onFocusChanged);
-    // הוספת listener לשינויי טקסט כדי לעדכן את ה-opacity
     widget.controller.addListener(_onTextChanged);
   }
 
   void _onTextChanged() {
-    setState(() {}); // עדכון המצב לשינוי opacity
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _onFocusChanged() {
-    setState(() {});
-
+    if (mounted) {
+      setState(() {});
+    }
     if (!_focus.hasFocus && widget.controller.text.trim().isEmpty) {
       widget.onFocusLost?.call();
     }
@@ -177,70 +179,113 @@ class _SpacingFieldState extends State<_SpacingField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final bool hasText = widget.controller.text.trim().isNotEmpty;
-    final bool isInactive = !_focus.hasFocus && hasText;
+    final bool hasFocus = _focus.hasFocus;
+    final bool isFloating = hasFocus || hasText; // התנאי להצפת התווית
+    final bool isInactive = !hasFocus && hasText;
+
+    final floatingLabelStyle = TextStyle(
+      color: hasFocus ? theme.primaryColor : theme.hintColor,
+      fontSize: 12,
+      backgroundColor: theme.scaffoldBackgroundColor,
+    );
+    final placeholderStyle = TextStyle(
+      color: theme.hintColor.withOpacity(0.8),
+      fontSize: 12,
+    );
 
     return AnimatedOpacity(
-      opacity: isInactive ? 0.5 : 1.0, // חצי שקופה כשלא בפוקוס ויש טקסט
+      opacity: isInactive ? 0.5 : 1.0,
       duration: const Duration(milliseconds: 200),
-      child: Container(
-        width: 45, // הצרה משמעותית מ-65 ל-45 (מתאים ל-2 ספרות)
-        height: 40,
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: _focus.hasFocus
-                ? Theme.of(context).primaryColor
-                : Theme.of(context).dividerColor,
-            width: _focus.hasFocus ? 1.5 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  Colors.black.withValues(alpha: _focus.hasFocus ? 0.15 : 0.08),
-              blurRadius: _focus.hasFocus ? 6 : 3,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Material(
-          type: MaterialType.transparency,
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.close, size: 14),
-                onPressed: widget.onRemove,
-                splashRadius: 16,
-                padding: const EdgeInsets.only(left: 4, right: 2),
-                constraints: const BoxConstraints(),
+      child: Stack(
+        clipBehavior: Clip.none, // מאפשר לתווית לצאת מגבולות ה-Stack
+        children: [
+          // 1. קופסת הקלט עצמה (השכבה התחתונה)
+          Container(
+            width: 45, // רוחב צר למספר 1-2 ספרות
+            height: 40,
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: hasFocus ? theme.primaryColor : theme.dividerColor,
+                width: hasFocus ? 1.5 : 1.0,
               ),
-              Expanded(
-                child: TextField(
-                  controller: widget.controller,
-                  focusNode: _focus,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: 'מרווח',
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.only(right: 4, bottom: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(hasFocus ? 0.15 : 0.08),
+                  blurRadius: hasFocus ? 6 : 3,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 14),
+                    onPressed: widget.onRemove,
+                    splashRadius: 16,
+                    padding: const EdgeInsets.only(left: 4, right: 2),
+                    constraints: const BoxConstraints(),
                   ),
-                  style: const TextStyle(fontSize: 12, color: Colors.black87),
-                  textAlign: TextAlign.right,
-                  onSubmitted: (v) {
-                    if (v.trim().isEmpty) widget.onRemove();
-                  },
+                  Expanded(
+                    child: TextField(
+                      controller: widget.controller,
+                      focusNode: _focus,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      decoration: const InputDecoration(
+                        // הסרנו את labelText מכאן
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.only(right: 4, bottom: 4),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w200, // גופן צר לטקסט שנכתב
+                      ),
+                      textAlign: TextAlign.right,
+                      onSubmitted: (v) {
+                        if (v.trim().isEmpty) widget.onRemove();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 2. התווית הצפה (השכבה העליונה)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            // מיקום דינמי: למעלה או באמצע
+            top: isFloating ? -10 : 10,
+            right: isFloating ? 8 : 12,
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 150),
+              style: isFloating ? floatingLabelStyle : placeholderStyle,
+              child: Container(
+                // קונטיינר זה יוצר את אפקט ה"חיתוך" של הגבול
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: const Text(
+                  'מרווח',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w100, // גופן צר במיוחד
+                    fontSize: 11,
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -273,17 +318,19 @@ class _AlternativeFieldState extends State<_AlternativeField> {
       }
     });
     _focus.addListener(_onFocusChanged);
-    // הוספת listener לשינויי טקסט כדי לעדכן את ה-opacity
     widget.controller.addListener(_onTextChanged);
   }
 
   void _onTextChanged() {
-    setState(() {}); // עדכון המצב לשינוי opacity
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _onFocusChanged() {
-    setState(() {});
-
+    if (mounted) {
+      setState(() {});
+    }
     if (!_focus.hasFocus && widget.controller.text.trim().isEmpty) {
       widget.onFocusLost?.call();
     }
@@ -299,69 +346,111 @@ class _AlternativeFieldState extends State<_AlternativeField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final bool hasText = widget.controller.text.trim().isNotEmpty;
-    final bool isInactive = !_focus.hasFocus && hasText;
+    final bool hasFocus = _focus.hasFocus;
+    final bool isFloating = hasFocus || hasText; // התנאי להצפת התווית
+    final bool isInactive = !hasFocus && hasText;
+
+    final floatingLabelStyle = TextStyle(
+      color: hasFocus ? theme.primaryColor : theme.hintColor,
+      fontSize: 12,
+      backgroundColor: theme.scaffoldBackgroundColor,
+    );
+    final placeholderStyle = TextStyle(
+      color: theme.hintColor.withOpacity(0.8),
+      fontSize: 12,
+    );
 
     return AnimatedOpacity(
-      opacity: isInactive ? 0.5 : 1.0, // חצי שקופה כשלא בפוקוס ויש טקסט
+      opacity: isInactive ? 0.5 : 1.0,
       duration: const Duration(milliseconds: 200),
-      child: Container(
-        width: 70, // הצרה עוד יותר - מ-120 ל-100
-        height: 40,
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: _focus.hasFocus
-                ? Theme.of(context).primaryColor
-                : Theme.of(context).dividerColor,
-            width: _focus.hasFocus ? 1.5 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  Colors.black.withValues(alpha: _focus.hasFocus ? 0.15 : 0.08),
-              blurRadius: _focus.hasFocus ? 6 : 3,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Material(
-          type: MaterialType.transparency,
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.close, size: 14),
-                onPressed: widget.onRemove,
-                splashRadius: 16,
-                padding: const EdgeInsets.only(left: 4, right: 2),
-                constraints: const BoxConstraints(),
+      child: Stack(
+        clipBehavior: Clip.none, // מאפשר לתווית לצאת מגבולות ה-Stack
+        children: [
+          // 1. קופסת הקלט עצמה (השכבה התחתונה)
+          Container(
+            width: 60, // רוחב צר למילה של כ-4 תווים
+            height: 40,
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: hasFocus ? theme.primaryColor : theme.dividerColor,
+                width: hasFocus ? 1.5 : 1.0,
               ),
-              Expanded(
-                child: TextField(
-                  controller: widget.controller,
-                  focusNode: _focus,
-                  inputFormatters: [
-                    // הגבלה למילה אחת - מניעת רווחים
-                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: 'מילה חילופית',
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.only(right: 4, bottom: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(hasFocus ? 0.15 : 0.08),
+                  blurRadius: hasFocus ? 6 : 3,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 14),
+                    onPressed: widget.onRemove,
+                    splashRadius: 16,
+                    padding: const EdgeInsets.only(left: 4, right: 2),
+                    constraints: const BoxConstraints(),
                   ),
-                  style: const TextStyle(fontSize: 12, color: Colors.black87),
-                  textAlign: TextAlign.right,
-                  onSubmitted: (v) {
-                    if (v.trim().isEmpty) widget.onRemove();
-                  },
+                  Expanded(
+                    child: TextField(
+                      controller: widget.controller,
+                      focusNode: _focus,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                      ],
+                      decoration: const InputDecoration(
+                        // הסרנו את labelText מכאן
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.only(right: 4, bottom: 4),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w200, // גופן צר לטקסט שנכתב
+                      ),
+                      textAlign: TextAlign.right,
+                      onSubmitted: (v) {
+                        if (v.trim().isEmpty) widget.onRemove();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 2. התווית הצפה (השכבה העליונה)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            // מיקום דינמי
+            top: isFloating ? -10 : 10,
+            right: isFloating ? 8 : 15,
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 150),
+              style: isFloating ? floatingLabelStyle : placeholderStyle,
+              child: Container(
+                // קונטיינר זה יוצר את אפקט ה"חיתוך" של הגבול
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: const Text(
+                  'מילה חילופית',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w100, // גופן צר במיוחד
+                    fontSize: 11,
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
