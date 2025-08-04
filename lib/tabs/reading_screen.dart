@@ -152,10 +152,26 @@ class _ReadingScreenState extends State<ReadingScreen>
                           .toList(),
                     ),
                   ),
-                  leading: IconButton(
-                    icon: const Icon(Icons.add_to_queue),
-                    tooltip: 'החלף שולחן עבודה',
-                    onPressed: () => _showSaveWorkspaceDialog(context),
+                  leadingWidth: 150,
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.add_to_queue),
+                        tooltip: 'החלף שולחן עבודה',
+                        onPressed: () => _showSaveWorkspaceDialog(context),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.history),
+                        tooltip: 'הצג היסטוריה',
+                        onPressed: () => _showHistoryDialog(context),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.bookmark),
+                        tooltip: 'הצג מועדפים',
+                        onPressed: () => _showBookmarksDialog(context),
+                      ),
+                    ],
                   ),
                 ),
                 body: SizedBox.fromSize(
