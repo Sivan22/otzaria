@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/tools/measurement_converter/measurement_converter_screen.dart';
 import 'calendar_widget.dart';
 import 'calendar_cubit.dart';
 
@@ -92,7 +93,7 @@ class _MoreScreenState extends State<MoreScreen> {
           child: const CalendarWidget(),
         );
       case 1:
-        return const Center(child: Text('ממיר מידות - בקרוב...'));
+        return const MeasurementConverterScreen();
       case 2:
         return const Center(child: Text('גימטריות - בקרוב...'));
       default:
