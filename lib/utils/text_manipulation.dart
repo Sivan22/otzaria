@@ -2,9 +2,10 @@ import 'dart:io';
 
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/search/utils/regex_patterns.dart';
 
 String stripHtmlIfNeeded(String text) {
-  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
+  return text.replaceAll(SearchRegexPatterns.htmlStripper, '');
 }
 
 String truncate(String text, int length) {
@@ -13,7 +14,7 @@ String truncate(String text, int length) {
 
 String removeVolwels(String s) {
   s = s.replaceAll('־', ' ').replaceAll(' ׀', '');
-  return s.replaceAll(RegExp(r'[\u0591-\u05C7]'), '');
+  return s.replaceAll(SearchRegexPatterns.vowelsAndCantillation, '');
 }
 
 String highLight(String data, String searchQuery) {
@@ -122,15 +123,9 @@ String _mapGenerationToCategory(String generation) {
   }
 }
 
-// Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
-final RegExp _holyNameRegex = RegExp(
-  r"י([\p{Mn}]*)ה([\p{Mn}]*)ו([\p{Mn}]*)ה([\p{Mn}]*)",
-  unicode: true,
-);
-
 String replaceHolyNames(String s) {
   return s.replaceAllMapped(
-    _holyNameRegex,
+    SearchRegexPatterns.holyName,
     (match) => 'י${match[1]}ק${match[2]}ו${match[3]}ק${match[4]}',
   );
 }
@@ -140,7 +135,7 @@ String removeTeamim(String s) => s
     .replaceAll(' ׀', '')
     .replaceAll('ֽ', '')
     .replaceAll('׀', '')
-    .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
+    .replaceAll(SearchRegexPatterns.cantillationOnly, '');
 
 String removeSectionNames(String s) => s
     .replaceAll('פרק ', '')

@@ -1,3 +1,5 @@
+import 'package:otzaria/search/utils/regex_patterns.dart';
+
 class SearchTerm {
   final String word;
   final List<String> alternatives;
@@ -70,7 +72,7 @@ class SearchQuery {
       return SearchQuery();
     }
     
-    final words = query.trim().split(RegExp(r'\s+'));
+    final words = query.trim().split(SearchRegexPatterns.wordSplitter);
     final terms = words.map((word) => SearchTerm(word: word)).toList();
     return SearchQuery(terms: terms);
   }

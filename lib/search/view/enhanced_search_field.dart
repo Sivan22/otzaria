@@ -13,6 +13,7 @@ import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_state.dart';
+import 'package:otzaria/search/utils/regex_patterns.dart';
 
 // הווידג'ט החדש לניהול מצבי הכפתור
 class _PlusButton extends StatefulWidget {
@@ -407,7 +408,7 @@ class _AlternativeFieldState extends State<_AlternativeField> {
                       controller: widget.controller,
                       focusNode: _focus,
                       inputFormatters: [
-                        FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                        FilteringTextInputFormatter.deny(SearchRegexPatterns.spacesFilter),
                       ],
                       decoration: const InputDecoration(
                         // הסרנו את labelText מכאן

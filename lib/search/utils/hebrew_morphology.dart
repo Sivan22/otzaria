@@ -1,4 +1,8 @@
+import 'package:otzaria/search/utils/regex_patterns.dart';
+
 /// כלים לטיפול בקידומות, סיומות וכתיב מלא/חסר בעברית (גרסה משולבת ומשופרת)
+/// 
+/// הערה: הרגקסים הבסיסיים עברו לקובץ regex_patterns.dart לארגון טוב יותר
 class HebrewMorphology {
   // קידומות דקדוקיות בסיסיות
   static const List<String> _basicPrefixes = [
@@ -50,20 +54,12 @@ class HebrewMorphology {
 
   /// יוצר דפוס רגקס קומפקטי לחיפוש מילה עם קידומות דקדוקיות
   static String createPrefixRegexPattern(String word) {
-    if (word.isEmpty) return word;
-    // שימוש בתבנית קבועה ויעילה
-    return r'(ו|מ|כ|ב|ש|ל|ה|ד)?(כ|ב|ש|ל|ה|ד)?(ה)?' + RegExp.escape(word);
+    return SearchRegexPatterns.createPrefixPattern(word);
   }
 
   /// יוצר דפוס רגקס קומפקטי לחיפוש מילה עם סיומות דקדוקיות
   static String createSuffixRegexPattern(String word) {
-    if (word.isEmpty) return word;
-
-    // שימוש בתבנית קבועה ויעילה, מסודרת לפי אורך
-    const suffixPattern =
-        r'(ותי|ותַי|ותיך|ותֶיךָ|ותַיִךְ|ותיו|ותָיו|ותיה|ותֶיהָ|ותינו|ותֵינוּ|ותיכם|ותֵיכם|ותיכן|ותֵיכן|ותיהם|ותֵיהם|ותיהן|ותֵיהן|יות|יי|יַי|יך|יךָ|יִךְ|יו|יה|יא|יהָ|ינו|יכם|יכן|יהם|יהן|י|ך|ךָ|ךְ|ו|ה|הּ|נו|כם|כן|ם|ן|ים|ות)?';
-
-    return RegExp.escape(word) + suffixPattern;
+    return SearchRegexPatterns.createSuffixPattern(word);
   }
 
   /// יוצר דפוס רגקס קומפקטי לחיפוש מילה עם קידומות וסיומות דקדוקיות יחד
@@ -72,23 +68,7 @@ class HebrewMorphology {
     bool includePrefixes = true,
     bool includeSuffixes = true,
   }) {
-    if (word.isEmpty) return word;
-
-    String pattern = RegExp.escape(word);
-
-    if (includePrefixes) {
-      // שימוש בתבנית קבועה ויעילה
-      pattern = r'(ו|מ|כ|ב|ש|ל|ה|ד)?(כ|ב|ש|ל|ה|ד)?(ה)?' + pattern;
-    }
-
-    if (includeSuffixes) {
-      // שימוש בתבנית קבועה ויעילה
-      const suffixPattern =
-          r'(ותי|ותַי|ותיך|ותֶיךָ|ותַיִךְ|ותיו|ותָיו|ותיה|ותֶיהָ|ותינו|ותֵינוּ|ותיכם|ותֵיכם|ותיכן|ותֵיכן|ותיהם|ותֵיהם|ותיהן|ותֵיהן|יות|יי|יַי|יך|יךָ|יִךְ|יו|יה|יא|תא|יהָ|ינו|יכם|יכן|יהם|יהן|י|ך|ךָ|ךְ|ו|ה|הּ|נו|כם|כן|ם|ן|ים|ות)?';
-      pattern = pattern + suffixPattern;
-    }
-
-    return pattern;
+    return SearchRegexPatterns.createFullMorphologicalPattern(word);
   }
 
   // --- מתודות ליצירת רשימות וריאציות (נשמרו כפי שהן) ---
@@ -127,31 +107,17 @@ class HebrewMorphology {
 
   /// בודק אם מילה מכילה קידומת דקדוקית
   static bool hasGrammaticalPrefix(String word) {
-    if (word.isEmpty) return false;
-    final regex = RegExp(r'^(ו|מ|כ|ב|ש|ל|ה)+(.+)');
-    return regex.hasMatch(word);
+    return SearchRegexPatterns.hasGrammaticalPrefix(word);
   }
 
   /// בודק אם מילה מכילה סיומת דקדוקית
   static bool hasGrammaticalSuffix(String word) {
-    if (word.isEmpty) return false;
-    const suffixPattern =
-        r'(ותי|ותַי|ותיך|ותֶיךָ|ותַיִךְ|ותיו|ותָיו|ותיה|ותֶיהָ|ותינו|ותֵינוּ|ותיכם|ותֵיכם|ותיכן|ותֵיכן|ותיהם|ותֵיהם|ותיהן|ותֵיהן|יי|יַי|יך|יךָ|יִךְ|יו|יה|יהָ|ינו|יכם|יכן|יהם|יהן|י|ך|ךָ|ךְ|ו|ה|הּ|נו|כם|כן|ם|ן|ים|ות)$';
-    final regex = RegExp(suffixPattern);
-    return regex.hasMatch(word);
+    return SearchRegexPatterns.hasGrammaticalSuffix(word);
   }
 
   /// מחלץ את השורש של מילה (מסיר קידומות וסיומות)
   static String extractRoot(String word) {
-    if (word.isEmpty) return word;
-    String result = word;
-    final prefixRegex = RegExp(r'^(ו|מ|כ|ב|ש|ל|ה)+');
-    result = result.replaceFirst(prefixRegex, '');
-    const suffixPattern =
-        r'(ותי|ותַי|ותיך|ותֶיךָ|ותַיִךְ|ותיו|ותָיו|ותיה|ותֶיהָ|ותינו|ותֵינוּ|ותיכם|ותֵיכם|ותיכן|ותֵיכן|ותיהם|ותֵיהם|ותיהן|ותֵיהן|יי|יַי|יך|יךָ|יִךְ|יו|יה|יהָ|ינו|יכם|יכן|יהם|יהן|י|ך|ךָ|ךְ|ו|ה|הּ|נו|כם|כן|ם|ן|ים|ות)$';
-    final suffixRegex = RegExp(suffixPattern);
-    result = result.replaceFirst(suffixRegex, '');
-    return result.isEmpty ? word : result;
+    return SearchRegexPatterns.extractRoot(word);
   }
 
   /// מחזיר רשימה של קידומות בסיסיות (לתמיכה לאחור)
@@ -165,43 +131,11 @@ class HebrewMorphology {
 
   /// יוצר דפוס רגקס לכתיב מלא/חסר על בסיס רשימת וריאציות
   static String createFullPartialSpellingPattern(String word) {
-    if (word.isEmpty) return word;
-    final variations = generateFullPartialSpellingVariations(word);
-    final escapedVariations = variations.map((v) => RegExp.escape(v)).toList();
-    return r'(?:^|\s)(' + escapedVariations.join('|') + r')(?=\s|$)';
+    return SearchRegexPatterns.createFullPartialSpellingPattern(word);
   }
 
   /// יוצר רשימה של וריאציות כתיב מלא/חסר
   static List<String> generateFullPartialSpellingVariations(String word) {
-    if (word.isEmpty) return [word];
-    final variations = <String>{};
-    final chars = word.split('');
-    final optionalIndices = <int>[];
-
-    for (int i = 0; i < chars.length; i++) {
-      if (['י', 'ו', "'", '"'].contains(chars[i])) {
-        optionalIndices.add(i);
-      }
-    }
-
-    final numCombinations = 1 << optionalIndices.length; // 2^n
-    for (int i = 0; i < numCombinations; i++) {
-      final variant = StringBuffer();
-      int originalCharIndex = 0;
-      for (int optionalCharIndex = 0;
-          optionalCharIndex < optionalIndices.length;
-          optionalCharIndex++) {
-        int nextOptional = optionalIndices[optionalCharIndex];
-        variant.write(word.substring(originalCharIndex, nextOptional));
-        if ((i & (1 << optionalCharIndex)) != 0) {
-          variant.write(chars[nextOptional]);
-        }
-        originalCharIndex = nextOptional + 1;
-      }
-      variant.write(word.substring(originalCharIndex));
-      variations.add(variant.toString());
-    }
-
-    return variations.toList();
+    return SearchRegexPatterns.generateFullPartialSpellingVariations(word);
   }
 }

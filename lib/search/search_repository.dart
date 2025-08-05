@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/search/utils/hebrew_morphology.dart';
+import 'package:otzaria/search/utils/regex_patterns.dart';
 import 'package:search_engine/search_engine.dart';
 
 /// Performs a search operation across indexed texts.
@@ -35,7 +36,7 @@ class SearchRepository {
     final hasSearchOptions = searchOptions != null && searchOptions.isNotEmpty;
 
     // המרת החיפוש לפורמט המנוע החדש
-    final words = query.trim().split(RegExp(r'\s+'));
+    final words = query.trim().split(SearchRegexPatterns.wordSplitter);
     final List<String> regexTerms;
     final int effectiveSlop;
 
@@ -189,45 +190,18 @@ class SearchRepository {
                 allVariations.addAll(
                     HebrewMorphology.generateSuffixVariations(baseVariation));
               }
+            } else if (hasPrefix && hasSuffix) {
+              // קידומות וסיומות יחד - משתמש בחיפוש "חלק ממילה"
+              allVariations.add(SearchRegexPatterns.createPartialWordPattern(baseVariation));
             } else if (hasPrefix) {
-              // קידומות רגילות - הגבלה חכמה לפי אורך המילה
-              if (baseVariation.length <= 1) {
-                // מילה של תו אחד - הגבלה קיצונית (מקסימום 5 תווים קידומת)
-                allVariations.add('.{1,5}' + RegExp.escape(baseVariation));
-              } else if (baseVariation.length <= 2) {
-                // מילה של 2 תווים - הגבלה בינונית (מקסימום 4 תווים קידומת)
-                allVariations.add('.{1,4}' + RegExp.escape(baseVariation));
-              } else if (baseVariation.length <= 3) {
-                // מילה של 3 תווים - הגבלה קלה (מקסימום 3 תווים קידומת)
-                allVariations.add('.{1,3}' + RegExp.escape(baseVariation));
-              } else {
-                // מילה ארוכה - ללא הגבלה
-                allVariations.add('.*' + RegExp.escape(baseVariation));
-              }
+              // קידומות רגילות - שימוש ברגקס מרכזי
+              allVariations.add(SearchRegexPatterns.createPrefixSearchPattern(baseVariation));
             } else if (hasSuffix) {
-              // סיומות רגילות - הגבלה חכמה לפי אורך המילה
-              if (baseVariation.length <= 1) {
-                // מילה של תו אחד - הגבלה קיצונית (מקסימום 7 תווים סיומת)
-                allVariations.add(RegExp.escape(baseVariation) + '.{1,7}');
-              } else if (baseVariation.length <= 2) {
-                // מילה של 2 תווים - הגבלה בינונית (מקסימום 6 תווים סיומת)
-                allVariations.add(RegExp.escape(baseVariation) + '.{1,6}');
-              } else if (baseVariation.length <= 3) {
-                // מילה של 3 תווים - הגבלה קלה (מקסימום 5 תווים סיומת)
-                allVariations.add(RegExp.escape(baseVariation) + '.{1,5}');
-              } else {
-                // מילה ארוכה - ללא הגבלה
-                allVariations.add(RegExp.escape(baseVariation) + '.*');
-              }
+              // סיומות רגילות - שימוש ברגקס מרכזי
+              allVariations.add(SearchRegexPatterns.createSuffixSearchPattern(baseVariation));
             } else if (hasPartialWord) {
-              // חלק ממילה - הגבלה חכמה לפי אורך המילה
-              if (baseVariation.length <= 3) {
-                // מילה קצרה (1-3 תווים) - 3 תווים לפני ו3 אחרי
-                allVariations.add('.{0,3}' + RegExp.escape(baseVariation) + '.{0,3}');
-              } else {
-                // מילה ארוכה (4+ תווים) - 2 תווים לפני ו2 אחרי
-                allVariations.add('.{0,2}' + RegExp.escape(baseVariation) + '.{0,2}');
-              }
+              // חלק ממילה - שימוש ברגקס מרכזי
+              allVariations.add(SearchRegexPatterns.createPartialWordPattern(baseVariation));
             } else {
               // ללא אפשרויות מיוחדות - מילה מדויקת
               allVariations.add(RegExp.escape(baseVariation));
@@ -246,8 +220,26 @@ class SearchRepository {
             : '(${limitedVariations.join('|')})';
 
         regexTerms.add(finalPattern);
-        print(
-            '🔄 מילה $i: $finalPattern (קידומות: $hasPrefix, סיומות: $hasSuffix, קידומות דקדוקיות: $hasGrammaticalPrefixes, סיומות דקדוקיות: $hasGrammaticalSuffixes, כתיב מלא/חסר: $hasFullPartialSpelling, חלק ממילה: $hasPartialWord)');
+        // הודעת דיבוג עם הסבר על הלוגיקה
+        final searchType = hasPrefix && hasSuffix 
+            ? 'קידומות+סיומות (חלק ממילה)'
+            : hasGrammaticalPrefixes && hasGrammaticalSuffixes
+                ? 'קידומות+סיומות דקדוקיות'
+                : hasPrefix
+                    ? 'קידומות'
+                    : hasSuffix
+                        ? 'סיומות'
+                        : hasGrammaticalPrefixes
+                            ? 'קידומות דקדוקיות'
+                            : hasGrammaticalSuffixes
+                                ? 'סיומות דקדוקיות'
+                                : hasPartialWord
+                                    ? 'חלק ממילה'
+                                    : hasFullPartialSpelling
+                                        ? 'כתיב מלא/חסר'
+                                        : 'מדויק';
+        
+        print('🔄 מילה $i: $finalPattern (סוג חיפוש: $searchType)');
       } else {
         // fallback למילה המקורית
         regexTerms.add(word);
