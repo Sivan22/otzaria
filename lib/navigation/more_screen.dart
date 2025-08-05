@@ -51,6 +51,10 @@ class _MoreScreenState extends State<MoreScreen> {
                 label: Text('לוח שנה'),
               ),
               NavigationRailDestination(
+                icon: ImageIcon(AssetImage('assets/icon/שמור וזכור.png')),
+                label: Text('זכור ושמור'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(Icons.straighten),
                 label: Text('ממיר מידות'),
               ),
@@ -74,8 +78,10 @@ class _MoreScreenState extends State<MoreScreen> {
       case 0:
         return 'לוח שנה';
       case 1:
-        return 'ממיר מידות';
+        return 'זכור ושמור';
       case 2:
+        return 'ממיר מידות';
+      case 3:
         return 'גימטריות';
       default:
         return 'עוד';
@@ -102,9 +108,11 @@ class _MoreScreenState extends State<MoreScreen> {
           child: const CalendarWidget(),
         );
       case 1:
-        return const MeasurementConverterScreen();
+        return const Center(child: Text('בקרוב...'));
       case 2:
-        return const Center(child: Text('גימטריות - בקרוב...'));
+        return const MeasurementConverterScreen();
+      case 3:
+        return const Center(child: Text('בקרוב...'));
       default:
         return Container();
     }
