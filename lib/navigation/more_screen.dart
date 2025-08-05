@@ -13,6 +13,19 @@ class MoreScreen extends StatefulWidget {
 
 class _MoreScreenState extends State<MoreScreen> {
   int _selectedIndex = 0;
+  late final CalendarCubit _calendarCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _calendarCubit = CalendarCubit();
+  }
+
+  @override
+  void dispose() {
+    _calendarCubit.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,13 +85,9 @@ class _MoreScreenState extends State<MoreScreen> {
   List<Widget>? _getActions(BuildContext context, int index) {
     if (index == 0) {
       return [
-        Builder(
-          builder: (context) {
-            return IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => _showSettingsDialog(context),
-            );
-          },
+        IconButton(
+          icon: const Icon(Icons.settings),
+          onPressed: () => _showSettingsDialog(context),
         ),
       ];
     }
@@ -88,8 +97,8 @@ class _MoreScreenState extends State<MoreScreen> {
   Widget _buildCurrentWidget(int index) {
     switch (index) {
       case 0:
-        return BlocProvider(
-          create: (context) => CalendarCubit(),
+        return BlocProvider.value(
+          value: _calendarCubit,
           child: const CalendarWidget(),
         );
       case 1:
@@ -102,13 +111,11 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   void _showSettingsDialog(BuildContext context) {
-    final calendarCubit = context.read<CalendarCubit>();
-
     showDialog(
       context: context,
       builder: (dialogContext) {
         return BlocBuilder<CalendarCubit, CalendarState>(
-          bloc: calendarCubit,
+          bloc: _calendarCubit,
           builder: (context, state) {
             return AlertDialog(
               title: const Text('הגדרות לוח שנה'),
@@ -121,7 +128,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     groupValue: state.calendarType,
                     onChanged: (value) {
                       if (value != null) {
-                        calendarCubit.changeCalendarType(value);
+                        _calendarCubit.changeCalendarType(value);
                       }
                       Navigator.of(dialogContext).pop();
                     },
@@ -132,7 +139,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     groupValue: state.calendarType,
                     onChanged: (value) {
                       if (value != null) {
-                        calendarCubit.changeCalendarType(value);
+                        _calendarCubit.changeCalendarType(value);
                       }
                       Navigator.of(dialogContext).pop();
                     },
@@ -143,7 +150,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     groupValue: state.calendarType,
                     onChanged: (value) {
                       if (value != null) {
-                        calendarCubit.changeCalendarType(value);
+                        _calendarCubit.changeCalendarType(value);
                       }
                       Navigator.of(dialogContext).pop();
                     },

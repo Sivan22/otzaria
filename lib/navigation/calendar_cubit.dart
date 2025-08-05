@@ -1,9 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:kosher_dart/kosher_dart.dart';
-import 'package:flutter/material.dart';
 
 enum CalendarType { hebrew, gregorian, combined }
+
+enum CalendarView { month, week, day }
 
 // Calendar State
 class CalendarState extends Equatable {
@@ -14,6 +15,7 @@ class CalendarState extends Equatable {
   final JewishDate currentJewishDate;
   final DateTime currentGregorianDate;
   final CalendarType calendarType;
+  final CalendarView calendarView;
 
   const CalendarState({
     required this.selectedJewishDate,
@@ -23,6 +25,7 @@ class CalendarState extends Equatable {
     required this.currentJewishDate,
     required this.currentGregorianDate,
     required this.calendarType,
+    required this.calendarView,
   });
 
   factory CalendarState.initial() {
@@ -37,6 +40,7 @@ class CalendarState extends Equatable {
       currentJewishDate: jewishNow,
       currentGregorianDate: now,
       calendarType: CalendarType.combined,
+      calendarView: CalendarView.month,
     );
   }
 
@@ -48,6 +52,7 @@ class CalendarState extends Equatable {
     JewishDate? currentJewishDate,
     DateTime? currentGregorianDate,
     CalendarType? calendarType,
+    CalendarView? calendarView,
   }) {
     return CalendarState(
       selectedJewishDate: selectedJewishDate ?? this.selectedJewishDate,
@@ -58,6 +63,7 @@ class CalendarState extends Equatable {
       currentJewishDate: currentJewishDate ?? this.currentJewishDate,
       currentGregorianDate: currentGregorianDate ?? this.currentGregorianDate,
       calendarType: calendarType ?? this.calendarType,
+      calendarView: calendarView ?? this.calendarView,
     );
   }
 
@@ -77,7 +83,8 @@ class CalendarState extends Equatable {
         currentJewishDate.getJewishDayOfMonth(),
 
         currentGregorianDate,
-        calendarType
+        calendarType,
+        calendarView
       ];
 }
 
@@ -166,6 +173,37 @@ class CalendarCubit extends Cubit<CalendarState> {
   void changeCalendarType(CalendarType type) {
     emit(state.copyWith(calendarType: type));
   }
+
+  void changeCalendarView(CalendarView view) {
+    emit(state.copyWith(calendarView: view));
+  }
+
+  void jumpToToday() {
+    final now = DateTime.now();
+    final jewishNow = JewishDate();
+    final newTimes = _calculateDailyTimes(now, state.selectedCity);
+
+    emit(state.copyWith(
+      selectedJewishDate: jewishNow,
+      selectedGregorianDate: now,
+      currentJewishDate: jewishNow,
+      currentGregorianDate: now,
+      dailyTimes: newTimes,
+    ));
+  }
+
+  void jumpToDate(DateTime date) {
+    final jewishDate = JewishDate.fromDateTime(date);
+    final newTimes = _calculateDailyTimes(date, state.selectedCity);
+
+    emit(state.copyWith(
+      selectedJewishDate: jewishDate,
+      selectedGregorianDate: date,
+      currentJewishDate: jewishDate,
+      currentGregorianDate: date,
+      dailyTimes: newTimes,
+    ));
+  }
 }
 
 // City coordinates map
@@ -194,8 +232,6 @@ const Map<String, Map<String, double>> cityCoordinates = {
 
 // Calculate daily times function
 Map<String, String> _calculateDailyTimes(DateTime date, String city) {
-  print(
-      'Calculating times for date: ${date.day}/${date.month}/${date.year}, city: $city');
   final cityData = cityCoordinates[city];
   if (cityData == null) {
     return {};
