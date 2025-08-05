@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
+import 'package:otzaria/services/custom_fonts_service.dart';
 
 class SettingsState extends Equatable {
   final bool isDarkMode;
@@ -19,6 +20,8 @@ class SettingsState extends Equatable {
   final bool defaultSidebarOpen;
   final bool pinSidebar;
   final double sidebarWidth;
+  final List<CustomFont> customFonts;
+  final bool isLoadingCustomFonts;
 
   const SettingsState({
     required this.isDarkMode,
@@ -38,6 +41,8 @@ class SettingsState extends Equatable {
     required this.defaultSidebarOpen,
     required this.pinSidebar,
     required this.sidebarWidth,
+    required this.customFonts,
+    required this.isLoadingCustomFonts,
   });
 
   factory SettingsState.initial() {
@@ -59,6 +64,8 @@ class SettingsState extends Equatable {
       defaultSidebarOpen: false,
       pinSidebar: false,
       sidebarWidth: 300,
+      customFonts: const [],
+      isLoadingCustomFonts: false,
     );
   }
 
@@ -80,6 +87,8 @@ class SettingsState extends Equatable {
     bool? defaultSidebarOpen,
     bool? pinSidebar,
     double? sidebarWidth,
+    List<CustomFont>? customFonts,
+    bool? isLoadingCustomFonts,
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -99,7 +108,9 @@ class SettingsState extends Equatable {
           removeNikudFromTanach ?? this.removeNikudFromTanach,
       defaultSidebarOpen: defaultSidebarOpen ?? this.defaultSidebarOpen,
       pinSidebar: pinSidebar ?? this.pinSidebar,
-      sidebarWidth: sidebarWidth ?? this.sidebarWidth,      
+      sidebarWidth: sidebarWidth ?? this.sidebarWidth,
+      customFonts: customFonts ?? this.customFonts,
+      isLoadingCustomFonts: isLoadingCustomFonts ?? this.isLoadingCustomFonts,
     );
   }
 
@@ -121,6 +132,8 @@ class SettingsState extends Equatable {
         removeNikudFromTanach,
         defaultSidebarOpen,
         pinSidebar,
-        sidebarWidth,        
+        sidebarWidth,
+        customFonts,
+        isLoadingCustomFonts,
       ];
 }

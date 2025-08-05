@@ -14,6 +14,8 @@ import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:otzaria/widgets/enhanced_font_dropdown.dart';
+import 'package:otzaria/utils/font_utils.dart';
 import 'dart:async';
 
 class MySettingsScreen extends StatefulWidget {
@@ -29,6 +31,32 @@ class _MySettingsScreenState extends State<MySettingsScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  Future<void> _addCustomFont(BuildContext context) async {
+    try {
+      // בחירת קובץ גופן
+      final fontPath = await FontUtils.pickFontFile();
+      if (fontPath == null) return;
+
+      // הצגת תצוגה מקדימה וקבלת שם
+      final displayName = await FontUtils.showFontPreviewDialog(context, fontPath);
+      if (displayName == null) return;
+
+      // הוספת הגופן
+      if (context.mounted) {
+        context.read<SettingsBloc>().add(AddCustomFont(fontPath, displayName));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה בהוספת הגופן: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   Widget _buildColumns(int maxColumns, List<Widget> children) {
     const double rowSpacing = 16.0;
@@ -173,29 +201,28 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         context.read<SettingsBloc>().add(UpdateFontSize(value));
                       },
                     ),
-                    DropDownSettingsTile<String>(
+                    EnhancedFontDropdown(
                       title: 'גופן',
                       settingKey: 'key-font-family',
-                      values: const <String, String>{
-                        'TaameyDavidCLM': 'דוד',
-                        'FrankRuhlCLM': 'פרנק-רוהל',
-                        'TaameyAshkenaz': 'טעמי אשכנז',
-                        'KeterYG': 'כתר',
-                        'Shofar': 'שופר',
-                        'NotoSerifHebrew': 'נוטו',
-                        'Tinos': 'טינוס',
-                        'NotoRashiHebrew': 'רש"י',
-                        'Candara': 'קנדרה',
-                        'roboto': 'רובוטו',
-                        'Calibri': 'קליברי',
-                        'Arial': 'אריאל',
-                      },
                       selected: state.fontFamily,
+                      customFonts: state.customFonts,
+                      isLoading: state.isLoadingCustomFonts,
                       leading: const Icon(Icons.font_download_outlined),
                       onChange: (value) {
                         context
                             .read<SettingsBloc>()
                             .add(UpdateFontFamily(value));
+                      },
+                      onRemoveCustomFont: (fontId) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(RemoveCustomFont(fontId));
+                      },
+                      onAddCustomFont: () => _addCustomFont(context),
+                      onRenameCustomFont: (fontId, newName) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(RenameCustomFont(fontId, newName));
                       },
                     ),
                     SettingsContainer(
@@ -442,11 +469,11 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
                     SwitchSettingsTile(
-                      title: 'סינכרון אוטומטי',
+                      title: 'סינכרון הספרייה באופן אוטומטי',
                       leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
-                      enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
+                      enabledLabel: 'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
@@ -565,21 +592,24 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             }
                           },
                         ),
-                        SimpleSettingsTile(
-                          title: 'מיקום ספרי HebrewBooks',
-                          subtitle: Settings.getValue<String>(
-                                  'key-hebrew-books-path') ??
-                              'לא קיים',
-                          leading: const Icon(Icons.folder),
-                          onTap: () async {
-                            String? path =
-                                await FilePicker.platform.getDirectoryPath();
-                            if (path != null) {
-                              context
-                                  .read<LibraryBloc>()
-                                  .add(UpdateHebrewBooksPath(path));
-                            }
-                          },
+                        Tooltip(
+                          message: 'במידה וקיימים ברשותכם ספרים ממאגר זה',
+                          child: SimpleSettingsTile(
+                            title: 'מיקום ספרי HebrewBooks (היברובוקס)',
+                            subtitle: Settings.getValue<String>(
+                                    'key-hebrew-books-path') ??
+                                'לא קיים',
+                            leading: const Icon(Icons.folder),
+                            onTap: () async {
+                              String? path =
+                                  await FilePicker.platform.getDirectoryPath();
+                              if (path != null) {
+                                context
+                                    .read<LibraryBloc>()
+                                    .add(UpdateHebrewBooksPath(path));
+                              }
+                            },
+                          ),
                         ),
                       ]),
                     SwitchSettingsTile(

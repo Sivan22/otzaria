@@ -27,6 +27,7 @@ import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 import 'package:otzaria/library/view/grid_items.dart';
 import 'package:otzaria/library/view/otzar_book_dialog.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
+import 'package:otzaria/widgets/workspace_icon_button.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({Key? key}) : super(key: key);
@@ -112,9 +113,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             ),
                             child: const SyncIconButton(),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.add_to_queue),
-                            tooltip: 'החלף שולחן עבודה',
+                          WorkspaceIconButton(
                             onPressed: () =>
                                 _showSwitchWorkspaceDialog(context),
                           ),

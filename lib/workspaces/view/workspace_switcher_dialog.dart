@@ -184,11 +184,12 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                   padding: const EdgeInsets.all(8.0),
                   child: Builder(builder: (context) {
                     bool isEditing = false; // Flag to track editing
+                    late TextEditingController editController;
                     return StatefulBuilder(builder: (context, setState) {
                       return isEditing
                           ? TextField(
-                              controller:
-                                  TextEditingController(text: workspace.name),
+                              controller: editController,
+                              autofocus: true,
                               onSubmitted: (newName) {
                                 setState(() {
                                   context.read<WorkspaceBloc>().add(
@@ -217,6 +218,7 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                                     icon: const Icon(Icons.edit),
                                     onPressed: () {
                                       setState(() {
+                                        editController = TextEditingController(text: workspace.name);
                                         isEditing = true;
                                       });
                                     })
