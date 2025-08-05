@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "אוצריא"
-#define MyAppVersion "0.2.7"
+#define MyAppVersion "0.9.0"
 #define MyAppPublisher "sivan22"
 #define MyAppURL "https://github.com/Sivan22/otzaria"
 #define MyAppExeName "otzaria.exe"
@@ -3305,7 +3305,6 @@ Type: filesandordirs; Name: "{app}\אוצריא\שות\ראשונים\רמבם\�
 Type: filesandordirs; Name: "{app}\אוצריא\תלמוד בבלי\אחרונים\עין איה.txt";
 Type: filesandordirs; Name: "{app}\אוצריא\תלמוד בבלי\ראשונים\ראה על ברכות.txt";
 Type: filesandordirs; Name: "{app}\אוצריא\תנך\ראשונים\מנחת שי\כתובים\מנחת שי על אסתר.txt";
-Type: filesandordirs; Name: "{app}\index";
 Type: filesandordirs; Name: "{app}\default.isar";
 
 [Run]

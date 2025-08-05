@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "אוצריא"
-#define MyAppVersion "0.2.7"
+#define MyAppVersion "0.9.0"
 #define MyAppPublisher "sivan22"
 #define MyAppURL "https://github.com/Sivan22/otzaria"
 #define MyAppExeName "otzaria.exe"
@@ -30,10 +30,6 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 DisableDirPage=auto
-
-[InstallDelete]
-Type: filesandordirs; Name: "{app}\index";
-Type: filesandordirs; Name: "{app}\default.isar";
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
