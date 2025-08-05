@@ -61,8 +61,8 @@ Future<bool> hasTopic(String title, String topic) async {
         }
       }
 
-      // Book not found in CSV, it's "פרשנים נוספים"
-      return topic == 'פרשנים נוספים';
+      // Book not found in CSV, it's "מפרשים נוספים"
+      return topic == 'מפרשים נוספים';
     }
   } catch (e) {
     // If CSV fails, fall back to path-based check
@@ -118,7 +118,7 @@ String _mapGenerationToCategory(String generation) {
     case 'מחברי זמננו':
       return 'מחברי זמננו';
     default:
-      return 'פרשנים נוספים';
+      return 'מפרשים נוספים';
   }
 }
 
@@ -439,7 +439,7 @@ Future<Map<String, List<String>>> splitByEra(
     'ראשונים': [],
     'אחרונים': [],
     'מחברי זמננו': [],
-    'פרשנים נוספים': [],
+    'מפרשים נוספים': [],
   };
 
   // ממיינים כל פרשן לקטגוריה הראשונה שמתאימה לו
@@ -455,8 +455,8 @@ Future<Map<String, List<String>>> splitByEra(
     } else if (await hasTopic(t, 'מחברי זמננו')) {
       byEra['מחברי זמננו']!.add(t);
     } else {
-      // כל ספר שלא נמצא בקטגוריות הקודמות יוכנס ל"פרשנים נוספים"
-      byEra['פרשנים נוספים']!.add(t);
+      // כל ספר שלא נמצא בקטגוריות הקודמות יוכנס ל"מפרשים נוספים"
+      byEra['מפרשים נוספים']!.add(t);
     }
   }
 

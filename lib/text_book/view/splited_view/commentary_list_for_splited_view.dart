@@ -59,7 +59,7 @@ class _CommentaryListState extends State<CommentaryList> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'חפש בתוך הפרשנים המוצגים...',
+                      hintText: 'חפש בתוך המפרשים המוצגים...',
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
@@ -121,7 +121,7 @@ class _CommentaryListState extends State<CommentaryList> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (thisLinksSnapshot.data!.isEmpty) {
-                  return const Center(child: Text("לא נמצאו פרשנים להצגה"));
+                  return const Center(child: Text("לא נמצאו מפרשים להצגה"));
                 }
                 return ProgressiveScroll(
                   scrollController: scrollController,

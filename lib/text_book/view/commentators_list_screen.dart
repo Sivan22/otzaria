@@ -131,7 +131,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
       if (state is! TextBookLoaded) return const Center();
       if (state.availableCommentators.isEmpty) {
         return const Center(
-          child: Text("אין פרשנים"),
+          child: Text("אין מפרשים"),
         );
       }
       if (commentatorsList.isEmpty) _update(context, state);
@@ -204,7 +204,7 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                 if (commentatorsList.isNotEmpty)
                   CheckboxListTile(
                     title:
-                        const Text('הצג את כל הפרשנים'), // שמרתי את השינוי שלך
+                        const Text('הצג את כל המפרשים'), // שמרתי את השינוי שלך
                     value: commentatorsList
                         .where((e) =>
                             !e.startsWith('__TITLE_') &&
