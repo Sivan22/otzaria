@@ -381,12 +381,15 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                               ? BlendMode.difference
                               : BlendMode.dst,
                         ),
-                        child: PdfViewer.file(
+                        child: Container(
+                          color: Theme.of(context).colorScheme.surface,
+                          child: PdfViewer.file(
                           widget.tab.book.path,
                           initialPageNumber: widget.tab.pageNumber,
                           passwordProvider: () => passwordDialog(context),
                           controller: widget.tab.pdfViewerController,
                           params: PdfViewerParams(
+                            backgroundColor: Theme.of(context).colorScheme.surface,
                             maxScale: 10,
                             horizontalCacheExtent: 5,
                             verticalCacheExtent: 5,
@@ -473,6 +476,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                         ),
                       ),
                     ),
+                    ),
                   ),
                 ),
               ],
@@ -500,7 +504,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         child: Container(
           color: Theme.of(context).colorScheme.surface,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: Column(
               children: [
                 Row(

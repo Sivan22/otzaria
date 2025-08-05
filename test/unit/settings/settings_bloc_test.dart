@@ -75,7 +75,6 @@ void main() {
             defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
             pinSidebar: mockSettings['pinSidebar'] as bool,
             sidebarWidth: mockSettings['sidebarWidth'] as double,
-            facetFilteringWidth: mockSettings['facetFilteringWidth'] as double,
           ),
         ],
         verify: (_) {

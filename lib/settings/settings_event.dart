@@ -162,12 +162,3 @@ class UpdateSidebarWidth extends SettingsEvent {
   @override
   List<Object?> get props => [sidebarWidth];
 }
-
-class UpdateFacetFilteringWidth extends SettingsEvent {
-  final double facetFilteringWidth;
-
-  const UpdateFacetFilteringWidth(this.facetFilteringWidth);
-
-  @override
-  List<Object?> get props => [facetFilteringWidth];
-}

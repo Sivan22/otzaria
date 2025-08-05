@@ -399,57 +399,63 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                 availableWidth,
               );
 
-              return Material(
-                clipBehavior: Clip.hardEdge,
-                child: ListTile(
-                  leading:
-                      result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
-                  onTap: () {
-                    if (result.isPdf) {
-                      context.read<TabsBloc>().add(AddTab(
-                            PdfBookTab(
-                              book: PdfBook(
-                                  title: result.title, path: result.filePath),
-                              pageNumber: result.segment.toInt() + 1,
-                              searchText: widget.tab.queryController.text,
-                              openLeftPane:
-                                  (Settings.getValue<bool>('key-pin-sidebar') ??
-                                          false) ||
-                                      (Settings.getValue<bool>(
-                                              'key-default-sidebar-open') ??
-                                          false),
-                            ),
-                          ));
-                    } else {
-                      context.read<TabsBloc>().add(AddTab(
-                            TextBookTab(
-                                book: TextBook(
-                                  title: result.title,
-                                ),
-                                index: result.segment.toInt(),
-                                searchText: widget.tab.queryController.text,
-                                openLeftPane: (Settings.getValue<bool>(
-                                            'key-pin-sidebar') ??
-                                        false) ||
-                                    (Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false)),
-                          ));
-                    }
+                        return ListTile(
+                          leading: result.isPdf
+                              ? const Icon(Icons.picture_as_pdf)
+                              : null,
+                          onTap: () {
+                            if (result.isPdf) {
+                              context.read<TabsBloc>().add(AddTab(
+                                    PdfBookTab(
+                                      book: PdfBook(
+                                          title: result.title,
+                                          path: result.filePath),
+                                      pageNumber: result.segment.toInt() + 1,
+                                      searchText:
+                                          widget.tab.queryController.text,
+                                      openLeftPane: (Settings.getValue<bool>(
+                                                  'key-pin-sidebar') ??
+                                              false) ||
+                                          (Settings.getValue<bool>(
+                                                  'key-default-sidebar-open') ??
+                                              false),
+                                    ),
+                                  ));
+                            } else {
+                              context.read<TabsBloc>().add(AddTab(
+                                    TextBookTab(
+                                        book: TextBook(
+                                          title: result.title,
+                                        ),
+                                        index: result.segment.toInt(),
+                                        searchText:
+                                            widget.tab.queryController.text,
+                                        openLeftPane: (Settings.getValue<bool>(
+                                                    'key-pin-sidebar') ??
+                                                false) ||
+                                            (Settings.getValue<bool>(
+                                                    'key-default-sidebar-open') ??
+                                                false)),
+                                  ));
+                            }
+                          },
+                          title: Text(titleText),
+                          subtitle: Text.rich(
+                            TextSpan(children: snippetSpans),
+                            maxLines: null, // אין הגבלה על מספר השורות!
+                            textAlign: TextAlign.justify,
+                            textDirection: TextDirection.rtl,
+                          ),
+                        );
+                      },
+                    );
                   },
-                  title: Text(titleText),
-                  subtitle: Text.rich(
-                    TextSpan(children: snippetSpans),
-                    maxLines: null, // אין הגבלה על מספר השורות!
-                    textAlign: TextAlign.justify,
-                    textDirection: TextDirection.rtl,
-                  ),
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
-      ),
-    );
+      );
+    });
   }
 }

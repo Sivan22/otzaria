@@ -2,12 +2,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/settings/settings_event.dart';
 import 'package:otzaria/settings/settings_repository.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/services/custom_fonts_service.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final SettingsRepository _repository;
+  final CustomFontsService _customFontsService;
 
-  SettingsBloc({required SettingsRepository repository})
-      : _repository = repository,
+  SettingsBloc({
+    required SettingsRepository repository,
+    CustomFontsService? customFontsService,
+  })  : _repository = repository,
+        _customFontsService = customFontsService ?? CustomFontsService.instance,
         super(SettingsState.initial()) {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateDarkMode>(_onUpdateDarkMode);
@@ -27,7 +32,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateDefaultSidebarOpen>(_onUpdateDefaultSidebarOpen);
     on<UpdatePinSidebar>(_onUpdatePinSidebar);
     on<UpdateSidebarWidth>(_onUpdateSidebarWidth);
-    on<UpdateFacetFilteringWidth>(_onUpdateFacetFilteringWidth);
   }
 
   Future<void> _onLoadSettings(
@@ -35,6 +39,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     final settings = await _repository.loadSettings();
+    
+    // טעינת גופנים אישיים
+    emit(state.copyWith(isLoadingCustomFonts: true));
+    final customFonts = await _customFontsService.getCustomFonts();
+    
     emit(SettingsState(
       isDarkMode: settings['isDarkMode'],
       seedColor: settings['seedColor'],
@@ -52,8 +61,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       removeNikudFromTanach: settings['removeNikudFromTanach'],
       defaultSidebarOpen: settings['defaultSidebarOpen'],
       pinSidebar: settings['pinSidebar'],
-      sidebarWidth: settings['sidebarWidth'],
-      facetFilteringWidth: settings['facetFilteringWidth'],
+      sidebarWidth: settings['sidebarWidth'],      
     ));
   }
 
@@ -93,8 +101,22 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     UpdateFontFamily event,
     Emitter<SettingsState> emit,
   ) async {
-    await _repository.updateFontFamily(event.fontFamily);
-    emit(state.copyWith(fontFamily: event.fontFamily));
+    // בדיקה שהגופן תקין
+    final builtInFonts = {'TaameyDavidCLM', 'FrankRuhlCLM', 'TaameyAshkenaz', 
+                         'KeterYG', 'Shofar', 'NotoSerifHebrew', 'Tinos', 
+                         'NotoRashiHebrew', 'Candara', 'roboto', 'Calibri', 'Arial'};
+    
+    final isBuiltIn = builtInFonts.contains(event.fontFamily);
+    final isCustom = state.customFonts.any((font) => font.id == event.fontFamily);
+    
+    if (isBuiltIn || isCustom) {
+      await _repository.updateFontFamily(event.fontFamily);
+      emit(state.copyWith(fontFamily: event.fontFamily));
+    } else {
+      // גופן לא תקין - השתמש בגופן ברירת מחדל
+      await _repository.updateFontFamily('FrankRuhlCLM');
+      emit(state.copyWith(fontFamily: 'FrankRuhlCLM'));
+    }
   }
 
   Future<void> _onUpdateShowOtzarHachochma(
@@ -191,13 +213,5 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _repository.updateSidebarWidth(event.sidebarWidth);
     emit(state.copyWith(sidebarWidth: event.sidebarWidth));
-  }
-
-  Future<void> _onUpdateFacetFilteringWidth(
-    UpdateFacetFilteringWidth event,
-    Emitter<SettingsState> emit,
-  ) async {
-    await _repository.updateFacetFilteringWidth(event.facetFilteringWidth);
-    emit(state.copyWith(facetFilteringWidth: event.facetFilteringWidth));
   }
 }

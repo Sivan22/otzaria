@@ -17,6 +17,7 @@ class SplitedViewScreen extends StatefulWidget {
     required this.searchTextController,
     required this.openLeftPaneTab,
     required this.tab,
+    this.customFontFamily,
   });
 
   final List<String> content;
@@ -24,6 +25,7 @@ class SplitedViewScreen extends StatefulWidget {
   final TextEditingValue searchTextController;
   final void Function(int) openLeftPaneTab;
   final TextBookTab tab;
+  final String? customFontFamily;
 
   @override
   State<SplitedViewScreen> createState() => _SplitedViewScreenState();
@@ -163,6 +165,7 @@ class _SplitedViewScreenState extends State<SplitedViewScreen> {
                   openLeftPaneTab: widget.openLeftPaneTab,
                   showSplitedView: state.showSplitView,
                   tab: widget.tab,
+                  customFontFamily: widget.customFontFamily,
                 ),
               ],
             ),

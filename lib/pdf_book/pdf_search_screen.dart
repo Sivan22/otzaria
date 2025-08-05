@@ -211,7 +211,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodySmall?.color ??
-                      Colors.grey[700],
+                      Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
