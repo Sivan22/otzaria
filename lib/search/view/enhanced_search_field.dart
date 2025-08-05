@@ -11,6 +11,8 @@ import 'package:otzaria/search/models/search_terms_model.dart';
 import 'package:otzaria/search/view/tantivy_full_text_search.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
+import 'package:otzaria/tabs/bloc/tabs_state.dart';
 
 // הווידג'ט החדש לניהול מצבי הכפתור
 class _PlusButton extends StatefulWidget {
@@ -508,7 +510,15 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   @override
+  void deactivate() {
+    debugPrint('⏸️ EnhancedSearchField deactivating - clearing overlays');
+    _clearAllOverlays();
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
+    debugPrint('🗑️ EnhancedSearchField disposing');
     _clearAllOverlays();
     widget.widget.tab.queryController.removeListener(_onTextChanged);
     widget.widget.tab.searchFieldFocusNode
@@ -627,8 +637,12 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   void _clearAllOverlays(
       {bool keepSearchDrawer = false, bool keepFilledBubbles = false}) {
+    debugPrint(
+        '🧹 CLEAR OVERLAYS: ${DateTime.now()} - keepSearchDrawer: $keepSearchDrawer, keepFilledBubbles: $keepFilledBubbles');
     // ניקוי אלטרנטיבות - רק אם לא ביקשנו לשמור בועות מלאות או אם הן ריקות
     if (!keepFilledBubbles) {
+      debugPrint(
+          '🧹 Clearing ${_alternativeOverlays.length} alternative overlay groups');
       for (final entries in _alternativeOverlays.values) {
         for (final entry in entries) {
           entry.remove();
@@ -677,6 +691,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
     // ניקוי מרווחים - רק אם לא ביקשנו לשמור בועות מלאות או אם הן ריקות
     if (!keepFilledBubbles) {
+      debugPrint('🧹 Clearing ${_spacingOverlays.length} spacing overlays');
       for (final entry in _spacingOverlays.values) {
         entry.remove();
       }
@@ -1059,10 +1074,14 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _showAlternativeOverlay(int termIndex, int altIndex) {
+    debugPrint(
+        '🎈 Showing alternative overlay: term=$termIndex, alt=$altIndex');
+
     // בדיקה שהאינדקסים תקינים
     if (termIndex >= _wordPositions.length ||
         !_alternativeControllers.containsKey(termIndex) ||
         altIndex >= _alternativeControllers[termIndex]!.length) {
+      debugPrint('❌ Invalid indices for alternative overlay');
       return;
     }
 
@@ -1074,6 +1093,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
         Overlay.of(context).mounted && // ודא שה-Overlay קיים
         existingOverlays[altIndex].mounted) {
       // ודא שהבועה הספציפית הזו עדיין על המסך
+      debugPrint('⚠️ Alternative overlay already exists and mounted');
       return; // אם הבועה כבר קיימת ומוצגת, אל תעשה כלום
     }
 
@@ -1118,7 +1138,11 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   void _showSpacingOverlay(int leftIndex, int rightIndex) {
     final key = _spaceKey(leftIndex, rightIndex);
-    if (_spacingOverlays.containsKey(key)) return;
+    debugPrint('🎈 Showing spacing overlay: $key');
+    if (_spacingOverlays.containsKey(key)) {
+      debugPrint('⚠️ Spacing overlay already exists: $key');
+      return;
+    }
 
     // בדיקה שהאינדקסים תקינים
     if (leftIndex >= _wordRightEdges.length ||
@@ -1423,27 +1447,54 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<NavigationBloc, NavigationState>(
-      listener: (context, state) {
-        // כשעוברים ממסך החיפוש למסך אחר, שמור נתונים ונקה את כל הבועות
-        if (state.currentScreen != Screen.search) {
-          _saveDataToTab();
-          _clearAllOverlays();
-        } else if (state.currentScreen == Screen.search) {
-          // כשחוזרים למסך החיפוש, שחזר את הנתונים והצג את הבועות
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _restoreDataFromTab(); // 1. שחזר את תוכן הבועות מהזיכרון
-            // עיכוב נוסף כדי לוודא שהטקסט מעודכן
-            Future.delayed(const Duration(milliseconds: 50), () {
-              // השאר את העיכוב הקטן הזה
-              if (mounted) {
-                _calculateWordPositions(); // 2. חשב מיקומים (עכשיו זה יעבוד)
-                _showRestoredBubbles(); // 3. הצג את הבועות המשוחזרות
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<NavigationBloc, NavigationState>(
+          listener: (context, state) {
+            debugPrint('🔄 Navigation changed to: ${state.currentScreen}');
+
+            // תמיד נקה בועות כשמשנים מסך - זה יפתור את הבאג
+            // שבו בועות נשארות כשעוברים ממסך אחד לשני (לא דרך החיפוש)
+            _clearAllOverlays();
+
+            // אם עוזבים את מסך החיפוש - שמור נתונים
+            if (state.currentScreen != Screen.search) {
+              debugPrint('📤 Leaving search screen, saving data');
+              _saveDataToTab();
+            }
+            // אם חוזרים למסך החיפוש - שחזר נתונים והצג בועות
+            else if (state.currentScreen == Screen.search) {
+              debugPrint('📥 Returning to search screen, restoring data');
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _restoreDataFromTab(); // 1. שחזר את תוכן הבועות מהזיכרון
+                // עיכוב נוסף כדי לוודא שהטקסט מעודכן
+                Future.delayed(const Duration(milliseconds: 50), () {
+                  // השאר את העיכוב הקטן הזה
+                  if (mounted) {
+                    _calculateWordPositions(); // 2. חשב מיקומים (עכשיו זה יעבוד)
+                    _showRestoredBubbles(); // 3. הצג את הבועות המשוחזרות
+                  }
+                });
+              });
+            }
+          },
+        ),
+        // הוספת listener לשינויי tabs - למקרה שהבעיה קשורה לכך
+        BlocListener<TabsBloc, TabsState>(
+          listener: (context, state) {
+            debugPrint(
+                '📑 Tabs changed - current tab index: ${state.currentTabIndex}');
+            // אם עברנו לטאב שאינו search tab, נקה בועות
+            if (state.currentTabIndex < state.tabs.length) {
+              final currentTab = state.tabs[state.currentTabIndex];
+              if (currentTab.runtimeType.toString() != 'SearchingTab') {
+                debugPrint('📤 Switched to non-search tab, clearing overlays');
+                _clearAllOverlays();
               }
-            });
-          });
-        }
-      },
+            }
+          },
+        ),
+      ],
       child: Stack(
         key: _stackKey,
         clipBehavior: Clip.none,
