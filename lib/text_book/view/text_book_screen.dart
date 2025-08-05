@@ -23,6 +23,9 @@ import 'package:otzaria/text_book/view/combined_view/combined_book_screen.dart';
 import 'package:otzaria/text_book/view/commentators_list_screen.dart';
 import 'package:otzaria/text_book/view/links_screen.dart';
 import 'package:otzaria/text_book/view/splited_view/splited_view_screen.dart';
+import 'package:otzaria/utils/font_utils.dart';
+import 'package:otzaria/widgets/quick_font_selector.dart';
+import 'package:otzaria/widgets/current_font_provider.dart';
 import 'package:otzaria/text_book/view/text_book_search_screen.dart';
 import 'package:otzaria/text_book/view/toc_navigator_screen.dart';
 import 'package:otzaria/utils/open_book.dart';
@@ -67,8 +70,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   late TabController tabController;
   late final ValueNotifier<double> _sidebarWidth;
   late final StreamSubscription<SettingsState> _settingsSub;
+  String? currentBookFont; // גופן ספציפי לספר הנוכחי
   static const String _reportFileName = 'דיווח שגיאות בספרים.txt';
   static const String _reportSeparator = '==============================';
+  static const String _reportSeparator2 = '------------------------------';
   static const String _fallbackMail = 'otzaria.200@gmail.com';
 
   String? encodeQueryParameters(Map<String, String> params) {
@@ -101,6 +106,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         .read<SettingsBloc>()
         .stream
         .listen((state) => _sidebarWidth.value = state.sidebarWidth);
+    
+    // איפוס גופן ספציפי לספר
+    currentBookFont = null;
   }
 
   @override
@@ -116,6 +124,55 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   void _openLeftPaneTab(int index) {
     context.read<TextBookBloc>().add(const ToggleLeftPane(true));
     tabController.index = index;
+  }
+
+  String _getFontFamily(BuildContext context) {
+    // אם יש גופן ספציפי לספר, השתמש בו
+    if (currentBookFont != null) {
+      final settingsState = context.read<SettingsBloc>().state;
+      final fallbackFont = FontUtils.getFallbackFont(
+        currentBookFont!,
+        settingsState.customFonts,
+      );
+      
+      if (fallbackFont != null) {
+        return fallbackFont;
+      }
+      
+      return FontUtils.getFontFamilyForDisplay(
+        currentBookFont!,
+        settingsState.customFonts,
+      );
+    }
+    
+    // אחרת השתמש בגופן הגלובלי
+    final settingsState = context.read<SettingsBloc>().state;
+    final fallbackFont = FontUtils.getFallbackFont(
+      settingsState.fontFamily,
+      settingsState.customFonts,
+    );
+    
+    if (fallbackFont != null) {
+      return fallbackFont;
+    }
+    
+    return FontUtils.getFontFamilyForDisplay(
+      settingsState.fontFamily,
+      settingsState.customFonts,
+    );
+  }
+
+  Widget _buildFontSelectorButton(BuildContext context, TextBookLoaded state) {
+    return QuickFontSelector(
+      currentFont: currentBookFont ?? context.read<SettingsBloc>().state.fontFamily,
+      onFontChanged: (fontFamily) {
+        setState(() {
+          currentBookFont = fontFamily;
+        });
+        // גרימה לעדכון התצוגה על ידי שליחת event עם אותו גודל גופן
+        context.read<TextBookBloc>().add(UpdateFontSize(state.fontSize));
+      },
+    );
   }
 
   @override
@@ -232,6 +289,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       if (wideScreen) ...[
         _buildZoomInButton(context, state),
         _buildZoomOutButton(context, state),
+        _buildFontSelectorButton(context, state),
       ],
 
       // Navigation Buttons (wide screen only)
@@ -566,9 +624,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
                             text,
                             style: TextStyle(
                               fontSize: fontSize,
-                              fontFamily:
-                                  Settings.getValue('key-font-family') ??
-                                      'candara',
+                              fontFamily: _getFontFamily(context),
                             ),
                             onSelectionChanged: (selection, cause) {
                               if (selection.start != selection.end) {
@@ -706,7 +762,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     הטקסט שבו נמצאה הטעות:
     $selectedText
 
-    פירוט הטעות:$detailsSection
+    פירוט הטעות:
+    $detailsSection
 
     ''';
   }
@@ -730,6 +787,13 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         mode: exists ? FileMode.append : FileMode.write,
         encoding: utf8,
       );
+
+      // אם זה קובץ חדש, כתוב את השורה הראשונה עם הוראות השליחה
+      if (!exists) {
+        sink.writeln('יש לשלוח קובץ זה למייל: $_fallbackMail');
+        sink.writeln(_reportSeparator2);
+        sink.writeln(''); // שורת רווח
+      }
 
       // אם יש כבר תוכן קודם בקובץ קיים -> הוסף מפריד לפני הרשומה החדשה
       if (exists && (await file.length()) > 0) {
@@ -782,7 +846,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     final message =
         "הדיווח נשמר בהצלחה לקובץ '$_reportFileName', הנמצא בתיקייה הראשית של אוצריא.\n"
-        "יש לך כבר $count דיווחים, וכעת תוכל לשלוח את הקובץ למייל: $_fallbackMail!";
+        "יש לך כבר $count דיווחים!\n"
+        "כעת תוכל לשלוח את הקובץ למייל: $_fallbackMail";
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -957,25 +1022,27 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   Widget _buildSplitedOrCombinedView(TextBookLoaded state) {
-    if (state.showSplitView && state.activeCommentators.isNotEmpty) {
-      return SplitedViewScreen(
-        content: state.content,
-        openBookCallback: widget.openBookCallback,
-        searchTextController: TextEditingValue(text: state.searchText),
-        openLeftPaneTab: _openLeftPaneTab,
-        tab: widget.tab,
-      );
-    }
-
-    return BlocBuilder<SettingsBloc, SettingsState>(
-      builder: (context, settingsState) {
-        return Padding(
-          padding: state.showLeftPane
-              ? EdgeInsets.zero
-              : EdgeInsets.symmetric(horizontal: settingsState.paddingSize),
-          child: _buildCombinedView(state),
-        );
-      },
+    return CurrentFontProvider(
+      currentFont: currentBookFont,
+      child: state.showSplitView && state.activeCommentators.isNotEmpty
+          ? SplitedViewScreen(
+              content: state.content,
+              openBookCallback: widget.openBookCallback,
+              searchTextController: TextEditingValue(text: state.searchText),
+              openLeftPaneTab: _openLeftPaneTab,
+              tab: widget.tab,
+              customFontFamily: currentBookFont,
+            )
+          : BlocBuilder<SettingsBloc, SettingsState>(
+              builder: (context, settingsState) {
+                return Padding(
+                  padding: state.showLeftPane
+                      ? EdgeInsets.zero
+                      : EdgeInsets.symmetric(horizontal: settingsState.paddingSize),
+                  child: _buildCombinedView(state),
+                );
+              },
+            ),
     );
   }
 
@@ -987,6 +1054,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       openLeftPaneTab: _openLeftPaneTab,
       showSplitedView: ValueNotifier(state.showSplitView),
       tab: widget.tab,
+      customFontFamily: currentBookFont,
     );
   }
 
@@ -1000,6 +1068,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         }
       }
     });
+
     return ValueListenableBuilder<double>(
       valueListenable: _sidebarWidth,
       builder: (context, width, child) => AnimatedSize(
@@ -1007,92 +1076,73 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         child: SizedBox(
           width: state.showLeftPane ? width : 0,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TabBar(
-                        tabs: const [
-                          Tab(
-                              child: Center(
-                                  child: Text('ניווט',
-                                      textAlign: TextAlign.center))),
-                          Tab(
-                              child: Center(
-                                  child: Text('חיפוש',
-                                      textAlign: TextAlign.center))),
-                          Tab(
-                              child: Center(
-                                  child: Text('מפרשים',
-                                      textAlign: TextAlign.center))),
-                          Tab(
-                              child: Center(
-                                  child: Text('קישורים',
-                                      textAlign: TextAlign.center))),
-                        ],
-                        controller: tabController,
-                        isScrollable: false,
-                        tabAlignment: TabAlignment.fill,
-                        padding: EdgeInsets.zero,
-                        indicatorPadding: EdgeInsets.zero,
-                        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                        onTap: (value) {
-                          if (value == 1 && !Platform.isAndroid) {
-                            textSearchFocusNode.requestFocus();
-                          } else if (value == 0 && !Platform.isAndroid) {
-                            navigationSearchFocusNode.requestFocus();
-                          }
-                        },
-                      ),
+          padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TabBar(
+                      tabs: const [
+                        Tab(text: 'ניווט'),
+                        Tab(text: 'חיפוש'),
+                        Tab(text: 'פרשנות'),
+                        Tab(text: 'קישורים'),
+                      ],
+                      controller: tabController,
+                      onTap: (value) {
+                        if (value == 1 && !Platform.isAndroid) {
+                          textSearchFocusNode.requestFocus();
+                        } else if (value == 0 && !Platform.isAndroid) {
+                          navigationSearchFocusNode.requestFocus();
+                        }
+                      },
                     ),
-                    if (MediaQuery.of(context).size.width >= 600)
-                      IconButton(
-                        onPressed:
-                            (Settings.getValue<bool>('key-pin-sidebar') ??
-                                    false)
-                                ? null
-                                : () => context.read<TextBookBloc>().add(
-                                      TogglePinLeftPane(!state.pinLeftPane),
-                                    ),
-                        icon: const Icon(Icons.push_pin),
-                        isSelected: state.pinLeftPane ||
-                            (Settings.getValue<bool>('key-pin-sidebar') ??
-                                false),
-                      ),
+                  ),
+                  if (MediaQuery.of(context).size.width >= 600)
+                    IconButton(
+                      onPressed:
+                          (Settings.getValue<bool>('key-pin-sidebar') ?? false)
+                              ? null
+                              : () => context.read<TextBookBloc>().add(
+                                    TogglePinLeftPane(!state.pinLeftPane),
+                                  ),
+                      icon: const Icon(Icons.push_pin),
+                      isSelected: state.pinLeftPane ||
+                          (Settings.getValue<bool>('key-pin-sidebar') ?? false),
+                    ),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: tabController,
+                  children: [
+                    _buildTocViewer(context, state),
+                    CallbackShortcuts(
+                      bindings: <ShortcutActivator, VoidCallback>{
+                        LogicalKeySet(
+                          LogicalKeyboardKey.control,
+                          LogicalKeyboardKey.keyF,
+                        ): () {
+                          context.read<TextBookBloc>().add(
+                                const ToggleLeftPane(true),
+                              );
+                          tabController.index = 1;
+                          textSearchFocusNode.requestFocus();
+                        },
+                      },
+                      child: _buildSearchView(context, state),
+                    ),
+                    _buildCommentaryView(),
+                    _buildLinkView(context, state),
                   ],
                 ),
-                Expanded(
-                  child: TabBarView(
-                    controller: tabController,
-                    children: [
-                      _buildTocViewer(context, state),
-                      CallbackShortcuts(
-                        bindings: <ShortcutActivator, VoidCallback>{
-                          LogicalKeySet(
-                            LogicalKeyboardKey.control,
-                            LogicalKeyboardKey.keyF,
-                          ): () {
-                            context.read<TextBookBloc>().add(
-                                  const ToggleLeftPane(true),
-                                );
-                            tabController.index = 1;
-                            textSearchFocusNode.requestFocus();
-                          },
-                        },
-                        child: _buildSearchView(context, state),
-                      ),
-                      _buildCommentaryView(),
-                      _buildLinkView(context, state),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    ),
     );
   }
 

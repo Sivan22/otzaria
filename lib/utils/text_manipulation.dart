@@ -73,54 +73,6 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-// Helper function to parse CSV line with proper comma handling
-List<String> _parseCsvLine(String line) {
-  final List<String> result = [];
-  bool inQuotes = false;
-  String currentField = '';
-
-  for (int i = 0; i < line.length; i++) {
-    final char = line[i];
-
-    if (char == '"') {
-      // Handle escaped quotes (double quotes)
-      if (i + 1 < line.length && line[i + 1] == '"' && inQuotes) {
-        currentField += '"';
-        i++; // Skip the next quote
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char == ',' && !inQuotes) {
-      result.add(currentField.trim());
-      currentField = '';
-    } else {
-      currentField += char;
-    }
-  }
-
-  // Add the last field
-  result.add(currentField.trim());
-
-  return result;
-}
-
-// Helper function to map CSV generation to our categories
-String _mapGenerationToCategory(String generation) {
-  switch (generation) {
-    case 'תורה שבכתב':
-      return 'תורה שבכתב';
-    case 'חז"ל':
-      return 'חז"ל';
-    case 'ראשונים':
-      return 'ראשונים';
-    case 'אחרונים':
-      return 'אחרונים';
-    case 'מחברי זמננו':
-      return 'מחברי זמננו';
-    default:
-      return 'מפרשים נוספים';
-  }
-}
 
 // Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
 final RegExp _holyNameRegex = RegExp(
@@ -143,17 +95,17 @@ String removeTeamim(String s) => s
     .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
 
 String removeSectionNames(String s) => s
-    .replaceAll('פרק ', '')
-    .replaceAll('פסוק ', '')
-    .replaceAll('פסקה ', '')
-    .replaceAll('סעיף ', '')
-    .replaceAll('סימן ', '')
-    .replaceAll('הלכה ', '')
-    .replaceAll('מאמר ', '')
-    .replaceAll('קטן ', '')
-    .replaceAll('משנה ', '')
-    .replaceAll('י', '')
-    .replaceAll('ו', '')
+    .replaceAll('פרק', '')
+    .replaceAll('פסוק', '')
+    .replaceAll('פסקה', '')
+    .replaceAll('סעיף', '')
+    .replaceAll('סימן', '')
+    .replaceAll('הלכה', '')
+    .replaceAll('מאמר', '')
+    .replaceAll('קטן', '')
+    .replaceAll('משנה', '')
+    .replaceAll(RegExp(r'(?<=[א-ת])י|י(?=[א-ת])'), '')
+    .replaceAll(RegExp(r'(?<=[א-ת])ו|ו(?=[א-ת])'), '')
     .replaceAll('"', '')
     .replaceAll("'", '')
     .replaceAll(',', '')
@@ -221,6 +173,10 @@ String replaceParaphrases(String s) {
       .replaceAll(' הלכ', ' הלכות')
       .replaceAll(' הלכה', ' הלכות')
       .replaceAll(' המשנה', ' המשניות')
+      .replaceAll(' הרב', ' ר')
+      .replaceAll(' הרב', ' רבי')
+      .replaceAll(' הרב', ' רבינו')
+      .replaceAll(' הרב', ' רבנו')
       .replaceAll(' ויקר', ' ויקרא רבה')
       .replaceAll(' ויר', ' ויקרא רבה')
       .replaceAll(' זהח', ' זוהר חדש')
@@ -273,6 +229,9 @@ String replaceParaphrases(String s) {
       .replaceAll(' מדר', ' מדרש')
       .replaceAll(' מדרש רבא', ' מדרש רבה')
       .replaceAll(' מדת', ' מדרש תהלים')
+      .replaceAll(' מהדורא תנינא', ' מהדות')
+      .replaceAll(' מהדורא', ' מהדורה')
+      .replaceAll(' מהדורה', ' מהדורא')
       .replaceAll(' מהרשא', ' חדושי אגדות')
       .replaceAll(' מהרשא', ' חדושי הלכות')
       .replaceAll(' מונ', ' מורה נבוכים')
@@ -306,7 +265,7 @@ String replaceParaphrases(String s) {
       .replaceAll(' ספהמצ', ' ספר המצוות')
       .replaceAll(' ספר המצות', ' ספר המצוות')
       .replaceAll(' ספרא', ' תורת כהנים')
-      .replaceAll(' ע"מ', ' עמוד')
+      .replaceAll(' עמ', ' עמוד')
       .replaceAll(' עא', ' עמוד א')
       .replaceAll(' עב', ' עמוד ב')
       .replaceAll(' עהש', ' ערוך השולחן')
@@ -322,12 +281,15 @@ String replaceParaphrases(String s) {
       .replaceAll(' פירו', ' פירוש')
       .replaceAll(' פירוש המשנה', ' פירוש המשניות')
       .replaceAll(' פמג', ' פרי מגדים')
+      .replaceAll(' פני', ' פני יהושע')
       .replaceAll(' פסז', ' פסיקתא זוטרתא')
       .replaceAll(' פסיקתא זוטא', ' פסיקתא זוטרתא')
       .replaceAll(' פסיקתא רבה', ' פסיקתא רבתי')
       .replaceAll(' פסר', ' פסיקתא רבתי')
       .replaceAll(' פעח', ' פרי עץ חיים')
       .replaceAll(' פרח', ' פרי חדש')
+      .replaceAll(' פרמג', ' פרי מגדים')
+      .replaceAll(' פתש', ' פתחי תשובה')
       .replaceAll(' צפנפ', ' צפנת פענח')
       .replaceAll(' קדושל', ' קדושת לוי')
       .replaceAll(' קוא', ' קול אליהו')
@@ -339,7 +301,11 @@ String replaceParaphrases(String s) {
       .replaceAll(' קצשוע', ' קיצור שולחן ערוך')
       .replaceAll(' קשוע', ' קיצור שולחן ערוך')
       .replaceAll(' ר חיים', ' הגרח')
+      .replaceAll(' ר', ' הרב')
+      .replaceAll(' ר', ' ר')
       .replaceAll(' ר', ' רבי')
+      .replaceAll(' ר', ' רבינו')
+      .replaceAll(' ר', ' רבנו')
       .replaceAll(' רא בהרמ', ' רבי אברהם בן הרמבם')
       .replaceAll(' ראבע', ' אבן עזרא')
       .replaceAll(' ראשיח', ' ראשית חכמה')
@@ -348,8 +314,16 @@ String replaceParaphrases(String s) {
       .replaceAll(' רבי חיים', ' הגרח')
       .replaceAll(' רבי נחמן', ' מוהרן')
       .replaceAll(' רבי נתן', ' מוהרנת')
+      .replaceAll(' רבי', ' הרב')
+      .replaceAll(' רבי', ' רבינו')
+      .replaceAll(' רבי', ' רבנו')
       .replaceAll(' רבינו חיים', ' הגרח')
+      .replaceAll(' רבינו', ' הרב')
+      .replaceAll(' רבינו', ' ר')
       .replaceAll(' רבינו', ' רבי')
+      .replaceAll(' רבינו', ' רבנו')
+      .replaceAll(' רבנו', ' הרב')
+      .replaceAll(' רבנו', ' ר')
       .replaceAll(' רבנו', ' רבי')
       .replaceAll(' רבנו', ' רבינו')
       .replaceAll(' רח', ' רבנו חננאל')
@@ -398,6 +372,8 @@ String replaceParaphrases(String s) {
       .replaceAll(' תנדא', ' תנא דבי אליהו')
       .replaceAll(' תנדבא', ' תנא דבי אליהו')
       .replaceAll(' תנח', ' תנחומא')
+      .replaceAll(' תניינא', ' תנינא')
+      .replaceAll(' תנינא', ' תניינא')
       .replaceAll(' תקוז', ' תיקוני זוהר')
       .replaceAll(' תשו', ' שות')
       .replaceAll(' תשו', ' תשובה')
@@ -411,11 +387,7 @@ String replaceParaphrases(String s) {
       .replaceAll(' תשובת', ' שות')
       .replaceAll(' תשובת', ' תשו')
       .replaceAll(' תשובת', ' תשובה')
-      .replaceAll(' תשובת', ' תשובות')
-      .replaceAll('משנב', ' משנה ברורה ')
-      .replaceAll('פרמג', ' פרי מגדים ')
-      .replaceAll('פתש', ' פתחי תשובה ')
-      .replaceAll('שטמק', ' שיטה מקובצת ');
+      .replaceAll(' תשובת', ' תשובות');
 
   if (s.startsWith("טז")) {
     s = s.replaceFirst("טז", "טורי זהב");

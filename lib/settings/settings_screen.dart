@@ -14,6 +14,8 @@ import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:otzaria/widgets/enhanced_font_dropdown.dart';
+import 'package:otzaria/utils/font_utils.dart';
 import 'dart:async';
 
 class MySettingsScreen extends StatefulWidget {
@@ -29,6 +31,32 @@ class _MySettingsScreenState extends State<MySettingsScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  Future<void> _addCustomFont(BuildContext context) async {
+    try {
+      // בחירת קובץ גופן
+      final fontPath = await FontUtils.pickFontFile();
+      if (fontPath == null) return;
+
+      // הצגת תצוגה מקדימה וקבלת שם
+      final displayName = await FontUtils.showFontPreviewDialog(context, fontPath);
+      if (displayName == null) return;
+
+      // הוספת הגופן
+      if (context.mounted) {
+        context.read<SettingsBloc>().add(AddCustomFont(fontPath, displayName));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה בהוספת הגופן: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   Widget _buildColumns(int maxColumns, List<Widget> children) {
     const double rowSpacing = 16.0;
@@ -173,29 +201,28 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         context.read<SettingsBloc>().add(UpdateFontSize(value));
                       },
                     ),
-                    DropDownSettingsTile<String>(
+                    EnhancedFontDropdown(
                       title: 'גופן',
                       settingKey: 'key-font-family',
-                      values: const <String, String>{
-                        'TaameyDavidCLM': 'דוד',
-                        'FrankRuhlCLM': 'פרנק-רוהל',
-                        'TaameyAshkenaz': 'טעמי אשכנז',
-                        'KeterYG': 'כתר',
-                        'Shofar': 'שופר',
-                        'NotoSerifHebrew': 'נוטו',
-                        'Tinos': 'טינוס',
-                        'NotoRashiHebrew': 'רש"י',
-                        'Candara': 'קנדרה',
-                        'roboto': 'רובוטו',
-                        'Calibri': 'קליברי',
-                        'Arial': 'אריאל',
-                      },
                       selected: state.fontFamily,
+                      customFonts: state.customFonts,
+                      isLoading: state.isLoadingCustomFonts,
                       leading: const Icon(Icons.font_download_outlined),
                       onChange: (value) {
                         context
                             .read<SettingsBloc>()
                             .add(UpdateFontFamily(value));
+                      },
+                      onRemoveCustomFont: (fontId) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(RemoveCustomFont(fontId));
+                      },
+                      onAddCustomFont: () => _addCustomFont(context),
+                      onRenameCustomFont: (fontId, newName) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(RenameCustomFont(fontId, newName));
                       },
                     ),
                     SettingsContainer(
@@ -266,7 +293,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               selected: 'ctrl+r',
                               settingKey: 'key-shortcut-open-reading-screen',
                               title: 'עיון',
-                              leading: Icon(Icons.menu_book_rounded),
+                              leading: const Icon(Icons.menu_book_rounded),
                               values: shortcuctsList,
                             ),
                             DropDownSettingsTile<String>(
@@ -360,7 +387,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         title: 'ברירת המחדל להצגת המפרשים',
                         enabledLabel: 'המפרשים יוצגו לצד הטקסט',
                         disabledLabel: 'המפרשים יוצגו מתחת הטקסט',
-                        leading: Icon(Icons.vertical_split),
+                        leading: const Icon(Icons.vertical_split),
                         defaultValue: false,
                         activeColor: Theme.of(context).cardColor,
                       ),
@@ -442,11 +469,11 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
                     SwitchSettingsTile(
-                      title: 'סינכרון אוטומטי',
-                      leading: Icon(Icons.sync),
+                      title: 'סינכרון הספרייה באופן אוטומטי',
+                      leading: const Icon(Icons.sync),
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
-                      enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
+                      enabledLabel: 'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
@@ -565,21 +592,24 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             }
                           },
                         ),
-                        SimpleSettingsTile(
-                          title: 'מיקום ספרי HebrewBooks',
-                          subtitle: Settings.getValue<String>(
-                                  'key-hebrew-books-path') ??
-                              'לא קיים',
-                          leading: const Icon(Icons.folder),
-                          onTap: () async {
-                            String? path =
-                                await FilePicker.platform.getDirectoryPath();
-                            if (path != null) {
-                              context
-                                  .read<LibraryBloc>()
-                                  .add(UpdateHebrewBooksPath(path));
-                            }
-                          },
+                        Tooltip(
+                          message: 'במידה וקיימים ברשותכם ספרים ממאגר זה',
+                          child: SimpleSettingsTile(
+                            title: 'מיקום ספרי HebrewBooks (היברובוקס)',
+                            subtitle: Settings.getValue<String>(
+                                    'key-hebrew-books-path') ??
+                                'לא קיים',
+                            leading: const Icon(Icons.folder),
+                            onTap: () async {
+                              String? path =
+                                  await FilePicker.platform.getDirectoryPath();
+                              if (path != null) {
+                                context
+                                    .read<LibraryBloc>()
+                                    .add(UpdateHebrewBooksPath(path));
+                              }
+                            },
+                          ),
                         ),
                       ]),
                     SwitchSettingsTile(
@@ -588,7 +618,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       enabledLabel:
                           'קבלת עדכונים על גרסאות בדיקה, ייתכנו באגים וחוסר יציבות',
                       disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
-                      leading: Icon(Icons.bug_report),
+                      leading: const Icon(Icons.bug_report),
                       activeColor: Theme.of(context).cardColor,
                     ),
                     SimpleSettingsTile(
@@ -723,7 +753,9 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
 
   // פונקציה לבניית הידית כדי למנוע כפילות קוד
   Widget _buildThumb({required bool isLeft}) {
-    return GestureDetector(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
       onPanUpdate: (details) {
         setState(() {
           double newMargin =
@@ -755,6 +787,7 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -771,86 +804,125 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
           children: [
             // ------------  הסליידר המתוקן  -------------
             SizedBox(
-              // --- שינוי 2: הגדלת גובה הרכיב לנוחות ---
               height: widgetHeight,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // קו הרקע
-                  Container(
-                    height: trackHeight,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(trackHeight / 2),
-                    ),
-                  ),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTapDown: (details) {
+                  // חישוב המיקום החדש לפי הלחיצה
+                  final RenderBox renderBox =
+                      context.findRenderObject() as RenderBox;
+                  final localPosition =
+                      renderBox.globalToLocal(details.globalPosition);
+                  final tapX = localPosition.dx;
 
-                  // הקו הפעיל (מייצג את רוחב הטקסט)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _margin),
-                    child: Container(
+                  // חישוב השוליים החדשים - לוגיקה נכונה
+                  double newMargin;
+
+                  // אם לחצנו במרכז - השוליים יהיו מקסימליים
+                  // אם לחצנו בקצוות - השוליים יהיו מינימליים
+                  double distanceFromCenter = (tapX - fullWidth / 2).abs();
+                  newMargin = (fullWidth / 2) - distanceFromCenter;
+
+                  // הגבלת הערכים
+                  newMargin = newMargin
+                      .clamp(widget.min, widget.max)
+                      .clamp(widget.min, fullWidth / 2);
+
+                  setState(() {
+                    _margin = newMargin;
+                  });
+
+                  widget.onChanged(_margin);
+                  _handleDragStart();
+                  _handleDragEnd();
+                },
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // אזור לחיצה מורחב - שקוף וגדול יותר מהפס
+                    Container(
+                      height: thumbSize * 2, // גובה כמו הידיות
+                      color: Colors.transparent,
+                    ),
+
+                    // קו הרקע
+                    Container(
                       height: trackHeight,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).dividerColor.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(trackHeight / 2),
                       ),
                     ),
-                  ),
 
-                  // הצגת הערך מעל הידית (רק בזמן תצוגה)
-                  if (_showPreview)
-                    Positioned(
-                      left: _margin - 10,
-                      top: 0,
+                    // הקו הפעיל (מייצג את רוחב הטקסט)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: _margin),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                        height: trackHeight,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _margin.toStringAsFixed(0),
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              fontSize: 12),
+                          borderRadius: BorderRadius.circular(trackHeight / 2),
                         ),
                       ),
                     ),
 
-                  if (_showPreview)
-                    Positioned(
-                      right: _margin - 10,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _margin.toStringAsFixed(0),
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              fontSize: 12),
+                    // הצגת הערך מעל הידית (רק בזמן תצוגה)
+                    if (_showPreview)
+                      Positioned(
+                        left: _margin - 10,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _margin.toStringAsFixed(0),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontSize: 12),
+                          ),
                         ),
                       ),
+
+                    if (_showPreview)
+                      Positioned(
+                        right: _margin - 10,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _margin.toStringAsFixed(0),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontSize: 12),
+                          ),
+                        ),
+                      ),
+
+                    // הכפתור השמאלי
+                    Positioned(
+                      left: _margin - (thumbSize),
+                      child: _buildThumb(isLeft: true),
                     ),
 
-                  // הכפתור השמאלי
-                  Positioned(
-                    left: _margin - (thumbSize),
-                    child: _buildThumb(isLeft: true),
-                  ),
-
-                  // הכפתור הימני
-                  Positioned(
-                    right: _margin - (thumbSize),
-                    child: _buildThumb(isLeft: false),
-                  ),
-                ],
+                    // הכפתור הימני
+                    Positioned(
+                      right: _margin - (thumbSize),
+                      child: _buildThumb(isLeft: false),
+                    ),
+                  ],
+                ),
               ),
+            ),
             ),
 
             const SizedBox(height: 8),
@@ -888,6 +960,7 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
                 ),
               ),
             ),
+          
           ],
         );
       },

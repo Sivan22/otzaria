@@ -18,9 +18,13 @@ import 'package:otzaria/search/view/full_text_search_screen.dart';
 import 'package:otzaria/text_book/view/text_book_screen.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
+import 'package:otzaria/workspaces/bloc/workspace_bloc.dart';
+import 'package:otzaria/workspaces/bloc/workspace_event.dart';
 import 'package:otzaria/history/history_dialog.dart';
 import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/widgets/workspace_icon_button.dart';
+
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -35,6 +39,12 @@ class _ReadingScreenState extends State<ReadingScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // וודא שה-WorkspaceBloc נטען
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<WorkspaceBloc>().add(LoadWorkspaces());
+      }
+    });
   }
 
   @override
@@ -58,14 +68,11 @@ class _ReadingScreenState extends State<ReadingScreen>
   Widget build(BuildContext context) {
     return BlocListener<TabsBloc, TabsState>(
       listener: (context, state) {
-        if (state.hasOpenTabs) {
-          context
-              .read<HistoryBloc>()
-              .add(CaptureStateForHistory(state.currentTab!));
+        if(state.hasOpenTabs) {
+          context.read<HistoryBloc>().add(CaptureStateForHistory(state.currentTab!));
         }
       },
-      listenWhen: (previous, current) =>
-          previous.currentTabIndex != current.currentTabIndex,
+      listenWhen: (previous, current) => previous.currentTabIndex != current.currentTabIndex,
       child: BlocBuilder<TabsBloc, TabsState>(
         builder: (context, state) {
           if (!state.hasOpenTabs) {
@@ -152,26 +159,10 @@ class _ReadingScreenState extends State<ReadingScreen>
                           .toList(),
                     ),
                   ),
-                  leadingWidth: 150,
-                  leading: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.add_to_queue),
-                        tooltip: 'החלף שולחן עבודה',
-                        onPressed: () => _showSaveWorkspaceDialog(context),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.history),
-                        tooltip: 'הצג היסטוריה',
-                        onPressed: () => _showHistoryDialog(context),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.bookmark),
-                        tooltip: 'הצג מועדפים',
-                        onPressed: () => _showBookmarksDialog(context),
-                      ),
-                    ],
+                  leading: IconButton(
+                    icon: const Icon(Icons.add_to_queue),
+                    tooltip: 'החלף שולחן עבודה',
+                    onPressed: () => _showSaveWorkspaceDialog(context),
                   ),
                 ),
                 body: SizedBox.fromSize(
