@@ -284,6 +284,7 @@ class TantivyDataProvider {
       final hasGrammaticalPrefixes = wordOptions['קידומות דקדוקיות'] == true;
       final hasGrammaticalSuffixes = wordOptions['סיומות דקדוקיות'] == true;
       final hasFullPartialSpelling = wordOptions['כתיב מלא/חסר'] == true;
+      final hasPartialWord = wordOptions['חלק ממילה'] == true;
 
       // קבלת מילים חילופיות
       final alternatives = alternativeWords?[i];
@@ -382,6 +383,15 @@ class TantivyDataProvider {
                 // מילה ארוכה - ללא הגבלה
                 allVariations.add('${RegExp.escape(baseVariation)}.*');
               }
+            } else if (hasPartialWord) {
+              // חלק ממילה - הגבלה חכמה לפי אורך המילה
+              if (baseVariation.length <= 3) {
+                // מילה קצרה (1-3 תווים) - 3 תווים לפני ו3 אחרי
+                allVariations.add('.{0,3}${RegExp.escape(baseVariation)}.{0,3}');
+              } else {
+                // מילה ארוכה (4+ תווים) - 2 תווים לפני ו2 אחרי
+                allVariations.add('.{0,2}${RegExp.escape(baseVariation)}.{0,2}');
+              }
             } else {
               // ללא אפשרויות מיוחדות - מילה מדויקת
               allVariations.add(RegExp.escape(baseVariation));
@@ -425,7 +435,8 @@ class TantivyDataProvider {
         if (wordOptions['סיומות'] == true ||
             wordOptions['קידומות'] == true ||
             wordOptions['קידומות דקדוקיות'] == true ||
-            wordOptions['סיומות דקדוקיות'] == true) {
+            wordOptions['סיומות דקדוקיות'] == true ||
+            wordOptions['חלק ממילה'] == true) {
           hasSuffixOrPrefix = true;
           shortestWordLength = math.min(shortestWordLength, word.length);
         }

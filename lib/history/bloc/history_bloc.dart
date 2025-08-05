@@ -120,7 +120,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
       'קידומות דקדוקיות': 'קד',
       'סיומות דקדוקיות': 'סד',
       'כתיב מלא/חסר': 'מח',
-      'חלק ממילה': 'ש',
+      'חלק ממילה': 'חמ',
     };
 
     const Set<String> suffixOptions = {
