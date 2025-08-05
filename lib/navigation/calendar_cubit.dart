@@ -28,7 +28,7 @@ class CalendarState extends Equatable {
   factory CalendarState.initial() {
     final now = DateTime.now();
     final jewishNow = JewishDate();
-    
+
     return CalendarState(
       selectedJewishDate: jewishNow,
       selectedGregorianDate: now,
@@ -51,7 +51,8 @@ class CalendarState extends Equatable {
   }) {
     return CalendarState(
       selectedJewishDate: selectedJewishDate ?? this.selectedJewishDate,
-      selectedGregorianDate: selectedGregorianDate ?? this.selectedGregorianDate,
+      selectedGregorianDate:
+          selectedGregorianDate ?? this.selectedGregorianDate,
       selectedCity: selectedCity ?? this.selectedCity,
       dailyTimes: dailyTimes ?? this.dailyTimes,
       currentJewishDate: currentJewishDate ?? this.currentJewishDate,
@@ -60,13 +61,12 @@ class CalendarState extends Equatable {
     );
   }
 
-
   @override
   List<Object?> get props => [
         selectedJewishDate.getJewishYear(),
         selectedJewishDate.getJewishMonth(),
         selectedJewishDate.getJewishDayOfMonth(),
-        
+
         selectedGregorianDate,
         selectedCity,
         dailyTimes,
@@ -75,7 +75,7 @@ class CalendarState extends Equatable {
         currentJewishDate.getJewishYear(),
         currentJewishDate.getJewishMonth(),
         currentJewishDate.getJewishDayOfMonth(),
-        
+
         currentGregorianDate,
         calendarType
       ];
@@ -194,94 +194,41 @@ const Map<String, Map<String, double>> cityCoordinates = {
 
 // Calculate daily times function
 Map<String, String> _calculateDailyTimes(DateTime date, String city) {
-  final targetDate = date;
-  final isSummer = targetDate.month >= 4 && targetDate.month <= 9;
-
-  print('Calculating times for date: ${targetDate.day}/${targetDate.month}/${targetDate.year}, city: $city');
-
-  final dayOfYear = targetDate.difference(DateTime(targetDate.year, 1, 1)).inDays;
-  final seasonalAdjustment = _getSeasonalAdjustment(dayOfYear);
-
-  Map<String, String> baseTimes;
-  final cityData = cityCoordinates[city]!;
-  final isJerusalem = city == 'ירושלים';
-
-  if (isJerusalem) {
-    baseTimes = isSummer
-        ? {
-            'alos': _adjustTime('04:20', seasonalAdjustment),
-            'sunrise': _adjustTime('05:45', seasonalAdjustment),
-            'sofZmanShma': _adjustTime('09:00', seasonalAdjustment),
-            'sofZmanTfila': _adjustTime('10:15', seasonalAdjustment),
-            'chatzos': _adjustTime('12:45', seasonalAdjustment),
-            'minchaGedola': _adjustTime('13:30', seasonalAdjustment),
-            'minchaKetana': _adjustTime('17:15', seasonalAdjustment),
-            'plagHamincha': _adjustTime('18:30', seasonalAdjustment),
-            'sunset': _adjustTime('19:45', seasonalAdjustment),
-            'tzais': _adjustTime('20:30', seasonalAdjustment),
-          }
-        : {
-            'alos': _adjustTime('05:45', seasonalAdjustment),
-            'sunrise': _adjustTime('06:30', seasonalAdjustment),
-            'sofZmanShma': _adjustTime('09:15', seasonalAdjustment),
-            'sofZmanTfila': _adjustTime('10:00', seasonalAdjustment),
-            'chatzos': _adjustTime('12:00', seasonalAdjustment),
-            'minchaGedola': _adjustTime('12:30', seasonalAdjustment),
-            'minchaKetana': _adjustTime('15:00', seasonalAdjustment),
-            'plagHamincha': _adjustTime('16:15', seasonalAdjustment),
-            'sunset': _adjustTime('17:30', seasonalAdjustment),
-            'tzais': _adjustTime('18:15', seasonalAdjustment),
-          };
-  } else {
-    final latAdjustment = ((cityData['lat']! - 31.7683) * 2).round();
-    baseTimes = isSummer
-        ? {
-            'alos': _adjustTime('04:30', seasonalAdjustment + latAdjustment),
-            'sunrise': _adjustTime('05:50', seasonalAdjustment + latAdjustment),
-            'sofZmanShma': _adjustTime('09:10', seasonalAdjustment + latAdjustment),
-            'sofZmanTfila': _adjustTime('10:20', seasonalAdjustment + latAdjustment),
-            'chatzos': _adjustTime('12:50', seasonalAdjustment + latAdjustment),
-            'minchaGedola': _adjustTime('13:35', seasonalAdjustment + latAdjustment),
-            'minchaKetana': _adjustTime('17:20', seasonalAdjustment + latAdjustment),
-            'plagHamincha': _adjustTime('18:35', seasonalAdjustment + latAdjustment),
-            'sunset': _adjustTime('19:50', seasonalAdjustment + latAdjustment),
-            'tzais': _adjustTime('20:35', seasonalAdjustment + latAdjustment),
-          }
-        : {
-            'alos': _adjustTime('05:50', seasonalAdjustment + latAdjustment),
-            'sunrise': _adjustTime('06:35', seasonalAdjustment + latAdjustment),
-            'sofZmanShma': _adjustTime('09:20', seasonalAdjustment + latAdjustment),
-            'sofZmanTfila': _adjustTime('10:05', seasonalAdjustment + latAdjustment),
-            'chatzos': _adjustTime('12:05', seasonalAdjustment + latAdjustment),
-            'minchaGedola': _adjustTime('12:35', seasonalAdjustment + latAdjustment),
-            'minchaKetana': _adjustTime('15:05', seasonalAdjustment + latAdjustment),
-            'plagHamincha': _adjustTime('16:20', seasonalAdjustment + latAdjustment),
-            'sunset': _adjustTime('17:35', seasonalAdjustment + latAdjustment),
-            'tzais': _adjustTime('18:20', seasonalAdjustment + latAdjustment),
-          };
+  print(
+      'Calculating times for date: ${date.day}/${date.month}/${date.year}, city: $city');
+  final cityData = cityCoordinates[city];
+  if (cityData == null) {
+    return {};
   }
 
-  return baseTimes;
+  final locationName = city;
+  final latitude = cityData['lat']!;
+  final longitude = cityData['lng']!;
+  final elevation = cityData['elevation']!;
+
+  final location = GeoLocation();
+  location.setLocationName(locationName);
+  location.setLatitude(latitude: latitude);
+  location.setLongitude(longitude: longitude);
+  location.setDateTime(date);
+  location.setElevation(elevation);
+
+  final zmanimCalendar = ZmanimCalendar.intGeolocation(location);
+
+  return {
+    'alos': _formatTime(zmanimCalendar.getAlosHashachar()!),
+    'sunrise': _formatTime(zmanimCalendar.getSunrise()!),
+    'sofZmanShma': _formatTime(zmanimCalendar.getSofZmanShmaGRA()!),
+    'sofZmanTfila': _formatTime(zmanimCalendar.getSofZmanTfilaGRA()!),
+    'chatzos': _formatTime(zmanimCalendar.getChatzos()!),
+    'minchaGedola': _formatTime(zmanimCalendar.getMinchaGedola()!),
+    'minchaKetana': _formatTime(zmanimCalendar.getMinchaKetana()!),
+    'plagHamincha': _formatTime(zmanimCalendar.getPlagHamincha()!),
+    'sunset': _formatTime(zmanimCalendar.getSunset()!),
+    'tzais': _formatTime(zmanimCalendar.getTzais()!),
+  };
 }
 
-int _getSeasonalAdjustment(int dayOfYear) {
-  if (dayOfYear < 80 || dayOfYear > 300) {
-    return -15; // Winter - earlier times
-  } else if (dayOfYear > 120 && dayOfYear < 260) {
-    return 15; // Summer - later times
-  } else {
-    return 0; // Spring/Fall
-  }
-}
-
-String _adjustTime(String timeStr, int adjustmentMinutes) {
-  final parts = timeStr.split(':');
-  final hour = int.parse(parts[0]);
-  final minute = int.parse(parts[1]);
-
-  final totalMinutes = hour * 60 + minute + adjustmentMinutes;
-  final adjustedHour = (totalMinutes ~/ 60) % 24;
-  final adjustedMinute = totalMinutes % 60;
-
-  return '${adjustedHour.toString().padLeft(2, '0')}:${adjustedMinute.toString().padLeft(2, '0')}';
+String _formatTime(DateTime dt) {
+  return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 }

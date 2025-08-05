@@ -11,104 +11,98 @@ class MoreScreen extends StatefulWidget {
 }
 
 class _MoreScreenState extends State<MoreScreen> {
-  Widget? currentWidget;
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    // אם currentWidget אינו null, הצג אותו. אחרת, הצג את התפריט.
-    if (currentWidget != null) {
-      return currentWidget!;
-    }
-
-    // זהו מסך התפריט הראשי
     return Scaffold(
       appBar: AppBar(
-        title: const Text('עוד'),
+        title: Text(_getTitle(_selectedIndex)),
         centerTitle: true,
+        actions: _getActions(context, _selectedIndex),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _buildToolItem(
-              context,
-              icon: Icons.calendar_today,
-              title: 'לוח שנה',
-              subtitle: 'לוח שנה עברי ולועזי',
-              onTap: () => _showCalendar(),
-            ),
-            const SizedBox(height: 16),
-            _buildToolItem(
-              context,
-              icon: Icons.straighten,
-              title: 'ממיר מידות',
-              subtitle: 'המרת מידות ומשקולות',
-              onTap: () => _showComingSoon(context, 'ממיר מידות ומשקולות'),
-            ),
-            const SizedBox(height: 16),
-            _buildToolItem(
-              context,
-              icon: Icons.calculate,
-              title: 'גימטריות',
-              subtitle: 'חישובי גימטריה',
-              onTap: () => _showComingSoon(context, 'גימטריות'),
-            ),
-          ],
-        ),
+      body: Row(
+        children: [
+          NavigationRail(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            labelType: NavigationRailLabelType.all,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.calendar_today),
+                label: Text('לוח שנה'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.straighten),
+                label: Text('ממיר מידות'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.calculate),
+                label: Text('גימטריות'),
+              ),
+            ],
+          ),
+          const VerticalDivider(thickness: 1, width: 1),
+          Expanded(
+            child: _buildCurrentWidget(_selectedIndex),
+          ),
+        ],
       ),
     );
   }
 
-  // פונקציה זו בונה את מסך לוח השנה
-  void _showCalendar() {
-    setState(() {
-      currentWidget = BlocProvider(
-        create: (context) => CalendarCubit(),
-        child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                setState(() {
-                  currentWidget = null; // חזור למסך התפריט
-                });
-              },
-            ),
-            title: BlocBuilder<CalendarCubit, CalendarState>(
-              builder: (context, state) {
-                switch (state.calendarType) {
-                  case CalendarType.hebrew:
-                    return const Text('לוח שנה עברי');
-                  case CalendarType.gregorian:
-                    return const Text('לוח שנה לועזי');
-                  case CalendarType.combined:
-                    return const Text('לוח שנה משולב');
-                }
-              },
-            ),
-            centerTitle: true,
-            actions: [
-              Builder(
-                builder: (context) {
-                  return IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () => _showSettingsDialog(context),
-                  );
-                }
-              ),
-            ],
-          ),
-          body: const CalendarWidget(),
-        ),
-      );
-    });
+  String _getTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'לוח שנה';
+      case 1:
+        return 'ממיר מידות';
+      case 2:
+        return 'גימטריות';
+      default:
+        return 'עוד';
+    }
   }
 
-  // פונקציה זו מציגה את דיאלוג ההגדרות
+  List<Widget>? _getActions(BuildContext context, int index) {
+    if (index == 0) {
+      return [
+        Builder(
+          builder: (context) {
+            return IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => _showSettingsDialog(context),
+            );
+          },
+        ),
+      ];
+    }
+    return null;
+  }
+
+  Widget _buildCurrentWidget(int index) {
+    switch (index) {
+      case 0:
+        return BlocProvider(
+          create: (context) => CalendarCubit(),
+          child: const CalendarWidget(),
+        );
+      case 1:
+        return const Center(child: Text('ממיר מידות - בקרוב...'));
+      case 2:
+        return const Center(child: Text('גימטריות - בקרוב...'));
+      default:
+        return Container();
+    }
+  }
+
   void _showSettingsDialog(BuildContext context) {
     final calendarCubit = context.read<CalendarCubit>();
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -136,7 +130,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     value: CalendarType.gregorian,
                     groupValue: state.calendarType,
                     onChanged: (value) {
-                       if (value != null) {
+                      if (value != null) {
                         calendarCubit.changeCalendarType(value);
                       }
                       Navigator.of(dialogContext).pop();
@@ -147,7 +141,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     value: CalendarType.combined,
                     groupValue: state.calendarType,
                     onChanged: (value) {
-                       if (value != null) {
+                      if (value != null) {
                         calendarCubit.changeCalendarType(value);
                       }
                       Navigator.of(dialogContext).pop();
@@ -165,66 +159,6 @@ class _MoreScreenState extends State<MoreScreen> {
           },
         );
       },
-    );
-  }
-
-  // שאר הפונקציות נשארות כפי שהיו
-  Widget _buildToolItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 110,
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 32, color: Theme.of(context).primaryColor),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context, String feature) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(feature),
-        content: const Text('בקרוב...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('אישור'),
-          ),
-        ],
-      ),
     );
   }
 }

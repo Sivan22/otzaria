@@ -9,12 +9,28 @@ class CalendarWidget extends StatelessWidget {
 
   // העברנו את רשימות הקבועים לכאן כדי שיהיו זמינים
   final List<String> hebrewMonths = const [
-    'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול',
-    'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר'
+    'ניסן',
+    'אייר',
+    'סיון',
+    'תמוז',
+    'אב',
+    'אלול',
+    'תשרי',
+    'חשון',
+    'כסלו',
+    'טבת',
+    'שבט',
+    'אדר'
   ];
 
   final List<String> hebrewDays = const [
-    'ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'
+    'ראשון',
+    'שני',
+    'שלישי',
+    'רביעי',
+    'חמישי',
+    'שישי',
+    'שבת'
   ];
 
   @override
@@ -163,7 +179,8 @@ class CalendarWidget extends StatelessWidget {
     );
     final startingWeekday = firstDayOfMonth.getGregorianCalendar().weekday % 7;
 
-    List<Widget> dayWidgets = List.generate(startingWeekday, (_) => const SizedBox());
+    List<Widget> dayWidgets =
+        List.generate(startingWeekday, (_) => const SizedBox());
 
     for (int day = 1; day <= daysInMonth; day++) {
       dayWidgets.add(_buildHebrewDayCell(context, state, day));
@@ -171,42 +188,51 @@ class CalendarWidget extends StatelessWidget {
 
     List<Widget> rows = [];
     for (int i = 0; i < dayWidgets.length; i += 7) {
-      final rowWidgets = dayWidgets.sublist(i, i + 7 > dayWidgets.length ? dayWidgets.length : i + 7);
-      while(rowWidgets.length < 7) {
+      final rowWidgets = dayWidgets.sublist(
+          i, i + 7 > dayWidgets.length ? dayWidgets.length : i + 7);
+      while (rowWidgets.length < 7) {
         rowWidgets.add(const SizedBox());
       }
-      rows.add(Row(children: rowWidgets.map((w) => Expanded(child: w)).toList()));
+      rows.add(
+          Row(children: rowWidgets.map((w) => Expanded(child: w)).toList()));
     }
 
     return Column(children: rows);
   }
 
-  Widget _buildGregorianCalendarDays(BuildContext context, CalendarState state) {
+  Widget _buildGregorianCalendarDays(
+      BuildContext context, CalendarState state) {
     final currentGregorianDate = state.currentGregorianDate;
-    final firstDayOfMonth = DateTime(currentGregorianDate.year, currentGregorianDate.month, 1);
-    final lastDayOfMonth = DateTime(currentGregorianDate.year, currentGregorianDate.month + 1, 0);
+    final firstDayOfMonth =
+        DateTime(currentGregorianDate.year, currentGregorianDate.month, 1);
+    final lastDayOfMonth =
+        DateTime(currentGregorianDate.year, currentGregorianDate.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     final startingWeekday = firstDayOfMonth.weekday % 7;
 
-    List<Widget> dayWidgets = List.generate(startingWeekday, (_) => const SizedBox());
-    
+    List<Widget> dayWidgets =
+        List.generate(startingWeekday, (_) => const SizedBox());
+
     for (int day = 1; day <= daysInMonth; day++) {
       dayWidgets.add(_buildGregorianDayCell(context, state, day));
     }
-    
+
     List<Widget> rows = [];
     for (int i = 0; i < dayWidgets.length; i += 7) {
-      final rowWidgets = dayWidgets.sublist(i, i + 7 > dayWidgets.length ? dayWidgets.length : i + 7);
-       while(rowWidgets.length < 7) {
+      final rowWidgets = dayWidgets.sublist(
+          i, i + 7 > dayWidgets.length ? dayWidgets.length : i + 7);
+      while (rowWidgets.length < 7) {
         rowWidgets.add(const SizedBox());
       }
-      rows.add(Row(children: rowWidgets.map((w) => Expanded(child: w)).toList()));
+      rows.add(
+          Row(children: rowWidgets.map((w) => Expanded(child: w)).toList()));
     }
 
     return Column(children: rows);
   }
 
-  Widget _buildHebrewDayCell(BuildContext context, CalendarState state, int day) {
+  Widget _buildHebrewDayCell(
+      BuildContext context, CalendarState state, int day) {
     final jewishDate = JewishDate();
     jewishDate.setJewishDate(
       state.currentJewishDate.getJewishYear(),
@@ -216,16 +242,19 @@ class CalendarWidget extends StatelessWidget {
     final gregorianDate = jewishDate.getGregorianCalendar();
 
     final isSelected = state.selectedJewishDate.getJewishDayOfMonth() == day &&
-        state.selectedJewishDate.getJewishMonth() == jewishDate.getJewishMonth() &&
+        state.selectedJewishDate.getJewishMonth() ==
+            jewishDate.getJewishMonth() &&
         state.selectedJewishDate.getJewishYear() == jewishDate.getJewishYear();
 
     return GestureDetector(
-      onTap: () => context.read<CalendarCubit>().selectDate(jewishDate, gregorianDate),
+      onTap: () =>
+          context.read<CalendarCubit>().selectDate(jewishDate, gregorianDate),
       child: Container(
         margin: const EdgeInsets.all(2),
         height: 50,
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          color:
+              isSelected ? Theme.of(context).primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey.shade300, width: 1),
         ),
@@ -238,7 +267,8 @@ class CalendarWidget extends StatelessWidget {
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.black,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: state.calendarType == CalendarType.combined ? 14 : 16,
+                  fontSize:
+                      state.calendarType == CalendarType.combined ? 14 : 16,
                 ),
               ),
               if (state.calendarType == CalendarType.combined)
@@ -256,8 +286,10 @@ class CalendarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildGregorianDayCell(BuildContext context, CalendarState state, int day) {
-    final gregorianDate = DateTime(state.currentGregorianDate.year, state.currentGregorianDate.month, day);
+  Widget _buildGregorianDayCell(
+      BuildContext context, CalendarState state, int day) {
+    final gregorianDate = DateTime(
+        state.currentGregorianDate.year, state.currentGregorianDate.month, day);
     final jewishDate = JewishDate.fromDateTime(gregorianDate);
 
     final isSelected = state.selectedGregorianDate.day == day &&
@@ -265,12 +297,14 @@ class CalendarWidget extends StatelessWidget {
         state.selectedGregorianDate.year == gregorianDate.year;
 
     return GestureDetector(
-      onTap: () => context.read<CalendarCubit>().selectDate(jewishDate, gregorianDate),
+      onTap: () =>
+          context.read<CalendarCubit>().selectDate(jewishDate, gregorianDate),
       child: Container(
         margin: const EdgeInsets.all(2),
         height: 50,
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          color:
+              isSelected ? Theme.of(context).primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey.shade300, width: 1),
         ),
@@ -283,7 +317,8 @@ class CalendarWidget extends StatelessWidget {
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.black,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: state.calendarType == CalendarType.combined ? 14 : 16,
+                  fontSize:
+                      state.calendarType == CalendarType.combined ? 14 : 16,
                 ),
               ),
               if (state.calendarType == CalendarType.combined)
@@ -301,7 +336,8 @@ class CalendarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDayDetailsWithoutEvents(BuildContext context, CalendarState state) {
+  Widget _buildDayDetailsWithoutEvents(
+      BuildContext context, CalendarState state) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,14 +461,16 @@ class CalendarWidget extends StatelessWidget {
             children: [
               Text(
                 timeData['name']!,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
               Text(
                 timeData['time'] ?? '--:--',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -440,7 +478,7 @@ class CalendarWidget extends StatelessWidget {
       },
     );
   }
-  
+
   // פונקציות העזר שלא תלויות במצב נשארות כאן
   String _getCurrentMonthYearText(CalendarState state) {
     if (state.calendarType == CalendarType.gregorian) {
@@ -471,14 +509,22 @@ class CalendarWidget extends StatelessWidget {
     int num = number;
     if (num >= 100) {
       int hundreds = (num ~/ 100) * 100;
-      if (hundreds == 900) result += 'תתק';
-      else if (hundreds == 800) result += 'תת';
-      else if (hundreds == 700) result += 'תש';
-      else if (hundreds == 600) result += 'תר';
-      else if (hundreds == 500) result += 'תק';
-      else if (hundreds == 400) result += 'ת';
-      else if (hundreds == 300) result += 'ש';
-      else if (hundreds == 200) result += 'ר';
+      if (hundreds == 900)
+        result += 'תתק';
+      else if (hundreds == 800)
+        result += 'תת';
+      else if (hundreds == 700)
+        result += 'תש';
+      else if (hundreds == 600)
+        result += 'תר';
+      else if (hundreds == 500)
+        result += 'תק';
+      else if (hundreds == 400)
+        result += 'ת';
+      else if (hundreds == 300)
+        result += 'ש';
+      else if (hundreds == 200)
+        result += 'ר';
       else if (hundreds == 100) result += 'ק';
       num %= 100;
     }
@@ -502,43 +548,54 @@ class CalendarWidget extends StatelessWidget {
 
   String _getGregorianMonthName(int month) {
     const months = [
-      'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
-      'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'
+      'ינואר',
+      'פברואר',
+      'מרץ',
+      'אפריל',
+      'מאי',
+      'יוני',
+      'יולי',
+      'אוגוסט',
+      'ספטמבר',
+      'אוקטובר',
+      'נובמבר',
+      'דצמבר'
     ];
     return months[month - 1];
   }
-  
+
   // החלק של האירועים עדיין לא עבר ריפקטורינג, הוא יישאר לא פעיל בינתיים
   Widget _buildEventsCard(BuildContext context, CalendarState state) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.event),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'אירועים',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.event),
+                const SizedBox(width: 8),
+                const Text(
+                  'אירועים',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {/* TODO: Implement create event with cubit */},
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('צור אירוע'),
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 12),
                   ),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    onPressed: () { /* TODO: Implement create event with cubit */ },
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('צור אירוע'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('אין אירועים ליום זה'),
-            ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Center(child: Text('אין אירועים ליום זה')),
+          ],
         ),
       ),
     );
