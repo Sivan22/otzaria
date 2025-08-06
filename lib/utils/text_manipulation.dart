@@ -31,8 +31,35 @@ String getTitleFromPath(String path) {
   return path.split(Platform.pathSeparator).last.split('.').first;
 }
 
+// Cache for the CSV data to avoid reading the file multiple times
+Map<String, String>? _csvCache;
+
 Future<bool> hasTopic(String title, String topic) async {
-  // First try to load CSV data
+  // Load CSV data once and cache it
+  if (_csvCache == null) {
+    await _loadCsvCache();
+  }
+
+  // Check if title exists in CSV cache
+  if (_csvCache!.containsKey(title)) {
+    final generation = _csvCache![title]!;
+    final mappedCategory = _mapGenerationToCategory(generation);
+    return mappedCategory == topic;
+  }
+
+  // Book not found in CSV, it's "מפרשים נוספים"
+  if (topic == 'מפרשים נוספים') {
+    return true;
+  }
+
+  // Fallback to original path-based logic
+  final titleToPath = await FileSystemData.instance.titleToPath;
+  return titleToPath[title]?.contains(topic) ?? false;
+}
+
+Future<void> _loadCsvCache() async {
+  _csvCache = {};
+  
   try {
     final libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
     final csvPath =
@@ -43,35 +70,29 @@ Future<bool> hasTopic(String title, String topic) async {
       final csvString = await csvFile.readAsString();
       final lines = csvString.split('\n');
 
-      // Skip header and search for the book
+      // Skip header and parse all lines
       for (int i = 1; i < lines.length; i++) {
         final line = lines[i].trim();
         if (line.isEmpty) continue;
 
         // Parse CSV line properly - handle commas inside quoted fields
         final parts = _parseCsvLine(line);
-        if (parts.isNotEmpty && parts[0].trim() == title) {
-          // Found the book, check if topic matches generation
-          if (parts.length >= 2) {
-            final generation = parts[1].trim();
-
-            // Map the CSV generation to our categories
-            final mappedCategory = _mapGenerationToCategory(generation);
-            return mappedCategory == topic;
-          }
+        if (parts.length >= 2) {
+          final bookTitle = parts[0].trim();
+          final generation = parts[1].trim();
+          _csvCache![bookTitle] = generation;
         }
       }
-
-      // Book not found in CSV, it's "מפרשים נוספים"
-      return topic == 'מפרשים נוספים';
     }
   } catch (e) {
-    // If CSV fails, fall back to path-based check
+    // If CSV fails, keep empty cache
+    _csvCache = {};
   }
+}
 
-  // Fallback to original path-based logic
-  final titleToPath = await FileSystemData.instance.titleToPath;
-  return titleToPath[title]?.contains(topic) ?? false;
+/// Clears the CSV cache to force reload on next access
+void clearCommentatorOrderCache() {
+  _csvCache = null;
 }
 
 // Helper function to parse CSV line with proper comma handling
