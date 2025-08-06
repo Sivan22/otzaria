@@ -408,7 +408,8 @@ class _AlternativeFieldState extends State<_AlternativeField> {
                       controller: widget.controller,
                       focusNode: _focus,
                       inputFormatters: [
-                        FilteringTextInputFormatter.deny(SearchRegexPatterns.spacesFilter),
+                        FilteringTextInputFormatter.deny(
+                            SearchRegexPatterns.spacesFilter),
                       ],
                       decoration: const InputDecoration(
                         // הסרנו את labelText מכאן
@@ -636,6 +637,42 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     }
   }
 
+  // עדכון אפשרויות החיפוש לפי המיפוי החדש
+  void _remapSearchOptions(Map<int, int> wordMapping, List<String> newWords) {
+    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
+    final oldSearchOptions =
+        Map<String, dynamic>.from(widget.widget.tab.searchOptions);
+    widget.widget.tab.searchOptions.clear();
+
+    for (final entry in oldSearchOptions.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      final parts = key.split('_');
+
+      if (parts.length >= 2) {
+        final word = parts[0];
+        final option = parts.sublist(1).join('_');
+
+        // מציאת האינדקס הישן של המילה
+        final oldWordIndex = oldWords.indexOf(word);
+
+        if (oldWordIndex != -1 && wordMapping.containsKey(oldWordIndex)) {
+          // המילה נמפתה למילה חדשה
+          final newWordIndex = wordMapping[oldWordIndex]!;
+          if (newWordIndex < newWords.length) {
+            final newWord = newWords[newWordIndex];
+            final newKey = '${newWord}_$option';
+            widget.widget.tab.searchOptions[newKey] = value;
+          }
+        } else if (newWords.contains(word)) {
+          // המילה עדיין קיימת בדיוק כמו שהיא
+          final newKey = '${word}_$option';
+          widget.widget.tab.searchOptions[newKey] = value;
+        }
+      }
+    }
+  }
+
   void _clearAllOverlays(
       {bool keepSearchDrawer = false, bool keepFilledBubbles = false}) {
     debugPrint(
@@ -785,86 +822,416 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
     final text = widget.widget.tab.queryController.text;
 
-    // בדיקה אם המילים השתנו באופן משמעותי - אם כן, נקה נתונים ישנים
-    final newWords =
-        text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toSet();
-    final oldWords = _searchQuery.terms.map((t) => t.word).toSet();
-
-    final bool wordsChangedSignificantly =
-        !newWords.containsAll(oldWords) || !oldWords.containsAll(newWords);
-
-    if (wordsChangedSignificantly) {
-      // אם המילים השתנו משמעותית, נקה נתונים ישנים שלא רלוונטיים
-      _cleanupIrrelevantData(newWords);
-    }
-
-    // מנקים את כל הבועות, אבל שומרים על בועות עם טקסט ועל המגירה אם הייתה פתוחה
-    _clearAllOverlays(keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
-
-    // אם שדה החיפוש התרוקן, נסגור את המגירה בכל זאת
-    if (text.trim().isEmpty && drawerWasOpen) {
-      _hideSearchOptionsOverlay();
-      _notifyDropdownClosed();
-      // יוצאים מהפונקציה כדי לא להמשיך
+    // אם שדה החיפוש התרוקן, נקה הכל ונסגור את המגירה
+    if (text.trim().isEmpty) {
+      _clearAllOverlays();
+      _disposeControllers();
+      widget.widget.tab.searchOptions.clear();
+      widget.widget.tab.alternativeWords.clear();
+      widget.widget.tab.spacingValues.clear();
+      if (drawerWasOpen) {
+        _hideSearchOptionsOverlay();
+        _notifyDropdownClosed();
+      }
+      setState(() {
+        _searchQuery = SearchQuery();
+      });
       return;
     }
 
+    // בדיקה אם זה שינוי קטן (מחיקת/הוספת אות אחת) או שינוי גדול (מחיקת/הוספת מילה שלמה)
+    final newWords =
+        text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
+
+    final bool isMinorChange = _isMinorTextChange(oldWords, newWords);
+
+    debugPrint('🔄 Text change detected: ${isMinorChange ? "MINOR" : "MAJOR"}');
+    debugPrint('   Old words: $oldWords');
+    debugPrint('   New words: $newWords');
+    debugPrint('   Current search options: ${widget.widget.tab.searchOptions.keys.toList()}');
+
+    if (isMinorChange) {
+      // שינוי קטן - שמור על כל הסימונים והבועות
+      debugPrint('✅ Preserving all markings and bubbles');
+      _handleMinorTextChange(text, drawerWasOpen);
+    } else {
+      // שינוי גדול - נקה סימונים שלא רלוונטיים יותר
+      debugPrint('🔄 Remapping markings and bubbles');
+      _handleMajorTextChange(text, newWords, drawerWasOpen);
+    }
+  }
+
+  // בדיקה אם זה שינוי קטן (רק שינוי באותיות בתוך מילים קיימות)
+  bool _isMinorTextChange(List<String> oldWords, List<String> newWords) {
+    // אם מספר המילים השתנה, זה תמיד שינוי גדול
+    // (מחיקת או הוספת מילה שלמה)
+    if (oldWords.length != newWords.length) {
+      return false;
+    }
+
+    // אם מספר המילים זהה, בדוק שינויים בתוך המילים
+    for (int i = 0; i < oldWords.length && i < newWords.length; i++) {
+      final oldWord = oldWords[i];
+      final newWord = newWords[i];
+
+      // אם המילים זהות, זה בסדר
+      if (oldWord == newWord) continue;
+
+      // בדיקה אם זה שינוי קטן (הוספה/הסרה של אות אחת או שתיים)
+      final lengthDiff = (oldWord.length - newWord.length).abs();
+      if (lengthDiff > 2) {
+        return false; // שינוי גדול מדי
+      }
+
+      // בדיקה אם המילה החדשה מכילה את רוב האותיות של המילה הישנה
+      final similarity = _calculateWordSimilarity(oldWord, newWord);
+      if (similarity < 0.7) {
+        return false; // המילים שונות מדי
+      }
+    }
+
+    return true;
+  }
+
+
+
+  // חישוב דמיון בין שתי מילים (אלגוריתם Levenshtein distance מפושט)
+  double _calculateWordSimilarity(String word1, String word2) {
+    if (word1.isEmpty && word2.isEmpty) return 1.0;
+    if (word1.isEmpty || word2.isEmpty) return 0.0;
+    if (word1 == word2) return 1.0;
+
+    // חישוב מרחק עריכה פשוט
+    final maxLength = word1.length > word2.length ? word1.length : word2.length;
+    int distance = (word1.length - word2.length).abs();
+
+    // ספירת תווים שונים באותו מיקום
+    final minLength = word1.length < word2.length ? word1.length : word2.length;
+    for (int i = 0; i < minLength; i++) {
+      if (word1[i] != word2[i]) {
+        distance++;
+      }
+    }
+
+    // החזרת ציון דמיון (1.0 = זהות מלאה, 0.0 = שונות מלאה)
+    return 1.0 - (distance / maxLength);
+  }
+
+  // טיפול בשינוי קטן - שמירה על כל הסימונים
+  void _handleMinorTextChange(String text, bool drawerWasOpen) {
+    // מנקים רק את הבועות הריקות, שומרים על הכל
+    _clearAllOverlays(keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
+
+    // שמירת אפשרויות החיפוש הקיימות ומילים ישנות לפני יצירת SearchQuery חדש
+    final oldSearchOptions = Map<String, dynamic>.from(widget.widget.tab.searchOptions);
+    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
+    
     setState(() {
       _searchQuery = SearchQuery.fromString(text);
-      _updateAlternativeControllers();
+      // לא קוראים ל-_updateAlternativeControllers כדי לא לפגוע במיפוי הקיים
     });
+
+    // עדכון אפשרויות החיפוש לפי המילים החדשות (שמירה על אפשרויות קיימות)
+    _updateSearchOptionsForMinorChange(oldSearchOptions, oldWords, text);
+    
+    debugPrint('✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculateWordPositions();
+      _showAllExistingBubbles();
 
-      // הצגת alternatives מה-SearchQuery
-      for (int i = 0; i < _searchQuery.terms.length; i++) {
-        for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
-          _showAlternativeOverlay(i, j);
-        }
-      }
-
-      // הצגת alternatives קיימים שנשמרו
-      for (final entry in _alternativeControllers.entries) {
-        final termIndex = entry.key;
-        final controllers = entry.value;
-        for (int j = 0; j < controllers.length; j++) {
-          if (controllers[j].text.trim().isNotEmpty) {
-            // בדיקה שהבועה לא מוצגת כבר
-            final existingOverlays = _alternativeOverlays[termIndex] ?? [];
-            if (j >= existingOverlays.length) {
-              _showAlternativeOverlay(termIndex, j);
-            }
-          }
-        }
-      }
-
-      // הצגת spacing overlays קיימים
-      for (final entry in _spacingControllers.entries) {
-        final key = entry.key;
-        final controller = entry.value;
-        if (controller.text.trim().isNotEmpty &&
-            !_spacingOverlays.containsKey(key)) {
-          // פירוק המפתח לאינדקסים
-          final parts = key.split('-');
-          if (parts.length == 2) {
-            final leftIndex = int.tryParse(parts[0]);
-            final rightIndex = int.tryParse(parts[1]);
-            if (leftIndex != null &&
-                rightIndex != null &&
-                leftIndex < _wordPositions.length &&
-                rightIndex < _wordPositions.length) {
-              _showSpacingOverlay(leftIndex, rightIndex);
-            }
-          }
-        }
-      }
-
-      // אם המגירה הייתה פתוחה, מרעננים את התוכן שלה
       if (drawerWasOpen) {
         _updateSearchOptionsOverlay();
       }
     });
+  }
+
+  // עדכון אפשרויות החיפוש בשינוי קטן - שמירה על אפשרויות קיימות
+  void _updateSearchOptionsForMinorChange(Map<String, dynamic> oldSearchOptions, List<String> oldWords, String newText) {
+    final newWords = newText.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    
+    debugPrint('🔧 Updating search options for minor change:');
+    debugPrint('   Old search options: ${oldSearchOptions.keys.toList()}');
+    debugPrint('   Old words: $oldWords');
+    debugPrint('   New words: $newWords');
+    
+    // אם מספר המילים זהה, פשוט נעדכן את המפתחות לפי המילים החדשות
+    if (newWords.length == oldWords.length) {
+      debugPrint('   Same number of words - updating keys');
+      widget.widget.tab.searchOptions.clear();
+      
+      for (final entry in oldSearchOptions.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        final parts = key.split('_');
+        
+        if (parts.length >= 2) {
+          final oldWord = parts[0];
+          final option = parts.sublist(1).join('_');
+          
+          // מציאת האינדקס של המילה הישנה
+          final oldWordIndex = oldWords.indexOf(oldWord);
+          if (oldWordIndex != -1 && oldWordIndex < newWords.length) {
+            // עדכון המפתח עם המילה החדשה
+            final newWord = newWords[oldWordIndex];
+            final newKey = '${newWord}_$option';
+            widget.widget.tab.searchOptions[newKey] = value;
+            debugPrint('🔄 Updated search option: $key -> $newKey');
+          }
+        }
+      }
+    } else {
+      // אם מספר המילים השתנה, נשמור רק אפשרויות של מילים שעדיין קיימות
+      debugPrint('   Different number of words - preserving existing words only');
+      widget.widget.tab.searchOptions.clear();
+      
+      for (final entry in oldSearchOptions.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        final parts = key.split('_');
+        
+        if (parts.length >= 2) {
+          final word = parts[0];
+          
+          // אם המילה עדיין קיימת ברשימה החדשה, נשמור את האפשרות
+          if (newWords.contains(word)) {
+            widget.widget.tab.searchOptions[key] = value;
+            debugPrint('🔄 Preserved search option: $key');
+          } else {
+            debugPrint('❌ Removed search option for deleted word: $key');
+          }
+        }
+      }
+    }
+  }
+
+  // טיפול בשינוי גדול - ניקוי סימונים לא רלוונטיים
+  void _handleMajorTextChange(
+      String text, List<String> newWords, bool drawerWasOpen) {
+    // מיפוי מילים ישנות למילים חדשות לפי דמיון
+    final wordMapping = _mapOldWordsToNew(newWords);
+    debugPrint('🗺️ Word mapping: $wordMapping');
+
+    // עדכון controllers ו-overlays לפי המיפוי החדש
+    _remapControllersAndOverlays(wordMapping);
+
+    // עדכון אפשרויות החיפוש לפי המיפוי החדש
+    _remapSearchOptions(wordMapping, newWords);
+
+    // ניקוי נתונים לא רלוונטיים
+    _cleanupIrrelevantData(newWords.toSet());
+
+    // לא צריך לקרוא ל-_clearAllOverlays כי כבר ניקינו הכל ב-_remapControllersAndOverlays
+
+    setState(() {
+      _searchQuery = SearchQuery.fromString(text);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateWordPositions();
+      debugPrint('🎈 Showing remapped bubbles after major change');
+      _showAllExistingBubbles();
+
+      if (drawerWasOpen) {
+        _updateSearchOptionsOverlay();
+      }
+    });
+  }
+
+  // מיפוי מילים ישנות למילים חדשות
+  Map<int, int> _mapOldWordsToNew(List<String> newWords) {
+    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
+    final Map<int, int> mapping = {};
+
+    // שלב 1: מיפוי מילים זהות לחלוטין
+    for (int oldIndex = 0; oldIndex < oldWords.length; oldIndex++) {
+      for (int newIndex = 0; newIndex < newWords.length; newIndex++) {
+        if (mapping.containsValue(newIndex)) continue;
+
+        if (oldWords[oldIndex] == newWords[newIndex]) {
+          mapping[oldIndex] = newIndex;
+          break;
+        }
+      }
+    }
+
+    // שלב 2: מיפוי מילים דומות (לטיפול במחיקת/הוספת אותיות)
+    for (int oldIndex = 0; oldIndex < oldWords.length; oldIndex++) {
+      if (mapping.containsKey(oldIndex)) continue; // כבר נמפה
+
+      final oldWord = oldWords[oldIndex];
+      double bestSimilarity = 0.0;
+      int bestNewIndex = -1;
+
+      for (int newIndex = 0; newIndex < newWords.length; newIndex++) {
+        if (mapping.containsValue(newIndex)) continue;
+
+        final newWord = newWords[newIndex];
+        final similarity = _calculateWordSimilarity(oldWord, newWord);
+
+        // סף נמוך יותר לדמיון כדי לתפוס גם שינויים קטנים
+        if (similarity > bestSimilarity && similarity > 0.3) {
+          bestSimilarity = similarity;
+          bestNewIndex = newIndex;
+        }
+      }
+
+      if (bestNewIndex != -1) {
+        mapping[oldIndex] = bestNewIndex;
+      }
+    }
+
+    return mapping;
+  }
+
+  // עדכון controllers ו-overlays לפי המיפוי החדש
+  void _remapControllersAndOverlays(Map<int, int> wordMapping) {
+    // שמירת controllers ישנים
+    final oldAlternativeControllers =
+        Map<int, List<TextEditingController>>.from(_alternativeControllers);
+    final oldSpacingControllers =
+        Map<String, TextEditingController>.from(_spacingControllers);
+
+    // ניקוי כל ה-overlays הישנים לפני המיפוי
+    debugPrint('🧹 Clearing all old overlays before remapping');
+    for (final entries in _alternativeOverlays.values) {
+      for (final entry in entries) {
+        entry.remove();
+      }
+    }
+    _alternativeOverlays.clear();
+    
+    for (final entry in _spacingOverlays.values) {
+      entry.remove();
+    }
+    _spacingOverlays.clear();
+
+    // ניקוי המפות הנוכחיות
+    _alternativeControllers.clear();
+    _spacingControllers.clear();
+
+    // מיפוי controllers של מילים חלופיות
+    for (final entry in oldAlternativeControllers.entries) {
+      final oldIndex = entry.key;
+      final controllers = entry.value;
+
+      if (wordMapping.containsKey(oldIndex)) {
+        final newIndex = wordMapping[oldIndex]!;
+        _alternativeControllers[newIndex] = controllers;
+      } else {
+        // אם המילה לא נמפתה, נמחק את ה-controllers
+        for (final controller in controllers) {
+          controller.dispose();
+        }
+      }
+    }
+
+    // מיפוי controllers של מרווחים
+    for (final entry in oldSpacingControllers.entries) {
+      final oldKey = entry.key;
+      final controller = entry.value;
+      final parts = oldKey.split('-');
+
+      if (parts.length == 2) {
+        final oldLeft = int.tryParse(parts[0]);
+        final oldRight = int.tryParse(parts[1]);
+
+        if (oldLeft != null &&
+            oldRight != null &&
+            wordMapping.containsKey(oldLeft) &&
+            wordMapping.containsKey(oldRight)) {
+          final newLeft = wordMapping[oldLeft]!;
+          final newRight = wordMapping[oldRight]!;
+          final newKey = _spaceKey(newLeft, newRight);
+          _spacingControllers[newKey] = controller;
+        } else {
+          // אם המרווח לא רלוונטי יותר, נמחק את ה-controller
+          controller.dispose();
+        }
+      }
+    }
+
+    // עדכון המילים החלופיות ב-tab
+    _updateAlternativeWordsInTab();
+    // עדכון המרווחים ב-tab
+    _updateSpacingInTab();
+  }
+
+  // הצגת כל הבועות הקיימות
+  void _showAllExistingBubbles() {
+    debugPrint('🎈 Showing existing bubbles - word positions: ${_wordPositions.length}');
+    
+    // הצגת alternatives מה-SearchQuery
+    for (int i = 0; i < _searchQuery.terms.length; i++) {
+      for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
+        if (i < _wordPositions.length) {
+          _showAlternativeOverlay(i, j);
+        } else {
+          debugPrint('⚠️ Skipping SearchQuery alternative at invalid position: $i');
+        }
+      }
+    }
+
+    // הצגת alternatives קיימים שנשמרו
+    final invalidControllerKeys = <int>[];
+    for (final entry in _alternativeControllers.entries) {
+      final termIndex = entry.key;
+      final controllers = entry.value;
+      
+      // בדיקה שהאינדקס תקין
+      if (termIndex >= _wordPositions.length) {
+        debugPrint('⚠️ Marking invalid alternative controllers for removal: $termIndex');
+        invalidControllerKeys.add(termIndex);
+        // מחיקת controllers לא תקינים
+        for (final controller in controllers) {
+          controller.dispose();
+        }
+        continue;
+      }
+      
+      for (int j = 0; j < controllers.length; j++) {
+        if (controllers[j].text.trim().isNotEmpty) {
+          debugPrint('🎈 Showing alternative bubble at position $termIndex, alt $j');
+          _showAlternativeOverlay(termIndex, j);
+        }
+      }
+    }
+    
+    // הסרת controllers לא תקינים
+    for (final key in invalidControllerKeys) {
+      _alternativeControllers.remove(key);
+    }
+
+    // הצגת spacing overlays קיימים
+    final invalidSpacingKeys = <String>[];
+    for (final entry in _spacingControllers.entries) {
+      final key = entry.key;
+      final controller = entry.value;
+      if (controller.text.trim().isNotEmpty) {
+        final parts = key.split('-');
+        if (parts.length == 2) {
+          final leftIndex = int.tryParse(parts[0]);
+          final rightIndex = int.tryParse(parts[1]);
+          if (leftIndex != null &&
+              rightIndex != null &&
+              leftIndex < _wordPositions.length &&
+              rightIndex < _wordPositions.length) {
+            debugPrint('🎈 Showing spacing bubble between $leftIndex and $rightIndex');
+            _showSpacingOverlay(leftIndex, rightIndex);
+          } else {
+            debugPrint('⚠️ Marking invalid spacing controller for removal: $key');
+            invalidSpacingKeys.add(key);
+            controller.dispose();
+          }
+        }
+      }
+    }
+    
+    // הסרת spacing controllers לא תקינים
+    for (final key in invalidSpacingKeys) {
+      _spacingControllers.remove(key);
+    }
   }
 
   void _onCursorPositionChanged() {
@@ -888,58 +1255,11 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       // החזרת מיקום הסמן אחרי העדכון
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          print(
+          debugPrint(
               'DEBUG: Restoring cursor position in update: ${currentSelection.baseOffset}');
           widget.widget.tab.queryController.selection = currentSelection;
         }
       });
-    }
-  }
-
-  void _updateAlternativeControllers() {
-    // שמירה על controllers קיימים שיש בהם טקסט
-    final Map<int, List<TextEditingController>> existingControllers = {};
-    for (final entry in _alternativeControllers.entries) {
-      final termIndex = entry.key;
-      final controllers = entry.value;
-      final controllersWithText =
-          controllers.where((c) => c.text.trim().isNotEmpty).toList();
-      if (controllersWithText.isNotEmpty) {
-        existingControllers[termIndex] = controllersWithText;
-      }
-    }
-
-    // מחיקת controllers ריקים בלבד
-    for (final entry in _alternativeControllers.entries) {
-      final controllers = entry.value;
-      for (final controller in controllers) {
-        if (controller.text.trim().isEmpty) {
-          controller.dispose();
-        }
-      }
-    }
-
-    // איפוס המפה
-    _alternativeControllers.clear();
-
-    // החזרת controllers עם טקסט
-    _alternativeControllers.addAll(existingControllers);
-
-    // הוספת controllers חדשים מה-SearchQuery
-    for (int i = 0; i < _searchQuery.terms.length; i++) {
-      final term = _searchQuery.terms[i];
-      _alternativeControllers.putIfAbsent(i, () => []);
-
-      // הוספת alternatives מה-SearchQuery שלא קיימים כבר
-      for (final alt in term.alternatives) {
-        final existingTexts =
-            _alternativeControllers[i]!.map((c) => c.text).toList();
-        if (!existingTexts.contains(alt)) {
-          final controller = TextEditingController(text: alt);
-          controller.addListener(() => _updateAlternativeWordsInTab());
-          _alternativeControllers[i]!.add(controller);
-        }
-      }
     }
   }
 

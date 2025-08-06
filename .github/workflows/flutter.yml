@@ -11,6 +11,7 @@ on:
       - dev
       - dev_dev2
       - n-search2
+      - ns2new
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
