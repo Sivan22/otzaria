@@ -32,6 +32,19 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
     super.dispose();
   }
 
+  String _generateUniqueWorkspaceName(List<Workspace> existingWorkspaces) {
+    final existingNames = existingWorkspaces.map((w) => w.name).toSet();
+    int counter = existingWorkspaces.length + 1;
+    
+    while (true) {
+      final candidateName = "שולחן עבודה $counter";
+      if (!existingNames.contains(candidateName)) {
+        return candidateName;
+      }
+      counter++;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -109,9 +122,9 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
           child: InkWell(
             onTap: () {
               final workspaceBloc = context.read<WorkspaceBloc>();
+              final newWorkspaceName = _generateUniqueWorkspaceName(workspaceBloc.state.workspaces);
               workspaceBloc.add(AddWorkspace(
-                  name:
-                      "שולחן עבודה חדש ${workspaceBloc.state.workspaces.length + 1}",
+                  name: newWorkspaceName,
                   tabs: const [],
                   currentTabIndex: 0));
             },
@@ -184,19 +197,31 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                   padding: const EdgeInsets.all(8.0),
                   child: Builder(builder: (context) {
                     bool isEditing = false; // Flag to track editing
+                    late TextEditingController editController;
                     return StatefulBuilder(builder: (context, setState) {
                       return isEditing
                           ? TextField(
-                              controller:
-                                  TextEditingController(text: workspace.name),
+                              controller: editController,
+                                  autofocus: true,
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
                               onSubmitted: (newName) {
-                                setState(() {
+                                if (newName.trim().isNotEmpty) {
                                   context.read<WorkspaceBloc>().add(
                                         RenameWorkspace(
                                           workspace,
-                                          newName,
+                                          newName.trim(),
                                         ),
                                       );
+                                }
+                                setState(() {
+                                  isEditing = false;
+                                });
+                              },
+                              onTapOutside: (event) {
+                                setState(() {
                                   isEditing = false;
                                 });
                               },
@@ -217,6 +242,11 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                                     icon: const Icon(Icons.edit),
                                     onPressed: () {
                                       setState(() {
+                                        editController = TextEditingController(text: workspace.name);
+                                        // Set cursor position to end of text
+                                        editController.selection = TextSelection.fromPosition(
+                                          TextPosition(offset: workspace.name.length),
+                                        );
                                         isEditing = true;
                                       });
                                     })
