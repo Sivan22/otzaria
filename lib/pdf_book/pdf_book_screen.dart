@@ -24,24 +24,24 @@ import 'package:printing/printing.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/page_converter.dart';
 import 'package:flutter/gestures.dart';
- 
+
 class PdfBookScreen extends StatefulWidget {
   final PdfBookTab tab;
- 
+
   const PdfBookScreen({
     super.key,
     required this.tab,
   });
- 
+
   @override
   State<PdfBookScreen> createState() => _PdfBookScreenState();
 }
- 
+
 class _PdfBookScreenState extends State<PdfBookScreen>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
- 
+
   late final PdfViewerController pdfController;
   late final PdfTextSearcher textSearcher;
   TabController? _leftPaneTabController;
@@ -50,24 +50,25 @@ class _PdfBookScreenState extends State<PdfBookScreen>
   final FocusNode _navigationFieldFocusNode = FocusNode();
   late final ValueNotifier<double> _sidebarWidth;
   late final StreamSubscription<SettingsState> _settingsSub;
- 
+
   Future<void> _runInitialSearchIfNeeded() async {
     final controller = widget.tab.searchController;
     final String query = controller.text.trim();
     if (query.isEmpty) return;
 
     print('DEBUG: Triggering search by simulating user input for "$query"');
-  
+
     // שיטה 1: הוספה והסרה מהירה
     controller.text = '$query '; // הוסף תו זמני
-  
+
     // המתן רגע קצרצר כדי שהשינוי יתפוס
     await Future.delayed(const Duration(milliseconds: 50));
-  
+
     controller.text = query; // החזר את הטקסט המקורי
     // הזז את הסמן לסוף הטקסט
-    controller.selection = TextSelection.fromPosition(TextPosition(offset: controller.text.length));
-    
+    controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: controller.text.length));
+
     //ברוב המקרים, שינוי הטקסט עצמו יפעיל את ה-listener של הספרייה.
     // אם לא, ייתכן שעדיין צריך לקרוא לזה ידנית:
     textSearcher.startTextSearch(query, goToFirstMatch: false);
@@ -80,28 +81,29 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     }
     _searchFieldFocusNode.requestFocus();
   }
- 
+
   late TabController _tabController;
   final GlobalKey<State<PdfBookSearchView>> _searchViewKey = GlobalKey();
   int? _lastProcessedSearchSessionId;
- 
+
   void _onTextSearcherUpdated() {
     String currentSearchTerm = widget.tab.searchController.text;
     int? persistedIndexFromTab = widget.tab.pdfSearchCurrentMatchIndex;
-    
+
     widget.tab.searchText = currentSearchTerm;
     widget.tab.pdfSearchMatches = List.from(textSearcher.matches);
     widget.tab.pdfSearchCurrentMatchIndex = textSearcher.currentIndex;
- 
+
     if (mounted) {
       setState(() {});
     }
- 
-    bool isNewSearchExecution = (_lastProcessedSearchSessionId != textSearcher.searchSession);
+
+    bool isNewSearchExecution =
+        (_lastProcessedSearchSessionId != textSearcher.searchSession);
     if (isNewSearchExecution) {
       _lastProcessedSearchSessionId = textSearcher.searchSession;
     }
- 
+
     if (isNewSearchExecution &&
         currentSearchTerm.isNotEmpty &&
         textSearcher.matches.isNotEmpty &&
@@ -112,37 +114,36 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       textSearcher.goToMatchOfIndex(persistedIndexFromTab);
     }
   }
- 
+
   void initState() {
     super.initState();
-  
+
     // 1. צור את הבקר (המכונית) קודם כל.
     pdfController = PdfViewerController();
-    
+
     // 2. צור את המחפש (השלט) וחבר אותו לבקר שיצרנו הרגע.
     textSearcher = PdfTextSearcher(pdfController)
       ..addListener(_onTextSearcherUpdated);
-  
+
     // 3. שמור את הבקר בטאב כדי ששאר חלקי האפליקציה יוכלו להשתמש בו.
     widget.tab.pdfViewerController = pdfController;
-  
-      _sidebarWidth = ValueNotifier<double>(
+
+    _sidebarWidth = ValueNotifier<double>(
         Settings.getValue<double>('key-sidebar-width', defaultValue: 300)!);
 
-    _settingsSub =
-        context.read<SettingsBloc>().stream.listen((state) {
+    _settingsSub = context.read<SettingsBloc>().stream.listen((state) {
       _sidebarWidth.value = state.sidebarWidth;
     });
 
     // -- שאר הקוד של initState נשאר כמעט זהה --
     pdfController.addListener(_onPdfViewerControllerUpdate);
-  
+
     _tabController = TabController(
       length: 3,
       vsync: this,
       initialIndex: widget.tab.searchText.isNotEmpty ? 1 : 0,
     );
-  
+
     if (widget.tab.searchText.isNotEmpty) {
       _currentLeftPaneTabIndex = 1;
     } else {
@@ -181,7 +182,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       }
     });
   }
- 
+
   void _onPdfViewerControllerUpdate() {
     if (widget.tab.pdfViewerController.isReady) {
       widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber ?? 1;
@@ -193,7 +194,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       }();
     }
   }
- 
+
   @override
   void dispose() {
     textSearcher.removeListener(_onTextSearcherUpdated);
@@ -205,7 +206,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     _settingsSub.cancel();
     super.dispose();
   }
- 
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -213,7 +214,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       final wideScreen = (MediaQuery.of(context).size.width >= 600);
       return CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): _ensureSearchTabIsActive,
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
+              _ensureSearchTabIsActive,
           LogicalKeySet(LogicalKeyboardKey.arrowRight): _goNextPage,
           LogicalKeySet(LogicalKeyboardKey.arrowLeft): _goPreviousPage,
           LogicalKeySet(LogicalKeyboardKey.arrowDown): _goNextPage,
@@ -240,7 +242,8 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 valueListenable: widget.tab.currentTitle,
                 builder: (context, value, child) {
                   String displayTitle = value;
-                  if (value.isNotEmpty && !value.contains(widget.tab.book.title)) {
+                  if (value.isNotEmpty &&
+                      !value.contains(widget.tab.book.title)) {
                     displayTitle = "${widget.tab.book.title}, $value";
                   }
                   return SelectionArea(
@@ -256,23 +259,33 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                 icon: const Icon(Icons.menu),
                 tooltip: 'חיפוש וניווט',
                 onPressed: () {
-                  widget.tab.showLeftPane.value = !widget.tab.showLeftPane.value;
+                  widget.tab.showLeftPane.value =
+                      !widget.tab.showLeftPane.value;
                 },
               ),
               actions: [
-                _buildTextButton(context, widget.tab.book, widget.tab.pdfViewerController),
+                _buildTextButton(
+                    context, widget.tab.book, widget.tab.pdfViewerController),
                 IconButton(
                   icon: const Icon(Icons.bookmark_add),
                   tooltip: 'הוספת סימניה',
                   onPressed: () {
-                    int index = widget.tab.pdfViewerController.isReady ? widget.tab.pdfViewerController.pageNumber! : 1;
-                    bool bookmarkAdded = Provider.of<BookmarkBloc>(context, listen: false)
-                        .addBookmark(ref: '${widget.tab.title} עמוד $index', book: widget.tab.book, index: index);
+                    int index = widget.tab.pdfViewerController.isReady
+                        ? widget.tab.pdfViewerController.pageNumber!
+                        : 1;
+                    bool bookmarkAdded =
+                        Provider.of<BookmarkBloc>(context, listen: false)
+                            .addBookmark(
+                                ref: '${widget.tab.title} עמוד $index',
+                                book: widget.tab.book,
+                                index: index);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת'),
-                              duration: const Duration(milliseconds: 350),
+                          content: Text(bookmarkAdded
+                              ? 'הסימניה נוספה בהצלחה'
+                              : 'הסימניה כבר קיימת'),
+                          duration: const Duration(milliseconds: 350),
                         ),
                       );
                     }
@@ -298,20 +311,26 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   IconButton(
                     icon: const Icon(Icons.first_page),
                     tooltip: 'תחילת הספר',
-                    onPressed: () => widget.tab.pdfViewerController.goToPage(pageNumber: 1),
+                    onPressed: () =>
+                        widget.tab.pdfViewerController.goToPage(pageNumber: 1),
                   ),
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   tooltip: 'הקודם',
                   onPressed: () => widget.tab.pdfViewerController.isReady
-                      ? widget.tab.pdfViewerController.goToPage(pageNumber: max(widget.tab.pdfViewerController.pageNumber! - 1, 1))
+                      ? widget.tab.pdfViewerController.goToPage(
+                          pageNumber: max(
+                              widget.tab.pdfViewerController.pageNumber! - 1,
+                              1))
                       : null,
                 ),
                 PageNumberDisplay(controller: widget.tab.pdfViewerController),
                 IconButton(
                   onPressed: () => widget.tab.pdfViewerController.isReady
                       ? widget.tab.pdfViewerController.goToPage(
-                          pageNumber: min(widget.tab.pdfViewerController.pageNumber! + 1, widget.tab.pdfViewerController.pages.length))
+                          pageNumber: min(
+                              widget.tab.pdfViewerController.pageNumber! + 1,
+                              widget.tab.pdfViewerController.pages.length))
                       : null,
                   icon: const Icon(Icons.chevron_right),
                   tooltip: 'הבא',
@@ -320,11 +339,13 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   IconButton(
                     icon: const Icon(Icons.last_page),
                     tooltip: 'סוף הספר',
-                    onPressed: () => widget.tab.pdfViewerController.goToPage(pageNumber: widget.tab.pdfViewerController.pages.length),
+                    onPressed: () => widget.tab.pdfViewerController.goToPage(
+                        pageNumber:
+                            widget.tab.pdfViewerController.pages.length),
                   ),
                 IconButton(
-                  icon: const Icon(Icons.share),
-                  tooltip: 'שיתוף',
+                  icon: const Icon(Icons.print),
+                  tooltip: 'הדפס',
                   onPressed: () async {
                     await Printing.sharePdf(
                       bytes: File(widget.tab.book.path).readAsBytesSync(),
@@ -344,24 +365,27 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           child: GestureDetector(
                             behavior: HitTestBehavior.translucent,
                             onHorizontalDragUpdate: (details) {
-                              final newWidth = (_sidebarWidth.value -
-                                      details.delta.dx)
-                                  .clamp(200.0, 600.0);
+                              final newWidth =
+                                  (_sidebarWidth.value - details.delta.dx)
+                                      .clamp(200.0, 600.0);
                               _sidebarWidth.value = newWidth;
                             },
                             onHorizontalDragEnd: (_) {
-                              context.read<SettingsBloc>().add(
-                                  UpdateSidebarWidth(_sidebarWidth.value));
+                              context
+                                  .read<SettingsBloc>()
+                                  .add(UpdateSidebarWidth(_sidebarWidth.value));
                             },
                             child: const VerticalDivider(width: 4),
                           ),
                         )
                       : const SizedBox.shrink(),
-                ),                
+                ),
                 Expanded(
                   child: NotificationListener<UserScrollNotification>(
                     onNotification: (notification) {
-                      if (!(widget.tab.pinLeftPane.value || (Settings.getValue<bool>('key-pin-sidebar') ?? false))) {
+                      if (!(widget.tab.pinLeftPane.value ||
+                          (Settings.getValue<bool>('key-pin-sidebar') ??
+                              false))) {
                         Future.microtask(() {
                           widget.tab.showLeftPane.value = false;
                         });
@@ -370,14 +394,19 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                     },
                     child: Listener(
                       onPointerSignal: (event) {
-                        if (event is PointerScrollEvent && !(widget.tab.pinLeftPane.value || (Settings.getValue<bool>('key-pin-sidebar') ?? false))) {
+                        if (event is PointerScrollEvent &&
+                            !(widget.tab.pinLeftPane.value ||
+                                (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false))) {
                           widget.tab.showLeftPane.value = false;
                         }
                       },
                       child: ColorFiltered(
                         colorFilter: ColorFilter.mode(
                           Colors.white,
-                          Provider.of<SettingsBloc>(context, listen: true).state.isDarkMode
+                          Provider.of<SettingsBloc>(context, listen: true)
+                                  .state
+                                  .isDarkMode
                               ? BlendMode.difference
                               : BlendMode.dst,
                         ),
@@ -391,21 +420,27 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                             horizontalCacheExtent: 5,
                             verticalCacheExtent: 5,
                             onInteractionStart: (_) {
-                              if (!(widget.tab.pinLeftPane.value || (Settings.getValue<bool>('key-pin-sidebar') ?? false))) {
+                              if (!(widget.tab.pinLeftPane.value ||
+                                  (Settings.getValue<bool>('key-pin-sidebar') ??
+                                      false))) {
                                 widget.tab.showLeftPane.value = false;
                               }
                             },
-                            viewerOverlayBuilder: (context, size, handleLinkTap) => [
+                            viewerOverlayBuilder:
+                                (context, size, handleLinkTap) => [
                               PdfViewerScrollThumb(
                                 controller: widget.tab.pdfViewerController,
                                 orientation: ScrollbarOrientation.right,
                                 thumbSize: const Size(40, 25),
-                                thumbBuilder: (context, thumbSize, pageNumber, controller) => Container(
+                                thumbBuilder: (context, thumbSize, pageNumber,
+                                        controller) =>
+                                    Container(
                                   color: Colors.black,
                                   child: Center(
                                     child: Text(
                                       pageNumber.toString(),
-                                      style: const TextStyle(color: Colors.white),
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),
@@ -414,7 +449,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                                 controller: widget.tab.pdfViewerController,
                                 orientation: ScrollbarOrientation.bottom,
                                 thumbSize: const Size(80, 5),
-                                thumbBuilder: (context, thumbSize, pageNumber, controller) => Container(
+                                thumbBuilder: (context, thumbSize, pageNumber,
+                                        controller) =>
+                                    Container(
                                   decoration: BoxDecoration(
                                     color: Colors.grey[300],
                                     borderRadius: BorderRadius.circular(3),
@@ -422,20 +459,26 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                                 ),
                               ),
                             ],
-                            loadingBannerBuilder: (context, bytesDownloaded, totalBytes) => Center(
+                            loadingBannerBuilder:
+                                (context, bytesDownloaded, totalBytes) =>
+                                    Center(
                               child: CircularProgressIndicator(
-                                value: totalBytes != null ? bytesDownloaded / totalBytes : null,
+                                value: totalBytes != null
+                                    ? bytesDownloaded / totalBytes
+                                    : null,
                                 backgroundColor: Colors.grey,
                               ),
                             ),
-                            linkWidgetBuilder: (context, link, size) => Material(
+                            linkWidgetBuilder: (context, link, size) =>
+                                Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () async {
                                   if (link.url != null) {
                                     navigateToUrl(link.url!);
                                   } else if (link.dest != null) {
-                                    widget.tab.pdfViewerController.goToDest(link.dest);
+                                    widget.tab.pdfViewerController
+                                        .goToDest(link.dest);
                                   }
                                 },
                                 hoverColor: Colors.blue.withOpacity(0.2),
@@ -452,20 +495,27 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                             },
                             onViewerReady: (document, controller) async {
                               // 1. הגדרת המידע הראשוני מהמסמך
-                              widget.tab.documentRef.value = controller.documentRef;
-                              widget.tab.outline.value = await document.loadOutline();
-                            
+                              widget.tab.documentRef.value =
+                                  controller.documentRef;
+                              widget.tab.outline.value =
+                                  await document.loadOutline();
+
                               // 2. עדכון הכותרת הנוכחית
-                              widget.tab.currentTitle.value = await refFromPageNumber(
-                                  widget.tab.pdfViewerController.pageNumber ?? 1,
-                                  widget.tab.outline.value,
-                                  widget.tab.book.title);
-                            
+                              widget.tab.currentTitle.value =
+                                  await refFromPageNumber(
+                                      widget.tab.pdfViewerController
+                                              .pageNumber ??
+                                          1,
+                                      widget.tab.outline.value,
+                                      widget.tab.book.title);
+
                               // 3. הפעלת החיפוש הראשוני (עכשיו עם מנגנון ניסיונות חוזרים)
                               _runInitialSearchIfNeeded();
-                            
+
                               // 4. הצגת חלונית הצד אם צריך
-                              if (mounted && (widget.tab.showLeftPane.value || widget.tab.searchText.isNotEmpty)) {
+                              if (mounted &&
+                                  (widget.tab.showLeftPane.value ||
+                                      widget.tab.searchText.isNotEmpty)) {
                                 widget.tab.showLeftPane.value = true;
                               }
                             },
@@ -482,7 +532,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       );
     });
   }
- 
+
   AnimatedSize _buildLeftPane() {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
@@ -512,32 +562,49 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           child: TabBar(
                             controller: _leftPaneTabController,
                             tabs: const [
-                              Tab(child: Center(child: Text('ניווט', textAlign: TextAlign.center))),
-                              Tab(child: Center(child: Text('חיפוש', textAlign: TextAlign.center))),
-                              Tab(child: Center(child: Text('דפים', textAlign: TextAlign.center))),
+                              Tab(
+                                  child: Center(
+                                      child: Text('ניווט',
+                                          textAlign: TextAlign.center))),
+                              Tab(
+                                  child: Center(
+                                      child: Text('חיפוש',
+                                          textAlign: TextAlign.center))),
+                              Tab(
+                                  child: Center(
+                                      child: Text('דפים',
+                                          textAlign: TextAlign.center))),
                             ],
                             isScrollable: false,
                             tabAlignment: TabAlignment.fill,
                             padding: EdgeInsets.zero,
                             indicatorPadding: EdgeInsets.zero,
-                            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                            labelPadding:
+                                const EdgeInsets.symmetric(horizontal: 2),
                           ),
                         ),
                       ),
                     ),
                     ValueListenableBuilder(
                       valueListenable: widget.tab.pinLeftPane,
-                      builder: (context, pinLeftPanel, child) => MediaQuery.of(context).size.width < 600
-                          ? const SizedBox.shrink()
-                          : IconButton(
-                              onPressed: (Settings.getValue<bool>('key-pin-sidebar') ?? false)
-                                  ? null
-                                  : () {
-                                      widget.tab.pinLeftPane.value = !widget.tab.pinLeftPane.value;
-                                    },
-                              icon: const Icon(Icons.push_pin),
-                              isSelected: pinLeftPanel || (Settings.getValue<bool>('key-pin-sidebar') ?? false),
-                            ),
+                      builder: (context, pinLeftPanel, child) =>
+                          MediaQuery.of(context).size.width < 600
+                              ? const SizedBox.shrink()
+                              : IconButton(
+                                  onPressed: (Settings.getValue<bool>(
+                                              'key-pin-sidebar') ??
+                                          false)
+                                      ? null
+                                      : () {
+                                          widget.tab.pinLeftPane.value =
+                                              !widget.tab.pinLeftPane.value;
+                                        },
+                                  icon: const Icon(Icons.push_pin),
+                                  isSelected: pinLeftPanel ||
+                                      (Settings.getValue<bool>(
+                                              'key-pin-sidebar') ??
+                                          false),
+                                ),
                     ),
                   ],
                 ),
@@ -588,27 +655,28 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       ),
     );
   }
- 
+
   void _goNextPage() {
     if (widget.tab.pdfViewerController.isReady) {
-      final nextPage = min(widget.tab.pdfViewerController.pageNumber! + 1, widget.tab.pdfViewerController.pages.length);
+      final nextPage = min(widget.tab.pdfViewerController.pageNumber! + 1,
+          widget.tab.pdfViewerController.pages.length);
       widget.tab.pdfViewerController.goToPage(pageNumber: nextPage);
     }
   }
- 
+
   void _goPreviousPage() {
     if (widget.tab.pdfViewerController.isReady) {
       final prevPage = max(widget.tab.pdfViewerController.pageNumber! - 1, 1);
       widget.tab.pdfViewerController.goToPage(pageNumber: prevPage);
     }
   }
- 
+
   Future<void> navigateToUrl(Uri url) async {
     if (await shouldOpenUrl(context, url)) {
       await launchUrl(url);
     }
   }
- 
+
   Future<bool> shouldOpenUrl(BuildContext context, Uri url) async {
     final result = await showDialog<bool?>(
       context: context,
@@ -644,16 +712,22 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     );
     return result ?? false;
   }
- 
-  Widget _buildTextButton(BuildContext context, PdfBook book, PdfViewerController controller) {
+
+  Widget _buildTextButton(
+      BuildContext context, PdfBook book, PdfViewerController controller) {
     return FutureBuilder(
-      future: DataRepository.instance.library.then((library) => library.findBookByTitle(book.title, TextBook)),
+      future: DataRepository.instance.library
+          .then((library) => library.findBookByTitle(book.title, TextBook)),
       builder: (context, snapshot) => snapshot.hasData
           ? IconButton(
               icon: const Icon(Icons.article),
               tooltip: 'פתח טקסט',
               onPressed: () async {
-                final index = await pdfToTextPage(book, widget.tab.outline.value ?? [], controller.pageNumber ?? 1, context);
+                final index = await pdfToTextPage(
+                    book,
+                    widget.tab.outline.value ?? [],
+                    controller.pageNumber ?? 1,
+                    context);
                 openBook(context, snapshot.data!, index ?? 0, '');
               })
           : const SizedBox.shrink(),

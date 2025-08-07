@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
@@ -52,35 +50,40 @@ class _PlusButtonState extends State<_PlusButton> {
     final primaryColor = Theme.of(context).primaryColor;
 
     // MouseRegion מזהה ריחוף עכבר
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          // אנימציה למעבר חלק
-          duration: const Duration(milliseconds: 200),
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: isHighlighted
-                ? primaryColor
-                : primaryColor.withValues(alpha: 0.5),
-            shape: BoxShape.circle,
-            boxShadow: [
-              if (isHighlighted)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-          ),
-          child: const Icon(
-            Icons.add,
-            size: 12,
-            color: Colors.white,
+    return Tooltip(
+      message: 'הוסף מילה חלופית',
+      waitDuration: const Duration(milliseconds: 500),
+      showDuration: const Duration(milliseconds: 1500),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovering = true),
+        onExit: (_) => setState(() => _isHovering = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            // אנימציה למעבר חלק
+            duration: const Duration(milliseconds: 200),
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: isHighlighted
+                  ? primaryColor
+                  : primaryColor.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (isHighlighted)
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+              ],
+            ),
+            child: const Icon(
+              Icons.add,
+              size: 12,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
@@ -95,34 +98,39 @@ class _SpacingButtonState extends State<_SpacingButton> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: _isHovering
-                ? primaryColor
-                : primaryColor.withValues(alpha: 0.7),
-            shape: BoxShape.circle,
-            boxShadow: [
-              if (_isHovering)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-          ),
-          child: const Icon(
-            Icons.more_horiz,
-            size: 12,
-            color: Colors.white,
+    return Tooltip(
+      message: 'הגדר ריווח בין מילים',
+      waitDuration: const Duration(milliseconds: 500),
+      showDuration: const Duration(milliseconds: 1500),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovering = true),
+        onExit: (_) => setState(() => _isHovering = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: _isHovering
+                  ? primaryColor
+                  : primaryColor.withValues(alpha: 0.7),
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (_isHovering)
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+              ],
+            ),
+            child: const Icon(
+              Icons.swap_horiz,
+              size: 12,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
@@ -498,8 +506,6 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   final Map<int, List<OverlayEntry>> _alternativeOverlays = {};
   OverlayEntry? _searchOptionsOverlay;
   int? _hoveredWordIndex;
-  bool _isUpdatingText = false; // דגל למניעת לולאות אינסופיות
-  String _lastProcessedText = ''; // מעקב אחר הטקסט האחרון שעובד
 
   final Map<String, OverlayEntry> _spacingOverlays = {};
   final Map<String, TextEditingController> _spacingControllers = {};
@@ -841,24 +847,10 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _onTextChanged() {
-    // מניעת לולאות אינסופיות
-    if (_isUpdatingText) {
-      debugPrint('🚫 Skipping text change - already updating');
-      return;
-    }
-
-    final text = widget.widget.tab.queryController.text;
-
-    // מניעת עיבוד מיותר אם הטקסט לא השתנה באמת
-    if (text == _lastProcessedText) {
-      debugPrint('🚫 Skipping text change - text unchanged: "$text"');
-      return;
-    }
-
-    _lastProcessedText = text;
-
     // בודקים אם המגירה הייתה פתוחה לפני השינוי
     final bool drawerWasOpen = _searchOptionsOverlay != null;
+
+    final text = widget.widget.tab.queryController.text;
 
     // אם שדה החיפוש התרוקן, נקה הכל ונסגור את המגירה
     if (text.trim().isEmpty) {
@@ -957,44 +949,33 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   // טיפול בשינוי קטן - שמירה על כל הסימונים
   void _handleMinorTextChange(String text, bool drawerWasOpen) {
-    _isUpdatingText = true; // הגדרת הדגל למניעת לולאות
+    // מנקים רק את הבועות הריקות, שומרים על הכל
+    _clearAllOverlays(keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
 
-    try {
-      // מנקים רק את הבועות הריקות, שומרים על הכל
-      _clearAllOverlays(
-          keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
+    // שמירת אפשרויות החיפוש הקיימות ומילים ישנות לפני יצירת SearchQuery חדש
+    final oldSearchOptions =
+        Map<String, dynamic>.from(widget.widget.tab.searchOptions);
+    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
 
-      // שמירת אפשרויות החיפוש הקיימות ומילים ישנות לפני יצירת SearchQuery חדש
-      final oldSearchOptions =
-          Map<String, dynamic>.from(widget.widget.tab.searchOptions);
-      final oldWords = _searchQuery.terms.map((t) => t.word).toList();
+    setState(() {
+      _searchQuery = SearchQuery.fromString(text);
+      // לא קוראים ל-_updateAlternativeControllers כדי לא לפגוע במיפוי הקיים
+    });
 
-      setState(() {
-        _searchQuery = SearchQuery.fromString(text);
-        // לא קוראים ל-_updateAlternativeControllers כדי לא לפגוע במיפוי הקיים
-      });
+    // עדכון אפשרויות החיפוש לפי המילים החדשות (שמירה על אפשרויות קיימות)
+    _updateSearchOptionsForMinorChange(oldSearchOptions, oldWords, text);
 
-      // עדכון אפשרויות החיפוש לפי המילים החדשות (שמירה על אפשרויות קיימות)
-      _updateSearchOptionsForMinorChange(oldSearchOptions, oldWords, text);
+    debugPrint(
+        '✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
 
-      debugPrint(
-          '✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateWordPositions();
+      _showAllExistingBubbles();
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _calculateWordPositions();
-          _showAllExistingBubbles();
-
-          if (drawerWasOpen) {
-            _updateSearchOptionsOverlay();
-          }
-        }
-        _isUpdatingText = false; // איפוס הדגל
-      });
-    } catch (e) {
-      _isUpdatingText = false; // איפוס הדגל גם במקרה של שגיאה
-      rethrow;
-    }
+      if (drawerWasOpen) {
+        _updateSearchOptionsOverlay();
+      }
+    });
   }
 
   // עדכון אפשרויות החיפוש בשינוי קטן - שמירה על אפשרויות קיימות
@@ -1065,44 +1046,34 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   // טיפול בשינוי גדול - ניקוי סימונים לא רלוונטיים
   void _handleMajorTextChange(
       String text, List<String> newWords, bool drawerWasOpen) {
-    _isUpdatingText = true; // הגדרת הדגל למניעת לולאות
+    // מיפוי מילים ישנות למילים חדשות לפי דמיון
+    final wordMapping = _mapOldWordsToNew(newWords);
+    debugPrint('🗺️ Word mapping: $wordMapping');
 
-    try {
-      // מיפוי מילים ישנות למילים חדשות לפי דמיון
-      final wordMapping = _mapOldWordsToNew(newWords);
-      debugPrint('🗺️ Word mapping: $wordMapping');
+    // עדכון controllers ו-overlays לפי המיפוי החדש
+    _remapControllersAndOverlays(wordMapping);
 
-      // עדכון controllers ו-overlays לפי המיפוי החדש
-      _remapControllersAndOverlays(wordMapping);
+    // עדכון אפשרויות החיפוש לפי המיפוי החדש
+    _remapSearchOptions(wordMapping, newWords);
 
-      // עדכון אפשרויות החיפוש לפי המיפוי החדש
-      _remapSearchOptions(wordMapping, newWords);
+    // ניקוי נתונים לא רלוונטיים
+    _cleanupIrrelevantData(newWords.toSet());
 
-      // ניקוי נתונים לא רלוונטיים
-      _cleanupIrrelevantData(newWords.toSet());
+    // לא צריך לקרוא ל-_clearAllOverlays כי כבר ניקינו הכל ב-_remapControllersAndOverlays
 
-      // לא צריך לקרוא ל-_clearAllOverlays כי כבר ניקינו הכל ב-_remapControllersAndOverlays
+    setState(() {
+      _searchQuery = SearchQuery.fromString(text);
+    });
 
-      setState(() {
-        _searchQuery = SearchQuery.fromString(text);
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateWordPositions();
+      debugPrint('🎈 Showing remapped bubbles after major change');
+      _showAllExistingBubbles();
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _calculateWordPositions();
-          debugPrint('🎈 Showing remapped bubbles after major change');
-          _showAllExistingBubbles();
-
-          if (drawerWasOpen) {
-            _updateSearchOptionsOverlay();
-          }
-        }
-        _isUpdatingText = false; // איפוס הדגל
-      });
-    } catch (e) {
-      _isUpdatingText = false; // איפוס הדגל גם במקרה של שגיאה
-      rethrow;
-    }
+      if (drawerWasOpen) {
+        _updateSearchOptionsOverlay();
+      }
+    });
   }
 
   // מיפוי מילים ישנות למילים חדשות
@@ -1307,40 +1278,36 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _onCursorPositionChanged() {
-    // עדכון המגירה כשהסמן זז (אם היא פתוחה) - רק אם לא באמצע עדכון טקסט
-    if (_searchOptionsOverlay != null && !_isUpdatingText) {
+    // עדכון המגירה כשהסמן זז (אם היא פתוחה)
+    if (_searchOptionsOverlay != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_isUpdatingText) {
-          _updateSearchOptionsOverlay();
-        }
+        _updateSearchOptionsOverlay();
       });
     }
   }
 
   void _updateSearchOptionsOverlay() {
     // עדכון המגירה אם היא פתוחה
-    if (_searchOptionsOverlay != null && !_isUpdatingText) {
+    if (_searchOptionsOverlay != null) {
       // שמירת מיקום הסמן לפני העדכון
       final currentSelection = widget.widget.tab.queryController.selection;
 
       _hideSearchOptionsOverlay();
       _showSearchOptionsOverlay();
 
-      // החזרת מיקום הסמן אחרי העדכון - רק אם לא באמצע עדכון טקסט
+      // החזרת מיקום הסמן אחרי העדכון
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_isUpdatingText) {
+        if (mounted) {
           debugPrint(
               'DEBUG: Restoring cursor position in update: ${currentSelection.baseOffset}');
-          _isUpdatingText = true;
           widget.widget.tab.queryController.selection = currentSelection;
-          _isUpdatingText = false;
         }
       });
     }
   }
 
   void _calculateWordPositions() {
-    if (_textFieldKey.currentContext == null || _isUpdatingText) return;
+    if (_textFieldKey.currentContext == null) return;
 
     RenderEditable? editable;
     void findEditable(RenderObject child) {
@@ -1366,9 +1333,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
     final text = widget.widget.tab.queryController.text;
     if (text.isEmpty) {
-      if (mounted && !_isUpdatingText) {
-        setState(() {});
-      }
+      setState(() {});
       return;
     }
 
@@ -1380,13 +1345,13 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       if (start == -1) continue;
       final end = start + w.length;
 
-      final boxes = editable!.getBoxesForSelection(
+      final pts = editable!.getEndpointsForSelection(
         TextSelection(baseOffset: start, extentOffset: end),
       );
-      if (boxes.isEmpty) continue;
+      if (pts.isEmpty) continue;
 
-      final leftLocalX = boxes.map((b) => b.left).reduce(math.min);
-      final rightLocalX = boxes.map((b) => b.right).reduce(math.max);
+      final leftLocalX = pts.first.point.dx;
+      final rightLocalX = pts.last.point.dx;
 
       final leftGlobal = editable!.localToGlobal(Offset(leftLocalX, 0));
       final rightGlobal = editable!.localToGlobal(Offset(rightLocalX, 0));
@@ -1405,19 +1370,18 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       idx = end;
     }
 
-    if (text.isNotEmpty && _wordPositions.isEmpty && !_isUpdatingText) {
-      // החישוב נכשל למרות שיש טקסט. ננסה שוב ב-frame הבא.
+    if (text.isNotEmpty && _wordPositions.isEmpty) {
+// החישוב נכשל למרות שיש טקסט. ננסה שוב ב-frame הבא.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_isUpdatingText) {
+        if (mounted) {
+          // ודא שהווידג'ט עדיין קיים
           _calculateWordPositions();
         }
       });
-      return;
+      return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מידע שגוי
     }
 
-    if (mounted && !_isUpdatingText) {
-      setState(() {});
-    }
+    setState(() {});
   }
 
   void _addAlternative(int termIndex) {
