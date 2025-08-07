@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:kosher_dart/kosher_dart.dart';
+import 'package:otzaria/settings/settings_repository.dart';
 
 enum CalendarType { hebrew, gregorian, combined }
 
@@ -39,7 +40,7 @@ class CalendarState extends Equatable {
       dailyTimes: const {},
       currentJewishDate: jewishNow,
       currentGregorianDate: now,
-      calendarType: CalendarType.combined,
+      calendarType: CalendarType.combined, // ברירת מחדל, יעודכן ב-_initializeCalendar
       calendarView: CalendarView.month,
     );
   }
@@ -90,8 +91,25 @@ class CalendarState extends Equatable {
 
 // Calendar Cubit
 class CalendarCubit extends Cubit<CalendarState> {
-  CalendarCubit() : super(CalendarState.initial()) {
-    _updateTimesForDate(state.selectedGregorianDate, state.selectedCity);
+  final SettingsRepository _settingsRepository;
+
+  CalendarCubit({SettingsRepository? settingsRepository}) 
+      : _settingsRepository = settingsRepository ?? SettingsRepository(),
+        super(CalendarState.initial()) {
+    _initializeCalendar();
+  }
+
+  Future<void> _initializeCalendar() async {
+    final settings = await _settingsRepository.loadSettings();
+    final calendarTypeString = settings['calendarType'] as String;
+    final calendarType = _stringToCalendarType(calendarTypeString);
+    final selectedCity = settings['selectedCity'] as String;
+    
+    emit(state.copyWith(
+      calendarType: calendarType,
+      selectedCity: selectedCity,
+    ));
+    _updateTimesForDate(state.selectedGregorianDate, selectedCity);
   }
 
   void _updateTimesForDate(DateTime date, String city) {
@@ -114,6 +132,8 @@ class CalendarCubit extends Cubit<CalendarState> {
       selectedCity: newCity,
       dailyTimes: newTimes,
     ));
+    // שמור את הבחירה בהגדרות
+    _settingsRepository.updateSelectedCity(newCity);
   }
 
   void previousMonth() {
@@ -172,6 +192,8 @@ class CalendarCubit extends Cubit<CalendarState> {
 
   void changeCalendarType(CalendarType type) {
     emit(state.copyWith(calendarType: type));
+    // שמור את הבחירה בהגדרות
+    _settingsRepository.updateCalendarType(_calendarTypeToString(type));
   }
 
   void changeCalendarView(CalendarView view) {
@@ -267,4 +289,28 @@ Map<String, String> _calculateDailyTimes(DateTime date, String city) {
 
 String _formatTime(DateTime dt) {
   return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+}
+
+// Helper functions for CalendarType conversion
+CalendarType _stringToCalendarType(String value) {
+  switch (value) {
+    case 'hebrew':
+      return CalendarType.hebrew;
+    case 'gregorian':
+      return CalendarType.gregorian;
+    case 'combined':
+    default:
+      return CalendarType.combined;
+  }
+}
+
+String _calendarTypeToString(CalendarType type) {
+  switch (type) {
+    case CalendarType.hebrew:
+      return 'hebrew';
+    case CalendarType.gregorian:
+      return 'gregorian';
+    case CalendarType.combined:
+      return 'combined';
+  }
 }

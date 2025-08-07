@@ -57,7 +57,8 @@ class SearchRegexPatterns {
   /// יוצר רגקס לחיפוש מילה עם קידומות דקדוקיות
   static String createPrefixPattern(String word) {
     if (word.isEmpty) return word;
-    return r'(ו|מ|כש|כ|ב|ש|ל|ה|ד)?(כ|ב|ש|ל|ה|ד)?(ה)?' + RegExp.escape(word);
+    return r'(ו|מ|דא|א|כש|כ|ב|ש|ל|ה|ד)?(כ|ב|ש|ל|ה|ד)?(ה)?' +
+        RegExp.escape(word);
   }
 
   /// יוצר רגקס לחיפוש מילה עם סיומות דקדוקיות

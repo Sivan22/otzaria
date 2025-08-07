@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/tools/measurement_converter/measurement_converter_screen.dart';
+import 'package:otzaria/settings/settings_repository.dart';
 import 'calendar_widget.dart';
 import 'calendar_cubit.dart';
 
@@ -14,11 +15,13 @@ class MoreScreen extends StatefulWidget {
 class _MoreScreenState extends State<MoreScreen> {
   int _selectedIndex = 0;
   late final CalendarCubit _calendarCubit;
+  late final SettingsRepository _settingsRepository;
 
   @override
   void initState() {
     super.initState();
-    _calendarCubit = CalendarCubit();
+    _settingsRepository = SettingsRepository();
+    _calendarCubit = CalendarCubit(settingsRepository: _settingsRepository);
   }
 
   @override

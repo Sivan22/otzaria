@@ -21,6 +21,8 @@ class SettingsRepository {
   static const String keyPinSidebar = 'key-pin-sidebar';
   static const String keySidebarWidth = 'key-sidebar-width';
   static const String keyFacetFilteringWidth = 'key-facet-filtering-width';
+  static const String keyCalendarType = 'key-calendar-type';
+  static const String keySelectedCity = 'key-selected-city';
 
   final SettingsWrapper _settings;
 
@@ -91,6 +93,14 @@ class SettingsRepository {
           _settings.getValue<double>(keySidebarWidth, defaultValue: 300),
       'facetFilteringWidth':
           _settings.getValue<double>(keyFacetFilteringWidth, defaultValue: 235),
+      'calendarType': _settings.getValue<String>(
+        keyCalendarType,
+        defaultValue: 'combined',
+      ),
+      'selectedCity': _settings.getValue<String>(
+        keySelectedCity,
+        defaultValue: 'ירושלים',
+      ),
     };
   }
 
@@ -166,6 +176,14 @@ class SettingsRepository {
     await _settings.setValue(keyFacetFilteringWidth, value);
   }
 
+  Future<void> updateCalendarType(String value) async {
+    await _settings.setValue(keyCalendarType, value);
+  }
+
+  Future<void> updateSelectedCity(String value) async {
+    await _settings.setValue(keySelectedCity, value);
+  }
+
   /// Initialize default settings to disk if this is the first app launch
   Future<void> _initializeDefaultsIfNeeded() async {
     if (await _checkIfDefaultsNeeded()) {
@@ -200,6 +218,8 @@ class SettingsRepository {
     await _settings.setValue(keyPinSidebar, false);
     await _settings.setValue(keySidebarWidth, 300.0);
     await _settings.setValue(keyFacetFilteringWidth, 235.0);
+    await _settings.setValue(keyCalendarType, 'combined');
+    await _settings.setValue(keySelectedCity, 'ירושלים');
 
     // Mark as initialized
     await _settings.setValue('settings_initialized', true);
