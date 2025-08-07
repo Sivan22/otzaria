@@ -530,6 +530,7 @@ class _SearchTermsDisplayState extends State<SearchTermsDisplay> {
                                   controller: _scrollController,
                                   thumbVisibility: true,
                                   trackVisibility: true,
+                                  thickness: 3.0, // עובי דק יותר לפס הגלילה
                                   child: SingleChildScrollView(
                                     controller: _scrollController,
                                     scrollDirection: Axis.horizontal,

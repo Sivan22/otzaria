@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
@@ -496,6 +498,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   final Map<int, List<OverlayEntry>> _alternativeOverlays = {};
   OverlayEntry? _searchOptionsOverlay;
   int? _hoveredWordIndex;
+  bool _isUpdatingText = false; // דגל למניעת לולאות אינסופיות
+  String _lastProcessedText = ''; // מעקב אחר הטקסט האחרון שעובד
 
   final Map<String, OverlayEntry> _spacingOverlays = {};
   final Map<String, TextEditingController> _spacingControllers = {};
@@ -653,7 +657,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   // עדכון אפשרויות החיפוש לפי המיפוי החדש
   void _remapSearchOptions(Map<int, int> wordMapping, List<String> newWords) {
     // ניצור עותק של האפשרויות הישנות ונתייחס אליו כאל Map מהסוג הנכון
-    final oldSearchOptions = Map<String, Map<String, bool>>.from(widget.widget.tab.searchOptions);
+    final oldSearchOptions =
+        Map<String, Map<String, bool>>.from(widget.widget.tab.searchOptions);
     final newSearchOptions = <String, Map<String, bool>>{};
 
     // נעבור על כל האפשרויות הישנות
@@ -675,10 +680,10 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
           // נוודא שהאינדקס החדש תקין ביחס לרשימת המילים החדשה
           if (newIndex < newWords.length) {
             final newWord = newWords[newIndex];
-            
+
             // ✅ כאן התיקון המרכזי: נייצר מפתח חדש עם המילה החדשה והאינדקס החדש
             final newKey = '${newWord}_$newIndex';
-            
+
             // נוסיף את האפשרויות למפה החדשה שיצרנו
             newSearchOptions[newKey] = optionsMap;
           }
@@ -836,10 +841,24 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _onTextChanged() {
-    // בודקים אם המגירה הייתה פתוחה לפני השינוי
-    final bool drawerWasOpen = _searchOptionsOverlay != null;
+    // מניעת לולאות אינסופיות
+    if (_isUpdatingText) {
+      debugPrint('🚫 Skipping text change - already updating');
+      return;
+    }
 
     final text = widget.widget.tab.queryController.text;
+
+    // מניעת עיבוד מיותר אם הטקסט לא השתנה באמת
+    if (text == _lastProcessedText) {
+      debugPrint('🚫 Skipping text change - text unchanged: "$text"');
+      return;
+    }
+
+    _lastProcessedText = text;
+
+    // בודקים אם המגירה הייתה פתוחה לפני השינוי
+    final bool drawerWasOpen = _searchOptionsOverlay != null;
 
     // אם שדה החיפוש התרוקן, נקה הכל ונסגור את המגירה
     if (text.trim().isEmpty) {
@@ -938,33 +957,44 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   // טיפול בשינוי קטן - שמירה על כל הסימונים
   void _handleMinorTextChange(String text, bool drawerWasOpen) {
-    // מנקים רק את הבועות הריקות, שומרים על הכל
-    _clearAllOverlays(keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
+    _isUpdatingText = true; // הגדרת הדגל למניעת לולאות
 
-    // שמירת אפשרויות החיפוש הקיימות ומילים ישנות לפני יצירת SearchQuery חדש
-    final oldSearchOptions =
-        Map<String, dynamic>.from(widget.widget.tab.searchOptions);
-    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
+    try {
+      // מנקים רק את הבועות הריקות, שומרים על הכל
+      _clearAllOverlays(
+          keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
 
-    setState(() {
-      _searchQuery = SearchQuery.fromString(text);
-      // לא קוראים ל-_updateAlternativeControllers כדי לא לפגוע במיפוי הקיים
-    });
+      // שמירת אפשרויות החיפוש הקיימות ומילים ישנות לפני יצירת SearchQuery חדש
+      final oldSearchOptions =
+          Map<String, dynamic>.from(widget.widget.tab.searchOptions);
+      final oldWords = _searchQuery.terms.map((t) => t.word).toList();
 
-    // עדכון אפשרויות החיפוש לפי המילים החדשות (שמירה על אפשרויות קיימות)
-    _updateSearchOptionsForMinorChange(oldSearchOptions, oldWords, text);
+      setState(() {
+        _searchQuery = SearchQuery.fromString(text);
+        // לא קוראים ל-_updateAlternativeControllers כדי לא לפגוע במיפוי הקיים
+      });
 
-    debugPrint(
-        '✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
+      // עדכון אפשרויות החיפוש לפי המילים החדשות (שמירה על אפשרויות קיימות)
+      _updateSearchOptionsForMinorChange(oldSearchOptions, oldWords, text);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateWordPositions();
-      _showAllExistingBubbles();
+      debugPrint(
+          '✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
 
-      if (drawerWasOpen) {
-        _updateSearchOptionsOverlay();
-      }
-    });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _calculateWordPositions();
+          _showAllExistingBubbles();
+
+          if (drawerWasOpen) {
+            _updateSearchOptionsOverlay();
+          }
+        }
+        _isUpdatingText = false; // איפוס הדגל
+      });
+    } catch (e) {
+      _isUpdatingText = false; // איפוס הדגל גם במקרה של שגיאה
+      rethrow;
+    }
   }
 
   // עדכון אפשרויות החיפוש בשינוי קטן - שמירה על אפשרויות קיימות
@@ -1035,34 +1065,44 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   // טיפול בשינוי גדול - ניקוי סימונים לא רלוונטיים
   void _handleMajorTextChange(
       String text, List<String> newWords, bool drawerWasOpen) {
-    // מיפוי מילים ישנות למילים חדשות לפי דמיון
-    final wordMapping = _mapOldWordsToNew(newWords);
-    debugPrint('🗺️ Word mapping: $wordMapping');
+    _isUpdatingText = true; // הגדרת הדגל למניעת לולאות
 
-    // עדכון controllers ו-overlays לפי המיפוי החדש
-    _remapControllersAndOverlays(wordMapping);
+    try {
+      // מיפוי מילים ישנות למילים חדשות לפי דמיון
+      final wordMapping = _mapOldWordsToNew(newWords);
+      debugPrint('🗺️ Word mapping: $wordMapping');
 
-    // עדכון אפשרויות החיפוש לפי המיפוי החדש
-    _remapSearchOptions(wordMapping, newWords);
+      // עדכון controllers ו-overlays לפי המיפוי החדש
+      _remapControllersAndOverlays(wordMapping);
 
-    // ניקוי נתונים לא רלוונטיים
-    _cleanupIrrelevantData(newWords.toSet());
+      // עדכון אפשרויות החיפוש לפי המיפוי החדש
+      _remapSearchOptions(wordMapping, newWords);
 
-    // לא צריך לקרוא ל-_clearAllOverlays כי כבר ניקינו הכל ב-_remapControllersAndOverlays
+      // ניקוי נתונים לא רלוונטיים
+      _cleanupIrrelevantData(newWords.toSet());
 
-    setState(() {
-      _searchQuery = SearchQuery.fromString(text);
-    });
+      // לא צריך לקרוא ל-_clearAllOverlays כי כבר ניקינו הכל ב-_remapControllersAndOverlays
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateWordPositions();
-      debugPrint('🎈 Showing remapped bubbles after major change');
-      _showAllExistingBubbles();
+      setState(() {
+        _searchQuery = SearchQuery.fromString(text);
+      });
 
-      if (drawerWasOpen) {
-        _updateSearchOptionsOverlay();
-      }
-    });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _calculateWordPositions();
+          debugPrint('🎈 Showing remapped bubbles after major change');
+          _showAllExistingBubbles();
+
+          if (drawerWasOpen) {
+            _updateSearchOptionsOverlay();
+          }
+        }
+        _isUpdatingText = false; // איפוס הדגל
+      });
+    } catch (e) {
+      _isUpdatingText = false; // איפוס הדגל גם במקרה של שגיאה
+      rethrow;
+    }
   }
 
   // מיפוי מילים ישנות למילים חדשות
@@ -1267,36 +1307,40 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   void _onCursorPositionChanged() {
-    // עדכון המגירה כשהסמן זז (אם היא פתוחה)
-    if (_searchOptionsOverlay != null) {
+    // עדכון המגירה כשהסמן זז (אם היא פתוחה) - רק אם לא באמצע עדכון טקסט
+    if (_searchOptionsOverlay != null && !_isUpdatingText) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateSearchOptionsOverlay();
+        if (mounted && !_isUpdatingText) {
+          _updateSearchOptionsOverlay();
+        }
       });
     }
   }
 
   void _updateSearchOptionsOverlay() {
     // עדכון המגירה אם היא פתוחה
-    if (_searchOptionsOverlay != null) {
+    if (_searchOptionsOverlay != null && !_isUpdatingText) {
       // שמירת מיקום הסמן לפני העדכון
       final currentSelection = widget.widget.tab.queryController.selection;
 
       _hideSearchOptionsOverlay();
       _showSearchOptionsOverlay();
 
-      // החזרת מיקום הסמן אחרי העדכון
+      // החזרת מיקום הסמן אחרי העדכון - רק אם לא באמצע עדכון טקסט
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && !_isUpdatingText) {
           debugPrint(
               'DEBUG: Restoring cursor position in update: ${currentSelection.baseOffset}');
+          _isUpdatingText = true;
           widget.widget.tab.queryController.selection = currentSelection;
+          _isUpdatingText = false;
         }
       });
     }
   }
 
   void _calculateWordPositions() {
-    if (_textFieldKey.currentContext == null) return;
+    if (_textFieldKey.currentContext == null || _isUpdatingText) return;
 
     RenderEditable? editable;
     void findEditable(RenderObject child) {
@@ -1322,7 +1366,9 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
     final text = widget.widget.tab.queryController.text;
     if (text.isEmpty) {
-      setState(() {});
+      if (mounted && !_isUpdatingText) {
+        setState(() {});
+      }
       return;
     }
 
@@ -1334,13 +1380,13 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       if (start == -1) continue;
       final end = start + w.length;
 
-      final pts = editable!.getEndpointsForSelection(
+      final boxes = editable!.getBoxesForSelection(
         TextSelection(baseOffset: start, extentOffset: end),
       );
-      if (pts.isEmpty) continue;
+      if (boxes.isEmpty) continue;
 
-      final leftLocalX = pts.first.point.dx;
-      final rightLocalX = pts.last.point.dx;
+      final leftLocalX = boxes.map((b) => b.left).reduce(math.min);
+      final rightLocalX = boxes.map((b) => b.right).reduce(math.max);
 
       final leftGlobal = editable!.localToGlobal(Offset(leftLocalX, 0));
       final rightGlobal = editable!.localToGlobal(Offset(rightLocalX, 0));
@@ -1359,18 +1405,19 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       idx = end;
     }
 
-    if (text.isNotEmpty && _wordPositions.isEmpty) {
-// החישוב נכשל למרות שיש טקסט. ננסה שוב ב-frame הבא.
+    if (text.isNotEmpty && _wordPositions.isEmpty && !_isUpdatingText) {
+      // החישוב נכשל למרות שיש טקסט. ננסה שוב ב-frame הבא.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          // ודא שהווידג'ט עדיין קיים
+        if (mounted && !_isUpdatingText) {
           _calculateWordPositions();
         }
       });
-      return; // צא מהפונקציה כדי לא לקרוא ל-setState עם מידע שגוי
+      return;
     }
 
-    setState(() {});
+    if (mounted && !_isUpdatingText) {
+      setState(() {});
+    }
   }
 
   void _addAlternative(int termIndex) {
