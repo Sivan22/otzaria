@@ -91,15 +91,9 @@ class HistoryView extends StatelessWidget {
                     onTap: () {
                       if (historyItem.isSearch) {
                         final tabsBloc = context.read<TabsBloc>();
-                        SearchingTab searchTab;
-                        try {
-                          searchTab = tabsBloc.state.tabs
-                                  .firstWhere((tab) => tab is SearchingTab)
-                              as SearchingTab;
-                        } catch (e) {
-                          searchTab = SearchingTab('חיפוש', null);
-                          tabsBloc.add(AddTab(searchTab));
-                        }
+                        // Always create a new search tab instead of reusing existing one
+                        final searchTab = SearchingTab('חיפוש', null);
+                        tabsBloc.add(AddTab(searchTab));
 
                         // Restore search query and options
                         searchTab.queryController.text = historyItem.book.title;
