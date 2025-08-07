@@ -36,7 +36,10 @@ class SearchRepository {
     final hasSearchOptions = searchOptions != null && searchOptions.isNotEmpty;
 
     // המרת החיפוש לפורמט המנוע החדש
-    final words = query.trim().split(SearchRegexPatterns.wordSplitter);
+    // סינון מחרוזות ריקות שנוצרות כאשר יש רווחים בסוף השאילתה
+    final words = query.trim().split(SearchRegexPatterns.wordSplitter)
+        .where((word) => word.isNotEmpty)
+        .toList();
     final List<String> regexTerms;
     final int effectiveSlop;
 

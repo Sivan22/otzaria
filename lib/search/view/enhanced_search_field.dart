@@ -1909,7 +1909,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                       context
                           .read<HistoryBloc>()
                           .add(AddHistory(widget.widget.tab));
-                      context.read<SearchBloc>().add(UpdateSearchQuery(e,
+                      context.read<SearchBloc>().add(UpdateSearchQuery(e.trim(),
                           customSpacing: widget.widget.tab.spacingValues,
                           alternativeWords: widget.widget.tab.alternativeWords,
                           searchOptions: widget.widget.tab.searchOptions));
@@ -1925,7 +1925,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
                               .read<HistoryBloc>()
                               .add(AddHistory(widget.widget.tab));
                           context.read<SearchBloc>().add(UpdateSearchQuery(
-                              widget.widget.tab.queryController.text,
+                              widget.widget.tab.queryController.text.trim(),
                               customSpacing: widget.widget.tab.spacingValues,
                               alternativeWords:
                                   widget.widget.tab.alternativeWords,

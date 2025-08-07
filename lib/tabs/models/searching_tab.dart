@@ -37,7 +37,7 @@ class SearchingTab extends OpenedTab {
   ) {
     if (searchText != null) {
       queryController.text = searchText;
-      searchBloc.add(UpdateSearchQuery(searchText));
+      searchBloc.add(UpdateSearchQuery(searchText.trim()));
     }
   }
 
