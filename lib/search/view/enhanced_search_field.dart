@@ -133,11 +133,13 @@ class _SpacingField extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onRemove;
   final VoidCallback? onFocusLost;
+  final bool requestFocus; // פרמטר חדש לקביעה אם לבקש פוקוס
 
   const _SpacingField({
     required this.controller,
     required this.onRemove,
     this.onFocusLost,
+    this.requestFocus = true, // ברירת מחדל - כן לבקש פוקוס
   });
 
   @override
@@ -150,11 +152,14 @@ class _SpacingFieldState extends State<_SpacingField> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focus.requestFocus();
-      }
-    });
+    // רק אם נדרש לבקש פוקוס (בועות חדשות)
+    if (widget.requestFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focus.requestFocus();
+        }
+      });
+    }
     _focus.addListener(_onFocusChanged);
     widget.controller.addListener(_onTextChanged);
   }
@@ -300,11 +305,13 @@ class _AlternativeField extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onRemove;
   final VoidCallback? onFocusLost;
+  final bool requestFocus; // פרמטר חדש לקביעה אם לבקש פוקוס
 
   const _AlternativeField({
     required this.controller,
     required this.onRemove,
     this.onFocusLost,
+    this.requestFocus = true, // ברירת מחדל - כן לבקש פוקוס
   });
 
   @override
@@ -317,11 +324,17 @@ class _AlternativeFieldState extends State<_AlternativeField> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focus.requestFocus();
-      }
-    });
+    // רק אם נדרש לבקש פוקוס (בועות חדשות)
+    if (widget.requestFocus) {
+      debugPrint('🎯 Requesting focus for new alternative field');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focus.requestFocus();
+        }
+      });
+    } else {
+      debugPrint('🚫 NOT requesting focus for existing alternative field');
+    }
     _focus.addListener(_onFocusChanged);
     widget.controller.addListener(_onTextChanged);
   }
@@ -597,7 +610,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       final controllers = entry.value;
       for (int j = 0; j < controllers.length; j++) {
         if (termIndex < _wordPositions.length) {
-          _showAlternativeOverlay(termIndex, j);
+          _showAlternativeOverlay(termIndex, j, requestFocus: false);
         }
       }
     }
@@ -612,7 +625,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
             rightIndex != null &&
             leftIndex < _wordPositions.length &&
             rightIndex < _wordPositions.length) {
-          _showSpacingOverlay(leftIndex, rightIndex);
+          _showSpacingOverlay(leftIndex, rightIndex, requestFocus: false);
         }
       }
     }
@@ -639,38 +652,44 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   // עדכון אפשרויות החיפוש לפי המיפוי החדש
   void _remapSearchOptions(Map<int, int> wordMapping, List<String> newWords) {
-    final oldWords = _searchQuery.terms.map((t) => t.word).toList();
-    final oldSearchOptions =
-        Map<String, dynamic>.from(widget.widget.tab.searchOptions);
-    widget.widget.tab.searchOptions.clear();
+    // ניצור עותק של האפשרויות הישנות ונתייחס אליו כאל Map מהסוג הנכון
+    final oldSearchOptions = Map<String, Map<String, bool>>.from(widget.widget.tab.searchOptions);
+    final newSearchOptions = <String, Map<String, bool>>{};
 
+    // נעבור על כל האפשרויות הישנות
     for (final entry in oldSearchOptions.entries) {
-      final key = entry.key;
-      final value = entry.value;
-      final parts = key.split('_');
+      final oldKey = entry.key; // לדוגמה: "מילה_1"
+      final optionsMap = entry.value; // מפת האפשרויות של המילה
+      final parts = oldKey.split('_');
 
+      // נוודא שהמפתח תקין (מכיל מילה ואינדקס)
       if (parts.length >= 2) {
-        final word = parts[0];
-        final option = parts.sublist(1).join('_');
+        // נחלץ את האינדקס הישן מהמפתח
+        final oldIndex = int.tryParse(parts.last);
 
-        // מציאת האינדקס הישן של המילה
-        final oldWordIndex = oldWords.indexOf(word);
+        // אם הצלחנו לקרוא את האינדקס הישן, והוא קיים במפת המיפוי שלנו
+        if (oldIndex != null && wordMapping.containsKey(oldIndex)) {
+          // נמצא את האינדקס החדש של המילה
+          final newIndex = wordMapping[oldIndex]!;
 
-        if (oldWordIndex != -1 && wordMapping.containsKey(oldWordIndex)) {
-          // המילה נמפתה למילה חדשה
-          final newWordIndex = wordMapping[oldWordIndex]!;
-          if (newWordIndex < newWords.length) {
-            final newWord = newWords[newWordIndex];
-            final newKey = '${newWord}_$option';
-            widget.widget.tab.searchOptions[newKey] = value;
+          // נוודא שהאינדקס החדש תקין ביחס לרשימת המילים החדשה
+          if (newIndex < newWords.length) {
+            final newWord = newWords[newIndex];
+            
+            // ✅ כאן התיקון המרכזי: נייצר מפתח חדש עם המילה החדשה והאינדקס החדש
+            final newKey = '${newWord}_$newIndex';
+            
+            // נוסיף את האפשרויות למפה החדשה שיצרנו
+            newSearchOptions[newKey] = optionsMap;
           }
-        } else if (newWords.contains(word)) {
-          // המילה עדיין קיימת בדיוק כמו שהיא
-          final newKey = '${word}_$option';
-          widget.widget.tab.searchOptions[newKey] = value;
         }
+        // אם המילה נמחקה (ולא נמצאת ב-wordMapping), אנחנו פשוט מתעלמים מהאפשרויות שלה, וזה תקין.
       }
     }
+
+    // לבסוף, נחליף את מפת האפשרויות הישנה במפה החדשה והמעודכנת שבנינו
+    widget.widget.tab.searchOptions.clear();
+    widget.widget.tab.searchOptions.addAll(newSearchOptions);
   }
 
   void _clearAllOverlays(
@@ -849,7 +868,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     debugPrint('🔄 Text change detected: ${isMinorChange ? "MINOR" : "MAJOR"}');
     debugPrint('   Old words: $oldWords');
     debugPrint('   New words: $newWords');
-    debugPrint('   Current search options: ${widget.widget.tab.searchOptions.keys.toList()}');
+    debugPrint(
+        '   Current search options: ${widget.widget.tab.searchOptions.keys.toList()}');
 
     if (isMinorChange) {
       // שינוי קטן - שמור על כל הסימונים והבועות
@@ -894,8 +914,6 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     return true;
   }
 
-
-
   // חישוב דמיון בין שתי מילים (אלגוריתם Levenshtein distance מפושט)
   double _calculateWordSimilarity(String word1, String word2) {
     if (word1.isEmpty && word2.isEmpty) return 1.0;
@@ -924,9 +942,10 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     _clearAllOverlays(keepSearchDrawer: drawerWasOpen, keepFilledBubbles: true);
 
     // שמירת אפשרויות החיפוש הקיימות ומילים ישנות לפני יצירת SearchQuery חדש
-    final oldSearchOptions = Map<String, dynamic>.from(widget.widget.tab.searchOptions);
+    final oldSearchOptions =
+        Map<String, dynamic>.from(widget.widget.tab.searchOptions);
     final oldWords = _searchQuery.terms.map((t) => t.word).toList();
-    
+
     setState(() {
       _searchQuery = SearchQuery.fromString(text);
       // לא קוראים ל-_updateAlternativeControllers כדי לא לפגוע במיפוי הקיים
@@ -934,8 +953,9 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
     // עדכון אפשרויות החיפוש לפי המילים החדשות (שמירה על אפשרויות קיימות)
     _updateSearchOptionsForMinorChange(oldSearchOptions, oldWords, text);
-    
-    debugPrint('✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
+
+    debugPrint(
+        '✅ After minor change - search options: ${widget.widget.tab.searchOptions.keys.toList()}');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculateWordPositions();
@@ -948,28 +968,33 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   }
 
   // עדכון אפשרויות החיפוש בשינוי קטן - שמירה על אפשרויות קיימות
-  void _updateSearchOptionsForMinorChange(Map<String, dynamic> oldSearchOptions, List<String> oldWords, String newText) {
-    final newWords = newText.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-    
+  void _updateSearchOptionsForMinorChange(Map<String, dynamic> oldSearchOptions,
+      List<String> oldWords, String newText) {
+    final newWords = newText
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+
     debugPrint('🔧 Updating search options for minor change:');
     debugPrint('   Old search options: ${oldSearchOptions.keys.toList()}');
     debugPrint('   Old words: $oldWords');
     debugPrint('   New words: $newWords');
-    
+
     // אם מספר המילים זהה, פשוט נעדכן את המפתחות לפי המילים החדשות
     if (newWords.length == oldWords.length) {
       debugPrint('   Same number of words - updating keys');
       widget.widget.tab.searchOptions.clear();
-      
+
       for (final entry in oldSearchOptions.entries) {
         final key = entry.key;
         final value = entry.value;
         final parts = key.split('_');
-        
+
         if (parts.length >= 2) {
           final oldWord = parts[0];
           final option = parts.sublist(1).join('_');
-          
+
           // מציאת האינדקס של המילה הישנה
           final oldWordIndex = oldWords.indexOf(oldWord);
           if (oldWordIndex != -1 && oldWordIndex < newWords.length) {
@@ -983,17 +1008,18 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       }
     } else {
       // אם מספר המילים השתנה, נשמור רק אפשרויות של מילים שעדיין קיימות
-      debugPrint('   Different number of words - preserving existing words only');
+      debugPrint(
+          '   Different number of words - preserving existing words only');
       widget.widget.tab.searchOptions.clear();
-      
+
       for (final entry in oldSearchOptions.entries) {
         final key = entry.key;
         final value = entry.value;
         final parts = key.split('_');
-        
+
         if (parts.length >= 2) {
           final word = parts[0];
-          
+
           // אם המילה עדיין קיימת ברשימה החדשה, נשמור את האפשרות
           if (newWords.contains(word)) {
             widget.widget.tab.searchOptions[key] = value;
@@ -1101,7 +1127,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       }
     }
     _alternativeOverlays.clear();
-    
+
     for (final entry in _spacingOverlays.values) {
       entry.remove();
     }
@@ -1160,15 +1186,17 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
 
   // הצגת כל הבועות הקיימות
   void _showAllExistingBubbles() {
-    debugPrint('🎈 Showing existing bubbles - word positions: ${_wordPositions.length}');
-    
+    debugPrint(
+        '🎈 Showing existing bubbles - word positions: ${_wordPositions.length}');
+
     // הצגת alternatives מה-SearchQuery
     for (int i = 0; i < _searchQuery.terms.length; i++) {
       for (int j = 0; j < _searchQuery.terms[i].alternatives.length; j++) {
         if (i < _wordPositions.length) {
-          _showAlternativeOverlay(i, j);
+          _showAlternativeOverlay(i, j, requestFocus: false);
         } else {
-          debugPrint('⚠️ Skipping SearchQuery alternative at invalid position: $i');
+          debugPrint(
+              '⚠️ Skipping SearchQuery alternative at invalid position: $i');
         }
       }
     }
@@ -1178,10 +1206,11 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     for (final entry in _alternativeControllers.entries) {
       final termIndex = entry.key;
       final controllers = entry.value;
-      
+
       // בדיקה שהאינדקס תקין
       if (termIndex >= _wordPositions.length) {
-        debugPrint('⚠️ Marking invalid alternative controllers for removal: $termIndex');
+        debugPrint(
+            '⚠️ Marking invalid alternative controllers for removal: $termIndex');
         invalidControllerKeys.add(termIndex);
         // מחיקת controllers לא תקינים
         for (final controller in controllers) {
@@ -1189,15 +1218,16 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
         }
         continue;
       }
-      
+
       for (int j = 0; j < controllers.length; j++) {
         if (controllers[j].text.trim().isNotEmpty) {
-          debugPrint('🎈 Showing alternative bubble at position $termIndex, alt $j');
-          _showAlternativeOverlay(termIndex, j);
+          debugPrint(
+              '🎈 Showing alternative bubble at position $termIndex, alt $j');
+          _showAlternativeOverlay(termIndex, j, requestFocus: false);
         }
       }
     }
-    
+
     // הסרת controllers לא תקינים
     for (final key in invalidControllerKeys) {
       _alternativeControllers.remove(key);
@@ -1217,17 +1247,19 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
               rightIndex != null &&
               leftIndex < _wordPositions.length &&
               rightIndex < _wordPositions.length) {
-            debugPrint('🎈 Showing spacing bubble between $leftIndex and $rightIndex');
-            _showSpacingOverlay(leftIndex, rightIndex);
+            debugPrint(
+                '🎈 Showing spacing bubble between $leftIndex and $rightIndex');
+            _showSpacingOverlay(leftIndex, rightIndex, requestFocus: false);
           } else {
-            debugPrint('⚠️ Marking invalid spacing controller for removal: $key');
+            debugPrint(
+                '⚠️ Marking invalid spacing controller for removal: $key');
             invalidSpacingKeys.add(key);
             controller.dispose();
           }
         }
       }
     }
-    
+
     // הסרת spacing controllers לא תקינים
     for (final key in invalidSpacingKeys) {
       _spacingControllers.remove(key);
@@ -1352,7 +1384,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       // הוספת listener לעדכון המידע ב-tab כשהטקסט משתנה
       controller.addListener(() => _updateAlternativeWordsInTab());
       _alternativeControllers[termIndex]!.add(controller);
-      _showAlternativeOverlay(termIndex, newIndex);
+      _showAlternativeOverlay(termIndex, newIndex, requestFocus: true);
     });
     _updateAlternativeWordsInTab();
   }
@@ -1390,11 +1422,12 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     }
     _alternativeOverlays[termIndex]!.clear();
     for (int i = 0; i < _alternativeControllers[termIndex]!.length; i++) {
-      _showAlternativeOverlay(termIndex, i);
+      _showAlternativeOverlay(termIndex, i, requestFocus: false);
     }
   }
 
-  void _showAlternativeOverlay(int termIndex, int altIndex) {
+  void _showAlternativeOverlay(int termIndex, int altIndex,
+      {bool requestFocus = false}) {
     debugPrint(
         '🎈 Showing alternative overlay: term=$termIndex, alt=$altIndex');
 
@@ -1436,6 +1469,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
             controller: controller,
             onRemove: () => _removeAlternative(termIndex, altIndex),
             onFocusLost: () => _checkAndRemoveEmptyField(termIndex, altIndex),
+            requestFocus: requestFocus, // העברת הפרמטר
           ),
         );
       },
@@ -1457,7 +1491,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
     );
   }
 
-  void _showSpacingOverlay(int leftIndex, int rightIndex) {
+  void _showSpacingOverlay(int leftIndex, int rightIndex,
+      {bool requestFocus = false}) {
     final key = _spaceKey(leftIndex, rightIndex);
     debugPrint('🎈 Showing spacing overlay: $key');
     if (_spacingOverlays.containsKey(key)) {
@@ -1495,6 +1530,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
           controller: controller,
           onRemove: () => _removeSpacingOverlay(key),
           onFocusLost: () => _removeSpacingOverlayIfEmpty(key),
+          requestFocus: requestFocus, // העברת הפרמטר
         ),
       ),
     );
@@ -1535,7 +1571,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
               onEnter: (_) => setState(() => _hoveredWordIndex = i),
               onExit: (_) => setState(() => _hoveredWordIndex = null),
               child: _SpacingButton(
-                onTap: () => _showSpacingOverlay(i, i + 1),
+                onTap: () => _showSpacingOverlay(i, i + 1, requestFocus: true),
               ),
             ),
           ),
