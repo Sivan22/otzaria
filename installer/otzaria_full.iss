@@ -30,10 +30,6 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 DisableDirPage=auto
-; Force UTF-8 encoding for Hebrew text
-CodePage=65001
-; Enable right-to-left reading for Hebrew
-RightToLeft=yes
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\אוצריא\בית שני";
