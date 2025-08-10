@@ -17,12 +17,16 @@ class CommentaryContent extends StatefulWidget {
     required this.openBookCallback,
     required this.removeNikud,
     this.searchQuery = '',
+    this.currentSearchIndex = 0,
+    this.onSearchResultsCountChanged,
   });
   final bool removeNikud;
   final Link link;
   final double fontSize;
   final Function(TextBookTab) openBookCallback;
   final String searchQuery;
+  final int currentSearchIndex;
+  final Function(int)? onSearchResultsCountChanged;
 
   @override
   State<CommentaryContent> createState() => _CommentaryContentState();
@@ -35,6 +39,17 @@ class _CommentaryContentState extends State<CommentaryContent> {
   void initState() {
     super.initState();
     content = widget.link.content;
+  }
+
+  int _countSearchMatches(String text, String searchQuery) {
+    if (searchQuery.isEmpty) return 0;
+    
+    final RegExp regex = RegExp(
+      RegExp.escape(searchQuery),
+      caseSensitive: false,
+    );
+    
+    return regex.allMatches(text).length;
   }
 
   @override
@@ -57,7 +72,16 @@ class _CommentaryContentState extends State<CommentaryContent> {
               if (widget.removeNikud) {
                 text = utils.removeVolwels(text);
               }
-              text = utils.highLight(text, widget.searchQuery);              
+              
+              // ספירת תוצאות החיפוש ועדכון הרכיב האב
+              if (widget.searchQuery.isNotEmpty) {
+                final searchCount = _countSearchMatches(text, widget.searchQuery);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.onSearchResultsCountChanged?.call(searchCount);
+                });
+              }
+              
+              text = utils.highLight(text, widget.searchQuery, currentIndex: widget.currentSearchIndex);              
               return BlocBuilder<SettingsBloc, SettingsState>(
                 builder: (context, settingsState) {
                   return Html(data: text, style: {
