@@ -31,6 +31,7 @@ import 'package:otzaria/history/history_dialog.dart';
 import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/bloc/history_event.dart';
 import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
+import 'package:otzaria/widgets/workspace_icon_button.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({Key? key}) : super(key: key);
@@ -111,9 +112,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             margin: const EdgeInsets.symmetric(horizontal: 2),
                           ),
                           // קבוצה 2: שולחן עבודה, היסטוריה ומועדפים
-                          IconButton(
-                            icon: const Icon(Icons.add_to_queue),
-                            tooltip: 'החלף שולחן עבודה',
+                          WorkspaceIconButton(
                             onPressed: () =>
                                 _showSwitchWorkspaceDialog(context),
                           ),
