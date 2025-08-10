@@ -442,11 +442,11 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
                     SwitchSettingsTile(
-                      title: 'סינכרון אוטומטי',
+                      title: 'סינכרון הספרייה באופן אוטומטי',
                       leading: Icon(Icons.sync),
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
-                      enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
+                      enabledLabel: 'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
@@ -565,21 +565,24 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             }
                           },
                         ),
-                        SimpleSettingsTile(
-                          title: 'מיקום ספרי HebrewBooks',
-                          subtitle: Settings.getValue<String>(
-                                  'key-hebrew-books-path') ??
-                              'לא קיים',
-                          leading: const Icon(Icons.folder),
-                          onTap: () async {
-                            String? path =
-                                await FilePicker.platform.getDirectoryPath();
-                            if (path != null) {
-                              context
-                                  .read<LibraryBloc>()
-                                  .add(UpdateHebrewBooksPath(path));
-                            }
-                          },
+                        Tooltip(
+                          message: 'במידה וקיימים ברשותכם ספרים ממאגר זה',
+                          child: SimpleSettingsTile(
+                            title: 'מיקום ספרי HebrewBooks (היברובוקס)',
+                            subtitle: Settings.getValue<String>(
+                                    'key-hebrew-books-path') ??
+                                'לא קיים',
+                            leading: const Icon(Icons.folder),
+                            onTap: () async {
+                              String? path =
+                                  await FilePicker.platform.getDirectoryPath();
+                              if (path != null) {
+                                context
+                                    .read<LibraryBloc>()
+                                    .add(UpdateHebrewBooksPath(path));
+                              }
+                            },
+                          ),
                         ),
                       ]),
                     SwitchSettingsTile(
