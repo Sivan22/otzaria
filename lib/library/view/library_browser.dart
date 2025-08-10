@@ -92,20 +92,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       alignment: Alignment.centerRight,
                       child: Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.home),
-                            tooltip: 'חזרה לתיקיה הראשית',
-                            onPressed: () {
-                              setState(() => _depth = 0);
-                              context.read<LibraryBloc>().add(LoadLibrary());
-                              context
-                                  .read<FocusRepository>()
-                                  .librarySearchController
-                                  .clear();
-                              _update(context, state, settingsState);
-                              _refocusSearchBar(selectAll: true);
-                            },
-                          ),
+                          // קבוצה 1: סינכרון
                           BlocProvider(
                             create: (context) => FileSyncBloc(
                               repository: FileSyncRepository(
@@ -116,6 +103,14 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             ),
                             child: const SyncIconButton(),
                           ),
+                          // קו מפריד
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: Colors.grey.shade400,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                          ),
+                          // קבוצה 2: שולחן עבודה, היסטוריה ומועדפים
                           IconButton(
                             icon: const Icon(Icons.add_to_queue),
                             tooltip: 'החלף שולחן עבודה',
@@ -154,17 +149,38 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     ),
                   ],
                 ),
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_upward),
-                  tooltip: 'חזרה לתיקיה הקודמת',
-                  onPressed: () {
-                    if (state.currentCategory?.parent != null) {
-                      setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
-                      context.read<LibraryBloc>().add(NavigateUp());
-                      context.read<LibraryBloc>().add(const SearchBooks());
-                      _refocusSearchBar(selectAll: true);
-                    }
-                  },
+                leadingWidth: 100,
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // קבוצה 1: חזור ובית (צמודים)
+                    IconButton(
+                      icon: const Icon(Icons.arrow_upward),
+                      tooltip: 'חזרה לתיקיה הקודמת',
+                      onPressed: () {
+                        if (state.currentCategory?.parent != null) {
+                          setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
+                          context.read<LibraryBloc>().add(NavigateUp());
+                          context.read<LibraryBloc>().add(const SearchBooks());
+                          _refocusSearchBar(selectAll: true);
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.home),
+                      tooltip: 'חזרה לתיקיה הראשית',
+                      onPressed: () {
+                        setState(() => _depth = 0);
+                        context.read<LibraryBloc>().add(LoadLibrary());
+                        context
+                            .read<FocusRepository>()
+                            .librarySearchController
+                            .clear();
+                        _update(context, state, settingsState);
+                        _refocusSearchBar(selectAll: true);
+                      },
+                    ),
+                  ],
                 ),
               ),
               body: Column(

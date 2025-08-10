@@ -92,6 +92,22 @@ class _ReadingScreenState extends State<ReadingScreen>
                     padding: const EdgeInsets.all(8.0),
                     child: TextButton(
                       onPressed: () {
+                        _showSaveWorkspaceDialog(context);
+                      },
+                      child: const Text('החלף שולחן עבודה'),
+                    ),
+                  ),
+                  // קו מפריד
+                  Container(
+                    height: 1,
+                    width: 200,
+                    color: Colors.grey.shade400,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      onPressed: () {
                         _showHistoryDialog(context);
                       },
                       child: const Text('הצג היסטוריה'),
@@ -104,15 +120,6 @@ class _ReadingScreenState extends State<ReadingScreen>
                         _showBookmarksDialog(context);
                       },
                       child: const Text('הצג מועדפים'),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextButton(
-                      onPressed: () {
-                        _showSaveWorkspaceDialog(context);
-                      },
-                      child: const Text('החלף שולחן עבודה'),
                     ),
                   )
                 ],
@@ -156,11 +163,20 @@ class _ReadingScreenState extends State<ReadingScreen>
                   leading: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // קבוצה 1: שולחן עבודה
                       IconButton(
                         icon: const Icon(Icons.add_to_queue),
                         tooltip: 'החלף שולחן עבודה',
                         onPressed: () => _showSaveWorkspaceDialog(context),
                       ),
+                      // קו מפריד
+                      Container(
+                        height: 24,
+                        width: 1,
+                        color: Colors.grey.shade400,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                      ),
+                      // קבוצה 2: היסטוריה ומועדפים
                       IconButton(
                         icon: const Icon(Icons.history),
                         tooltip: 'הצג היסטוריה',
