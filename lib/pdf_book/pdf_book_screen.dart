@@ -550,7 +550,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         child: Container(
           color: Theme.of(context).colorScheme.surface,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(1, 0, 4, 0),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: Column(
               children: [
                 Row(
