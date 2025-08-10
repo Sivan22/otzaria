@@ -416,6 +416,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           passwordProvider: () => passwordDialog(context),
                           controller: widget.tab.pdfViewerController,
                           params: PdfViewerParams(
+                            backgroundColor: Theme.of(context).colorScheme.surface, // צבע רקע המסך, בתצוגת ספרי PDF 
                             maxScale: 10,
                             horizontalCacheExtent: 5,
                             verticalCacheExtent: 5,

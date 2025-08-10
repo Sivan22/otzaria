@@ -63,7 +63,7 @@ class _ThumbnailsViewState extends State<ThumbnailsView>
     if (currentPage == null || _lastScrolledPage == currentPage) return;
     if (!_scrollController.hasClients) return;
 
-    const itemExtent = 256.0; // container height + margin
+    const itemExtent = 266.0; // container height + margin
     final viewportHeight = _scrollController.position.viewportDimension;
     final target =
         itemExtent * (currentPage - 1) - (viewportHeight / 2) + (itemExtent / 2);
@@ -79,7 +79,7 @@ class _ThumbnailsViewState extends State<ThumbnailsView>
   Widget build(BuildContext context) {
     super.build(context);
     return Container(
-      color: Colors.grey,
+      color: Theme.of(context).colorScheme.surface, // צבע הרקע בכרטיסיית 'דפים' בתפריט הצידי
       child: widget.documentRef == null
           ? null
           : PdfDocumentViewBuilder(
@@ -109,7 +109,7 @@ class _ThumbnailsViewState extends State<ThumbnailsView>
                             widget.controller!.pageNumber == index + 1;
                         return Container(
                           margin: const EdgeInsets.all(8),
-                          height: 240,
+                          height: 250,
                           decoration: isSelected
                               ? BoxDecoration(
                                   color: Theme.of(context)
