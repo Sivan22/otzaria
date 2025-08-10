@@ -1387,7 +1387,7 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
   void _addAlternative(int termIndex) {
     setState(() {
       _alternativeControllers.putIfAbsent(termIndex, () => []);
-      if (_alternativeControllers[termIndex]!.length >= 2) {
+      if (_alternativeControllers[termIndex]!.length >= 3) {
         return;
       }
       final newIndex = _alternativeControllers[termIndex]!.length;
