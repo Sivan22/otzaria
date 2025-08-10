@@ -698,19 +698,19 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   ) {
     final detailsSection = errorDetails.isEmpty ? '' : '\n$errorDetails';
 
-    return '''שם הספר: $bookTitle
-    מיקום: $currentRef
-    שם הקובץ: ${bookDetails['שם הקובץ']}
-    נתיב הקובץ: ${bookDetails['נתיב הקובץ']}
-    תיקיית המקור: ${bookDetails['תיקיית המקור']}
+    return '''
+שם הספר: $bookTitle
+מיקום: $currentRef
+שם הקובץ: ${bookDetails['שם הקובץ']}
+נתיב הקובץ: ${bookDetails['נתיב הקובץ']}
+תיקיית המקור: ${bookDetails['תיקיית המקור']}
 
-    הטקסט שבו נמצאה הטעות:
-    $selectedText
+הטקסט שבו נמצאה הטעות:
+$selectedText
 
-    פירוט הטעות:
-    $detailsSection
-
-    ''';
+פירוט הטעות:
+$detailsSection
+''';
   }
 
   /// שמירת דיווח לקובץ בתיקייה הראשית של הספרייה (libraryPath).
