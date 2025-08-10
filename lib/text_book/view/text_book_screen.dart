@@ -69,6 +69,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   late final StreamSubscription<SettingsState> _settingsSub;
   static const String _reportFileName = 'דיווח שגיאות בספרים.txt';
   static const String _reportSeparator = '==============================';
+  static const String _reportSeparator2 = '------------------------------';
   static const String _fallbackMail = 'otzaria.200@gmail.com';
 
   String? encodeQueryParameters(Map<String, String> params) {
@@ -732,6 +733,13 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         encoding: utf8,
       );
 
+      // אם זה קובץ חדש, כתוב את השורה הראשונה עם הוראות השליחה
+      if (!exists) {
+        sink.writeln('יש לשלוח קובץ זה למייל: $_fallbackMail');
+        sink.writeln(_reportSeparator2);
+        sink.writeln(''); // שורת רווח
+      }
+
       // אם יש כבר תוכן קודם בקובץ קיים -> הוסף מפריד לפני הרשומה החדשה
       if (exists && (await file.length()) > 0) {
         sink.writeln(''); // שורת רווח
@@ -783,7 +791,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     final message =
         "הדיווח נשמר בהצלחה לקובץ '$_reportFileName', הנמצא בתיקייה הראשית של אוצריא.\n"
-        "יש לך כבר $count דיווחים, וכעת תוכל לשלוח את הקובץ למייל: $_fallbackMail!";
+        "יש לך כבר $count דיווחים!\n"
+        "כעת תוכל לשלוח את הקובץ למייל: $_fallbackMail";
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
