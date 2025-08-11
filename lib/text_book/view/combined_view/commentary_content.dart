@@ -81,7 +81,7 @@ class _CommentaryContentState extends State<CommentaryContent> {
                 });
               }
               
-              text = utils.highLight(text, widget.searchQuery, currentIndex: widget.currentSearchIndex);              
+              // Highlighting will be handled by the HTML widget's built-in search functionality              
               return BlocBuilder<SettingsBloc, SettingsState>(
                 builder: (context, settingsState) {
                   return Html(data: text, style: {

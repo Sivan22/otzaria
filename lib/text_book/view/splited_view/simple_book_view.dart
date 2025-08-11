@@ -254,11 +254,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                         child: Html(
                           // remove nikud if needed
                           data: state.removeNikud
-                              ? utils.highLight(
-                                  utils.removeVolwels('$data\n'),
-                                  state.searchText,
-                                )
-                              : utils.highLight('$data\n', state.searchText),
+                              ? utils.removeVolwels('$data\n')
+                              : '$data\n',
                           style: {
                             'body': Style(
                               fontSize: FontSize(widget.textSize),

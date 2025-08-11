@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -347,9 +348,10 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   icon: const Icon(Icons.print),
                   tooltip: 'הדפס',
                   onPressed: () async {
-                    await Printing.sharePdf(
-                      bytes: File(widget.tab.book.path).readAsBytesSync(),
+                    final bytes = await Isolate.run(() => 
+                      File(widget.tab.book.path).readAsBytesSync()
                     );
+                    await Printing.sharePdf(bytes: bytes);
                   },
                 ),
               ],

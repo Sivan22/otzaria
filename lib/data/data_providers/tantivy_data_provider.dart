@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:search_engine/search_engine.dart';
@@ -166,7 +167,7 @@ class TantivyDataProvider {
     if (hasAlternativeWords || hasSearchOptions) {
       // יש מילים חילופיות או אפשרויות חיפוש - נבנה queries מתקדמים
       regexTerms =
-          _buildAdvancedQueryForCount(words, alternativeWords, searchOptions);
+          await _buildAdvancedQueryForCount(words, alternativeWords, searchOptions);
       effectiveSlop = hasCustomSpacing
           ? _getMaxCustomSpacingForCount(customSpacing, words.length)
           : (fuzzy ? distance : 0);
@@ -267,10 +268,10 @@ class TantivyDataProvider {
   }
 
   /// בונה query מתקדם עם מילים חילופיות ואפשרויות חיפוש
-  List<String> _buildAdvancedQueryForCount(
+  Future<List<String>> _buildAdvancedQueryForCount(
       List<String> words,
       Map<int, List<String>>? alternativeWords,
-      Map<String, Map<String, bool>>? searchOptions) {
+      Map<String, Map<String, bool>>? searchOptions) async {
     List<String> regexTerms = [];
 
     for (int i = 0; i < words.length; i++) {
@@ -313,11 +314,11 @@ class TantivyDataProvider {
               if (option.length <= 3) {
                 // למילים קצרות, נגביל את מספר הוריאציות
                 final allSpellingVariations =
-                    _generateFullPartialSpellingVariations(option);
+                    await _generateFullPartialSpellingVariations(option);
                 // נקח רק את ה-5 הראשונות כדי למנוע יותר מדי expansions
                 baseVariations = allSpellingVariations.take(5).toList();
               } else {
-                baseVariations = _generateFullPartialSpellingVariations(option);
+                baseVariations = await _generateFullPartialSpellingVariations(option);
               }
             } catch (e) {
               // אם יש בעיה, נוסיף לפחות את המילה המקורית
@@ -464,50 +465,52 @@ class TantivyDataProvider {
   }
 
   // פונקציות עזר ליצירת וריאציות כתיב מלא/חסר ודקדוקיות
-  List<String> _generateFullPartialSpellingVariations(String word) {
-    if (word.isEmpty) return [word];
+  Future<List<String>> _generateFullPartialSpellingVariations(String word) async {
+    return await Isolate.run(() {
+      if (word.isEmpty) return [word];
 
-    final variations = <String>{word}; // המילה המקורית
+      final variations = <String>{word}; // המילה המקורית
 
-    // מוצא את כל המיקומים של י, ו, וגרשיים
-    final chars = word.split('');
-    final optionalIndices = <int>[];
+      // מוצא את כל המיקומים של י, ו, וגרשיים
+      final chars = word.split('');
+      final optionalIndices = <int>[];
 
-    // מוצא אינדקסים של תווים שיכולים להיות אופציונליים
-    for (int i = 0; i < chars.length; i++) {
-      if (chars[i] == 'י' ||
-          chars[i] == 'ו' ||
-          chars[i] == "'" ||
-          chars[i] == '"') {
-        optionalIndices.add(i);
-      }
-    }
-
-    // יוצר את כל הצירופים האפשריים (2^n אפשרויות)
-    final numCombinations = 1 << optionalIndices.length; // 2^n
-
-    for (int combination = 0; combination < numCombinations; combination++) {
-      final variant = <String>[];
-
+      // מוצא אינדקסים של תווים שיכולים להיות אופציונליים
       for (int i = 0; i < chars.length; i++) {
-        final optionalIndex = optionalIndices.indexOf(i);
-
-        if (optionalIndex != -1) {
-          // זה תו אופציונלי - בודק אם לכלול אותו בצירוף הזה
-          final shouldInclude = (combination & (1 << optionalIndex)) != 0;
-          if (shouldInclude) {
-            variant.add(chars[i]);
-          }
-        } else {
-          // תו רגיל - תמיד כולל
-          variant.add(chars[i]);
+        if (chars[i] == 'י' ||
+            chars[i] == 'ו' ||
+            chars[i] == "'" ||
+            chars[i] == '"') {
+          optionalIndices.add(i);
         }
       }
 
-      variations.add(variant.join(''));
-    }
+      // יוצר את כל הצירופים האפשריים (2^n אפשרויות)
+      final numCombinations = 1 << optionalIndices.length; // 2^n
 
-    return variations.toList();
+      for (int combination = 0; combination < numCombinations; combination++) {
+        final variant = <String>[];
+
+        for (int i = 0; i < chars.length; i++) {
+          final optionalIndex = optionalIndices.indexOf(i);
+
+          if (optionalIndex != -1) {
+            // זה תו אופציונלי - בודק אם לכלול אותו בצירוף הזה
+            final shouldInclude = (combination & (1 << optionalIndex)) != 0;
+            if (shouldInclude) {
+              variant.add(chars[i]);
+            }
+          } else {
+            // תו רגיל - תמיד כולל
+            variant.add(chars[i]);
+          }
+        }
+
+        variations.add(variant.join(''));
+      }
+
+      return variations.toList();
+    });
   }
 
   List<String> _generateFullMorphologicalVariations(String word) {
@@ -589,7 +592,7 @@ class TantivyDataProvider {
 
     if (hasAlternativeWords || hasSearchOptions) {
       regexTerms =
-          _buildAdvancedQueryForCount(words, alternativeWords, searchOptions);
+          await _buildAdvancedQueryForCount(words, alternativeWords, searchOptions);
       effectiveSlop = hasCustomSpacing
           ? _getMaxCustomSpacingForCount(customSpacing, words.length)
           : (fuzzy ? distance : 0);

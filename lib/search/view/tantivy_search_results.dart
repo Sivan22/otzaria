@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -30,50 +31,52 @@ class TantivySearchResults extends StatefulWidget {
 
 class _TantivySearchResultsState extends State<TantivySearchResults> {
   // פונקציה עזר ליצירת וריאציות כתיב מלא/חסר
-  List<String> _generateFullPartialSpellingVariations(String word) {
-    if (word.isEmpty) return [word];
+  Future<List<String>> _generateFullPartialSpellingVariations(String word) async {
+    return await Isolate.run(() {
+      if (word.isEmpty) return [word];
 
-    final variations = <String>{word}; // המילה המקורית
+      final variations = <String>{word}; // המילה המקורית
 
-    // מוצא את כל המיקומים של י, ו, וגרשיים
-    final chars = word.split('');
-    final optionalIndices = <int>[];
+      // מוצא את כל המיקומים של י, ו, וגרשיים
+      final chars = word.split('');
+      final optionalIndices = <int>[];
 
-    // מוצא אינדקסים של תווים שיכולים להיות אופציונליים
-    for (int i = 0; i < chars.length; i++) {
-      if (chars[i] == 'י' ||
-          chars[i] == 'ו' ||
-          chars[i] == "'" ||
-          chars[i] == '"') {
-        optionalIndices.add(i);
-      }
-    }
-
-    // יוצר את כל הצירופים האפשריים (2^n אפשרויות)
-    final numCombinations = 1 << optionalIndices.length; // 2^n
-
-    for (int combination = 0; combination < numCombinations; combination++) {
-      final variant = <String>[];
-
+      // מוצא אינדקסים של תווים שיכולים להיות אופציונליים
       for (int i = 0; i < chars.length; i++) {
-        final optionalIndex = optionalIndices.indexOf(i);
-
-        if (optionalIndex != -1) {
-          // זה תו אופציונלי - בודק אם לכלול אותו בצירוף הזה
-          final shouldInclude = (combination & (1 << optionalIndex)) != 0;
-          if (shouldInclude) {
-            variant.add(chars[i]);
-          }
-        } else {
-          // תו רגיל - תמיד כולל
-          variant.add(chars[i]);
+        if (chars[i] == 'י' ||
+            chars[i] == 'ו' ||
+            chars[i] == "'" ||
+            chars[i] == '"') {
+          optionalIndices.add(i);
         }
       }
 
-      variations.add(variant.join(''));
-    }
+      // יוצר את כל הצירופים האפשריים (2^n אפשרויות)
+      final numCombinations = 1 << optionalIndices.length; // 2^n
 
-    return variations.toList();
+      for (int combination = 0; combination < numCombinations; combination++) {
+        final variant = <String>[];
+
+        for (int i = 0; i < chars.length; i++) {
+          final optionalIndex = optionalIndices.indexOf(i);
+
+          if (optionalIndex != -1) {
+            // זה תו אופציונלי - בודק אם לכלול אותו בצירוף הזה
+            final shouldInclude = (combination & (1 << optionalIndex)) != 0;
+            if (shouldInclude) {
+              variant.add(chars[i]);
+            }
+          } else {
+            // תו רגיל - תמיד כולל
+            variant.add(chars[i]);
+          }
+        }
+
+        variations.add(variant.join(''));
+      }
+
+      return variations.toList();
+    });
   }
 
   // פונקציה לחישוב כמה תווים יכולים להיכנס בשורה אחת
@@ -93,13 +96,13 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
   }
 
   // פונקציה חכמה ליצירת קטע טקסט עם הדגשות - מבטיחה שכל ההתאמות יופיעו!
-  List<InlineSpan> createSnippetSpans(
+  Future<List<InlineSpan>> createSnippetSpans(
     String fullHtml,
     String query,
     TextStyle defaultStyle,
     TextStyle highlightStyle,
     double availableWidth,
-  ) {
+  ) async {
     // 1. קבלת הטקסט הנקי מה-HTML
     final plainText =
         html_parser.parse(fullHtml).documentElement?.text.trim() ?? '';
@@ -126,7 +129,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
         // אם יש כתיב מלא/חסר, נוסיף את כל הווריאציות
         try {
           // ייבוא דינמי של HebrewMorphology
-          final variations = _generateFullPartialSpellingVariations(word);
+          final variations = await _generateFullPartialSpellingVariations(word);
           searchTerms.addAll(variations);
         } catch (e) {
           // אם יש בעיה, נוסיף לפחות את המילה המקורית
@@ -144,7 +147,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
           // אם יש כתיב מלא/חסר, נוסיף גם את הווריאציות של המילים החילופיות
           for (final alt in alternatives) {
             try {
-              final altVariations = _generateFullPartialSpellingVariations(alt);
+              final altVariations = await _generateFullPartialSpellingVariations(alt);
               searchTerms.addAll(altVariations);
             } catch (e) {
               searchTerms.add(alt);
@@ -383,7 +386,7 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                   32.0; // padding נוסף של ListTile
 
               // Create the snippet using the new robust function
-              final snippetSpans = createSnippetSpans(
+              final snippetSpansFuture = createSnippetSpans(
                 rawHtml,
                 state.searchQuery,
                 TextStyle(
@@ -401,49 +404,56 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
 
               return Material(
                 clipBehavior: Clip.hardEdge,
-                child: ListTile(
-                  leading:
-                      result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
-                  onTap: () {
-                    if (result.isPdf) {
-                      context.read<TabsBloc>().add(AddTab(
-                            PdfBookTab(
-                              book: PdfBook(
-                                  title: result.title, path: result.filePath),
-                              pageNumber: result.segment.toInt() + 1,
-                              searchText: widget.tab.queryController.text,
-                              openLeftPane:
-                                  (Settings.getValue<bool>('key-pin-sidebar') ??
-                                          false) ||
-                                      (Settings.getValue<bool>(
-                                              'key-default-sidebar-open') ??
-                                          false),
-                            ),
-                          ));
-                    } else {
-                      context.read<TabsBloc>().add(AddTab(
-                            TextBookTab(
-                                book: TextBook(
-                                  title: result.title,
+                child: FutureBuilder<List<InlineSpan>>(
+                  future: snippetSpansFuture,
+                  builder: (context, snapshot) {
+                    final snippetSpans = snapshot.data ?? [TextSpan(text: rawHtml)];
+                    
+                    return ListTile(
+                      leading:
+                          result.isPdf ? const Icon(Icons.picture_as_pdf) : null,
+                      onTap: () {
+                        if (result.isPdf) {
+                          context.read<TabsBloc>().add(AddTab(
+                                PdfBookTab(
+                                  book: PdfBook(
+                                      title: result.title, path: result.filePath),
+                                  pageNumber: result.segment.toInt() + 1,
+                                  searchText: widget.tab.queryController.text,
+                                  openLeftPane:
+                                      (Settings.getValue<bool>('key-pin-sidebar') ??
+                                              false) ||
+                                          (Settings.getValue<bool>(
+                                                  'key-default-sidebar-open') ??
+                                              false),
                                 ),
-                                index: result.segment.toInt(),
-                                searchText: widget.tab.queryController.text,
-                                openLeftPane: (Settings.getValue<bool>(
-                                            'key-pin-sidebar') ??
-                                        false) ||
-                                    (Settings.getValue<bool>(
-                                            'key-default-sidebar-open') ??
-                                        false)),
-                          ));
-                    }
+                              ));
+                        } else {
+                          context.read<TabsBloc>().add(AddTab(
+                                TextBookTab(
+                                    book: TextBook(
+                                      title: result.title,
+                                    ),
+                                    index: result.segment.toInt(),
+                                    searchText: widget.tab.queryController.text,
+                                    openLeftPane: (Settings.getValue<bool>(
+                                                'key-pin-sidebar') ??
+                                            false) ||
+                                        (Settings.getValue<bool>(
+                                                'key-default-sidebar-open') ??
+                                            false)),
+                              ));
+                        }
+                      },
+                      title: Text(titleText),
+                      subtitle: Text.rich(
+                        TextSpan(children: snippetSpans),
+                        maxLines: null, // אין הגבלה על מספר השורות!
+                        textAlign: TextAlign.justify,
+                        textDirection: TextDirection.rtl,
+                      ),
+                    );
                   },
-                  title: Text(titleText),
-                  subtitle: Text.rich(
-                    TextSpan(children: snippetSpans),
-                    maxLines: null, // אין הגבלה על מספר השורות!
-                    textAlign: TextAlign.justify,
-                    textDirection: TextDirection.rtl,
-                  ),
                 ),
               );
             },

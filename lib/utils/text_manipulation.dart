@@ -18,37 +18,39 @@ String removeVolwels(String s) {
   return s.replaceAll(SearchRegexPatterns.vowelsAndCantillation, '');
 }
 
-String highLight(String data, String searchQuery, {int currentIndex = -1}) {
+Future<String> highLight(String data, String searchQuery, {int currentIndex = -1}) async {
   if (searchQuery.isEmpty) return data;
   
-  final regex = RegExp(RegExp.escape(searchQuery), caseSensitive: false);
-  final matches = regex.allMatches(data).toList();
-  
-  if (matches.isEmpty) return data;
-  
-  // אם לא צוין אינדקס נוכחי, נדגיש את כל התוצאות באדום
-  if (currentIndex == -1) {
-    return data.replaceAll(regex, '<font color=red>$searchQuery</font>');
-  }
-  
-  // נדגיש את התוצאה הנוכחית בכחול ואת השאר באדום
-  String result = data;
-  int offset = 0;
-  
-  for (int i = 0; i < matches.length; i++) {
-    final match = matches[i];
-    final color = i == currentIndex ? 'blue' : 'red';
-    final backgroundColor = i == currentIndex ? ' style="background-color: yellow;"' : '';
-    final replacement = '<font color=$color$backgroundColor>${match.group(0)}</font>';
+  return await Isolate.run(() {
+    final regex = RegExp(RegExp.escape(searchQuery), caseSensitive: false);
+    final matches = regex.allMatches(data).toList();
     
-    final start = match.start + offset;
-    final end = match.end + offset;
+    if (matches.isEmpty) return data;
     
-    result = result.substring(0, start) + replacement + result.substring(end);
-    offset += replacement.length - match.group(0)!.length;
-  }
-  
-  return result;
+    // אם לא צוין אינדקס נוכחי, נדגיש את כל התוצאות באדום
+    if (currentIndex == -1) {
+      return data.replaceAll(regex, '<font color=red>$searchQuery</font>');
+    }
+    
+    // נדגיש את התוצאה הנוכחית בכחול ואת השאר באדום
+    String result = data;
+    int offset = 0;
+    
+    for (int i = 0; i < matches.length; i++) {
+      final match = matches[i];
+      final color = i == currentIndex ? 'blue' : 'red';
+      final backgroundColor = i == currentIndex ? ' style="background-color: yellow;"' : '';
+      final replacement = '<font color=$color$backgroundColor>${match.group(0)}</font>';
+      
+      final start = match.start + offset;
+      final end = match.end + offset;
+      
+      result = result.substring(0, start) + replacement + result.substring(end);
+      offset += replacement.length - match.group(0)!.length;
+    }
+    
+    return result;
+  });
 }
 
 String getTitleFromPath(String path) {

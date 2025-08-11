@@ -771,7 +771,9 @@ $detailsSection
       final content = await file.readAsString(encoding: utf8);
       if (content.trim().isEmpty) return 0;
 
-      final occurrences = _reportSeparator.allMatches(content).length;
+      final occurrences = await Isolate.run(() => 
+        _reportSeparator.allMatches(content).length
+      );
       return occurrences + 1;
     } catch (e) {
       debugPrint('countReports error: $e');

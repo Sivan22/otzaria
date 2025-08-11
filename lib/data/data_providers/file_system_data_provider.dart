@@ -281,7 +281,9 @@ class FileSystemData {
       final jsonString = await file.readAsString();
       final jsonList =
           await Isolate.run(() async => jsonDecode(jsonString) as List);
-      return jsonList.map((json) => Link.fromJson(json)).toList();
+      return await Isolate.run(() => 
+        jsonList.map((json) => Link.fromJson(json)).toList()
+      );
     } on Exception {
       return [];
     }
@@ -319,8 +321,7 @@ class FileSystemData {
       final lines = fullText.split('\n');
       return _extractPartialLines(lines, currentIndex, sectionsAround);
     } else {
-      return await Isolate.run(
-          () => _readPartialTextFile(file, currentIndex, sectionsAround));
+      return await _readPartialTextFile(file, currentIndex, sectionsAround);
     }
   }
 
@@ -335,12 +336,14 @@ class FileSystemData {
   }
 
   /// Helper function to read partial content from a text file
-  static List<String> _readPartialTextFile(
-      File file, int currentIndex, int sectionsAround) {
-    final lines = file.readAsStringSync().split('\n');
-    final startIndex = (currentIndex - sectionsAround).clamp(0, lines.length);
-    final endIndex = (currentIndex + sectionsAround + 1).clamp(0, lines.length);
-    return lines.sublist(startIndex, endIndex);
+  static Future<List<String>> _readPartialTextFile(
+      File file, int currentIndex, int sectionsAround) async {
+    return await Isolate.run(() {
+      final lines = file.readAsStringSync().split('\n');
+      final startIndex = (currentIndex - sectionsAround).clamp(0, lines.length);
+      final endIndex = (currentIndex + sectionsAround + 1).clamp(0, lines.length);
+      return lines.sublist(startIndex, endIndex);
+    });
   }
 
   /// Retrieves the content of a specific link within a book.
