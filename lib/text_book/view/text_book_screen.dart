@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:async';
@@ -462,9 +463,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     final visiblePositions = state.positionsListener.itemPositions.value
         .toList()
       ..sort((a, b) => a.index.compareTo(b.index));
-    final visibleText = visiblePositions
+    final visibleText = await Isolate.run(() => visiblePositions
         .map((pos) => utils.stripHtmlIfNeeded(allText[pos.index]))
-        .join('\n');
+        .join('\n'));
 
     if (!mounted) return;
 

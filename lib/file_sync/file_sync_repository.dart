@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:http/http.dart' as http;
 
@@ -46,7 +47,7 @@ class FileSyncRepository {
         }
       }
       final content = await file.readAsString(encoding: utf8);
-      return json.decode(content);
+      return await Isolate.run(() => json.decode(content));
     } catch (e) {
       print('Error reading local manifest: $e');
       // הלוגיקה שלך לגיבוי מ-.bak הייתה טובה, נתאים אותה ל-.old
@@ -56,7 +57,7 @@ class FileSyncRepository {
           print('Main manifest is corrupt, restoring from .old backup...');
           final backupContent = await oldFile.readAsString(encoding: utf8);
           await oldFile.rename(path); // rename בטוח יותר מ-copy
-          return json.decode(backupContent);
+          return await Isolate.run(() => json.decode(backupContent));
         } catch (_) {}
       }
       return {};

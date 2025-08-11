@@ -39,8 +39,11 @@ class IndexingRepository {
         if (book is TextBook) {
           if (!_tantivyDataProvider.booksDone
               .contains("${book.title}textBook")) {
-            if (_tantivyDataProvider.booksDone.contains(
-                sha1.convert(utf8.encode((await book.text))).toString())) {
+            final bookTextHash = await Isolate.run(() async {
+              final bookText = await book.text;
+              return sha1.convert(utf8.encode(bookText)).toString();
+            });
+            if (_tantivyDataProvider.booksDone.contains(bookTextHash)) {
               _tantivyDataProvider.booksDone.add("${book.title}textBook");
             } else {
               await Isolate.run(() => _indexTextBook(book));
@@ -50,8 +53,11 @@ class IndexingRepository {
         } else if (book is PdfBook) {
           if (!_tantivyDataProvider.booksDone
               .contains("${book.title}pdfBook")) {
-            if (_tantivyDataProvider.booksDone.contains(
-                sha1.convert(await File(book.path).readAsBytes()).toString())) {
+            final pdfFileHash = await Isolate.run(() async {
+              final fileBytes = await File(book.path).readAsBytes();
+              return sha1.convert(fileBytes).toString();
+            });
+            if (_tantivyDataProvider.booksDone.contains(pdfFileHash)) {
               _tantivyDataProvider.booksDone.add("${book.title}pdfBook");
             } else {
               await _indexPdfBook(book);
@@ -150,7 +156,10 @@ class IndexingRepository {
 
     // Process each page
     for (int i = 0; i < pages.length; i++) {
-      final texts = (await pages[i].loadText()).fullText.split('\n');
+      final texts = await Isolate.run(() async {
+        final pageText = (await pages[i].loadText()).fullText;
+        return pageText.split('\n');
+      });
       // Index each line from the page
       for (int j = 0; j < texts.length; j++) {
         if (!_tantivyDataProvider.isIndexing.value) {

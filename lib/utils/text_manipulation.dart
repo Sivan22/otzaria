@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
@@ -93,8 +94,10 @@ Future<void> _loadCsvCache() async {
     final csvFile = File(csvPath);
 
     if (await csvFile.exists()) {
-      final csvString = await csvFile.readAsString();
-      final lines = csvString.split('\n');
+      final lines = await Isolate.run(() async {
+        final csvString = await csvFile.readAsString();
+        return csvString.split('\n');
+      });
 
       // Skip header and parse all lines
       for (int i = 1; i < lines.length; i++) {
