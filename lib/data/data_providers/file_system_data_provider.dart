@@ -299,7 +299,7 @@ class FileSystemData {
       final bytes = await file.readAsBytes();
       return Isolate.run(() => docxToText(bytes, title));
     } else {
-      return file.readAsString();
+      return await Isolate.run(() => file.readAsString());
     }
   }
 
