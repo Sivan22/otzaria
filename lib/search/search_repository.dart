@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
 import 'package:otzaria/search/utils/hebrew_morphology.dart';
@@ -37,7 +38,9 @@ class SearchRepository {
 
     // המרת החיפוש לפורמט המנוע החדש
     // סינון מחרוזות ריקות שנוצרות כאשר יש רווחים בסוף השאילתה
-    final words = query.trim().split(SearchRegexPatterns.wordSplitter)
+    final words = query
+        .trim()
+        .split(SearchRegexPatterns.wordSplitter)
         .where((word) => word.isNotEmpty)
         .toList();
     final List<String> regexTerms;
@@ -49,7 +52,8 @@ class SearchRepository {
       if (hasAlternativeWords) print('🔄 מילים חילופיות: $alternativeWords');
       if (hasSearchOptions) print('🔄 אפשרויות חיפוש: $searchOptions');
 
-      regexTerms = _buildAdvancedQuery(words, alternativeWords, searchOptions);
+      regexTerms = await Isolate.run(
+          () => _buildAdvancedQuery(words, alternativeWords, searchOptions));
       print('🔄 RegexTerms מתקדם: $regexTerms');
       effectiveSlop = hasCustomSpacing
           ? _getMaxCustomSpacing(customSpacing, words.length)
@@ -195,16 +199,20 @@ class SearchRepository {
               }
             } else if (hasPrefix && hasSuffix) {
               // קידומות וסיומות יחד - משתמש בחיפוש "חלק ממילה"
-              allVariations.add(SearchRegexPatterns.createPartialWordPattern(baseVariation));
+              allVariations.add(
+                  SearchRegexPatterns.createPartialWordPattern(baseVariation));
             } else if (hasPrefix) {
               // קידומות רגילות - שימוש ברגקס מרכזי
-              allVariations.add(SearchRegexPatterns.createPrefixSearchPattern(baseVariation));
+              allVariations.add(
+                  SearchRegexPatterns.createPrefixSearchPattern(baseVariation));
             } else if (hasSuffix) {
               // סיומות רגילות - שימוש ברגקס מרכזי
-              allVariations.add(SearchRegexPatterns.createSuffixSearchPattern(baseVariation));
+              allVariations.add(
+                  SearchRegexPatterns.createSuffixSearchPattern(baseVariation));
             } else if (hasPartialWord) {
               // חלק ממילה - שימוש ברגקס מרכזי
-              allVariations.add(SearchRegexPatterns.createPartialWordPattern(baseVariation));
+              allVariations.add(
+                  SearchRegexPatterns.createPartialWordPattern(baseVariation));
             } else {
               // ללא אפשרויות מיוחדות - מילה מדויקת
               allVariations.add(RegExp.escape(baseVariation));
@@ -224,7 +232,7 @@ class SearchRepository {
 
         regexTerms.add(finalPattern);
         // הודעת דיבוג עם הסבר על הלוגיקה
-        final searchType = hasPrefix && hasSuffix 
+        final searchType = hasPrefix && hasSuffix
             ? 'קידומות+סיומות (חלק ממילה)'
             : hasGrammaticalPrefixes && hasGrammaticalSuffixes
                 ? 'קידומות+סיומות דקדוקיות'
@@ -241,7 +249,7 @@ class SearchRepository {
                                     : hasFullPartialSpelling
                                         ? 'כתיב מלא/חסר'
                                         : 'מדויק';
-        
+
         print('🔄 מילה $i: $finalPattern (סוג חיפוש: $searchType)');
       } else {
         // fallback למילה המקורית
