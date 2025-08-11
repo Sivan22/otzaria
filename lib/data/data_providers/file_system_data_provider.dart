@@ -303,6 +303,46 @@ class FileSystemData {
     }
   }
 
+  /// Retrieves a partial text content of a book around a specific section.
+  ///
+  /// Loads only the current section plus [sectionsAround] sections before and after.
+  /// This is much more efficient for large books.
+  Future<List<String>> getBookTextPartial(String title, int currentIndex,
+      {int sectionsAround = 50}) async {
+    final path = await _getBookPath(title);
+    final file = File(path);
+
+    if (path.endsWith('.docx')) {
+      // For DOCX, we still need to load the full content
+      final bytes = await file.readAsBytes();
+      final fullText = await Isolate.run(() => docxToText(bytes, title));
+      final lines = fullText.split('\n');
+      return _extractPartialLines(lines, currentIndex, sectionsAround);
+    } else {
+      return await Isolate.run(
+          () => _readPartialTextFile(file, currentIndex, sectionsAround));
+    }
+  }
+
+  /// Helper function to extract partial lines from a full text
+  List<String> _extractPartialLines(
+      List<String> allLines, int currentIndex, int sectionsAround) {
+    final startIndex =
+        (currentIndex - sectionsAround).clamp(0, allLines.length);
+    final endIndex =
+        (currentIndex + sectionsAround + 1).clamp(0, allLines.length);
+    return allLines.sublist(startIndex, endIndex);
+  }
+
+  /// Helper function to read partial content from a text file
+  static List<String> _readPartialTextFile(
+      File file, int currentIndex, int sectionsAround) {
+    final lines = file.readAsStringSync().split('\n');
+    final startIndex = (currentIndex - sectionsAround).clamp(0, lines.length);
+    final endIndex = (currentIndex + sectionsAround + 1).clamp(0, lines.length);
+    return lines.sublist(startIndex, endIndex);
+  }
+
   /// Retrieves the content of a specific link within a book.
   ///
   /// Reads the file line by line and returns the content at the specified index.

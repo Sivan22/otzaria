@@ -14,6 +14,11 @@ class TextBookRepository {
     return await book.text;
   }
 
+  /// Gets partial book content around a specific index (more efficient for large books)
+  Future<List<String>> getPartialBookContent(TextBook book, int currentIndex, {int sectionsAround = 50}) async {
+    return await book.getPartialText(currentIndex, sectionsAround: sectionsAround);
+  }
+
   Future<List<Link>> getBookLinks(TextBook book) async {
     return await book.links;
   }

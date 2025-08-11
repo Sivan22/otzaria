@@ -47,6 +47,8 @@ class TextBookError extends TextBookState {
 
 class TextBookLoaded extends TextBookState {
   final List<String> content;
+  final bool isPartialContent;
+  final int? partialStartIndex;
   final double fontSize;
   final bool showSplitView;
   final List<String> activeCommentators;
@@ -74,6 +76,8 @@ class TextBookLoaded extends TextBookState {
     required TextBook book,
     required bool showLeftPane,
     required this.content,
+    this.isPartialContent = false,
+    this.partialStartIndex,
     required this.fontSize,
     required this.showSplitView,
     required this.activeCommentators,
@@ -131,6 +135,8 @@ class TextBookLoaded extends TextBookState {
   TextBookLoaded copyWith({
     TextBook? book,
     List<String>? content,
+    bool? isPartialContent,
+    int? partialStartIndex,
     double? fontSize,
     bool? showLeftPane,
     bool? showSplitView,
@@ -156,6 +162,8 @@ class TextBookLoaded extends TextBookState {
     return TextBookLoaded(
       book: book ?? this.book,
       content: content ?? this.content,
+      isPartialContent: isPartialContent ?? this.isPartialContent,
+      partialStartIndex: partialStartIndex ?? this.partialStartIndex,
       fontSize: fontSize ?? this.fontSize,
       showLeftPane: showLeftPane ?? this.showLeftPane,
       showSplitView: showSplitView ?? this.showSplitView,
@@ -186,6 +194,8 @@ class TextBookLoaded extends TextBookState {
   List<Object?> get props => [
         book.title,
         content.length,
+        isPartialContent,
+        partialStartIndex,
         fontSize,
         showLeftPane,
         showSplitView,

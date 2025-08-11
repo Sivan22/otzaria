@@ -100,6 +100,10 @@ class TextBook extends Book {
   /// The text data of the book.
   Future<String> get text async => (await data.getBookText(title));
 
+  /// Gets partial text content around a specific index (more efficient for large books)
+  Future<List<String>> getPartialText(int currentIndex, {int sectionsAround = 50}) async => 
+      (await data.getBookTextPartial(title, currentIndex, sectionsAround: sectionsAround));
+
   /// Creates a new `Book` instance from a JSON object.
   ///
   /// The JSON object should have a 'title' key.

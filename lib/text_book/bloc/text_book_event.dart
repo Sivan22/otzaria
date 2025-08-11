@@ -11,15 +11,17 @@ class LoadContent extends TextBookEvent {
   final double fontSize;
   final bool showSplitView;
   final bool removeNikud;
+  final bool usePartialLoading;
 
   const LoadContent({
     required this.fontSize,
     required this.showSplitView,
     required this.removeNikud,
+    this.usePartialLoading = true, // Default to partial loading for better performance
   });
 
   @override
-  List<Object?> get props => [fontSize, showSplitView, removeNikud];
+  List<Object?> get props => [fontSize, showSplitView, removeNikud, usePartialLoading];
 }
 
 class UpdateFontSize extends TextBookEvent {
@@ -101,4 +103,33 @@ class UpdateSearchText extends TextBookEvent {
 
   @override
   List<Object?> get props => [text];
+}
+
+class LoadPartialContent extends TextBookEvent {
+  final int currentIndex;
+  final int sectionsAround;
+
+  const LoadPartialContent({
+    required this.currentIndex,
+    this.sectionsAround = 50,
+  });
+
+  @override
+  List<Object?> get props => [currentIndex, sectionsAround];
+}
+
+class LoadFullContent extends TextBookEvent {
+  const LoadFullContent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadMoreContent extends TextBookEvent {
+  final bool loadBefore; // true = load content before current, false = load content after
+  
+  const LoadMoreContent({this.loadBefore = false});
+
+  @override
+  List<Object?> get props => [loadBefore];
 }

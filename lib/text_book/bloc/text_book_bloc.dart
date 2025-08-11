@@ -17,6 +17,9 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   })  : _repository = repository,
         super(initialState) {
     on<LoadContent>(_onLoadContent);
+    on<LoadPartialContent>(_onLoadPartialContent);
+    on<LoadFullContent>(_onLoadFullContent);
+    on<LoadMoreContent>(_onLoadMoreContent);
     on<UpdateFontSize>(_onUpdateFontSize);
     on<ToggleLeftPane>(_onToggleLeftPane);
     on<ToggleSplitView>(_onToggleSplitView);
@@ -48,7 +51,22 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     emit(TextBookLoading(
         book, initial.index, initial.showLeftPane, initial.commentators));
     try {
-      final content = await _repository.getBookContent(book);
+      // Use partial loading if requested and we have a specific index
+      final List<String> contentLines;
+      final bool isPartial;
+      final int? partialStart;
+      
+      if (event.usePartialLoading && initial.index > 0) {
+        contentLines = await _repository.getPartialBookContent(book, initial.index);
+        isPartial = true;
+        partialStart = (initial.index - 50).clamp(0, double.infinity).toInt();
+      } else {
+        final fullContent = await _repository.getBookContent(book);
+        contentLines = fullContent.split('\n');
+        isPartial = false;
+        partialStart = null;
+      }
+      
       final links = await _repository.getBookLinks(book);
       final tableOfContents = await _repository.getTableOfContents(book);
       final availableCommentators =
@@ -82,7 +100,9 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
 
       emit(TextBookLoaded(
         book: book, // שימוש במשתנה המקומי
-        content: content.split('\n'),
+        content: contentLines,
+        isPartialContent: isPartial,
+        partialStartIndex: partialStart,
         links: links,
         availableCommentators: availableCommentators,
         tableOfContents: tableOfContents,
@@ -107,6 +127,114 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     } catch (e) {
       emit(TextBookError(e.toString(), book, initial.index,
           initial.showLeftPane, initial.commentators));
+    }
+  }
+
+  Future<void> _onLoadPartialContent(
+    LoadPartialContent event,
+    Emitter<TextBookState> emit,
+  ) async {
+    if (state is! TextBookLoaded) return;
+    
+    final currentState = state as TextBookLoaded;
+    final book = currentState.book;
+    
+    try {
+      // Load partial content around the current index
+      final partialContent = await _repository.getPartialBookContent(
+        book, 
+        event.currentIndex, 
+        sectionsAround: event.sectionsAround
+      );
+      
+      final startIndex = (event.currentIndex - event.sectionsAround).clamp(0, double.infinity).toInt();
+      
+      emit(currentState.copyWith(
+        content: partialContent,
+        isPartialContent: true,
+        partialStartIndex: startIndex,
+        selectedIndex: event.currentIndex,
+      ));
+    } catch (e) {
+      // If partial loading fails, keep the current state
+      print('Error loading partial content: $e');
+    }
+  }
+
+  Future<void> _onLoadFullContent(
+    LoadFullContent event,
+    Emitter<TextBookState> emit,
+  ) async {
+    if (state is! TextBookLoaded) return;
+    
+    final currentState = state as TextBookLoaded;
+    final book = currentState.book;
+    
+    try {
+      // Load the full content
+      final fullContent = await _repository.getBookContent(book);
+      final contentLines = fullContent.split('\n');
+      
+      emit(currentState.copyWith(
+        content: contentLines,
+        isPartialContent: false,
+        partialStartIndex: null,
+      ));
+    } catch (e) {
+      print('Error loading full content: $e');
+    }
+  }
+
+  Future<void> _onLoadMoreContent(
+    LoadMoreContent event,
+    Emitter<TextBookState> emit,
+  ) async {
+    if (state is! TextBookLoaded) return;
+    
+    final currentState = state as TextBookLoaded;
+    if (!currentState.isPartialContent) return; // Already have full content
+    
+    final book = currentState.book;
+    final currentContent = currentState.content;
+    final partialStart = currentState.partialStartIndex ?? 0;
+    
+    try {
+      if (event.loadBefore) {
+        // Load content before current content
+        final newStartIndex = (partialStart - 100).clamp(0, double.infinity).toInt();
+        if (newStartIndex < partialStart) {
+          final beforeContent = await _repository.getPartialBookContent(
+            book, 
+            newStartIndex + 50, // Center around this index
+            sectionsAround: 50
+          );
+          
+          // Merge with existing content (avoid duplicates)
+          final mergedContent = [...beforeContent, ...currentContent];
+          
+          emit(currentState.copyWith(
+            content: mergedContent,
+            partialStartIndex: newStartIndex,
+          ));
+        }
+      } else {
+        // Load content after current content
+        final currentEndIndex = partialStart + currentContent.length;
+        final newContent = await _repository.getPartialBookContent(
+          book, 
+          currentEndIndex + 50, // Center around this index
+          sectionsAround: 50
+        );
+        
+        // Merge with existing content (avoid duplicates)
+        final mergedContent = [...currentContent, ...newContent];
+        
+        emit(currentState.copyWith(
+          content: mergedContent,
+        ));
+      }
+    } catch (e) {
+      print('Error loading more content: $e');
     }
   }
 
@@ -191,6 +319,23 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       int? index = currentState.selectedIndex;
       if (!event.visibleIndecies.contains(index)) {
         index = null;
+      }
+
+      // Check if we need to load more content (if we're using partial content)
+      if (currentState.isPartialContent && event.visibleIndecies.isNotEmpty) {
+        final maxVisibleIndex = event.visibleIndecies.reduce((a, b) => a > b ? a : b);
+        final minVisibleIndex = event.visibleIndecies.reduce((a, b) => a < b ? a : b);
+        
+        // If we're near the end of loaded content, load more
+        if (maxVisibleIndex >= currentState.content.length - 10) {
+          final actualIndex = (currentState.partialStartIndex ?? 0) + maxVisibleIndex;
+          add(LoadPartialContent(currentIndex: actualIndex + 50));
+        }
+        // If we're near the beginning of loaded content, load more
+        else if (minVisibleIndex <= 10 && (currentState.partialStartIndex ?? 0) > 0) {
+          final actualIndex = (currentState.partialStartIndex ?? 0) + minVisibleIndex;
+          add(LoadPartialContent(currentIndex: actualIndex - 50));
+        }
       }
 
       emit(currentState.copyWith(
