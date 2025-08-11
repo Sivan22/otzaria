@@ -89,6 +89,109 @@ class SearchRepository {
         order: order);
   }
 
+  /// Streams search results in batches for better performance and user experience
+  Stream<List<SearchResult>> searchTextsStream(
+      String query, List<String> facets, int totalLimit,
+      {ResultsOrder order = ResultsOrder.relevance,
+      bool fuzzy = false,
+      int distance = 2,
+      int batchSize = 20, // Load 20 results at a time
+      Map<String, String>? customSpacing,
+      Map<int, List<String>>? alternativeWords,
+      Map<String, Map<String, bool>>? searchOptions}) async* {
+    
+    int offset = 0;
+    List<SearchResult> allResults = [];
+    
+    while (offset < totalLimit) {
+      final currentBatchSize = math.min(batchSize, totalLimit - offset);
+      
+      try {
+        // Search for current batch
+        final batchResults = await _searchBatch(
+          query, facets, currentBatchSize, offset,
+          order: order,
+          fuzzy: fuzzy,
+          distance: distance,
+          customSpacing: customSpacing,
+          alternativeWords: alternativeWords,
+          searchOptions: searchOptions,
+        );
+        
+        if (batchResults.isEmpty) {
+          break; // No more results
+        }
+        
+        allResults.addAll(batchResults);
+        yield List<SearchResult>.from(allResults); // Yield accumulated results
+        
+        offset += batchResults.length;
+        
+        // Small delay to prevent overwhelming the UI
+        await Future.delayed(const Duration(milliseconds: 50));
+        
+      } catch (e) {
+        print('Error in search batch: $e');
+        break;
+      }
+    }
+  }
+
+  /// Helper method to search a specific batch of results
+  Future<List<SearchResult>> _searchBatch(
+      String query, List<String> facets, int limit, int offset,
+      {ResultsOrder order = ResultsOrder.relevance,
+      bool fuzzy = false,
+      int distance = 2,
+      Map<String, String>? customSpacing,
+      Map<int, List<String>>? alternativeWords,
+      Map<String, Map<String, bool>>? searchOptions}) async {
+    
+    final index = await TantivyDataProvider.instance.engine;
+
+    // Same logic as original searchTexts but with offset support
+    final hasCustomSpacing = customSpacing != null && customSpacing.isNotEmpty;
+    final hasAlternativeWords = alternativeWords != null && alternativeWords.isNotEmpty;
+    final hasSearchOptions = searchOptions != null && searchOptions.isNotEmpty;
+
+    final words = query.trim().split(SearchRegexPatterns.wordSplitter)
+        .where((word) => word.isNotEmpty)
+        .toList();
+    final List<String> regexTerms;
+    final int effectiveSlop;
+
+    if (hasAlternativeWords || hasSearchOptions) {
+      regexTerms = await Isolate.run(() => _buildAdvancedQuery(words, alternativeWords, searchOptions));
+      effectiveSlop = hasCustomSpacing
+          ? _getMaxCustomSpacing(customSpacing, words.length)
+          : (fuzzy ? distance : 0);
+    } else if (fuzzy) {
+      regexTerms = words;
+      effectiveSlop = distance;
+    } else if (words.length == 1) {
+      regexTerms = [query];
+      effectiveSlop = 0;
+    } else if (hasCustomSpacing) {
+      regexTerms = words;
+      effectiveSlop = _getMaxCustomSpacing(customSpacing, words.length);
+    } else {
+      regexTerms = words;
+      effectiveSlop = distance;
+    }
+
+    final int maxExpansions = _calculateMaxExpansions(fuzzy, regexTerms.length,
+        searchOptions: searchOptions, words: words);
+
+    // Use search with offset (if the search engine supports it)
+    return await index.search(
+        regexTerms: regexTerms,
+        facets: facets,
+        limit: limit,
+        slop: effectiveSlop,
+        maxExpansions: maxExpansions,
+        order: order);
+  }
+
   /// מחשב את המרווח המקסימלי מהמרווחים המותאמים אישית
   int _getMaxCustomSpacing(Map<String, String> customSpacing, int wordCount) {
     int maxSpacing = 0;

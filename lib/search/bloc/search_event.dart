@@ -84,3 +84,26 @@ class UpdateFacetCounts extends SearchEvent {
   final Map<String, int> facetCounts;
   UpdateFacetCounts(this.facetCounts);
 }
+
+// Event for streaming search results
+class StartStreamingSearch extends SearchEvent {
+  final String query;
+  final Map<String, String>? customSpacing;
+  final Map<int, List<String>>? alternativeWords;
+  final Map<String, Map<String, bool>>? searchOptions;
+
+  const StartStreamingSearch(
+    this.query, {
+    this.customSpacing,
+    this.alternativeWords,
+    this.searchOptions,
+  });
+}
+
+// Event for receiving streaming search results
+class ReceiveStreamingResults extends SearchEvent {
+  final List<SearchResult> results;
+  final bool isComplete;
+
+  const ReceiveStreamingResults(this.results, {this.isComplete = false});
+}

@@ -31,78 +31,20 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<ToggleDotAll>(_onToggleDotAll);
     on<ToggleUnicode>(_onToggleUnicode);
     on<UpdateFacetCounts>(_onUpdateFacetCounts);
+    on<StartStreamingSearch>(_onStartStreamingSearch);
+    on<ReceiveStreamingResults>(_onReceiveStreamingResults);
   }
   Future<void> _onUpdateSearchQuery(
     UpdateSearchQuery event,
     Emitter<SearchState> emit,
   ) async {
-    if (event.query.isEmpty) {
-      emit(state.copyWith(
-        searchQuery: event.query,
-        results: [],
-        totalResults: 0,
-      ));
-      return;
-    }
-
-    // Clear global cache for new search
-    TantivyDataProvider.clearGlobalCache();
-
-    emit(state.copyWith(
-      searchQuery: event.query,
-      isLoading: true,
-      facetCounts: {}, // Clear facet counts for new search
+    // Use streaming search for better performance
+    add(StartStreamingSearch(
+      event.query,
+      customSpacing: event.customSpacing,
+      alternativeWords: event.alternativeWords,
+      searchOptions: event.searchOptions,
     ));
-
-    final booksToSearch = state.booksToSearch.map((e) => e.title).toList();
-
-    try {
-      final totalResults = await TantivyDataProvider.instance.countTexts(
-        event.query.replaceAll('"', '\\"'),
-        booksToSearch,
-        state.currentFacets,
-        fuzzy: state.fuzzy,
-        distance: state.distance,
-        customSpacing: event.customSpacing,
-        alternativeWords: event.alternativeWords,
-        searchOptions: event.searchOptions,
-      );
-
-      // If no results with current facets, try root facet
-      if (totalResults == 0 && !state.currentFacets.contains("/")) {
-        add(AddFacet("/"));
-        return;
-      }
-
-      final results = await _repository.searchTexts(
-        event.query.replaceAll('"', '\\"'),
-        state.currentFacets,
-        state.numResults,
-        fuzzy: state.fuzzy,
-        distance: state.distance,
-        order: state.sortBy,
-        customSpacing: event.customSpacing,
-        alternativeWords: event.alternativeWords,
-        searchOptions: event.searchOptions,
-      );
-
-      emit(state.copyWith(
-        results: results,
-        totalResults: totalResults,
-        isLoading: false,
-        facetCounts: {}, // Start with empty facet counts, will be filled by individual requests
-      ));
-
-      // Prefetch disabled - too slow and causes duplicates
-      // _prefetchCommonFacetCounts(event.query, event.customSpacing,
-      //     event.alternativeWords, event.searchOptions);
-    } catch (e) {
-      emit(state.copyWith(
-        results: [],
-        totalResults: 0,
-        isLoading: false,
-      ));
-    }
   }
 
   void _onUpdateFilterQuery(
@@ -407,5 +349,81 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     } else {
       print('🧹 Facet counts cleared');
     }
+  }
+
+  Future<void> _onStartStreamingSearch(
+    StartStreamingSearch event,
+    Emitter<SearchState> emit,
+  ) async {
+    if (event.query.isEmpty) {
+      emit(state.copyWith(
+        searchQuery: event.query,
+        results: [],
+        totalResults: 0,
+      ));
+      return;
+    }
+
+    // Clear global cache for new search
+    TantivyDataProvider.clearGlobalCache();
+
+    emit(state.copyWith(
+      searchQuery: event.query,
+      isLoading: true,
+      results: [], // Clear previous results
+      facetCounts: {},
+    ));
+
+    final booksToSearch = state.booksToSearch.map((e) => e.title).toList();
+
+    try {
+      // Get total count first
+      final totalResults = await TantivyDataProvider.instance.countTexts(
+        event.query.replaceAll('"', '\\"'),
+        booksToSearch,
+        state.currentFacets,
+        fuzzy: state.fuzzy,
+        distance: state.distance,
+        customSpacing: event.customSpacing,
+        alternativeWords: event.alternativeWords,
+        searchOptions: event.searchOptions,
+      );
+
+      emit(state.copyWith(totalResults: totalResults));
+
+      // Start streaming results
+      await for (final results in _repository.searchTextsStream(
+        event.query.replaceAll('"', '\\"'),
+        state.currentFacets,
+        state.numResults,
+        fuzzy: state.fuzzy,
+        distance: state.distance,
+        order: state.sortBy,
+        customSpacing: event.customSpacing,
+        alternativeWords: event.alternativeWords,
+        searchOptions: event.searchOptions,
+      )) {
+        add(ReceiveStreamingResults(results));
+      }
+
+      // Mark as complete
+      add(ReceiveStreamingResults(state.results, isComplete: true));
+    } catch (e) {
+      emit(state.copyWith(
+        results: [],
+        totalResults: 0,
+        isLoading: false,
+      ));
+    }
+  }
+
+  void _onReceiveStreamingResults(
+    ReceiveStreamingResults event,
+    Emitter<SearchState> emit,
+  ) {
+    emit(state.copyWith(
+      results: event.results,
+      isLoading: !event.isComplete,
+    ));
   }
 }
