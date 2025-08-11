@@ -17,7 +17,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 
 class SimpleBookView extends StatefulWidget {
-  SimpleBookView({
+  const SimpleBookView({
     super.key,
     required this.data,
     required this.openBookCallback,
@@ -55,7 +55,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
 
     return [
       ctx.MenuItem<void>(
-        label: 'הצג את כל ${groupName}',
+        label: 'הצג את כל $groupName',
         icon: groupActive ? Icons.check : null,
         onSelected: () {
           final current = List<String>.from(st.activeCommentators);
@@ -92,6 +92,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
 
     // 2. זיהוי פרשנים שכבר שויכו לקבוצה
     final Set<String> alreadyListed = {
+      ...state.torahShebichtav,
+      ...state.chazal,
       ...state.rishonim,
       ...state.acharonim,
       ...state.modernCommentators,
@@ -132,6 +134,20 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               },
             ),
             const ctx.MenuDivider(),
+            // תורה שבכתב
+            ..._buildGroup('תורה שבכתב', state.torahShebichtav, state),
+
+            // מוסיפים קו הפרדה רק אם יש גם תורה שבכתב וגם חזל
+            if (state.torahShebichtav.isNotEmpty && state.chazal.isNotEmpty)
+              const ctx.MenuDivider(),
+
+            // חזל
+            ..._buildGroup('חז"ל', state.chazal, state),
+
+            // מוסיפים קו הפרדה רק אם יש גם חזל וגם ראשונים
+            if (state.chazal.isNotEmpty && state.rishonim.isNotEmpty)
+              const ctx.MenuDivider(),
+
             // ראשונים
             ..._buildGroup('ראשונים', state.rishonim, state),
 
@@ -151,7 +167,9 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             ..._buildGroup('מחברי זמננו', state.modernCommentators, state),
 
             // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
-            if ((state.rishonim.isNotEmpty ||
+            if ((state.torahShebichtav.isNotEmpty ||
+                    state.chazal.isNotEmpty ||
+                    state.rishonim.isNotEmpty ||
                     state.acharonim.isNotEmpty ||
                     state.modernCommentators.isNotEmpty) &&
                 ungrouped.isNotEmpty)
