@@ -3305,7 +3305,6 @@ Type: filesandordirs; Name: "{app}\אוצריא\שות\ראשונים\רמבם\�
 Type: filesandordirs; Name: "{app}\אוצריא\תלמוד בבלי\אחרונים\עין איה.txt";
 Type: filesandordirs; Name: "{app}\אוצריא\תלמוד בבלי\ראשונים\ראה על ברכות.txt";
 Type: filesandordirs; Name: "{app}\אוצריא\תנך\ראשונים\מנחת שי\כתובים\מנחת שי על אסתר.txt";
-Type: filesandordirs; Name: "{app}\index";
 Type: filesandordirs; Name: "{app}\default.isar";
 
 [Run]

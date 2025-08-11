@@ -32,7 +32,6 @@ WizardStyle=modern
 DisableDirPage=auto
 
 [InstallDelete]
-Type: filesandordirs; Name: "{app}\index";
 Type: filesandordirs; Name: "{app}\default.isar";
 
 [Tasks]
