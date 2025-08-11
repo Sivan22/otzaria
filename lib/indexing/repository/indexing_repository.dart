@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
@@ -42,7 +43,7 @@ class IndexingRepository {
                 sha1.convert(utf8.encode((await book.text))).toString())) {
               _tantivyDataProvider.booksDone.add("${book.title}textBook");
             } else {
-              await _indexTextBook(book);
+              await Isolate.run(() => _indexTextBook(book));
               _tantivyDataProvider.booksDone.add("${book.title}textBook");
             }
           }
