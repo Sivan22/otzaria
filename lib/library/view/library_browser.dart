@@ -119,7 +119,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                           ),
                           IconButton(
                             icon: const Icon(Icons.bookmark),
-                            tooltip: 'הצג מועדפים',
+                            tooltip: 'הצג סימניות',
                             onPressed: () => _showBookmarksDialog(context),
                           ),
                           WorkspaceIconButton( // שולחנות עבודה

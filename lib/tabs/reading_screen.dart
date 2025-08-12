@@ -122,7 +122,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                       onPressed: () {
                         _showBookmarksDialog(context);
                       },
-                      child: const Text('הצג מועדפים'),
+                      child: const Text('הצג סימניות'),
                     ),
                   )
                 ],
@@ -181,7 +181,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                       ),
                       IconButton(
                         icon: const Icon(Icons.bookmark),
-                        tooltip: 'הצג מועדפים',
+                        tooltip: 'הצג סימניות',
                         onPressed: () => _showBookmarksDialog(context),
                       ),
                       // קבוצה 1: שולחן עבודה
