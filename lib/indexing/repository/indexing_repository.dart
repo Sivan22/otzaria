@@ -39,22 +39,25 @@ class IndexingRepository {
         if (book is TextBook) {
           if (!_tantivyDataProvider.booksDone
               .contains("${book.title}textBook")) {
-            final bookTextHash = await Isolate.run(() async {
-              final bookText = await book.text;
+            final bookText = await book.text;
+            final bookTextHash = await Isolate.run(() {
+              // Don't access book.text in isolate - just do the hash calculation
               return sha1.convert(utf8.encode(bookText)).toString();
             });
             if (_tantivyDataProvider.booksDone.contains(bookTextHash)) {
               _tantivyDataProvider.booksDone.add("${book.title}textBook");
             } else {
-              await Isolate.run(() => _indexTextBook(book));
+              await _indexTextBook(book.title, book.topics, bookText);
               _tantivyDataProvider.booksDone.add("${book.title}textBook");
             }
           }
         } else if (book is PdfBook) {
           if (!_tantivyDataProvider.booksDone
               .contains("${book.title}pdfBook")) {
+            final bookPath = book.path;
             final pdfFileHash = await Isolate.run(() async {
-              final fileBytes = await File(book.path).readAsBytes();
+              // Don't access book.path in isolate - just do the hash calculation
+              final fileBytes = await File(bookPath).readAsBytes();
               return sha1.convert(fileBytes).toString();
             });
             if (_tantivyDataProvider.booksDone.contains(pdfFileHash)) {
@@ -80,12 +83,11 @@ class IndexingRepository {
   }
 
   /// Indexes a text-based book by processing its content and adding it to the search index and reference index.
-  Future<void> _indexTextBook(TextBook book) async {
+  Future<void> _indexTextBook(
+      String title, String bookTopics, String text) async {
     final index = await _tantivyDataProvider.engine;
     final refIndex = _tantivyDataProvider.refEngine;
-    var text = await book.text;
-    final title = book.title;
-    final topics = "/${book.topics.replaceAll(', ', '/')}";
+    final topics = "/${bookTopics.replaceAll(', ', '/')}";
 
     final texts = text.split('\n');
     List<String> reference = [];
@@ -156,10 +158,8 @@ class IndexingRepository {
 
     // Process each page
     for (int i = 0; i < pages.length; i++) {
-      final texts = await Isolate.run(() async {
-        final pageText = (await pages[i].loadText()).fullText;
-        return pageText.split('\n');
-      });
+      final pageText = (await pages[i].loadText()).fullText;
+      final texts = pageText.split('\n');
       // Index each line from the page
       for (int j = 0; j < texts.length; j++) {
         if (!_tantivyDataProvider.isIndexing.value) {

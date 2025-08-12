@@ -32,7 +32,9 @@ class TantivySearchResults extends StatefulWidget {
 class _TantivySearchResultsState extends State<TantivySearchResults> {
   // פונקציה עזר ליצירת וריאציות כתיב מלא/חסר
   Future<List<String>> _generateFullPartialSpellingVariations(String word) async {
-    return await Isolate.run(() {
+    return await Isolate.run(() async {
+      // Initialize Settings in isolate if needed - not needed for this function
+      // as it doesn't use Settings
       if (word.isEmpty) return [word];
 
       final variations = <String>{word}; // המילה המקורית

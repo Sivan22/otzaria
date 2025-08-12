@@ -463,9 +463,12 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     final visiblePositions = state.positionsListener.itemPositions.value
         .toList()
       ..sort((a, b) => a.index.compareTo(b.index));
-    final visibleText = await Isolate.run(() => visiblePositions
-        .map((pos) => utils.stripHtmlIfNeeded(allText[pos.index]))
-        .join('\n'));
+    final visibleText = await Isolate.run(() async {
+      // Initialize Settings in isolate if needed - not needed for this function
+      return visiblePositions
+          .map((pos) => utils.stripHtmlIfNeeded(allText[pos.index]))
+          .join('\n');
+    });
 
     if (!mounted) return;
 
@@ -771,9 +774,10 @@ $detailsSection
       final content = await file.readAsString(encoding: utf8);
       if (content.trim().isEmpty) return 0;
 
-      final occurrences = await Isolate.run(() => 
-        _reportSeparator.allMatches(content).length
-      );
+      final occurrences = await Isolate.run(() async {
+        // Initialize Settings in isolate if needed - not needed for this function
+        return _reportSeparator.allMatches(content).length;
+      });
       return occurrences + 1;
     } catch (e) {
       debugPrint('countReports error: $e');

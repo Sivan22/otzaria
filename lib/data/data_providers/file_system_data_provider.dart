@@ -31,9 +31,37 @@ class FileSystemData {
   /// Creates a new instance of [FileSystemData] and initializes the title to path mapping
   /// and metadata
   FileSystemData() {
+    // Initialize with default values, will be properly initialized on first use
+    libraryPath = '.';
+    titleToPath = Future.value(<String, String>{});
+    metadata = Future.value(<String, Map<String, dynamic>>{});
+  }
+
+  bool _isInitialized = false;
+
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    // Only initialize Settings if we're in the main isolate
+    // In background isolates, we'll use default values
+    if (!Settings.isInitialized) {
+      try {
+        await Settings.init(cacheProvider: HiveCache());
+      } catch (e) {
+        // If Settings initialization fails (e.g., in isolate), use defaults
+        print('Settings initialization failed, using defaults: $e');
+        libraryPath = '.';
+        titleToPath = Future.value(<String, String>{});
+        metadata = Future.value(<String, Map<String, dynamic>>{});
+        _isInitialized = true;
+        return;
+      }
+    }
+
     libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
     titleToPath = _getTitleToPath();
     metadata = _getMetadata();
+    _isInitialized = true;
   }
 
   /// Singleton instance of [FileSystemData]
@@ -44,6 +72,7 @@ class FileSystemData {
   /// Reads the library from the configured path and combines it with metadata
   /// to create a full [Library] object containing all categories and books.
   Future<Library> getLibrary() async {
+    await _ensureInitialized();
     titleToPath = _getTitleToPath();
     metadata = _getMetadata();
     return _getLibraryFromDirectory(
@@ -279,11 +308,12 @@ class FileSystemData {
     try {
       File file = File(_getLinksPath(title));
       final jsonString = await file.readAsString();
-      final jsonList =
-          await Isolate.run(() async => jsonDecode(jsonString) as List);
-      return await Isolate.run(() => 
-        jsonList.map((json) => Link.fromJson(json)).toList()
-      );
+      final jsonList = await Isolate.run(() async {
+        // Initialize Settings in isolate if needed - not needed for this function
+        return jsonDecode(jsonString) as List;
+      });
+      // Don't use isolate for Link.fromJson since Link contains non-serializable objects
+      return jsonList.map((json) => Link.fromJson(json)).toList();
     } on Exception {
       return [];
     }
@@ -294,6 +324,7 @@ class FileSystemData {
   /// Supports both plain text and DOCX formats. DOCX files are processed
   /// using a special converter to extract their content.
   Future<String> getBookText(String title) async {
+    await _ensureInitialized();
     final path = await _getBookPath(title);
     final file = File(path);
 
@@ -311,6 +342,7 @@ class FileSystemData {
   /// This is much more efficient for large books.
   Future<List<String>> getBookTextPartial(String title, int currentIndex,
       {int sectionsAround = 50}) async {
+    await _ensureInitialized();
     final path = await _getBookPath(title);
     final file = File(path);
 
@@ -339,9 +371,11 @@ class FileSystemData {
   static Future<List<String>> _readPartialTextFile(
       File file, int currentIndex, int sectionsAround) async {
     return await Isolate.run(() {
+      // Don't initialize Settings in isolate - just do the file operation
       final lines = file.readAsStringSync().split('\n');
       final startIndex = (currentIndex - sectionsAround).clamp(0, lines.length);
-      final endIndex = (currentIndex + sectionsAround + 1).clamp(0, lines.length);
+      final endIndex =
+          (currentIndex + sectionsAround + 1).clamp(0, lines.length);
       return lines.sublist(startIndex, endIndex);
     });
   }
@@ -425,8 +459,10 @@ class FileSystemData {
     } catch (e) {
       return {};
     }
-    final tempMetadata =
-        await Isolate.run(() => jsonDecode(metadataString) as List);
+    final tempMetadata = await Isolate.run(() async {
+      // Initialize Settings in isolate if needed - not needed for this function
+      return jsonDecode(metadataString) as List;
+    });
 
     for (int i = 0; i < tempMetadata.length; i++) {
       final row = tempMetadata[i] as Map<String, dynamic>;
@@ -452,6 +488,7 @@ class FileSystemData {
 
   /// Retrieves the file system path for a book with the given title.
   Future<String> _getBookPath(String title) async {
+    await _ensureInitialized();
     final titleToPath = await this.titleToPath;
     return titleToPath[title] ?? 'error: book path not found: $title';
   }
@@ -463,7 +500,8 @@ class FileSystemData {
   Future<List<TocEntry>> _parseToc(Future<String> bookContentFuture) async {
     final String bookContent = await bookContentFuture;
 
-    return Isolate.run(() {
+    return Isolate.run(() async {
+      // Initialize Settings in isolate if needed - not needed for this function
       List<String> lines = bookContent.split('\n');
       List<TocEntry> toc = [];
       Map<int, TocEntry> parents = {}; // Track parent nodes for hierarchy

@@ -76,37 +76,35 @@ Future<List<Link>> getLinksforIndexs(
     required List<String> commentatorsToShow}) async {
   List<Link> doneLinks = links;
   List<Link> allLinks = [];
-  allLinks = await Isolate.run(() {
-    for (int i = 0; i < indexes.length; i++) {
-      List<Link> thisLinks = doneLinks
-          .where((link) =>
-              link.index1 == indexes[i] + 1 &&
-              (link.connectionType == "commentary" ||
-                  link.connectionType == "targum") &&
-              commentatorsToShow.contains(utils.getTitleFromPath(link.path2)))
-          .toList();
-      allLinks += thisLinks;
-    }
+  // Don't use isolate for Link processing since Link contains non-serializable objects
+  for (int i = 0; i < indexes.length; i++) {
+    List<Link> thisLinks = doneLinks
+        .where((link) =>
+            link.index1 == indexes[i] + 1 &&
+            (link.connectionType == "commentary" ||
+                link.connectionType == "targum") &&
+            commentatorsToShow.contains(utils.getTitleFromPath(link.path2)))
+        .toList();
+    allLinks += thisLinks;
+  }
 
-    allLinks.sort(
-        //sort by the order of the commentators to show and then by the heRef
-        (a, b) {
-      return a.heRef
-          .replaceAll(' טו,', ' ,יה')
-          .replaceAll(' טז,', ' יו,')
-          .compareTo(
-              b.heRef.replaceAll(' טו,', ' ,יה').replaceAll(' טז,', ' יו,'));
-    });
+  allLinks.sort(
+      //sort by the order of the commentators to show and then by the heRef
+      (a, b) {
+    return a.heRef
+        .replaceAll(' טו,', ' ,יה')
+        .replaceAll(' טז,', ' יו,')
+        .compareTo(
+            b.heRef.replaceAll(' טו,', ' ,יה').replaceAll(' טז,', ' יו,'));
+  });
 
-    allLinks.sort(
-        //sort by the order of the commentators to show and then by the heRef
-        (a, b) {
-      return commentatorsToShow
-          .indexOf(utils.getTitleFromPath(a.path2))
-          .compareTo(
-              commentatorsToShow.indexOf(utils.getTitleFromPath(b.path2)));
-    });
-    return allLinks;
+  allLinks.sort(
+      //sort by the order of the commentators to show and then by the heRef
+      (a, b) {
+    return commentatorsToShow
+        .indexOf(utils.getTitleFromPath(a.path2))
+        .compareTo(
+            commentatorsToShow.indexOf(utils.getTitleFromPath(b.path2)));
   });
   return allLinks;
 }

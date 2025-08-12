@@ -47,7 +47,10 @@ class FileSyncRepository {
         }
       }
       final content = await file.readAsString(encoding: utf8);
-      return await Isolate.run(() => json.decode(content));
+      return await Isolate.run(() async {
+        // Initialize Settings in isolate if needed - not needed for this function
+        return json.decode(content);
+      });
     } catch (e) {
       print('Error reading local manifest: $e');
       // הלוגיקה שלך לגיבוי מ-.bak הייתה טובה, נתאים אותה ל-.old
@@ -57,7 +60,10 @@ class FileSyncRepository {
           print('Main manifest is corrupt, restoring from .old backup...');
           final backupContent = await oldFile.readAsString(encoding: utf8);
           await oldFile.rename(path); // rename בטוח יותר מ-copy
-          return await Isolate.run(() => json.decode(backupContent));
+          return await Isolate.run(() async {
+            // Initialize Settings in isolate if needed - not needed for this function
+            return json.decode(backupContent);
+          });
         } catch (_) {}
       }
       return {};

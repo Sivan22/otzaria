@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:hive/hive.dart';
+import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'package:otzaria/search/search_repository.dart';
 
 /// A singleton class that manages search functionality using Tantivy search engine.
@@ -467,6 +468,7 @@ class TantivyDataProvider {
   // פונקציות עזר ליצירת וריאציות כתיב מלא/חסר ודקדוקיות
   Future<List<String>> _generateFullPartialSpellingVariations(String word) async {
     return await Isolate.run(() {
+      // Don't initialize Settings in isolate - just do the computation
       if (word.isEmpty) return [word];
 
       final variations = <String>{word}; // המילה המקורית

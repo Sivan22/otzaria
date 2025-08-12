@@ -18,37 +18,41 @@ String removeVolwels(String s) {
   return s.replaceAll(SearchRegexPatterns.vowelsAndCantillation, '');
 }
 
-Future<String> highLight(String data, String searchQuery, {int currentIndex = -1}) async {
+Future<String> highLight(String data, String searchQuery,
+    {int currentIndex = -1}) async {
   if (searchQuery.isEmpty) return data;
-  
+
   return await Isolate.run(() {
+    // Don't initialize Settings in isolate - just do the text processing
     final regex = RegExp(RegExp.escape(searchQuery), caseSensitive: false);
     final matches = regex.allMatches(data).toList();
-    
+
     if (matches.isEmpty) return data;
-    
+
     // אם לא צוין אינדקס נוכחי, נדגיש את כל התוצאות באדום
     if (currentIndex == -1) {
       return data.replaceAll(regex, '<font color=red>$searchQuery</font>');
     }
-    
+
     // נדגיש את התוצאה הנוכחית בכחול ואת השאר באדום
     String result = data;
     int offset = 0;
-    
+
     for (int i = 0; i < matches.length; i++) {
       final match = matches[i];
       final color = i == currentIndex ? 'blue' : 'red';
-      final backgroundColor = i == currentIndex ? ' style="background-color: yellow;"' : '';
-      final replacement = '<font color=$color$backgroundColor>${match.group(0)}</font>';
-      
+      final backgroundColor =
+          i == currentIndex ? ' style="background-color: yellow;"' : '';
+      final replacement =
+          '<font color=$color$backgroundColor>${match.group(0)}</font>';
+
       final start = match.start + offset;
       final end = match.end + offset;
-      
+
       result = result.substring(0, start) + replacement + result.substring(end);
       offset += replacement.length - match.group(0)!.length;
     }
-    
+
     return result;
   });
 }
@@ -63,10 +67,10 @@ String getTitleFromPath(String path) {
 // Cache for the CSV data to avoid reading the file multiple times
 Map<String, String>? _csvCache;
 
-Future<bool> hasTopic(String title, String topic) async {
+Future<bool> hasTopic(String title, String topic, [String? libraryPath]) async {
   // Load CSV data once and cache it
   if (_csvCache == null) {
-    await _loadCsvCache();
+    await _loadCsvCache(libraryPath);
   }
 
   // Check if title exists in CSV cache
@@ -86,17 +90,21 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-Future<void> _loadCsvCache() async {
+Future<void> _loadCsvCache([String? libraryPath]) async {
   _csvCache = {};
-  
+
   try {
-    final libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
+    // Use provided libraryPath or get from Settings if available
+    libraryPath ??= Settings.isInitialized 
+        ? Settings.getValue<String>('key-library-path') ?? '.'
+        : '.';
     final csvPath =
         '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}סדר הדורות.csv';
     final csvFile = File(csvPath);
 
     if (await csvFile.exists()) {
       final lines = await Isolate.run(() async {
+        // Don't initialize Settings in isolate - just do the file operation
         final csvString = await csvFile.readAsString();
         return csvString.split('\n');
       });
@@ -497,7 +505,7 @@ String replaceParaphrases(String s) {
 
 //פונקציה לחלוקת פרשנים לפי תקופה
 Future<Map<String, List<String>>> splitByEra(
-  List<String> titles,
+  List<String> titles, [String? libraryPath]
 ) async {
   // יוצרים מבנה נתונים ריק לכל הקטגוריות החדשות
   final Map<String, List<String>> byEra = {
@@ -511,15 +519,15 @@ Future<Map<String, List<String>>> splitByEra(
 
   // ממיינים כל פרשן לקטגוריה הראשונה שמתאימה לו
   for (final t in titles) {
-    if (await hasTopic(t, 'תורה שבכתב')) {
+    if (await hasTopic(t, 'תורה שבכתב', libraryPath)) {
       byEra['תורה שבכתב']!.add(t);
-    } else if (await hasTopic(t, 'חז"ל')) {
+    } else if (await hasTopic(t, 'חז"ל', libraryPath)) {
       byEra['חז"ל']!.add(t);
-    } else if (await hasTopic(t, 'ראשונים')) {
+    } else if (await hasTopic(t, 'ראשונים', libraryPath)) {
       byEra['ראשונים']!.add(t);
-    } else if (await hasTopic(t, 'אחרונים')) {
+    } else if (await hasTopic(t, 'אחרונים', libraryPath)) {
       byEra['אחרונים']!.add(t);
-    } else if (await hasTopic(t, 'מחברי זמננו')) {
+    } else if (await hasTopic(t, 'מחברי זמננו', libraryPath)) {
       byEra['מחברי זמננו']!.add(t);
     } else {
       // כל ספר שלא נמצא בקטגוריות הקודמות יוכנס ל"מפרשים נוספים"

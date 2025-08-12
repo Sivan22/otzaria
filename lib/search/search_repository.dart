@@ -53,7 +53,7 @@ class SearchRepository {
       if (hasSearchOptions) print('🔄 אפשרויות חיפוש: $searchOptions');
 
       regexTerms = await Isolate.run(
-          () => _buildAdvancedQuery(words, alternativeWords, searchOptions));
+          () => SearchRepository._buildAdvancedQuery(words, alternativeWords, searchOptions));
       print('🔄 RegexTerms מתקדם: $regexTerms');
       effectiveSlop = hasCustomSpacing
           ? _getMaxCustomSpacing(customSpacing, words.length)
@@ -161,7 +161,7 @@ class SearchRepository {
     final int effectiveSlop;
 
     if (hasAlternativeWords || hasSearchOptions) {
-      regexTerms = await Isolate.run(() => _buildAdvancedQuery(words, alternativeWords, searchOptions));
+      regexTerms = await Isolate.run(() => SearchRepository._buildAdvancedQuery(words, alternativeWords, searchOptions));
       effectiveSlop = hasCustomSpacing
           ? _getMaxCustomSpacing(customSpacing, words.length)
           : (fuzzy ? distance : 0);
@@ -210,7 +210,7 @@ class SearchRepository {
   }
 
   /// בונה query מתקדם עם מילים חילופיות ואפשרויות חיפוש
-  List<String> _buildAdvancedQuery(
+  static List<String> _buildAdvancedQuery(
       List<String> words,
       Map<int, List<String>>? alternativeWords,
       Map<String, Map<String, bool>>? searchOptions) {

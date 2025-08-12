@@ -7,6 +7,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
@@ -72,8 +73,14 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final availableCommentators =
           await _repository.getAvailableCommentators(links);
       // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
-      final eras = await utils.splitByEra(availableCommentators);
+      final libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
+      final eras = await utils.splitByEra(availableCommentators, libraryPath);
 
+      // Ensure Settings is initialized
+      if (!Settings.isInitialized) {
+        await Settings.init(cacheProvider: HiveCache());
+      }
+      
       final defaultRemoveNikud =
           Settings.getValue<bool>('key-default-nikud') ?? false;
       final removeNikudFromTanach =
@@ -81,6 +88,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final isTanach = await FileSystemData.instance.isTanachBook(book.title);
       final removeNikud =
           defaultRemoveNikud && (removeNikudFromTanach || !isTanach);
+      final pinLeftPane = Settings.getValue<bool>('key-pin-sidebar') ?? false;
 
       // Create controllers if this is the first load
       final ItemScrollController scrollController = ItemScrollController();
@@ -118,7 +126,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         modernCommentators: eras['מחברי זמננו'] ?? [],
         removeNikud: removeNikud,
         visibleIndices: [initial.index], // שימוש במשתנה המקומי
-        pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
+        pinLeftPane: pinLeftPane,
         searchText: searchText,
         scrollController: scrollController,
         scrollOffsetController: scrollOffsetController,
