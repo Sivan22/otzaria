@@ -996,6 +996,60 @@ $detailsSection
     );
   }
 
+  Widget _buildCustomTab(String text, int index, TextBookLoaded state) {
+    return AnimatedBuilder(
+      animation: tabController,
+      builder: (context, child) {
+        final isSelected = tabController.index == index;
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () {
+              tabController.animateTo(index);
+              if (index == 1 && !Platform.isAndroid) {
+                textSearchFocusNode.requestFocus();
+              } else if (index == 0 && !Platform.isAndroid) {
+                navigationSearchFocusNode.requestFocus();
+              }
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  tabController.animateTo(index);
+                  if (index == 1 && !Platform.isAndroid) {
+                    textSearchFocusNode.requestFocus();
+                  } else if (index == 0 && !Platform.isAndroid) {
+                    navigationSearchFocusNode.requestFocus();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    border: isSelected
+                        ? Border(
+                            bottom: BorderSide(
+                                color: Theme.of(context).primaryColor, width: 2))
+                        : null,
+                  ),
+                  child: Text(
+                    text,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isSelected ? Theme.of(context).primaryColor : null,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildCombinedView(TextBookLoaded state) {
     return CombinedView(
       data: state.content,
@@ -1030,38 +1084,24 @@ $detailsSection
                 Row(
                   children: [
                     Expanded(
-                      child: TabBar(
-                        tabs: const [
-                          Tab(
-                              child: Center(
-                                  child: Text('ניווט',
-                                      textAlign: TextAlign.center))),
-                          Tab(
-                              child: Center(
-                                  child: Text('חיפוש',
-                                      textAlign: TextAlign.center))),
-                          Tab(
-                              child: Center(
-                                  child: Text('מפרשים',
-                                      textAlign: TextAlign.center))),
-                          Tab(
-                              child: Center(
-                                  child: Text('קישורים',
-                                      textAlign: TextAlign.center))),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: _buildCustomTab('ניווט', 0, state)),
+                              Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                              Expanded(child: _buildCustomTab('חיפוש', 1, state)),
+                              Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                              Expanded(child: _buildCustomTab('מפרשים', 2, state)),
+                              Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                              Expanded(child: _buildCustomTab('קישורים', 3, state)),
+                            ],
+                          ),
+                          Container(
+                            height: 1,
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ],
-                        controller: tabController,
-                        isScrollable: false,
-                        tabAlignment: TabAlignment.fill,
-                        padding: EdgeInsets.zero,
-                        indicatorPadding: EdgeInsets.zero,
-                        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                        onTap: (value) {
-                          if (value == 1 && !Platform.isAndroid) {
-                            textSearchFocusNode.requestFocus();
-                          } else if (value == 0 && !Platform.isAndroid) {
-                            navigationSearchFocusNode.requestFocus();
-                          }
-                        },
                       ),
                     ),
                     if (MediaQuery.of(context).size.width >= 600)
