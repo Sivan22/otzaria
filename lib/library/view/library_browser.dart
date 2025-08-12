@@ -112,10 +112,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             margin: const EdgeInsets.symmetric(horizontal: 2),
                           ),
                           // קבוצה 2: שולחן עבודה, היסטוריה ומועדפים
-                          WorkspaceIconButton(
-                            onPressed: () =>
-                                _showSwitchWorkspaceDialog(context),
-                          ),
                           IconButton(
                             icon: const Icon(Icons.history),
                             tooltip: 'הצג היסטוריה',
@@ -125,6 +121,10 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             icon: const Icon(Icons.bookmark),
                             tooltip: 'הצג מועדפים',
                             onPressed: () => _showBookmarksDialog(context),
+                          ),
+                          WorkspaceIconButton( // שולחנות עבודה
+                            onPressed: () =>
+                                _showSwitchWorkspaceDialog(context),
                           ),
                         ],
                       ),
