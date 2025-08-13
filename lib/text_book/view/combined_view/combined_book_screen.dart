@@ -147,23 +147,45 @@ class _CombinedViewState extends State<CombinedView> {
             // חזל
             ..._buildGroup('חז"ל', state.chazal, state),
 
-            // מוסיפים קו הפרדה רק אם יש גם חזל וגם ראשונים
-            if (state.chazal.isNotEmpty && state.rishonim.isNotEmpty)
+            // מוסיפים קו הפרדה בין חז"ל לראשונים, או בין תורה שבכתב לראשונים אם אין חז"ל
+            if ((state.chazal.isNotEmpty && state.rishonim.isNotEmpty) ||
+                (state.chazal.isEmpty &&
+                    state.torahShebichtav.isNotEmpty &&
+                    state.rishonim.isNotEmpty))
               const ctx.MenuDivider(),
 
             // ראשונים
-            ..._buildGroup('ראשונים', state.rishonim, state),
+            ..._buildGroup('הראשונים', state.rishonim, state),
 
-            // מוסיפים קו הפרדה רק אם יש גם ראשונים וגם אחרונים
-            if (state.rishonim.isNotEmpty && state.acharonim.isNotEmpty)
+            // מוסיפים קו הפרדה בין ראשונים לאחרונים, או מהקבוצה הקודמת לאחרונים
+            if ((state.rishonim.isNotEmpty && state.acharonim.isNotEmpty) ||
+                (state.rishonim.isEmpty &&
+                    state.chazal.isNotEmpty &&
+                    state.acharonim.isNotEmpty) ||
+                (state.rishonim.isEmpty &&
+                    state.chazal.isEmpty &&
+                    state.torahShebichtav.isNotEmpty &&
+                    state.acharonim.isNotEmpty))
               const ctx.MenuDivider(),
 
             // אחרונים
-            ..._buildGroup('אחרונים', state.acharonim, state),
+            ..._buildGroup('האחרונים', state.acharonim, state),
 
-            // מוסיפים קו הפרדה רק אם יש גם אחרונים וגם בני זמננו
-            if (state.acharonim.isNotEmpty &&
-                state.modernCommentators.isNotEmpty)
+            // מוסיפים קו הפרדה בין אחרונים למחברי זמננו, או מהקבוצה הקודמת למחברי זמננו
+            if ((state.acharonim.isNotEmpty &&
+                    state.modernCommentators.isNotEmpty) ||
+                (state.acharonim.isEmpty &&
+                    state.rishonim.isNotEmpty &&
+                    state.modernCommentators.isNotEmpty) ||
+                (state.acharonim.isEmpty &&
+                    state.rishonim.isEmpty &&
+                    state.chazal.isNotEmpty &&
+                    state.modernCommentators.isNotEmpty) ||
+                (state.acharonim.isEmpty &&
+                    state.rishonim.isEmpty &&
+                    state.chazal.isEmpty &&
+                    state.torahShebichtav.isNotEmpty &&
+                    state.modernCommentators.isNotEmpty))
               const ctx.MenuDivider(),
 
             // מחברי זמננו
@@ -179,7 +201,7 @@ class _CombinedViewState extends State<CombinedView> {
               const ctx.MenuDivider(),
 
             // הוסף את רשימת הפרשנים הלא משויכים
-            ..._buildGroup('שאר מפרשים', ungrouped, state),
+            ..._buildGroup('שאר המפרשים', ungrouped, state),
           ],
         ),
         ctx.MenuItem.submenu(
