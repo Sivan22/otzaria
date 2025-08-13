@@ -22,8 +22,6 @@ import 'package:otzaria/history/history_dialog.dart';
 import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/widgets/workspace_icon_button.dart';
-import 'package:otzaria/workspaces/bloc/workspace_bloc.dart';
-import 'package:otzaria/workspaces/bloc/workspace_event.dart';
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -162,18 +160,11 @@ class _ReadingScreenState extends State<ReadingScreen>
                           .toList(),
                     ),
                   ),
-                  leadingWidth: 150,
+                  leadingWidth: 280,
                   leading: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // קו מפריד
-                      // Container(
-                      //   height: 24,
-                      //   width: 1,
-                      //   color: Colors.grey.shade400,
-                      //   margin: const EdgeInsets.symmetric(horizontal: 2),
-                      // ),
-                      // קבוצה 2: היסטוריה ומועדפים
+                      // קבוצה 1: היסטוריה ומועדפים
                       IconButton(
                         icon: const Icon(Icons.history),
                         tooltip: 'הצג היסטוריה',
@@ -184,11 +175,19 @@ class _ReadingScreenState extends State<ReadingScreen>
                         tooltip: 'הצג סימניות',
                         onPressed: () => _showBookmarksDialog(context),
                       ),
-                      // קבוצה 1: שולחן עבודה
-                      IconButton(
-                        icon: const Icon(Icons.add_to_queue),
-                        tooltip: 'החלף שולחן עבודה',
-                        onPressed: () => _showSaveWorkspaceDialog(context),
+                      // קו מפריד
+                      Container(
+                        height: 24,
+                        width: 1,
+                        color: Colors.grey.shade400,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                      ),
+                      // קבוצה 2: שולחן עבודה עם אנימציה
+                      SizedBox(
+                        width: 180, // רוחב קבוע למניעת הזזת הטאבים
+                        child: WorkspaceIconButton(
+                          onPressed: () => _showSaveWorkspaceDialog(context),
+                        ),
                       ),
                     ],
                   ),

@@ -159,10 +159,20 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             tooltip: 'הצג סימניות',
                             onPressed: () => _showBookmarksDialog(context),
                           ),
-                          WorkspaceIconButton(
-                            // שולחנות עבודה
-                            onPressed: () =>
-                                _showSwitchWorkspaceDialog(context),
+                          // קו מפריד
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: Colors.grey.shade400,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                          ),
+                          SizedBox(
+                            width: 180, // רוחב קבוע למניעת הזזת הטקסט
+                            child: WorkspaceIconButton(
+                              // שולחנות עבודה
+                              onPressed: () =>
+                                  _showSwitchWorkspaceDialog(context),
+                            ),
                           ),
                         ],
                       ),
