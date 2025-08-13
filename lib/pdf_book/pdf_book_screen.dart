@@ -560,28 +560,22 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                       child: Material(
                         color: Colors.transparent,
                         child: ClipRect(
-                          child: TabBar(
-                            controller: _leftPaneTabController,
-                            tabs: const [
-                              Tab(
-                                  child: Center(
-                                      child: Text('ניווט',
-                                          textAlign: TextAlign.center))),
-                              Tab(
-                                  child: Center(
-                                      child: Text('חיפוש',
-                                          textAlign: TextAlign.center))),
-                              Tab(
-                                  child: Center(
-                                      child: Text('דפים',
-                                          textAlign: TextAlign.center))),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(child: _buildCustomTab('ניווט', 0)),
+                                  Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                                  Expanded(child: _buildCustomTab('חיפוש', 1)),
+                                  Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                                  Expanded(child: _buildCustomTab('דפים', 2)),
+                                ],
+                              ),
+                              Container(
+                                height: 1,
+                                color: Theme.of(context).dividerColor,
+                              ),
                             ],
-                            isScrollable: false,
-                            tabAlignment: TabAlignment.fill,
-                            padding: EdgeInsets.zero,
-                            indicatorPadding: EdgeInsets.zero,
-                            labelPadding:
-                                const EdgeInsets.symmetric(horizontal: 2),
                           ),
                         ),
                       ),
@@ -712,6 +706,65 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       },
     );
     return result ?? false;
+  }
+
+  Widget _buildCustomTab(String text, int index) {
+    final controller = _leftPaneTabController;
+    if (controller == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14),
+        ),
+      );
+    }
+    
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final isSelected = controller.index == index;
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () {
+              controller.animateTo(index);
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  controller.animateTo(index);
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    border: isSelected
+                        ? Border(
+                            bottom: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                                width: 2))
+                        : null,
+                  ),
+                  child: Text(
+                    text,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isSelected ? Theme.of(context).primaryColor : null,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildTextButton(
