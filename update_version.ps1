@@ -3,6 +3,11 @@ param(
     [string]$VersionFile = "version.json"
 )
 
+# ---- Encoding helpers ----
+# Explicit UTF-8 encodings to avoid PS version differences (PS5 adds BOM by default)
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)  # for .gitignore, yaml, etc.
+$Utf8Bom   = New-Object System.Text.UTF8Encoding($true)   # for Inno Setup .iss files
+
 # Read version from JSON file
 if (-not (Test-Path $VersionFile)) {
     Write-Error "Version file '$VersionFile' not found!"
@@ -28,7 +33,7 @@ for ($i = 0; $i -lt $gitignoreContent.Length; $i++) {
         $gitignoreContent[$i] = "installer/otzaria-$newVersion-windows-full.exe"
     }
 }
-$gitignoreContent | Set-Content ".gitignore"
+$gitignoreContent | Set-Content ".gitignore" -Encoding $Utf8NoBom
 Write-Host "Updated .gitignore"
 
 # Update pubspec.yaml (lines 13 and 39)
@@ -41,7 +46,7 @@ for ($i = 0; $i -lt $pubspecContent.Length; $i++) {
         $pubspecContent[$i] = "version: $newVersion"
     }
 }
-$pubspecContent | Set-Content "pubspec.yaml"
+$pubspecContent | Set-Content "pubspec.yaml" -Encoding $Utf8NoBom
 Write-Host "Updated pubspec.yaml"
 
 # Update installer/otzaria_full.iss (line 5)
@@ -51,7 +56,7 @@ for ($i = 0; $i -lt $fullIssContent.Length; $i++) {
         $fullIssContent[$i] = "#define MyAppVersion `"$newVersion`""
     }
 }
-$fullIssContent | Set-Content "installer/otzaria_full.iss"
+$fullIssContent | Set-Content "installer/otzaria_full.iss" -Encoding $Utf8Bom
 Write-Host "Updated installer/otzaria_full.iss"
 
 # Update installer/otzaria.iss (line 5)
@@ -61,7 +66,7 @@ for ($i = 0; $i -lt $issContent.Length; $i++) {
         $issContent[$i] = "#define MyAppVersion `"$newVersion`""
     }
 }
-$issContent | Set-Content "installer/otzaria.iss"
+$issContent | Set-Content "installer/otzaria.iss" -Encoding $Utf8Bom
 Write-Host "Updated installer/otzaria.iss"
 
 Write-Host "Version update completed successfully!"
