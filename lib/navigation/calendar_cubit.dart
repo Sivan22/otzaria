@@ -104,7 +104,7 @@ class CalendarCubit extends Cubit<CalendarState> {
     final calendarTypeString = settings['calendarType'] as String;
     final calendarType = _stringToCalendarType(calendarTypeString);
     final selectedCity = settings['selectedCity'] as String;
-    
+
     emit(state.copyWith(
       calendarType: calendarType,
       selectedCity: selectedCity,
