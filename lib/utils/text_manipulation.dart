@@ -54,7 +54,16 @@ String getTitleFromPath(String path) {
   path = path
       .replaceAll('/', Platform.pathSeparator)
       .replaceAll('\\', Platform.pathSeparator);
-  return path.split(Platform.pathSeparator).last.split('.').first;
+  final fileName = path.split(Platform.pathSeparator).last;
+  
+  // אם אין נקודה בשם הקובץ, נחזיר את השם כמו שהוא
+  final lastDotIndex = fileName.lastIndexOf('.');
+  if (lastDotIndex == -1) {
+    return fileName;
+  }
+  
+  // נסיר רק את הסיומת (החלק האחרון אחרי הנקודה האחרונה)
+  return fileName.substring(0, lastDotIndex);
 }
 
 // Cache for the CSV data to avoid reading the file multiple times
