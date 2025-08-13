@@ -1017,20 +1017,26 @@ $detailsSection
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
                     border: isSelected
                         ? Border(
                             bottom: BorderSide(
-                                color: Theme.of(context).primaryColor, width: 2))
+                                color: Theme.of(context).primaryColor,
+                                width: 2))
                         : null,
                   ),
                   child: Text(
                     text,
                     textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
                     style: TextStyle(
                       color: isSelected ? Theme.of(context).primaryColor : null,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       fontSize: 14,
                     ),
                   ),
@@ -1081,13 +1087,32 @@ $detailsSection
                         children: [
                           Row(
                             children: [
-                              Expanded(child: _buildCustomTab('ניווט', 0, state)),
-                              Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
-                              Expanded(child: _buildCustomTab('חיפוש', 1, state)),
-                              Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
-                              Expanded(child: _buildCustomTab('מפרשים', 2, state)),
-                              Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
-                              Expanded(child: _buildCustomTab('קישורים', 3, state)),
+                              Expanded(
+                                  child: _buildCustomTab('ניווט', 0, state)),
+                              Container(
+                                  height: 24,
+                                  width: 1,
+                                  color: Colors.grey.shade400,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 2)),
+                              Expanded(
+                                  child: _buildCustomTab('חיפוש', 1, state)),
+                              Container(
+                                  height: 24,
+                                  width: 1,
+                                  color: Colors.grey.shade400,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 2)),
+                              Expanded(
+                                  child: _buildCustomTab('מפרשים', 2, state)),
+                              Container(
+                                  height: 24,
+                                  width: 1,
+                                  color: Colors.grey.shade400,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 2)),
+                              Expanded(
+                                  child: _buildCustomTab('קישורים', 3, state)),
                             ],
                           ),
                           Container(
