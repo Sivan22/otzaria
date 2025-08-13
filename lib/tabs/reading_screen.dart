@@ -21,6 +21,7 @@ import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
 import 'package:otzaria/history/history_dialog.dart';
 import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/widgets/workspace_icon_button.dart';
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -119,7 +120,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                       onPressed: () {
                         _showBookmarksDialog(context);
                       },
-                      child: const Text('הצג מועדפים'),
+                      child: const Text('הצג סימניות'),
                     ),
                   )
                 ],
@@ -159,15 +160,20 @@ class _ReadingScreenState extends State<ReadingScreen>
                           .toList(),
                     ),
                   ),
-                  leadingWidth: 150,
+                  leadingWidth: 280,
                   leading: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // קבוצה 1: שולחן עבודה
+                      // קבוצת היסטוריה וסימניות
                       IconButton(
-                        icon: const Icon(Icons.add_to_queue),
-                        tooltip: 'החלף שולחן עבודה',
-                        onPressed: () => _showSaveWorkspaceDialog(context),
+                        icon: const Icon(Icons.history),
+                        tooltip: 'הצג היסטוריה',
+                        onPressed: () => _showHistoryDialog(context),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.bookmark),
+                        tooltip: 'הצג סימניות',
+                        onPressed: () => _showBookmarksDialog(context),
                       ),
                       // קו מפריד
                       Container(
@@ -176,16 +182,12 @@ class _ReadingScreenState extends State<ReadingScreen>
                         color: Colors.grey.shade400,
                         margin: const EdgeInsets.symmetric(horizontal: 2),
                       ),
-                      // קבוצה 2: היסטוריה ומועדפים
-                      IconButton(
-                        icon: const Icon(Icons.history),
-                        tooltip: 'הצג היסטוריה',
-                        onPressed: () => _showHistoryDialog(context),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.bookmark),
-                        tooltip: 'הצג מועדפים',
-                        onPressed: () => _showBookmarksDialog(context),
+                      // קבוצת שולחן עבודה עם אנימציה
+                      SizedBox(
+                        width: 180, // רוחב קבוע למניעת הזזת הטאבים
+                        child: WorkspaceIconButton(
+                          onPressed: () => _showSaveWorkspaceDialog(context),
+                        ),
                       ),
                     ],
                   ),
