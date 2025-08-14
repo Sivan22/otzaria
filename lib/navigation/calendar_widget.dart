@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 import 'calendar_cubit.dart'; // ודא שהנתיב נכון
+import 'package:otzaria/daf_yomi/daf_yomi_helper.dart';
 
 // הפכנו את הווידג'ט ל-Stateless כי הוא כבר לא מנהל מצב בעצמו.
 class CalendarWidget extends StatelessWidget {
@@ -669,6 +670,8 @@ class CalendarWidget extends StatelessWidget {
               ),
             ),
             _buildTimesGrid(context, state),
+            const SizedBox(height: 16),
+            _buildDafYomiButtons(context, state),
           ],
         ),
       ),
@@ -677,18 +680,133 @@ class CalendarWidget extends StatelessWidget {
 
   Widget _buildTimesGrid(BuildContext context, CalendarState state) {
     final dailyTimes = state.dailyTimes;
-    final timesList = [
+    final jewishCalendar =
+        JewishCalendar.fromDateTime(state.selectedGregorianDate);
+
+    // זמנים בסיסיים
+    final List<Map<String, String?>> timesList = [
       {'name': 'עלות השחר', 'time': dailyTimes['alos']},
       {'name': 'זריחה', 'time': dailyTimes['sunrise']},
-      {'name': 'סוף זמן קריאת שמע', 'time': dailyTimes['sofZmanShma']},
-      {'name': 'סוף זמן תפילה', 'time': dailyTimes['sofZmanTfila']},
+      {'name': 'סוף זמן ק"ש - מג"א', 'time': dailyTimes['sofZmanShmaMGA']},
+      {'name': 'סוף זמן ק"ש - גר"א', 'time': dailyTimes['sofZmanShmaGRA']},
+      {'name': 'סוף זמן תפילה - מג"א', 'time': dailyTimes['sofZmanTfilaMGA']},
+      {'name': 'סוף זמן תפילה - גר"א', 'time': dailyTimes['sofZmanTfilaGRA']},
       {'name': 'חצות היום', 'time': dailyTimes['chatzos']},
+      {'name': 'חצות הלילה', 'time': dailyTimes['chatzosLayla']},
       {'name': 'מנחה גדולה', 'time': dailyTimes['minchaGedola']},
       {'name': 'מנחה קטנה', 'time': dailyTimes['minchaKetana']},
       {'name': 'פלג המנחה', 'time': dailyTimes['plagHamincha']},
       {'name': 'שקיעה', 'time': dailyTimes['sunset']},
+      {'name': 'שקיעה ר"ת', 'time': dailyTimes['sunsetRT']},
       {'name': 'צאת הכוכבים', 'time': dailyTimes['tzais']},
     ];
+
+    // הוספת זמנים מיוחדים לערב פסח
+    if (jewishCalendar.getYomTovIndex() == JewishCalendar.EREV_PESACH) {
+      timesList.addAll([
+        {
+          'name': 'סוף זמן אכילת חמץ - מג"א',
+          'time': dailyTimes['sofZmanAchilasChametzMGA']
+        },
+        {
+          'name': 'סוף זמן אכילת חמץ - גר"א',
+          'time': dailyTimes['sofZmanAchilasChametzGRA']
+        },
+        {
+          'name': 'סוף זמן ביעור חמץ - מג"א',
+          'time': dailyTimes['sofZmanBiurChametzMGA']
+        },
+        {
+          'name': 'סוף זמן ביעור חמץ - גר"א',
+          'time': dailyTimes['sofZmanBiurChametzGRA']
+        },
+      ]);
+    }
+
+    // הוספת זמני כניסת שבת/חג
+    if (jewishCalendar.getDayOfWeek() == 6 || jewishCalendar.isErevYomTov()) {
+      timesList
+          .add({'name': 'הדלקת נרות', 'time': dailyTimes['candleLighting']});
+    }
+
+    // הוספת זמני יציאת שבת/חג
+    if (jewishCalendar.getDayOfWeek() == 7 || jewishCalendar.isYomTov()) {
+      final String exitName;
+      final String exitName2;
+
+      if (jewishCalendar.getDayOfWeek() == 7 && !jewishCalendar.isYomTov()) {
+        exitName = 'יציאת שבת';
+        exitName2 = 'צאת השבת חזו"א';
+      } else if (jewishCalendar.isYomTov()) {
+        final holidayName = _getHolidayName(jewishCalendar);
+        exitName = 'יציאת $holidayName';
+        exitName2 = 'יציאת $holidayName חזו"א';
+      } else {
+        exitName = 'יציאת שבת';
+        exitName2 = 'צאת השבת חזו"א';
+      }
+
+      timesList.addAll([
+        {'name': exitName, 'time': dailyTimes['shabbosExit1']},
+        {'name': exitName2, 'time': dailyTimes['shabbosExit2']},
+      ]);
+    }
+
+    // הוספת זמן ספירת העומר
+    if (jewishCalendar.getDayOfOmer() != -1) {
+      timesList
+          .add({'name': 'ספירת העומר', 'time': dailyTimes['omerCounting']});
+    }
+
+    // הוספת זמני תענית
+    if (jewishCalendar.isTaanis() &&
+        jewishCalendar.getYomTovIndex() != JewishCalendar.YOM_KIPPUR) {
+      timesList.addAll([
+        {'name': 'תחילת התענית', 'time': dailyTimes['fastStart']},
+        {'name': 'סיום התענית', 'time': dailyTimes['fastEnd']},
+      ]);
+    }
+
+    // הוספת זמני קידוש לבנה
+    if (dailyTimes['kidushLevanaEarliest'] != null ||
+        dailyTimes['kidushLevanaLatest'] != null) {
+      if (dailyTimes['kidushLevanaEarliest'] != null) {
+        timesList.add({
+          'name': 'תחילת זמן קידוש לבנה',
+          'time': dailyTimes['kidushLevanaEarliest']
+        });
+      }
+      if (dailyTimes['kidushLevanaLatest'] != null) {
+        timesList.add({
+          'name': 'סוף זמן קידוש לבנה',
+          'time': dailyTimes['kidushLevanaLatest']
+        });
+      }
+    }
+
+    // הוספת זמני חנוכה
+    if (jewishCalendar.isChanukah()) {
+      timesList.add(
+          {'name': 'הדלקת נרות חנוכה', 'time': dailyTimes['chanukahCandles']});
+    }
+
+    // הוספת זמני קידוש לבנה
+    if (dailyTimes['tchilasKidushLevana'] != null) {
+      timesList.add({
+        'name': 'תחילת זמן קידוש לבנה',
+        'time': dailyTimes['tchilasKidushLevana']
+      });
+    }
+    if (dailyTimes['sofZmanKidushLevana'] != null) {
+      timesList.add({
+        'name': 'סוף זמן קידוש לבנה',
+        'time': dailyTimes['sofZmanKidushLevana']
+      });
+    }
+
+    // סינון זמנים שלא קיימים
+    final filteredTimesList =
+        timesList.where((timeData) => timeData['time'] != null).toList();
 
     return GridView.builder(
       shrinkWrap: true,
@@ -699,14 +817,20 @@ class CalendarWidget extends StatelessWidget {
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
-      itemCount: timesList.length,
+      itemCount: filteredTimesList.length,
       itemBuilder: (context, index) {
-        final timeData = timesList[index];
+        final timeData = filteredTimesList[index];
+        final isSpecialTime = _isSpecialTime(timeData['name']!);
+
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color:
+                isSpecialTime ? Colors.orange.withAlpha(51) : Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
+            border: isSpecialTime
+                ? Border.all(color: Colors.orange, width: 1)
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,22 +838,149 @@ class CalendarWidget extends StatelessWidget {
             children: [
               Text(
                 timeData['name']!,
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isSpecialTime ? Colors.orange.shade800 : null,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
               Text(
                 timeData['time'] ?? '--:--',
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isSpecialTime ? Colors.orange.shade800 : null,
+                ),
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  Widget _buildDafYomiButtons(BuildContext context, CalendarState state) {
+    final jewishCalendar =
+        JewishCalendar.fromDateTime(state.selectedGregorianDate);
+
+    // חישוב דף יומי בבלי
+    final dafYomiBavli = YomiCalculator.getDafYomiBavli(jewishCalendar);
+    final bavliTractate = dafYomiBavli.getMasechta();
+    final bavliDaf = dafYomiBavli.getDaf();
+
+    // חישוב דף יומי ירושלמי
+    final dafYomiYerushalmi =
+        YerushalmiYomiCalculator.getDafYomiYerushalmi(jewishCalendar);
+    final yerushalmiTractate = dafYomiYerushalmi.getMasechta();
+    final yerushalmiDaf = dafYomiYerushalmi.getDaf();
+
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              openDafYomiBook(
+                  context, bavliTractate, ' ${_formatDafNumber(bavliDaf)}.');
+            },
+            icon: const Icon(Icons.book),
+            label: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'דף היומי בבלי',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '$bavliTractate ${_formatDafNumber(bavliDaf)}',
+                  style: const TextStyle(fontSize: 10),
+                ),
+              ],
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              openDafYomiYerushalmiBook(context, yerushalmiTractate,
+                  ' ${_formatDafNumber(yerushalmiDaf)}.');
+            },
+            icon: const Icon(Icons.menu_book),
+            label: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'דף היומי ירושלמי',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '$yerushalmiTractate ${_formatDafNumber(yerushalmiDaf)}',
+                  style: const TextStyle(fontSize: 10),
+                ),
+              ],
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDafNumber(int daf) {
+    return HebrewDateFormatter()
+        .formatHebrewNumber(daf)
+        .replaceAll('״', '')
+        .replaceAll('׳', '');
+  }
+
+  bool _isSpecialTime(String timeName) {
+    return timeName.contains('חמץ') ||
+        timeName.contains('הדלקת נרות') ||
+        timeName.contains('יציאת') ||
+        timeName.contains('צאת השבת') ||
+        timeName.contains('ספירת העומר') ||
+        timeName.contains('תענית') ||
+        timeName.contains('חנוכה') ||
+        timeName.contains('קידוש לבנה');
+  }
+
+  String _getHolidayName(JewishCalendar jewishCalendar) {
+    final yomTovIndex = jewishCalendar.getYomTovIndex();
+
+    switch (yomTovIndex) {
+      case JewishCalendar.ROSH_HASHANA:
+        return 'ראש השנה';
+      case JewishCalendar.YOM_KIPPUR:
+        return 'יום כיפור';
+      case JewishCalendar.SUCCOS:
+        return 'חג הסוכות';
+      case JewishCalendar.SHEMINI_ATZERES:
+        return 'שמיני עצרת';
+      case JewishCalendar.SIMCHAS_TORAH:
+        return 'שמחת תורה';
+      case JewishCalendar.PESACH:
+        return 'חג הפסח';
+      case JewishCalendar.SHAVUOS:
+        return 'חג השבועות';
+      case JewishCalendar.CHANUKAH:
+        return 'חנוכה';
+      case 17: // HOSHANA_RABBA
+        return 'הושענא רבה';
+      case 2: // CHOL_HAMOED_PESACH
+        return 'חול המועד פסח';
+      case 16: // CHOL_HAMOED_SUCCOS
+        return 'חול המועד סוכות';
+      default:
+        return 'חג';
+    }
   }
 
   // פונקציות העזר שלא תלויות במצב נשארות כאן
@@ -827,7 +1078,7 @@ class CalendarWidget extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (builderContext, setState) {
             return AlertDialog(
               title: const Text('קפוץ לתאריך'),
               content: SizedBox(
