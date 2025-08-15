@@ -64,6 +64,10 @@ class TextBookLoaded extends TextBookState {
   final bool pinLeftPane;
   final String searchText;
   final String? currentTitle;
+  final bool showNotesSidebar;
+  final String? selectedTextForNote;
+  final int? selectedTextStart;
+  final int? selectedTextEnd;
 
   // Controllers
   final ItemScrollController scrollController;
@@ -94,6 +98,10 @@ class TextBookLoaded extends TextBookState {
     required this.scrollOffsetController,
     required this.positionsListener,
     this.currentTitle,
+    required this.showNotesSidebar,
+    this.selectedTextForNote,
+    this.selectedTextStart,
+    this.selectedTextEnd,
   }) : super(book, selectedIndex ?? 0, showLeftPane, activeCommentators);
 
   factory TextBookLoaded.initial({
@@ -125,6 +133,10 @@ class TextBookLoaded extends TextBookState {
       scrollOffsetController: ScrollOffsetController(),
       positionsListener: ItemPositionsListener.create(),
       visibleIndices: [index],
+      showNotesSidebar: false,
+      selectedTextForNote: null,
+      selectedTextStart: null,
+      selectedTextEnd: null,
     );
   }
 
@@ -152,6 +164,10 @@ class TextBookLoaded extends TextBookState {
     ScrollOffsetController? scrollOffsetController,
     ItemPositionsListener? positionsListener,
     String? currentTitle,
+    bool? showNotesSidebar,
+    String? selectedTextForNote,
+    int? selectedTextStart,
+    int? selectedTextEnd,
   }) {
     return TextBookLoaded(
       book: book ?? this.book,
@@ -179,6 +195,10 @@ class TextBookLoaded extends TextBookState {
           scrollOffsetController ?? this.scrollOffsetController,
       positionsListener: positionsListener ?? this.positionsListener,
       currentTitle: currentTitle ?? this.currentTitle,
+      showNotesSidebar: showNotesSidebar ?? this.showNotesSidebar,
+      selectedTextForNote: selectedTextForNote ?? this.selectedTextForNote,
+      selectedTextStart: selectedTextStart ?? this.selectedTextStart,
+      selectedTextEnd: selectedTextEnd ?? this.selectedTextEnd,
     );
   }
 
@@ -204,5 +224,9 @@ class TextBookLoaded extends TextBookState {
         pinLeftPane,
         searchText,
         currentTitle,
+        showNotesSidebar,
+        selectedTextForNote,
+        selectedTextStart,
+        selectedTextEnd,
       ];
 }

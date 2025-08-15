@@ -26,6 +26,9 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     on<UpdateSelectedIndex>(_onUpdateSelectedIndex);
     on<TogglePinLeftPane>(_onTogglePinLeftPane);
     on<UpdateSearchText>(_onUpdateSearchText);
+    on<ToggleNotesSidebar>(_onToggleNotesSidebar);
+    on<CreateNoteFromToolbar>(_onCreateNoteFromToolbar);
+    on<UpdateSelectedTextForNote>(_onUpdateSelectedTextForNote);
   }
 
   Future<void> _onLoadContent(
@@ -103,6 +106,10 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         scrollController: scrollController,
         scrollOffsetController: scrollOffsetController,
         positionsListener: positionsListener,
+        showNotesSidebar: false,
+        selectedTextForNote: null,
+        selectedTextStart: null,
+        selectedTextEnd: null,
       ));
     } catch (e) {
       emit(TextBookError(e.toString(), book, initial.index,
@@ -232,6 +239,40 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       emit(currentState.copyWith(
         searchText: event.text,
         selectedIndex: currentState.selectedIndex,
+      ));
+    }
+  }
+
+  void _onToggleNotesSidebar(
+    ToggleNotesSidebar event,
+    Emitter<TextBookState> emit,
+  ) {
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        showNotesSidebar: !currentState.showNotesSidebar,
+      ));
+    }
+  }
+
+  void _onCreateNoteFromToolbar(
+    CreateNoteFromToolbar event,
+    Emitter<TextBookState> emit,
+  ) {
+    // כרגע זה רק מציין שהאירוע התקבל
+    // הלוגיקה האמיתית תהיה בכפתור בשורת הכלים
+  }
+
+  void _onUpdateSelectedTextForNote(
+    UpdateSelectedTextForNote event,
+    Emitter<TextBookState> emit,
+  ) {
+    if (state is TextBookLoaded) {
+      final currentState = state as TextBookLoaded;
+      emit(currentState.copyWith(
+        selectedTextForNote: event.text,
+        selectedTextStart: event.start,
+        selectedTextEnd: event.end,
       ));
     }
   }

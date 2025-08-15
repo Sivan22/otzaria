@@ -30,6 +30,7 @@ import 'package:otzaria/utils/page_converter.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:otzaria/notes/notes_system.dart';
 
 /// נתוני הדיווח שנאספו מתיבת סימון הטקסט + פירוט הטעות שהמשתמש הקליד.
 class ReportedErrorData {
@@ -226,6 +227,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       // Bookmark Button
       _buildBookmarkButton(context, state),
 
+      // Notes Buttons
+      _buildShowNotesButton(context, state),
+      _buildAddNoteButton(context, state),
+
       // Search Button (wide screen only)
       if (wideScreen) _buildSearchButton(context, state),
 
@@ -329,6 +334,90 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       },
       icon: const Icon(Icons.bookmark_add),
       tooltip: 'הוספת סימניה',
+    );
+  }
+
+  Widget _buildShowNotesButton(BuildContext context, TextBookLoaded state) {
+    return IconButton(
+      onPressed: () {
+        // נוסיף event חדש ל-TextBookBloc להצגת/הסתרת הערות
+        context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+      },
+      icon: const Icon(Icons.notes),
+      tooltip: 'הצג הערות',
+    );
+  }
+
+  Widget _buildAddNoteButton(BuildContext context, TextBookLoaded state) {
+    return IconButton(
+      onPressed: () {
+        final selectedText = state.selectedTextForNote;
+        if (selectedText == null || selectedText.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('אנא בחר טקסט ליצירת הערה'),
+              duration: Duration(milliseconds: 1500),
+            ),
+          );
+          return;
+        }
+
+        // יצירת הערה עם הטקסט הנבחר
+        _showNoteEditor(
+          context,
+          selectedText,
+          state.selectedTextStart ?? 0,
+          state.selectedTextEnd ?? selectedText.length,
+          state.book.title,
+        );
+      },
+      icon: const Icon(Icons.note_add),
+      tooltip: 'הוסף הערה',
+    );
+  }
+
+  void _showNoteEditor(BuildContext context, String selectedText, int charStart, int charEnd, String bookId) {
+    showDialog(
+      context: context,
+      builder: (context) => NoteEditorDialog(
+        selectedText: selectedText,
+        bookId: bookId,
+        charStart: charStart,
+        charEnd: charEnd,
+        onSave: (noteRequest) async {
+          try {
+            final notesService = NotesIntegrationService.instance;
+            await notesService.createNoteFromSelection(
+              bookId,
+              selectedText,
+              charStart,
+              charEnd,
+              noteRequest.contentMarkdown,
+              tags: noteRequest.tags,
+              privacy: noteRequest.privacy,
+            );
+
+            if (context.mounted) {
+              Navigator.of(context).pop();
+              // הצגת סרגל ההערות אם הוא לא פתוח
+              final currentState = context.read<TextBookBloc>().state;
+              if (currentState is TextBookLoaded && !currentState.showNotesSidebar) {
+                context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ההערה נוצרה והוצגה בסרגל')),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('שגיאה ביצירת הערה: $e')),
+              );
+            }
+          }
+        },
+      ),
     );
   }
 

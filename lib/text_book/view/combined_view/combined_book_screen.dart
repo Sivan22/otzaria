@@ -18,6 +18,7 @@ import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
+import 'package:otzaria/notes/notes_system.dart';
 
 class CombinedView extends StatefulWidget {
   CombinedView({
@@ -44,6 +45,18 @@ class CombinedView extends StatefulWidget {
 class _CombinedViewState extends State<CombinedView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
+
+  // הוסרנו את _showNotesSidebar המקומי - נשתמש ב-state מה-BLoC
+
+  // מעקב אחר בחירת טקסט בלי setState
+  String? _selectedText;
+  int? _selectionStart;
+  int? _selectionEnd;
+
+  // שמירת הבחירה האחרונה לשימוש בתפריט הקונטקסט
+  String? _lastSelectedText;
+  int? _lastSelectionStart;
+  int? _lastSelectionEnd;
 
   /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת, כולל כפתור הצג/הסתר הכל
   List<ctx.MenuItem<void>> _buildGroup(
@@ -231,12 +244,93 @@ class _CombinedViewState extends State<CombinedView> {
               .toList(),
         ),
         const ctx.MenuDivider(),
+        // הערות אישיות
+        ctx.MenuItem(
+          label: () {
+            final text = _lastSelectedText ?? _selectedText;
+            if (text == null || text.trim().isEmpty) {
+              return 'הוסף הערה';
+            }
+            final preview =
+                text.length > 12 ? '${text.substring(0, 12)}...' : text;
+            return 'הוסף הערה ל: "$preview"';
+          }(),
+          onSelected: () => _createNoteFromSelection(),
+        ),
+        const ctx.MenuDivider(),
         ctx.MenuItem(
           label: 'בחר את כל הטקסט',
           onSelected: () =>
               _selectionKey.currentState?.selectableRegion.selectAll(),
         ),
       ],
+    );
+  }
+
+  /// יצירת הערה מטקסט נבחר
+  void _createNoteFromSelection() {
+    // נשתמש בבחירה האחרונה שנשמרה, או בבחירה הנוכחית
+    final text = _lastSelectedText ?? _selectedText;
+    if (text == null || text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('אנא בחר טקסט ליצירת הערה'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final start = _lastSelectionStart ?? _selectionStart ?? 0;
+    final end = _lastSelectionEnd ?? _selectionEnd ?? text.length;
+    _showNoteEditor(text, start, end);
+  }
+
+  /// הצגת עורך ההערות
+  void _showNoteEditor(String selectedText, int charStart, int charEnd) {
+    showDialog(
+      context: context,
+      builder: (context) => NoteEditorDialog(
+        selectedText: selectedText,
+        bookId: widget.tab.book.title,
+        charStart: charStart,
+        charEnd: charEnd,
+        onSave: (noteRequest) async {
+          try {
+            final notesService = NotesIntegrationService.instance;
+            final bookId = widget.tab.book.title;
+            await notesService.createNoteFromSelection(
+              bookId,
+              selectedText,
+              charStart,
+              charEnd,
+              noteRequest.contentMarkdown,
+              tags: noteRequest.tags,
+              privacy: noteRequest.privacy,
+            );
+
+            if (mounted) {
+              Navigator.of(context).pop();
+              // הצגת סרגל ההערות אם הוא לא פתוח
+              final currentState = context.read<TextBookBloc>().state;
+              if (currentState is TextBookLoaded &&
+                  !currentState.showNotesSidebar) {
+                context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ההערה נוצרה והוצגה בסרגל')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('שגיאה ביצירת הערה: $e')),
+              );
+            }
+          }
+        },
+      ),
     );
   }
 
@@ -255,6 +349,29 @@ class _CombinedViewState extends State<CombinedView> {
           child: SelectionArea(
             key: _selectionKey,
             contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+            onSelectionChanged: (selection) {
+              final text = selection?.plainText ?? '';
+              if (text.isEmpty) {
+                _selectedText = null;
+                _selectionStart = null;
+                _selectionEnd = null;
+                // עדכון ה-BLoC שאין טקסט נבחר
+                context.read<TextBookBloc>().add(const UpdateSelectedTextForNote(null, null, null));
+              } else {
+                _selectedText = text;
+                _selectionStart = 0;
+                _selectionEnd = text.length;
+
+                // שמירת הבחירה האחרונה
+                _lastSelectedText = text;
+                _lastSelectionStart = 0;
+                _lastSelectionEnd = text.length;
+                
+                // עדכון ה-BLoC עם הטקסט הנבחר
+                context.read<TextBookBloc>().add(UpdateSelectedTextForNote(text, 0, text.length));
+              }
+              // בלי setState – כדי לא לרנדר את כל העץ תוך כדי גרירת הבחירה
+            },
             child: ctx.ContextMenuRegion(
               // <-- ה-Region היחיד, במיקום הנכון
               contextMenu: _buildContextMenu(state),
@@ -336,6 +453,44 @@ class _CombinedViewState extends State<CombinedView> {
 
   @override
   Widget build(BuildContext context) {
-    return buildKeyboardListener();
+    final bookView = buildKeyboardListener();
+
+    // אם סרגל ההערות פתוח, הצג אותו לצד התוכן
+    return BlocBuilder<TextBookBloc, TextBookState>(
+      builder: (context, state) {
+        if (state is! TextBookLoaded) return bookView;
+
+        if (state.showNotesSidebar) {
+          return Row(
+            children: [
+              Expanded(flex: 3, child: bookView),
+              Container(
+                width: 1,
+                color: Theme.of(context).dividerColor,
+              ),
+              Expanded(
+                flex: 1,
+                child: NotesSidebar(
+                  bookId: widget.tab.book.title,
+                  onClose: () => context
+                      .read<TextBookBloc>()
+                      .add(const ToggleNotesSidebar()),
+                  onNavigateToPosition: (start, end) {
+                    // ניווט למיקום ההערה בטקסט
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('ניווט למיקום $start-$end'),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        }
+
+        return bookView;
+      },
+    );
   }
 }
