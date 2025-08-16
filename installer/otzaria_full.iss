@@ -3322,7 +3322,10 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 
 [Files]
-Source: "..\build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\windows\x64\runner\Release\*"; \
+    Excludes: "*.msix,*.msixbundle,*.appx,*.appxbundle,*.appinstaller"; \
+    DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 Source: "..\..\otzaria-library\אוצריא\*"; DestDir: "{app}\אוצריא"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\otzaria-library\links\*"; DestDir: "{app}\links"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\otzaria-library\files_manifest.json"; DestDir: "{app}"; Flags: ignoreversion

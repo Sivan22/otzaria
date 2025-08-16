@@ -48,5 +48,7 @@ Filename: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"; WorkingDi
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 
 [Files]
-Source: "..\build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\windows\x64\runner\Release\*"; \
+    Excludes: "*.msix,*.msixbundle,*.appx,*.appxbundle,*.appinstaller"; \
+    DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "uninstall_msix.ps1"; DestDir: "{app}"; Flags: ignoreversion
