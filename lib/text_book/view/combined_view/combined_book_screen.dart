@@ -288,9 +288,13 @@ class _CombinedViewState extends State<CombinedView> {
 
   /// הצגת עורך ההערות
   void _showNoteEditor(String selectedText, int charStart, int charEnd) {
+    // שמירת ה-context המקורי וה-bloc
+    final originalContext = context;
+    final textBookBloc = context.read<TextBookBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => NoteEditorDialog(
+      builder: (dialogContext) => NoteEditorDialog(
         selectedText: selectedText,
         bookId: widget.tab.book.title,
         charStart: charStart,
@@ -312,19 +316,19 @@ class _CombinedViewState extends State<CombinedView> {
             if (mounted) {
               // Dialog is already closed by NoteEditorDialog
               // הצגת סרגל ההערות אם הוא לא פתוח
-              final currentState = context.read<TextBookBloc>().state;
+              final currentState = textBookBloc.state;
               if (currentState is TextBookLoaded &&
                   !currentState.showNotesSidebar) {
-                context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+                textBookBloc.add(const ToggleNotesSidebar());
               }
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(originalContext).showSnackBar(
                 const SnackBar(content: Text('ההערה נוצרה והוצגה בסרגל')),
               );
             }
           } catch (e) {
             if (mounted) {
               // Dialog is already closed by NoteEditorDialog
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(originalContext).showSnackBar(
                 SnackBar(content: Text('שגיאה ביצירת הערה: $e')),
               );
             }
@@ -356,7 +360,9 @@ class _CombinedViewState extends State<CombinedView> {
                 _selectionStart = null;
                 _selectionEnd = null;
                 // עדכון ה-BLoC שאין טקסט נבחר
-                context.read<TextBookBloc>().add(const UpdateSelectedTextForNote(null, null, null));
+                context
+                    .read<TextBookBloc>()
+                    .add(const UpdateSelectedTextForNote(null, null, null));
               } else {
                 _selectedText = text;
                 _selectionStart = 0;
@@ -366,9 +372,11 @@ class _CombinedViewState extends State<CombinedView> {
                 _lastSelectedText = text;
                 _lastSelectionStart = 0;
                 _lastSelectionEnd = text.length;
-                
+
                 // עדכון ה-BLoC עם הטקסט הנבחר
-                context.read<TextBookBloc>().add(UpdateSelectedTextForNote(text, 0, text.length));
+                context
+                    .read<TextBookBloc>()
+                    .add(UpdateSelectedTextForNote(text, 0, text.length));
               }
               // בלי setState – כדי לא לרנדר את כל העץ תוך כדי גרירת הבחירה
             },

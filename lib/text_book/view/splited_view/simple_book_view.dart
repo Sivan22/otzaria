@@ -42,14 +42,14 @@ class SimpleBookView extends StatefulWidget {
 class _SimpleBookViewState extends State<SimpleBookView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
-  
+
   // הוסרנו את _showNotesSidebar המקומי - נשתמש ב-state מה-BLoC
-  
+
   // מעקב אחר בחירת טקסט בלי setState
   String? _selectedText;
   int? _selectionStart;
   int? _selectionEnd;
-  
+
   // שמירת הבחירה האחרונה לשימוש בתפריט הקונטקסט
   String? _lastSelectedText;
   int? _lastSelectionStart;
@@ -226,7 +226,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             if (text == null || text.trim().isEmpty) {
               return 'הוסף הערה';
             }
-            final preview = text.length > 12 ? '${text.substring(0, 12)}...' : text;
+            final preview =
+                text.length > 12 ? '${text.substring(0, 12)}...' : text;
             return 'הוסף הערה ל: "$preview"';
           }(),
           onSelected: () => _createNoteFromSelection(),
@@ -240,8 +241,6 @@ class _SimpleBookViewState extends State<SimpleBookView> {
       ],
     );
   }
-
-
 
   /// יצירת הערה מטקסט נבחר
   void _createNoteFromSelection() {
@@ -264,10 +263,13 @@ class _SimpleBookViewState extends State<SimpleBookView> {
 
   /// הצגת עורך ההערות
   void _showNoteEditor(String selectedText, int charStart, int charEnd) {
+    // שמירת ה-context המקורי וה-bloc
+    final originalContext = context;
+    final textBookBloc = context.read<TextBookBloc>();
 
     showDialog(
       context: context,
-      builder: (context) => NoteEditorDialog(
+      builder: (dialogContext) => NoteEditorDialog(
         selectedText: selectedText,
         bookId: widget.tab.book.title,
         charStart: charStart,
@@ -285,22 +287,23 @@ class _SimpleBookViewState extends State<SimpleBookView> {
               tags: noteRequest.tags,
               privacy: noteRequest.privacy,
             );
-            
+
             if (mounted) {
               // Dialog is already closed by NoteEditorDialog
               // הצגת סרגל ההערות אם הוא לא פתוח
-              final currentState = context.read<TextBookBloc>().state;
-              if (currentState is TextBookLoaded && !currentState.showNotesSidebar) {
-                context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+              final currentState = textBookBloc.state;
+              if (currentState is TextBookLoaded &&
+                  !currentState.showNotesSidebar) {
+                textBookBloc.add(const ToggleNotesSidebar());
               }
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(originalContext).showSnackBar(
                 const SnackBar(content: Text('ההערה נוצרה והוצגה בסרגל')),
               );
             }
           } catch (e) {
             if (mounted) {
               // Dialog is already closed by NoteEditorDialog
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(originalContext).showSnackBar(
                 SnackBar(content: Text('שגיאה ביצירת הערה: $e')),
               );
             }
@@ -310,16 +313,12 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     );
   }
 
-
-
-
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TextBookBloc, TextBookState>(
       builder: (context, state) {
         if (state is! TextBookLoaded) return const Center();
-        
+
         final bookView = ProgressiveScroll(
           scrollController: state.scrollOffsetController,
           maxSpeed: 10000.0,
@@ -335,20 +334,24 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                 _selectionStart = null;
                 _selectionEnd = null;
                 // עדכון ה-BLoC שאין טקסט נבחר
-                context.read<TextBookBloc>().add(const UpdateSelectedTextForNote(null, null, null));
+                context
+                    .read<TextBookBloc>()
+                    .add(const UpdateSelectedTextForNote(null, null, null));
               } else {
                 _selectedText = text;
                 // בינתיים אינדקסים פשוטים (אפשר לעדכן בעתיד למיפוי אמיתי במסמך)
                 _selectionStart = 0;
                 _selectionEnd = text.length;
-                
+
                 // שמירת הבחירה האחרונה
                 _lastSelectedText = text;
                 _lastSelectionStart = 0;
                 _lastSelectionEnd = text.length;
-                
+
                 // עדכון ה-BLoC עם הטקסט הנבחר
-                context.read<TextBookBloc>().add(UpdateSelectedTextForNote(text, 0, text.length));
+                context
+                    .read<TextBookBloc>()
+                    .add(UpdateSelectedTextForNote(text, 0, text.length));
               }
               // חשוב: לא קוראים ל-setState כאן כדי לא לפגוע בחוויית הבחירה
             },
@@ -399,7 +402,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             ),
           ),
         );
-        
+
         // אם סרגל ההערות פתוח, הצג אותו לצד התוכן
         if (state.showNotesSidebar) {
           return Row(
@@ -413,7 +416,9 @@ class _SimpleBookViewState extends State<SimpleBookView> {
                 flex: 1,
                 child: NotesSidebar(
                   bookId: widget.tab.book.title,
-                  onClose: () => context.read<TextBookBloc>().add(const ToggleNotesSidebar()),
+                  onClose: () => context
+                      .read<TextBookBloc>()
+                      .add(const ToggleNotesSidebar()),
                   onNavigateToPosition: (start, end) {
                     // ניווט למיקום ההערה בטקסט
                     // זה יצריך חישוב של האינדקס המתאים
@@ -429,7 +434,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
             ],
           );
         }
-        
+
         return bookView;
       },
     );

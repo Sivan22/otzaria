@@ -376,10 +376,15 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     );
   }
 
-  void _showNoteEditor(BuildContext context, String selectedText, int charStart, int charEnd, String bookId) {
+  void _showNoteEditor(BuildContext context, String selectedText, int charStart,
+      int charEnd, String bookId) {
+    // שמירת ה-context המקורי וה-bloc
+    final originalContext = context;
+    final textBookBloc = context.read<TextBookBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => NoteEditorDialog(
+      builder: (dialogContext) => NoteEditorDialog(
         selectedText: selectedText,
         bookId: bookId,
         charStart: charStart,
@@ -397,21 +402,22 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
               privacy: noteRequest.privacy,
             );
 
-            if (context.mounted) {
+            if (originalContext.mounted) {
               // Dialog is already closed by NoteEditorDialog
               // הצגת סרגל ההערות אם הוא לא פתוח
-              final currentState = context.read<TextBookBloc>().state;
-              if (currentState is TextBookLoaded && !currentState.showNotesSidebar) {
-                context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+              final currentState = textBookBloc.state;
+              if (currentState is TextBookLoaded &&
+                  !currentState.showNotesSidebar) {
+                textBookBloc.add(const ToggleNotesSidebar());
               }
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(originalContext).showSnackBar(
                 const SnackBar(content: Text('ההערה נוצרה והוצגה בסרגל')),
               );
             }
           } catch (e) {
-            if (context.mounted) {
+            if (originalContext.mounted) {
               // Dialog is already closed by NoteEditorDialog
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(originalContext).showSnackBar(
                 SnackBar(content: Text('שגיאה ביצירת הערה: $e')),
               );
             }
