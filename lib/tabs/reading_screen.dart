@@ -40,7 +40,14 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   @override
   void dispose() {
-    context.read<HistoryBloc>().add(FlushHistory());
+    // Check if widget is still mounted before accessing context
+    if (mounted) {
+      try {
+        context.read<HistoryBloc>().add(FlushHistory());
+      } catch (e) {
+        // Ignore errors during disposal
+      }
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

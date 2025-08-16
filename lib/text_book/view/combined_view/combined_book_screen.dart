@@ -310,7 +310,7 @@ class _CombinedViewState extends State<CombinedView> {
             );
 
             if (mounted) {
-              Navigator.of(context).pop();
+              // Dialog is already closed by NoteEditorDialog
               // הצגת סרגל ההערות אם הוא לא פתוח
               final currentState = context.read<TextBookBloc>().state;
               if (currentState is TextBookLoaded &&
@@ -323,7 +323,7 @@ class _CombinedViewState extends State<CombinedView> {
             }
           } catch (e) {
             if (mounted) {
-              Navigator.of(context).pop();
+              // Dialog is already closed by NoteEditorDialog
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('שגיאה ביצירת הערה: $e')),
               );

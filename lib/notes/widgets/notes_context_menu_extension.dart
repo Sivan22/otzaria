@@ -41,7 +41,7 @@ class NotesContextMenuExtension {
         charEnd: end,
         onSave: (request) {
           context.read<NotesBloc>().add(CreateNoteEvent(request));
-          Navigator.of(context).pop();
+          // Dialog will be closed by the caller
         },
       ),
     );
@@ -190,7 +190,7 @@ mixin NotesContextMenuMixin<T extends StatefulWidget> on State<T> {
         charEnd: end,
         onSave: (request) {
           context.read<NotesBloc>().add(CreateNoteEvent(request));
-          Navigator.of(context).pop();
+          // Dialog will be closed by the caller
         },
       ),
     );

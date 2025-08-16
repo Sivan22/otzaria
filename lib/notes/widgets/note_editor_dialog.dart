@@ -94,6 +94,7 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
         widget.onSave?.call(request);
       }
 
+      // Close the dialog after calling onSave
       if (mounted) {
         Navigator.of(context).pop();
       }
