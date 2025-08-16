@@ -132,11 +132,15 @@ class SearchRegexPatterns {
   }
 
   /// יוצר רגקס לכתיב מלא/חסר
-  static String createFullPartialSpellingPattern(String word) {
+  static String createFullPartialSpellingPattern(
+    String word, {
+    bool tokenAnchors = true, // עיגון לטוקן כשאין דקדוק/חלק-ממילה
+  }) {
     if (word.isEmpty) return word;
     final variations = generateFullPartialSpellingVariations(word);
-    final escapedVariations = variations.map((v) => RegExp.escape(v)).toList();
-    return r'(?:^|\s)(' + escapedVariations.join('|') + r')(?=\s|$)';
+    final escaped = variations.map(RegExp.escape).toList();
+    final core = '(?:${escaped.join('|')})';
+    return tokenAnchors ? '^$core\$' : core;
   }
 
   // ===== פונקציות עזר =====
@@ -240,12 +244,51 @@ class SearchRegexPatterns {
     return englishChars.hasMatch(text);
   }
 
+  /// יוצר רגקס משולב לכתיב מלא/חסר עם קידומות דקדוקיות
+  static String createSpellingWithPrefixPattern(String word) {
+    if (word.isEmpty) return word;
+    final variations = generateFullPartialSpellingVariations(word);
+    // הגבלה על מספר הוריאציות כדי למנוע רגקס ענק
+    final limitedVariations =
+        variations.length > 10 ? variations.take(10).toList() : variations;
+    final patterns =
+        limitedVariations.map((v) => createPrefixPattern(v)).toList();
+    return '(${patterns.join('|')})';
+  }
+
+  /// יוצר רגקס משולב לכתיב מלא/חסר עם סיומות דקדוקיות
+  static String createSpellingWithSuffixPattern(String word) {
+    if (word.isEmpty) return word;
+    final variations = generateFullPartialSpellingVariations(word);
+    // הגבלה על מספר הוריאציות כדי למנוע רגקס ענק
+    final limitedVariations =
+        variations.length > 10 ? variations.take(10).toList() : variations;
+    final patterns =
+        limitedVariations.map((v) => createSuffixPattern(v)).toList();
+    return '(${patterns.join('|')})';
+  }
+
+  /// יוצר רגקס משולב לכתיב מלא/חסר עם קידומות וסיומות דקדוקיות
+  static String createSpellingWithFullMorphologyPattern(String word) {
+    if (word.isEmpty) return word;
+    final variations = generateFullPartialSpellingVariations(word);
+    // הגבלה על מספר הוריאציות כדי למנוע רגקס ענק
+    final limitedVariations =
+        variations.length > 8 ? variations.take(8).toList() : variations;
+    final patterns = limitedVariations
+        .map((v) => createFullMorphologicalPattern(v))
+        .toList();
+    return '(${patterns.join('|')})';
+  }
+
   /// פונקציה שמחליטה איזה סוג חיפוש להשתמש בהתבסס על אפשרויות המשתמש
   ///
   /// הלוגיקה:
   /// - אם נבחרו גם קידומות וגם סיומות רגילות -> חיפוש "חלק ממילה"
   /// - אם נבחרו קידומות דקדוקיות וסיומות דקדוקיות -> חיפוש מורפולוגי מלא
   /// - אחרת -> חיפוש לפי האפשרות הספציפית שנבחרה
+// lib/search/utils/regex_patterns.dart
+
   static String createSearchPattern(
     String word, {
     bool hasPrefix = false,
@@ -253,33 +296,68 @@ class SearchRegexPatterns {
     bool hasGrammaticalPrefixes = false,
     bool hasGrammaticalSuffixes = false,
     bool hasPartialWord = false,
+    bool hasFullPartialSpelling = false,
   }) {
     if (word.isEmpty) return word;
 
-    // לוגיקה מיוחדת: קידומות + סיומות רגילות = חלק ממילה
+    // --- לוגיקה עבור שילובים עם "כתיב מלא/חסר" ---
+    if (hasFullPartialSpelling) {
+      final hasMorphologyOrPartial = hasGrammaticalPrefixes ||
+          hasGrammaticalSuffixes ||
+          hasPrefix ||
+          hasSuffix ||
+          hasPartialWord;
+
+      // ניצור את הווריאציות פעם אחת בלבד
+      final variations = generateFullPartialSpellingVariations(word);
+
+      // סדר העדיפויות חשוב כאן! מהספציפי ביותר לכללי ביותר
+      if (hasPrefix && hasSuffix) {
+        final patterns =
+            variations.map((v) => createPartialWordPattern(v)).toList();
+        return '(${patterns.join('|')})';
+      } else if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
+        return createSpellingWithFullMorphologyPattern(word);
+      } else if (hasPrefix) {
+        final patterns =
+            variations.map((v) => createPrefixSearchPattern(v)).toList();
+        return '(${patterns.join('|')})';
+      } else if (hasSuffix) {
+        final patterns =
+            variations.map((v) => createSuffixSearchPattern(v)).toList();
+        return '(${patterns.join('|')})';
+      } else if (hasGrammaticalPrefixes) {
+        return createSpellingWithPrefixPattern(word);
+      } else if (hasGrammaticalSuffixes) {
+        return createSpellingWithSuffixPattern(word);
+      } else if (hasPartialWord) {
+        final patterns =
+            variations.map((v) => createPartialWordPattern(v)).toList();
+        return '(${patterns.join('|')})';
+      } else {
+        // רק "כתיב מלא/חסר" ללא שום אפשרות אחרת
+        return createFullPartialSpellingPattern(
+          word,
+          tokenAnchors: !hasMorphologyOrPartial,
+        );
+      }
+    }
+
+    // --- לוגיקה עבור חיפושים ללא "כתיב מלא/חסר" ---
+    // סדר העדיפויות חשוב גם כאן
     if (hasPrefix && hasSuffix) {
       return createPartialWordPattern(word);
-    }
-
-    // קידומות וסיומות דקדוקיות יחד
-    if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
+    } else if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
       return createFullMorphologicalPattern(word);
-    }
-
-    // אפשרויות בודדות
-    if (hasGrammaticalPrefixes) {
-      return createPrefixPattern(word);
-    }
-    if (hasGrammaticalSuffixes) {
-      return createSuffixPattern(word);
-    }
-    if (hasPrefix) {
+    } else if (hasPrefix) {
       return createPrefixSearchPattern(word);
-    }
-    if (hasSuffix) {
+    } else if (hasSuffix) {
       return createSuffixSearchPattern(word);
-    }
-    if (hasPartialWord) {
+    } else if (hasGrammaticalPrefixes) {
+      return createPrefixPattern(word);
+    } else if (hasGrammaticalSuffixes) {
+      return createSuffixPattern(word);
+    } else if (hasPartialWord) {
       return createPartialWordPattern(word);
     }
 

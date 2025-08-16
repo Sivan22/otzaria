@@ -54,11 +54,17 @@ class _SearchOptionsDropdownState extends State<SearchOptionsDropdown> {
 class SearchOptionsRow extends StatefulWidget {
   final bool isVisible;
   final String? currentWord; // המילה הנוכחית
+  final int? wordIndex; // אינדקס המילה
+  final Map<String, Map<String, bool>>? wordOptions; // אפשרויות מהטאב
+  final VoidCallback? onOptionsChanged; // קולבק לעדכון
 
   const SearchOptionsRow({
     super.key,
     required this.isVisible,
     this.currentWord,
+    this.wordIndex,
+    this.wordOptions,
+    this.onOptionsChanged,
   });
 
   @override
@@ -66,9 +72,6 @@ class SearchOptionsRow extends StatefulWidget {
 }
 
 class _SearchOptionsRowState extends State<SearchOptionsRow> {
-  // מפה שמחזיקה אפשרויות לכל מילה
-  static final Map<String, Map<String, bool>> _wordOptions = {};
-
   // רשימת האפשרויות הזמינות
   static const List<String> _availableOptions = [
     'קידומות',
@@ -81,17 +84,25 @@ class _SearchOptionsRowState extends State<SearchOptionsRow> {
 
   Map<String, bool> _getCurrentWordOptions() {
     final currentWord = widget.currentWord;
-    if (currentWord == null || currentWord.isEmpty) {
+    final wordIndex = widget.wordIndex;
+    final wordOptions = widget.wordOptions;
+
+    if (currentWord == null ||
+        currentWord.isEmpty ||
+        wordIndex == null ||
+        wordOptions == null) {
       return Map.fromIterable(_availableOptions, value: (_) => false);
     }
 
+    final key = '${currentWord}_$wordIndex';
+
     // אם אין אפשרויות למילה הזו, ניצור אותן
-    if (!_wordOptions.containsKey(currentWord)) {
-      _wordOptions[currentWord] =
+    if (!wordOptions.containsKey(key)) {
+      wordOptions[key] =
           Map.fromIterable(_availableOptions, value: (_) => false);
     }
 
-    return _wordOptions[currentWord]!;
+    return wordOptions[key]!;
   }
 
   Widget _buildCheckbox(String option) {
@@ -103,8 +114,26 @@ class _SearchOptionsRowState extends State<SearchOptionsRow> {
         onTap: () {
           setState(() {
             final currentWord = widget.currentWord;
-            if (currentWord != null && currentWord.isNotEmpty) {
-              currentOptions[option] = !currentOptions[option]!;
+            final wordIndex = widget.wordIndex;
+            final wordOptions = widget.wordOptions;
+
+            if (currentWord != null &&
+                currentWord.isNotEmpty &&
+                wordIndex != null &&
+                wordOptions != null) {
+              final key = '${currentWord}_$wordIndex';
+
+              // וודא שהמפתח קיים
+              if (!wordOptions.containsKey(key)) {
+                wordOptions[key] =
+                    Map.fromIterable(_availableOptions, value: (_) => false);
+              }
+
+              // עדכן את האפשרות
+              wordOptions[key]![option] = !wordOptions[key]![option]!;
+
+              // קרא לקולבק
+              widget.onOptionsChanged?.call();
             }
           });
         },
@@ -159,8 +188,6 @@ class _SearchOptionsRowState extends State<SearchOptionsRow> {
       ),
     );
   }
-
-// lib\search\view\search_options_dropdown.dart
 
   @override
   Widget build(BuildContext context) {

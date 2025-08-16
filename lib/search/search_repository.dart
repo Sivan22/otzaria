@@ -27,21 +27,55 @@ class SearchRepository {
       Map<String, String>? customSpacing,
       Map<int, List<String>>? alternativeWords,
       Map<String, Map<String, bool>>? searchOptions}) async {
+    print('🚀 searchTexts called with query: "$query"');
+
+    // בדיקת וריאציות כתיב מלא/חסר
+    print('🔍 Testing spelling variations for "ראשית":');
+    final testVariations =
+        SearchRegexPatterns.generateFullPartialSpellingVariations('ראשית');
+    print('   variations: $testVariations');
+
+    // בדיקת createPrefixPattern עבור כל וריאציה
+    for (final variation in testVariations) {
+      final prefixPattern = SearchRegexPatterns.createPrefixPattern(variation);
+      print('   $variation -> $prefixPattern');
+    }
+
+    // בדיקת createSpellingWithPrefixPattern
+    final finalPattern =
+        SearchRegexPatterns.createSpellingWithPrefixPattern('ראשית');
+    print('🔍 Final createSpellingWithPrefixPattern result: $finalPattern');
     final index = await TantivyDataProvider.instance.engine;
 
     // בדיקה אם יש מרווחים מותאמים אישית, מילים חילופיות או אפשרויות חיפוש
     final hasCustomSpacing = customSpacing != null && customSpacing.isNotEmpty;
     final hasAlternativeWords =
         alternativeWords != null && alternativeWords.isNotEmpty;
-    final hasSearchOptions = searchOptions != null && searchOptions.isNotEmpty;
+    final hasSearchOptions = searchOptions != null &&
+        searchOptions.isNotEmpty &&
+        searchOptions.values.any((wordOptions) =>
+            wordOptions.values.any((isEnabled) => isEnabled == true));
+
+    print('🔍 hasSearchOptions: $hasSearchOptions');
+    print('🔍 hasAlternativeWords: $hasAlternativeWords');
 
     // המרת החיפוש לפורמט המנוע החדש
     // סינון מחרוזות ריקות שנוצרות כאשר יש רווחים בסוף השאילתה
-    final words = query.trim().split(SearchRegexPatterns.wordSplitter)
+    final words = query
+        .trim()
+        .split(SearchRegexPatterns.wordSplitter)
         .where((word) => word.isNotEmpty)
         .toList();
     final List<String> regexTerms;
     final int effectiveSlop;
+
+    // הודעת דיבוג לבדיקת search options
+    if (searchOptions != null && searchOptions.isNotEmpty) {
+      print('➡️Debug search options:');
+      for (final entry in searchOptions.entries) {
+        print('   ${entry.key}: ${entry.value}');
+      }
+    }
 
     if (hasAlternativeWords || hasSearchOptions) {
       // יש מילים חילופיות או אפשרויות חיפוש - נבנה queries מתקדמים
@@ -51,6 +85,8 @@ class SearchRepository {
 
       regexTerms = _buildAdvancedQuery(words, alternativeWords, searchOptions);
       print('🔄 RegexTerms מתקדם: $regexTerms');
+      print(
+          '🔄 effectiveSlop will be: ${hasCustomSpacing ? "custom" : (fuzzy ? distance.toString() : "0")}');
       effectiveSlop = hasCustomSpacing
           ? _getMaxCustomSpacing(customSpacing, words.length)
           : (fuzzy ? distance : 0);
@@ -76,13 +112,24 @@ class SearchRepository {
     final int maxExpansions = _calculateMaxExpansions(fuzzy, regexTerms.length,
         searchOptions: searchOptions, words: words);
 
-    return await index.search(
+    print('🔍 Final search params:');
+    print('   regexTerms: $regexTerms');
+    print('   facets: $facets');
+    print('   limit: $limit');
+    print('   slop: $effectiveSlop');
+    print('   maxExpansions: $maxExpansions');
+    print('🚀 Calling index.search...');
+
+    final results = await index.search(
         regexTerms: regexTerms,
         facets: facets,
         limit: limit,
         slop: effectiveSlop,
         maxExpansions: maxExpansions,
         order: order);
+
+    print('✅ Search completed, found ${results.length} results');
+    return results;
   }
 
   /// מחשב את המרווח המקסימלי מהמרווחים המותאמים אישית
@@ -140,76 +187,17 @@ class SearchRepository {
         final allVariations = <String>{};
 
         for (final option in validOptions) {
-          List<String> baseVariations = [option];
-
-          // אם יש כתיב מלא/חסר, נוצר את כל הווריאציות של כתיב
-          if (hasFullPartialSpelling) {
-            // הגבלה למילים קצרות - כתיב מלא/חסר יכול ליצור הרבה וריאציות
-            if (option.length <= 3) {
-              // למילים קצרות, נגביל את מספר הוריאציות
-              final allSpellingVariations =
-                  HebrewMorphology.generateFullPartialSpellingVariations(
-                      option);
-              // נקח רק את ה-5 הראשונות כדי למנוע יותר מדי expansions
-              baseVariations = allSpellingVariations.take(5).toList();
-            } else {
-              baseVariations =
-                  HebrewMorphology.generateFullPartialSpellingVariations(
-                      option);
-            }
-          }
-
-          // עבור כל וריאציה של כתיב, מוסיפים את האפשרויות הדקדוקיות
-          for (final baseVariation in baseVariations) {
-            if (hasGrammaticalPrefixes && hasGrammaticalSuffixes) {
-              // שתי האפשרויות יחד - הגבלה למילים קצרות
-              if (baseVariation.length <= 2) {
-                // למילים קצרות, נשתמש ברגקס קומפקטי במקום רשימת וריאציות
-                allVariations.add(
-                    HebrewMorphology.createFullMorphologicalRegexPattern(
-                        baseVariation));
-              } else {
-                allVariations.addAll(
-                    HebrewMorphology.generateFullMorphologicalVariations(
-                        baseVariation));
-              }
-            } else if (hasGrammaticalPrefixes) {
-              // רק קידומות דקדוקיות - הגבלה למילים קצרות
-              if (baseVariation.length <= 2) {
-                // למילים קצרות, נשתמש ברגקס קומפקטי
-                allVariations.add(
-                    HebrewMorphology.createPrefixRegexPattern(baseVariation));
-              } else {
-                allVariations.addAll(
-                    HebrewMorphology.generatePrefixVariations(baseVariation));
-              }
-            } else if (hasGrammaticalSuffixes) {
-              // רק סיומות דקדוקיות - הגבלה למילים קצרות
-              if (baseVariation.length <= 2) {
-                // למילים קצרות, נשתמש ברגקס קומפקטי
-                allVariations.add(
-                    HebrewMorphology.createSuffixRegexPattern(baseVariation));
-              } else {
-                allVariations.addAll(
-                    HebrewMorphology.generateSuffixVariations(baseVariation));
-              }
-            } else if (hasPrefix && hasSuffix) {
-              // קידומות וסיומות יחד - משתמש בחיפוש "חלק ממילה"
-              allVariations.add(SearchRegexPatterns.createPartialWordPattern(baseVariation));
-            } else if (hasPrefix) {
-              // קידומות רגילות - שימוש ברגקס מרכזי
-              allVariations.add(SearchRegexPatterns.createPrefixSearchPattern(baseVariation));
-            } else if (hasSuffix) {
-              // סיומות רגילות - שימוש ברגקס מרכזי
-              allVariations.add(SearchRegexPatterns.createSuffixSearchPattern(baseVariation));
-            } else if (hasPartialWord) {
-              // חלק ממילה - שימוש ברגקס מרכזי
-              allVariations.add(SearchRegexPatterns.createPartialWordPattern(baseVariation));
-            } else {
-              // ללא אפשרויות מיוחדות - מילה מדויקת
-              allVariations.add(RegExp.escape(baseVariation));
-            }
-          }
+          // השתמש בפונקציה המשולבת החדשה
+          final pattern = SearchRegexPatterns.createSearchPattern(
+            option,
+            hasPrefix: hasPrefix,
+            hasSuffix: hasSuffix,
+            hasGrammaticalPrefixes: hasGrammaticalPrefixes,
+            hasGrammaticalSuffixes: hasGrammaticalSuffixes,
+            hasPartialWord: hasPartialWord,
+            hasFullPartialSpelling: hasFullPartialSpelling,
+          );
+          allVariations.add(pattern);
         }
 
         // הגבלה על מספר הוריאציות הכולל למילה אחת
@@ -224,7 +212,7 @@ class SearchRepository {
 
         regexTerms.add(finalPattern);
         // הודעת דיבוג עם הסבר על הלוגיקה
-        final searchType = hasPrefix && hasSuffix 
+        final searchType = hasPrefix && hasSuffix
             ? 'קידומות+סיומות (חלק ממילה)'
             : hasGrammaticalPrefixes && hasGrammaticalSuffixes
                 ? 'קידומות+סיומות דקדוקיות'
@@ -241,7 +229,7 @@ class SearchRepository {
                                     : hasFullPartialSpelling
                                         ? 'כתיב מלא/חסר'
                                         : 'מדויק';
-        
+
         print('🔄 מילה $i: $finalPattern (סוג חיפוש: $searchType)');
       } else {
         // fallback למילה המקורית

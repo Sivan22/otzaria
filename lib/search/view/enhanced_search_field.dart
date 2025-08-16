@@ -14,6 +14,7 @@ import 'package:otzaria/navigation/bloc/navigation_state.dart';
 import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_state.dart';
 import 'package:otzaria/search/utils/regex_patterns.dart';
+import 'package:otzaria/search/view/search_options_dropdown.dart';
 
 // הווידג'ט החדש לניהול מצבי הכפתור
 class _PlusButton extends StatefulWidget {
@@ -1738,7 +1739,8 @@ class _EnhancedSearchFieldState extends State<EnhancedSearchField> {
       );
     }
 
-    return _SearchOptionsContent(
+    return SearchOptionsRow(
+      isVisible: true,
       currentWord: wordInfo['word'],
       wordIndex: wordInfo['index'],
       wordOptions: widget.widget.tab.searchOptions,
