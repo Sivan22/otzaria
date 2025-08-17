@@ -194,6 +194,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         ),
         ctx.MenuItem.submenu(
           label: 'קישורים',
+          enabled: LinksViewer.getLinks(state).isNotEmpty, // <--- חדש
           items: LinksViewer.getLinks(state)
               .map(
                 (link) => ctx.MenuItem(
