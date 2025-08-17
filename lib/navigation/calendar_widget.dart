@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kosher_dart/kosher_dart.dart';
-import 'calendar_cubit.dart'; // ודא שהנתיב נכון
+import 'calendar_cubit.dart';
 import 'package:otzaria/daf_yomi/daf_yomi_helper.dart';
 
 // הפכנו את הווידג'ט ל-Stateless כי הוא כבר לא מנהל מצב בעצמו.
@@ -634,20 +634,8 @@ class CalendarWidget extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                DropdownButton<String>(
-                  value: state.selectedCity,
-                  items: cityCoordinates.keys.map((city) {
-                    return DropdownMenuItem<String>(
-                      value: city,
-                      child: Text(city),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      context.read<CalendarCubit>().changeCity(value);
-                    }
-                  },
-                ),
+                // החלפנו את הDropdownButton בCityDropdownWithSearch
+                _buildCityDropdownWithSearch(context, state),
               ],
             ),
             const SizedBox(height: 16),
@@ -686,6 +674,14 @@ class CalendarWidget extends StatelessWidget {
     // זמנים בסיסיים
     final List<Map<String, String?>> timesList = [
       {'name': 'עלות השחר', 'time': dailyTimes['alos']},
+      {
+        'name': 'עלות השחר (שיטת 72 דקות) במעלות',
+        'time': dailyTimes['alos16point1Degrees']
+      },
+      {
+        'name': 'עלות השחר (שיטת 90 דקות) במעלות',
+        'time': dailyTimes['alos19point8Degrees']
+      },
       {'name': 'זריחה', 'time': dailyTimes['sunrise']},
       {'name': 'סוף זמן ק"ש - מג"א', 'time': dailyTimes['sofZmanShmaMGA']},
       {'name': 'סוף זמן ק"ש - גר"א', 'time': dailyTimes['sofZmanShmaGRA']},
@@ -697,8 +693,8 @@ class CalendarWidget extends StatelessWidget {
       {'name': 'מנחה קטנה', 'time': dailyTimes['minchaKetana']},
       {'name': 'פלג המנחה', 'time': dailyTimes['plagHamincha']},
       {'name': 'שקיעה', 'time': dailyTimes['sunset']},
-      {'name': 'שקיעה ר"ת', 'time': dailyTimes['sunsetRT']},
       {'name': 'צאת הכוכבים', 'time': dailyTimes['tzais']},
+      {'name': 'צאת הכוכבים ר"ת', 'time': dailyTimes['sunsetRT']},
     ];
 
     // הוספת זמנים מיוחדים לערב פסח
@@ -813,7 +809,7 @@ class CalendarWidget extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 3,
+        childAspectRatio: 2.5,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
@@ -1390,6 +1386,36 @@ class CalendarWidget extends StatelessWidget {
   }
 
   // החלק של האירועים עדיין לא עבר ריפקטורינג, הוא יישאר לא פעיל בינתיים
+  // הוספת הוויג'ט החדש לבחירת עיר עם סינון
+  Widget _buildCityDropdownWithSearch(
+      BuildContext context, CalendarState state) {
+    return ElevatedButton(
+      onPressed: () => _showCitySearchDialog(context, state),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(state.selectedCity),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_drop_down),
+        ],
+      ),
+    );
+  }
+
+  // דיאלוג חיפוש ערים
+  void _showCitySearchDialog(BuildContext context, CalendarState state) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _CitySearchDialog(
+        currentCity: state.selectedCity,
+        onCitySelected: (city) {
+          context.read<CalendarCubit>().changeCity(city);
+          Navigator.of(dialogContext).pop();
+        },
+      ),
+    );
+  }
+
   Widget _buildEventsCard(BuildContext context, CalendarState state) {
     return Card(
       child: Padding(
@@ -1423,6 +1449,124 @@ class CalendarWidget extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// דיאלוג לחיפוש ובחירת עיר
+class _CitySearchDialog extends StatefulWidget {
+  final String currentCity;
+  final ValueChanged<String> onCitySelected;
+
+  const _CitySearchDialog({
+    required this.currentCity,
+    required this.onCitySelected,
+  });
+
+  @override
+  State<_CitySearchDialog> createState() => _CitySearchDialogState();
+}
+
+class _CitySearchDialogState extends State<_CitySearchDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  late Map<String, Map<String, Map<String, double>>> _filteredCities;
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCities = cityCoordinates;
+    _searchController.addListener(_filterCities);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterCities);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterCities() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredCities = cityCoordinates;
+      } else {
+        _filteredCities = {};
+        cityCoordinates.forEach((country, cities) {
+          final matchingCities = Map.fromEntries(cities.entries.where(
+              (cityEntry) => cityEntry.key.toLowerCase().contains(query)));
+          if (matchingCities.isNotEmpty) {
+            _filteredCities[country] = matchingCities;
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> items = [];
+    _filteredCities.forEach((country, cities) {
+      items.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          child: Text(
+            country,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      );
+      cities.forEach((city, data) {
+        items.add(
+          ListTile(
+            title: Text(city),
+            onTap: () {
+              widget.onCitySelected(city);
+            },
+          ),
+        );
+      });
+      items.add(const Divider());
+    });
+    if (items.isNotEmpty) {
+      items.removeLast(); // Remove last divider
+    }
+
+    return AlertDialog(
+      title: const Text('חיפוש עיר'),
+      content: SizedBox(
+        width: 400, // הגדרת רוחב קבוע
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _searchController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'הקלד שם עיר...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _filteredCities.isEmpty
+                  ? const Center(child: Text('לא נמצאו ערים'))
+                  : ListView(children: items),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('ביטול'),
+        ),
+      ],
     );
   }
 }
