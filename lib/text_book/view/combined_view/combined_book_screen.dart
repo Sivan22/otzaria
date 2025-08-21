@@ -19,6 +19,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/notes/notes_system.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 
 class CombinedView extends StatefulWidget {
   CombinedView({
@@ -57,6 +58,9 @@ class _CombinedViewState extends State<CombinedView> {
   String? _lastSelectedText;
   int? _lastSelectionStart;
   int? _lastSelectionEnd;
+  
+  // מעקב אחר האינדקס הנוכחי שנבחר
+  int? _currentSelectedIndex;
 
   /// helper קטן שמחזיר רשימת MenuEntry מקבוצה אחת, כולל כפתור הצג/הסתר הכל
   List<ctx.MenuItem<void>> _buildGroup(
@@ -102,7 +106,8 @@ class _CombinedViewState extends State<CombinedView> {
     ];
   }
 
-  ctx.ContextMenu _buildContextMenu(TextBookLoaded state) {
+// + בניית תפריט קונטקסט "מקובע" לאינדקס ספציפי של פסקה
+ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphIndex) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -121,14 +126,11 @@ class _CombinedViewState extends State<CombinedView> {
         .toList();
 
     return ctx.ContextMenu(
-      // 4. הגדרת הגובה המקסימלי ל-70% מגובה המסך
       maxHeight: screenHeight * 0.9,
       entries: [
-        ctx.MenuItem(
-            label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
+        ctx.MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
           label: 'מפרשים',
-
           items: [
             ctx.MenuItem(
               label: 'הצג את כל המפרשים',
@@ -151,27 +153,16 @@ class _CombinedViewState extends State<CombinedView> {
               },
             ),
             const ctx.MenuDivider(),
-            // תורה שבכתב
             ..._buildGroup('תורה שבכתב', state.torahShebichtav, state),
-
-            // מוסיפים קו הפרדה רק אם יש גם תורה שבכתב וגם חזל
             if (state.torahShebichtav.isNotEmpty && state.chazal.isNotEmpty)
               const ctx.MenuDivider(),
-
-            // חזל
-            ..._buildGroup('חז"ל', state.chazal, state),
-
-            // מוסיפים קו הפרדה בין חז"ל לראשונים, או בין תורה שבכתב לראשונים אם אין חז"ל
+            ..._buildGroup('חז\"ל', state.chazal, state),
             if ((state.chazal.isNotEmpty && state.rishonim.isNotEmpty) ||
                 (state.chazal.isEmpty &&
                     state.torahShebichtav.isNotEmpty &&
                     state.rishonim.isNotEmpty))
               const ctx.MenuDivider(),
-
-            // ראשונים
             ..._buildGroup('הראשונים', state.rishonim, state),
-
-            // מוסיפים קו הפרדה בין ראשונים לאחרונים, או מהקבוצה הקודמת לאחרונים
             if ((state.rishonim.isNotEmpty && state.acharonim.isNotEmpty) ||
                 (state.rishonim.isEmpty &&
                     state.chazal.isNotEmpty &&
@@ -181,11 +172,7 @@ class _CombinedViewState extends State<CombinedView> {
                     state.torahShebichtav.isNotEmpty &&
                     state.acharonim.isNotEmpty))
               const ctx.MenuDivider(),
-
-            // אחרונים
             ..._buildGroup('האחרונים', state.acharonim, state),
-
-            // מוסיפים קו הפרדה בין אחרונים למחברי זמננו, או מהקבוצה הקודמת למחברי זמננו
             if ((state.acharonim.isNotEmpty &&
                     state.modernCommentators.isNotEmpty) ||
                 (state.acharonim.isEmpty &&
@@ -201,11 +188,7 @@ class _CombinedViewState extends State<CombinedView> {
                     state.torahShebichtav.isNotEmpty &&
                     state.modernCommentators.isNotEmpty))
               const ctx.MenuDivider(),
-
-            // מחברי זמננו
             ..._buildGroup('מחברי זמננו', state.modernCommentators, state),
-
-            // הוסף קו הפרדה רק אם יש קבוצות אחרות וגם פרשנים לא-משויכים
             if ((state.torahShebichtav.isNotEmpty ||
                     state.chazal.isNotEmpty ||
                     state.rishonim.isNotEmpty ||
@@ -213,14 +196,12 @@ class _CombinedViewState extends State<CombinedView> {
                     state.modernCommentators.isNotEmpty) &&
                 ungrouped.isNotEmpty)
               const ctx.MenuDivider(),
-
-            // הוסף את רשימת הפרשנים הלא משויכים
             ..._buildGroup('שאר המפרשים', ungrouped, state),
           ],
         ),
         ctx.MenuItem.submenu(
           label: 'קישורים',
-          enabled: LinksViewer.getLinks(state).isNotEmpty, // <--- חדש
+          enabled: LinksViewer.getLinks(state).isNotEmpty,
           items: LinksViewer.getLinks(state)
               .map(
                 (link) => ctx.MenuItem(
@@ -233,11 +214,8 @@ class _CombinedViewState extends State<CombinedView> {
                         ),
                         index: link.index2 - 1,
                         openLeftPane:
-                            (Settings.getValue<bool>('key-pin-sidebar') ??
-                                    false) ||
-                                (Settings.getValue<bool>(
-                                        'key-default-sidebar-open') ??
-                                    false),
+                            (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                            (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
                       ),
                     );
                   },
@@ -253,20 +231,50 @@ class _CombinedViewState extends State<CombinedView> {
             if (text == null || text.trim().isEmpty) {
               return 'הוסף הערה';
             }
-            final preview =
-                text.length > 12 ? '${text.substring(0, 12)}...' : text;
+            final preview = text.length > 12 ? '${text.substring(0, 12)}...' : text;
             return 'הוסף הערה ל: "$preview"';
           }(),
           onSelected: () => _createNoteFromSelection(),
         ),
         const ctx.MenuDivider(),
+        // העתקה
         ctx.MenuItem(
-          label: 'בחר את כל הטקסט',
-          onSelected: () =>
-              _selectionKey.currentState?.selectableRegion.selectAll(),
+          label: 'העתק',
+          enabled: (_lastSelectedText ?? _selectedText) != null &&
+              (_lastSelectedText ?? _selectedText)!.trim().isNotEmpty,
+          onSelected: _copyFormattedText,
+        ),
+        // + שים לב לשינוי בפונקציה שנקראת וב-enabled
+        ctx.MenuItem(
+          label: 'העתק את כל הפסקה',
+          enabled: paragraphIndex >= 0 && paragraphIndex < widget.data.length,
+          onSelected: () => _copyParagraphByIndex(paragraphIndex), // <--- קריאה לפונקציה החדשה עם האינדקס
+        ),
+        ctx.MenuItem(
+          label: 'העתק את הטקסט המוצג',
+          onSelected: _copyVisibleText,
         ),
       ],
     );
+  }
+
+  /// זיהוי האינדקס של הטקסט הנבחר
+  int? _findIndexByText(String selectedText) {
+    final cleanedSelected = selectedText.replaceAll(RegExp(r'\s+'), ' ').trim();
+    
+    for (int i = 0; i < widget.data.length; i++) {
+      final originalData = widget.data[i];
+      final cleanedOriginal = originalData
+          .replaceAll(RegExp(r'<[^>]*>'), '') // הסרת תגי HTML
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      
+      if (cleanedOriginal.contains(cleanedSelected) || 
+          cleanedSelected.contains(cleanedOriginal)) {
+        return i;
+      }
+    }
+    return null;
   }
 
   /// יצירת הערה מטקסט נבחר
@@ -286,6 +294,171 @@ class _CombinedViewState extends State<CombinedView> {
     final start = _lastSelectionStart ?? _selectionStart ?? 0;
     final end = _lastSelectionEnd ?? _selectionEnd ?? text.length;
     _showNoteEditor(text, start, end);
+  }
+
+  /// העתקת פסקה לפי אינדקס (משתמש ב־widget.data[index] ומייצר גם HTML)
+  Future<void> _copyParagraphByIndex(int index) async {
+    if (index < 0 || index >= widget.data.length) return;
+
+    final text = widget.data[index];
+    if (text.trim().isEmpty) return;
+
+    final item = DataWriterItem();
+    item.add(Formats.plainText(text));
+    item.add(Formats.htmlText(_formatTextAsHtml(text)));
+
+    await SystemClipboard.instance?.write([item]);
+  }
+
+  /// העתקת הטקסט המוצג במסך ללוח
+  void _copyVisibleText() async {
+    final state = context.read<TextBookBloc>().state;
+    if (state is! TextBookLoaded || state.visibleIndices.isEmpty) return;
+
+    // איסוף כל הטקסט הנראה במסך
+    final visibleTexts = <String>[];
+    for (final index in state.visibleIndices) {
+      if (index >= 0 && index < widget.data.length) {
+        visibleTexts.add(widget.data[index]);
+      }
+    }
+
+    if (visibleTexts.isEmpty) return;
+
+    final combinedText = visibleTexts.join('\n\n');
+    final combinedHtml = visibleTexts.map(_formatTextAsHtml).join('<br><br>');
+
+    final item = DataWriterItem();
+    item.add(Formats.plainText(combinedText));
+    item.add(Formats.htmlText(combinedHtml));
+    
+    await SystemClipboard.instance?.write([item]);
+  }
+
+  /// עיצוב טקסט כ-HTML עם הגדרות הגופן הנוכחיות
+  String _formatTextAsHtml(String text) {
+    final settingsState = context.read<SettingsBloc>().state;
+    return '''
+<div style="font-family: ${settingsState.fontFamily}; font-size: ${widget.textSize}px; text-align: justify; direction: rtl;">
+$text
+</div>
+''';
+  }
+
+  /// העתקת טקסט רגיל ללוח
+  Future<void> _copyPlainText() async {
+    final text = _lastSelectedText ?? _selectedText;
+    if (text == null || text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('אנא בחר טקסט להעתקה'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final clipboard = SystemClipboard.instance;
+      if (clipboard != null) {
+        final item = DataWriterItem();
+        item.add(Formats.plainText(text));
+        await clipboard.write([item]);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('הטקסט הועתק ללוח'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה בהעתקה: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  /// העתקת טקסט מעוצב (HTML) ללוח
+  Future<void> _copyFormattedText() async {
+    final plainText = _lastSelectedText ?? _selectedText;
+    if (plainText == null || plainText.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('אנא בחר טקסט להעתקה'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final clipboard = SystemClipboard.instance;
+      if (clipboard != null) {
+        // קבלת ההגדרות הנוכחיות לעיצוב
+        final settingsState = context.read<SettingsBloc>().state;
+        
+        // ניסיון למצוא את הטקסט המקורי עם תגי HTML
+        String htmlContentToUse = plainText;
+        
+        // אם יש לנו אינדקס נוכחי, ננסה למצוא את הטקסט המקורי
+        if (_currentSelectedIndex != null && 
+            _currentSelectedIndex! >= 0 && 
+            _currentSelectedIndex! < widget.data.length) {
+          final originalData = widget.data[_currentSelectedIndex!];
+          
+          // בדיקה אם הטקסט הפשוט מופיע בטקסט המקורי
+          final plainTextCleaned = plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
+          final originalCleaned = originalData
+              .replaceAll(RegExp(r'<[^>]*>'), '') // הסרת תגי HTML
+              .replaceAll(RegExp(r'\s+'), ' ')
+              .trim();
+          
+          // אם הטקסט הפשוט תואם לטקסט המקורי (או חלק ממנו), נשתמש במקורי
+          if (originalCleaned.contains(plainTextCleaned) || 
+              plainTextCleaned.contains(originalCleaned)) {
+            htmlContentToUse = originalData;
+          }
+        }
+        
+        // יצירת HTML מעוצב עם הגדרות הגופן והגודל
+        final finalHtmlContent = '''
+<div style="font-family: ${settingsState.fontFamily}; font-size: ${widget.textSize}px; text-align: justify; direction: rtl;">
+$htmlContentToUse
+</div>
+''';
+
+        final item = DataWriterItem();
+        item.add(Formats.plainText(plainText)); // טקסט רגיל כגיבוי
+        item.add(Formats.htmlText(finalHtmlContent)); // טקסט מעוצב עם תגי HTML מקוריים
+        await clipboard.write([item]);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('הטקסט המעוצב הועתק ללוח'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה בהעתקה מעוצבת: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   /// הצגת עורך ההערות
@@ -361,6 +534,7 @@ class _CombinedViewState extends State<CombinedView> {
                 _selectedText = null;
                 _selectionStart = null;
                 _selectionEnd = null;
+                _currentSelectedIndex = null;
                 // עדכון ה-BLoC שאין טקסט נבחר
                 context
                     .read<TextBookBloc>()
@@ -369,6 +543,9 @@ class _CombinedViewState extends State<CombinedView> {
                 _selectedText = text;
                 _selectionStart = 0;
                 _selectionEnd = text.length;
+
+                // ניסיון לזהות את האינדקס על בסיס התוכן
+                _currentSelectedIndex = _findIndexByText(text);
 
                 // שמירת הבחירה האחרונה
                 _lastSelectedText = text;
@@ -382,11 +559,8 @@ class _CombinedViewState extends State<CombinedView> {
               }
               // בלי setState – כדי לא לרנדר את כל העץ תוך כדי גרירת הבחירה
             },
-            child: ctx.ContextMenuRegion(
-              // <-- ה-Region היחיד, במיקום הנכון
-              contextMenu: _buildContextMenu(state),
-              child: buildOuterList(state),
-            ),
+            // שים לב: אין כאן יותר ContextMenuRegion עוטף את כל הרשימה.
+            child: buildOuterList(state),
           ),
         );
       },
@@ -408,56 +582,58 @@ class _CombinedViewState extends State<CombinedView> {
     );
   }
 
-  ExpansionTile buildExpansiomTile(
+  Widget buildExpansiomTile(
     ExpansibleController controller,
     int index,
     TextBookLoaded state,
   ) {
-    return ExpansionTile(
-      shape: const Border(),
-      //maintainState: true,
-      controller: controller,
-      key: PageStorageKey(widget.data[index]),
-      iconColor: Colors.transparent,
-      tilePadding: const EdgeInsets.all(0.0),
-      collapsedIconColor: Colors.transparent,
-      title: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settingsState) {
-          String data = widget.data[index];
-          if (!settingsState.showTeamim) {
-            data = utils.removeTeamim(data);
-          }
-
-          if (settingsState.replaceHolyNames) {
-            data = utils.replaceHolyNames(data);
-          }
-          return Html(
-            //remove nikud if needed
-            data: state.removeNikud
-                ? utils.highLight(
-                    utils.removeVolwels('$data\n'),
-                    state.searchText,
-                  )
-                : utils.highLight('$data\n', state.searchText),
-            style: {
-              'body': Style(
+    // עוטפים את כל ה־ExpansionTile בתפריט קונטקסט ספציפי לאינדקס הנוכחי:
+    return ctx.ContextMenuRegion(
+      contextMenu: _buildContextMenuForIndex(state, index),
+      child: ExpansionTile(
+        shape: const Border(),
+        controller: controller,
+        key: PageStorageKey(widget.data[index]),
+        iconColor: Colors.transparent,
+        tilePadding: const EdgeInsets.all(0.0),
+        collapsedIconColor: Colors.transparent,
+        title: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settingsState) {
+            String data = widget.data[index];
+            if (!settingsState.showTeamim) {
+              data = utils.removeTeamim(data);
+            }
+            if (settingsState.replaceHolyNames) {
+              data = utils.replaceHolyNames(data);
+            }
+            return Html(
+              data: state.removeNikud
+                  ? utils.highLight(
+                      utils.removeVolwels('$data\n'),
+                      state.searchText,
+                    )
+                  : utils.highLight('$data\n', state.searchText),
+              style: {
+                'body': Style(
                   fontSize: FontSize(widget.textSize),
                   fontFamily: settingsState.fontFamily,
-                  textAlign: TextAlign.justify),
-            },
-          );
-        },
+                  textAlign: TextAlign.justify,
+                ),
+              },
+            );
+          },
+        ),
+        children: [
+          widget.showSplitedView.value
+              ? const SizedBox.shrink()
+              : CommentaryListForCombinedView(
+                  index: index,
+                  fontSize: widget.textSize,
+                  openBookCallback: widget.openBookCallback,
+                  showSplitView: false,
+                ),
+        ],
       ),
-      children: [
-        widget.showSplitedView.value
-            ? const SizedBox.shrink()
-            : CommentaryListForCombinedView(
-                index: index,
-                fontSize: widget.textSize,
-                openBookCallback: widget.openBookCallback,
-                showSplitView: false,
-              ),
-      ],
     );
   }
 
