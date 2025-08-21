@@ -383,14 +383,14 @@ class _NotesSidebarState extends State<NotesSidebar> {
                         Text(
                           _searchQuery.isNotEmpty 
                               ? 'לא נמצאו תוצאות'
-                              : 'אין הערות עדיין',
+                              : 'אין הערות אישיות עדיין',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _searchQuery.isNotEmpty 
                               ? 'נסה מילות חיפוש אחרות'
-                              : 'בחר טקסט והוסף הערה ראשונה',
+                              : 'בחר טקסט והוסף הערה אישית ראשונה',
                           style: Theme.of(context).textTheme.bodyMedium,
                           textAlign: TextAlign.center,
                         ),

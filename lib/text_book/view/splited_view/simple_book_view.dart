@@ -232,7 +232,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
           label: () {
             final text = _lastSelectedText ?? _selectedText;
             if (text == null || text.trim().isEmpty) {
-              return 'הוסף הערה';
+              return 'הוסף הערה אישית';
             }
             final preview =
                 text.length > 12 ? '${text.substring(0, 12)}...' : text;
@@ -268,7 +268,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     if (text == null || text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('אנא בחר טקסט ליצירת הערה'),
+          content: Text('אנא בחר טקסט ליצירת הערה אישית'),
           duration: Duration(seconds: 2),
         ),
       );

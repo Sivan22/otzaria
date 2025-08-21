@@ -355,7 +355,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         if (selectedText == null || selectedText.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('אנא בחר טקסט ליצירת הערה'),
+              content: Text('אנא בחר טקסט ליצירת הערה אישית'),
               duration: Duration(milliseconds: 1500),
             ),
           );
@@ -372,7 +372,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         );
       },
       icon: const Icon(Icons.note_add),
-      tooltip: 'הוסף הערה',
+      tooltip: 'הוסף הערה אישית',
     );
   }
 

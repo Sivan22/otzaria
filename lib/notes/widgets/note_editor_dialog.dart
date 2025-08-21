@@ -55,7 +55,7 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
   bool get _isEditing => widget.existingNote != null;
 
   /// Get dialog title
-  String get _dialogTitle => _isEditing ? 'עריכת הערה' : 'הערה חדשה';
+  String get _dialogTitle => _isEditing ? 'עריכת הערה אישית' : 'הערה אישית חדשה';
 
   /// Handle save operation
   Future<void> _handleSave() async {
