@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart' as ctx;
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
@@ -58,7 +58,7 @@ class _CombinedViewState extends State<CombinedView> {
   String? _lastSelectedText;
   int? _lastSelectionStart;
   int? _lastSelectionEnd;
-  
+
   // מעקב אחר האינדקס הנוכחי שנבחר
   int? _currentSelectedIndex;
 
@@ -107,7 +107,8 @@ class _CombinedViewState extends State<CombinedView> {
   }
 
 // + בניית תפריט קונטקסט "מקובע" לאינדקס ספציפי של פסקה
-ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphIndex) {
+  ctx.ContextMenu _buildContextMenuForIndex(
+      TextBookLoaded state, int paragraphIndex) {
     // 1. קבלת מידע על גודל המסך
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -128,7 +129,8 @@ ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphInd
     return ctx.ContextMenu(
       maxHeight: screenHeight * 0.9,
       entries: [
-        ctx.MenuItem(label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
+        ctx.MenuItem(
+            label: 'חיפוש', onSelected: () => widget.openLeftPaneTab(1)),
         ctx.MenuItem.submenu(
           label: 'מפרשים',
           items: [
@@ -214,8 +216,11 @@ ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphInd
                         ),
                         index: link.index2 - 1,
                         openLeftPane:
-                            (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                            (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
+                            (Settings.getValue<bool>('key-pin-sidebar') ??
+                                    false) ||
+                                (Settings.getValue<bool>(
+                                        'key-default-sidebar-open') ??
+                                    false),
                       ),
                     );
                   },
@@ -231,7 +236,8 @@ ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphInd
             if (text == null || text.trim().isEmpty) {
               return 'הוסף הערה';
             }
-            final preview = text.length > 12 ? '${text.substring(0, 12)}...' : text;
+            final preview =
+                text.length > 12 ? '${text.substring(0, 12)}...' : text;
             return 'הוסף הערה ל: "$preview"';
           }(),
           onSelected: () => _createNoteFromSelection(),
@@ -248,7 +254,8 @@ ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphInd
         ctx.MenuItem(
           label: 'העתק את כל הפסקה',
           enabled: paragraphIndex >= 0 && paragraphIndex < widget.data.length,
-          onSelected: () => _copyParagraphByIndex(paragraphIndex), // <--- קריאה לפונקציה החדשה עם האינדקס
+          onSelected: () => _copyParagraphByIndex(
+              paragraphIndex), // <--- קריאה לפונקציה החדשה עם האינדקס
         ),
         ctx.MenuItem(
           label: 'העתק את הטקסט המוצג',
@@ -261,15 +268,15 @@ ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphInd
   /// זיהוי האינדקס של הטקסט הנבחר
   int? _findIndexByText(String selectedText) {
     final cleanedSelected = selectedText.replaceAll(RegExp(r'\s+'), ' ').trim();
-    
+
     for (int i = 0; i < widget.data.length; i++) {
       final originalData = widget.data[i];
       final cleanedOriginal = originalData
           .replaceAll(RegExp(r'<[^>]*>'), '') // הסרת תגי HTML
           .replaceAll(RegExp(r'\s+'), ' ')
           .trim();
-      
-      if (cleanedOriginal.contains(cleanedSelected) || 
+
+      if (cleanedOriginal.contains(cleanedSelected) ||
           cleanedSelected.contains(cleanedOriginal)) {
         return i;
       }
@@ -331,7 +338,7 @@ ctx.ContextMenu _buildContextMenuForIndex(TextBookLoaded state, int paragraphInd
     final item = DataWriterItem();
     item.add(Formats.plainText(combinedText));
     item.add(Formats.htmlText(combinedHtml));
-    
+
     await SystemClipboard.instance?.write([item]);
   }
 
@@ -364,7 +371,7 @@ $text
         final item = DataWriterItem();
         item.add(Formats.plainText(text));
         await clipboard.write([item]);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -404,30 +411,31 @@ $text
       if (clipboard != null) {
         // קבלת ההגדרות הנוכחיות לעיצוב
         final settingsState = context.read<SettingsBloc>().state;
-        
+
         // ניסיון למצוא את הטקסט המקורי עם תגי HTML
         String htmlContentToUse = plainText;
-        
+
         // אם יש לנו אינדקס נוכחי, ננסה למצוא את הטקסט המקורי
-        if (_currentSelectedIndex != null && 
-            _currentSelectedIndex! >= 0 && 
+        if (_currentSelectedIndex != null &&
+            _currentSelectedIndex! >= 0 &&
             _currentSelectedIndex! < widget.data.length) {
           final originalData = widget.data[_currentSelectedIndex!];
-          
+
           // בדיקה אם הטקסט הפשוט מופיע בטקסט המקורי
-          final plainTextCleaned = plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
+          final plainTextCleaned =
+              plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
           final originalCleaned = originalData
               .replaceAll(RegExp(r'<[^>]*>'), '') // הסרת תגי HTML
               .replaceAll(RegExp(r'\s+'), ' ')
               .trim();
-          
+
           // אם הטקסט הפשוט תואם לטקסט המקורי (או חלק ממנו), נשתמש במקורי
-          if (originalCleaned.contains(plainTextCleaned) || 
+          if (originalCleaned.contains(plainTextCleaned) ||
               plainTextCleaned.contains(originalCleaned)) {
             htmlContentToUse = originalData;
           }
         }
-        
+
         // יצירת HTML מעוצב עם הגדרות הגופן והגודל
         final finalHtmlContent = '''
 <div style="font-family: ${settingsState.fontFamily}; font-size: ${widget.textSize}px; text-align: justify; direction: rtl;">
@@ -437,9 +445,10 @@ $htmlContentToUse
 
         final item = DataWriterItem();
         item.add(Formats.plainText(plainText)); // טקסט רגיל כגיבוי
-        item.add(Formats.htmlText(finalHtmlContent)); // טקסט מעוצב עם תגי HTML מקוריים
+        item.add(Formats.htmlText(
+            finalHtmlContent)); // טקסט מעוצב עם תגי HTML מקוריים
         await clipboard.write([item]);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -606,20 +615,17 @@ $htmlContentToUse
             if (settingsState.replaceHolyNames) {
               data = utils.replaceHolyNames(data);
             }
-            return Html(
-              data: state.removeNikud
+            return HtmlWidget(
+              state.removeNikud
                   ? utils.highLight(
                       utils.removeVolwels('$data\n'),
                       state.searchText,
                     )
                   : utils.highLight('$data\n', state.searchText),
-              style: {
-                'body': Style(
-                  fontSize: FontSize(widget.textSize),
-                  fontFamily: settingsState.fontFamily,
-                  textAlign: TextAlign.justify,
-                ),
-              },
+              textStyle: TextStyle(
+                fontSize: widget.textSize,
+                fontFamily: settingsState.fontFamily,
+              ),
             );
           },
         ),
