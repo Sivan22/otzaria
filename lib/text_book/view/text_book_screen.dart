@@ -31,6 +31,10 @@ import 'package:otzaria/utils/ref_helper.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:otzaria/notes/notes_system.dart';
+import 'package:otzaria/models/phone_report_data.dart';
+import 'package:otzaria/services/data_collection_service.dart';
+import 'package:otzaria/services/phone_report_service.dart';
+import 'package:otzaria/widgets/phone_report_tab.dart';
 
 /// נתוני הדיווח שנאספו מתיבת סימון הטקסט + פירוט הטעות שהמשתמש הקליד.
 class ReportedErrorData {
@@ -45,6 +49,7 @@ enum ReportAction {
   cancel,
   sendEmail,
   saveForLater,
+  phone,
 }
 
 class TextBookViewerBloc extends StatefulWidget {
@@ -80,6 +85,24 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
               '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
         )
         .join('&');
+  }
+
+  int _getCurrentLineNumber() {
+    try {
+      final state = context.read<TextBookBloc>().state;
+      if (state is TextBookLoaded) {
+        final positions = state.positionsListener.itemPositions.value;
+        if (positions.isNotEmpty) {
+          final firstVisible =
+              positions.reduce((a, b) => a.index < b.index ? a : b);
+          return firstVisible.index + 1;
+        }
+      }
+      return 1; // Fallback to line 1
+    } catch (e) {
+      debugPrint('Error getting current line number: $e');
+      return 1;
+    }
   }
 
   @override
@@ -563,171 +586,51 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     if (!mounted) return;
 
-    final ReportedErrorData? reportData = await _showTextSelectionDialog(
+    final dynamic result = await _showTabbedReportDialog(
       context,
       visibleText,
       state.fontSize,
+      state.book.title,
     );
 
-    if (reportData == null) return; // בוטל או לא נבחר טקסט
+    if (result == null) return; // בוטל
     if (!mounted) return;
 
-    final ReportAction? action =
-        await _showConfirmationDialog(context, reportData);
+    // Handle different result types
+    if (result is ReportedErrorData) {
+      // Regular report - continue with existing flow
+      final ReportAction? action =
+          await _showConfirmationDialog(context, result);
 
-    if (action == null || action == ReportAction.cancel) return;
+      if (action == null || action == ReportAction.cancel) return;
 
-    // נבנה את גוף המייל (נעשה שימוש גם לשליחה וגם לשמירה)
-    final emailBody = _buildEmailBody(
-      state.book.title,
-      currentRef,
-      bookDetails,
-      reportData.selectedText,
-      reportData.errorDetails,
-    );
-
-    if (action == ReportAction.sendEmail) {
-      // בחירת כתובת דוא"ל לקבלת הדיווח
-      final emailAddress =
-          bookDetails['תיקיית המקור']?.contains('sefaria') == true
-              ? 'corrections@sefaria.org'
-              : _fallbackMail;
-
-      final emailUri = Uri(
-        scheme: 'mailto',
-        path: emailAddress,
-        query: encodeQueryParameters(<String, String>{
-          'subject': 'דיווח על טעות: ${state.book.title}',
-          'body': emailBody,
-        }),
-      );
-
-      try {
-        if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
-          _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
-        }
-      } catch (_) {
-        _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
-      }
-      return;
-    }
-
-    if (action == ReportAction.saveForLater) {
-      final saved = await _saveReportToFile(emailBody);
-      if (!saved) {
-        _showSimpleSnack('שמירת הדיווח נכשלה.');
-        return;
-      }
-
-      final count = await _countReportsInFile();
-      _showSavedSnack(count);
-      return;
+      // Handle regular report actions
+      await _handleRegularReportAction(
+          action, result, state, currentRef, bookDetails);
+    } else if (result is PhoneReportData) {
+      // Phone report - handle directly
+      await _handlePhoneReport(result);
     }
   }
 
-  Future<ReportedErrorData?> _showTextSelectionDialog(
+  Future<dynamic> _showTabbedReportDialog(
     BuildContext context,
     String text,
     double fontSize,
+    String bookTitle,
   ) async {
-    String? selectedContent;
-    final TextEditingController detailsController = TextEditingController();
-    return showDialog<ReportedErrorData>(
+    // קבל את מספר השורה ההתחלתי לפני פתיחת הדיאלוג
+    final currentLineNumber = _getCurrentLineNumber();
+
+    return showDialog<dynamic>(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('בחר את הטקסט שבו יש טעות'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('סמן את הטקסט שבו נמצאת הטעות:'),
-                    const SizedBox(height: 8),
-                    // השתמשנו ב-ConstrainedBox כדי לתת גובה מקסימלי, במקום Expanded
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.4,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: SingleChildScrollView(
-                          child: SelectableText(
-                            text,
-                            style: TextStyle(
-                              fontSize: fontSize,
-                              fontFamily:
-                                  Settings.getValue('key-font-family') ??
-                                      'candara',
-                            ),
-                            onSelectionChanged: (selection, cause) {
-                              if (selection.start != selection.end) {
-                                final newContent = text.substring(
-                                  selection.start,
-                                  selection.end,
-                                );
-                                if (newContent.isNotEmpty) {
-                                  setDialogState(() {
-                                    selectedContent = newContent;
-                                  });
-                                }
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'פירוט הטעות (חובה לפרט מהי הטעות, בלא פירוט לא נוכל לטפל):',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    TextField(
-                      controller: detailsController,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                        hintText: 'כתוב כאן מה לא תקין, הצע תיקון וכו\'',
-                      ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('ביטול'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  onPressed: selectedContent == null || selectedContent!.isEmpty
-                      ? null
-                      : () => Navigator.of(context).pop(
-                            ReportedErrorData(
-                              selectedText: selectedContent!,
-                              errorDetails: detailsController.text.trim(),
-                            ),
-                          ),
-                  child: const Text('המשך'),
-                ),
-              ],
-            );
-          },
+        return _TabbedReportDialog(
+          visibleText: text,
+          fontSize: fontSize,
+          bookTitle: bookTitle,
+          // העבר רק את מספר השורה ההתחלתי
+          currentLineNumber: currentLineNumber,
         );
       },
     );
@@ -806,6 +709,116 @@ $selectedText
 פירוט הטעות:
 $detailsSection
 ''';
+  }
+
+  /// Handle regular report action (email or save)
+  Future<void> _handleRegularReportAction(
+    ReportAction action,
+    ReportedErrorData reportData,
+    TextBookLoaded state,
+    String currentRef,
+    Map<String, String> bookDetails,
+  ) async {
+    final emailBody = _buildEmailBody(
+      state.book.title,
+      currentRef,
+      bookDetails,
+      reportData.selectedText,
+      reportData.errorDetails,
+    );
+
+    if (action == ReportAction.sendEmail) {
+      final emailAddress =
+          bookDetails['תיקיית המקור']?.contains('sefaria') == true
+              ? 'corrections@sefaria.org'
+              : _fallbackMail;
+
+      final emailUri = Uri(
+        scheme: 'mailto',
+        path: emailAddress,
+        query: encodeQueryParameters(<String, String>{
+          'subject': 'דיווח על טעות: ${state.book.title}',
+          'body': emailBody,
+        }),
+      );
+
+      try {
+        if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
+          _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+        }
+      } catch (_) {
+        _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+      }
+    } else if (action == ReportAction.saveForLater) {
+      final saved = await _saveReportToFile(emailBody);
+      if (!saved) {
+        _showSimpleSnack('שמירת הדיווח נכשלה.');
+        return;
+      }
+
+      final count = await _countReportsInFile();
+      _showSavedSnack(count);
+    }
+  }
+
+  /// Handle phone report submission
+  Future<void> _handlePhoneReport(PhoneReportData reportData) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final phoneReportService = PhoneReportService();
+      final result = await phoneReportService.submitReport(reportData);
+
+      // Hide loading indicator
+      if (mounted) Navigator.of(context).pop();
+
+      if (result.isSuccess) {
+        _showPhoneReportSuccessDialog();
+      } else {
+        _showSimpleSnack(result.message);
+      }
+    } catch (e) {
+      // Hide loading indicator
+      if (mounted) Navigator.of(context).pop();
+
+      debugPrint('Phone report error: $e');
+      _showSimpleSnack('שגיאה בשליחת הדיווח: ${e.toString()}');
+    }
+  }
+
+  /// Show success dialog for phone report
+  void _showPhoneReportSuccessDialog() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('דיווח נשלח בהצלחה'),
+        content: const Text('הדיווח נשלח בהצלחה לצוות אוצריא. תודה על הדיווח!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('סגור'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Open another report dialog
+              _showReportBugDialog(context,
+                  context.read<TextBookBloc>().state as TextBookLoaded);
+            },
+            child: const Text('פתח דוח שגיאות אחר'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// שמירת דיווח לקובץ בתיקייה הראשית של הספרייה (libraryPath).
@@ -1298,5 +1311,308 @@ $detailsSection
 
   Widget _buildCommentaryView() {
     return const CommentatorsListView();
+  }
+}
+
+// החלף את כל המחלקה הזו בקובץ text_book_screen.TXT
+
+/// Tabbed dialog for error reporting with regular and phone options
+class _TabbedReportDialog extends StatefulWidget {
+  final String visibleText;
+  final double fontSize;
+  final String bookTitle;
+  final int currentLineNumber; // חזרנו לפרמטר המקורי והנכון
+
+  const _TabbedReportDialog({
+    required this.visibleText,
+    required this.fontSize,
+    required this.bookTitle,
+    required this.currentLineNumber, // וגם כאן
+  });
+
+  @override
+  State<_TabbedReportDialog> createState() => _TabbedReportDialogState();
+}
+
+class _TabbedReportDialogState extends State<_TabbedReportDialog>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String? _selectedText;
+  final DataCollectionService _dataService = DataCollectionService();
+
+  // Phone report data
+  String _libraryVersion = 'unknown';
+  int? _bookId;
+  bool _isLoadingData = true;
+  List<String> _dataErrors = [];
+
+  // הסרנו את הפונקציה המיותרת _calculateLineNumberForSelectedText
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadPhoneReportData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPhoneReportData() async {
+    // קוד זה נשאר זהה
+    try {
+      final availability =
+          await _dataService.checkDataAvailability(widget.bookTitle);
+
+      setState(() {
+        _libraryVersion = availability['libraryVersion'] ?? 'unknown';
+        _bookId = availability['bookId'];
+        _dataErrors = List<String>.from(availability['errors'] ?? []);
+        _isLoadingData = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading phone report data: $e');
+      setState(() {
+        _dataErrors = ['שגיאה בטעינת נתוני הדיווח'];
+        _isLoadingData = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // קוד זה נשאר זהה
+    return Dialog(
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: Column(
+          children: [
+            // Dialog title
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'דיווח על טעות בספר',
+                style: Theme.of(context).textTheme.headlineSmall,
+                textDirection: TextDirection.rtl,
+              ),
+            ),
+            // Tab bar
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'דיווח רגיל'),
+                Tab(text: 'דיווח דרך קו אוצריא'),
+              ],
+            ),
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildRegularReportTab(),
+                  _buildPhoneReportTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegularReportTab() {
+    // קוד זה נשאר זהה
+    return _RegularReportTab(
+      visibleText: widget.visibleText,
+      fontSize: widget.fontSize,
+      initialSelectedText: _selectedText,
+      onTextSelected: (text) {
+        setState(() {
+          _selectedText = text;
+        });
+      },
+      onSubmit: (reportData) {
+        Navigator.of(context).pop(reportData);
+      },
+      onCancel: () {
+        Navigator.of(context).pop();
+      },
+    );
+  }
+
+  Widget _buildPhoneReportTab() {
+    if (_isLoadingData) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('טוען נתוני דיווח...'),
+          ],
+        ),
+      );
+    }
+
+    // --- כאן התיקון המרכזי ---
+    return PhoneReportTab(
+      visibleText: widget.visibleText,
+      fontSize: widget.fontSize,
+      libraryVersion: _libraryVersion,
+      bookId: _bookId,
+      lineNumber: widget.currentLineNumber, // העבר את מספר השורה ההתחלתי
+      initialSelectedText: _selectedText,
+      // עדכן את ה-onSubmit כדי לקבל את מספר השורה המחושב בחזרה
+      onSubmit: (selectedText, errorId, moreInfo, lineNumber) async {
+        final reportData = PhoneReportData(
+          selectedText: selectedText,
+          errorId: errorId,
+          moreInfo: moreInfo,
+          libraryVersion: _libraryVersion,
+          bookId: _bookId!,
+          lineNumber: lineNumber, // השתמש במספר השורה המעודכן שהתקבל!
+        );
+        Navigator.of(context).pop(reportData);
+      },
+      onCancel: () {
+        Navigator.of(context).pop();
+      },
+    );
+  }
+}
+
+/// Regular report tab widget
+class _RegularReportTab extends StatefulWidget {
+  final String visibleText;
+  final double fontSize;
+  final String? initialSelectedText;
+  final Function(String) onTextSelected;
+  final Function(ReportedErrorData) onSubmit;
+  final VoidCallback onCancel;
+
+  const _RegularReportTab({
+    required this.visibleText,
+    required this.fontSize,
+    this.initialSelectedText,
+    required this.onTextSelected,
+    required this.onSubmit,
+    required this.onCancel,
+  });
+
+  @override
+  State<_RegularReportTab> createState() => _RegularReportTabState();
+}
+
+class _RegularReportTabState extends State<_RegularReportTab> {
+  String? _selectedContent;
+  final TextEditingController _detailsController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedContent = widget.initialSelectedText;
+  }
+
+  @override
+  void dispose() {
+    _detailsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('סמן את הטקסט שבו נמצאת הטעות:'),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.3,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  widget.visibleText,
+                  style: TextStyle(
+                    fontSize: widget.fontSize,
+                    fontFamily:
+                        Settings.getValue('key-font-family') ?? 'candara',
+                  ),
+                  onSelectionChanged: (selection, cause) {
+                    if (selection.start != selection.end) {
+                      final newContent = widget.visibleText.substring(
+                        selection.start,
+                        selection.end,
+                      );
+                      if (newContent.isNotEmpty) {
+                        setState(() {
+                          _selectedContent = newContent;
+                        });
+                        widget.onTextSelected(newContent);
+                      }
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'פירוט הטעות (חובה לפרט מהי הטעות, בלא פירוט לא נוכל לטפל):',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _detailsController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              hintText: 'כתוב כאן מה לא תקין, הצע תיקון וכו\'',
+            ),
+            textDirection: TextDirection.rtl,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: widget.onCancel,
+                child: const Text('ביטול'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _selectedContent == null || _selectedContent!.isEmpty
+                    ? null
+                    : () {
+                        widget.onSubmit(
+                          ReportedErrorData(
+                            selectedText: _selectedContent!,
+                            errorDetails: _detailsController.text.trim(),
+                          ),
+                        );
+                      },
+                child: const Text('המשך'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
