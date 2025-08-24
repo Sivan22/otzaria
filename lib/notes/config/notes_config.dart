@@ -224,6 +224,24 @@ class NormalizationConfig {
     );
   }
 
+  /// Convert to map for serialization
+  Map<String, dynamic> toMap() {
+    return {
+      'removeNikud': removeNikud,
+      'quoteStyle': quoteStyle,
+      'unicodeForm': unicodeForm,
+    };
+  }
+
+  /// Create from map
+  factory NormalizationConfig.fromMap(Map<String, dynamic> map) {
+    return NormalizationConfig(
+      removeNikud: map['removeNikud'] ?? false,
+      quoteStyle: map['quoteStyle'] ?? 'ascii',
+      unicodeForm: map['unicodeForm'] ?? 'NFKC',
+    );
+  }
+
   @override
   String toString() => toConfigString();
 }

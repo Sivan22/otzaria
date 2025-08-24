@@ -164,6 +164,18 @@ class NotesDataProvider {
     return result.map((json) => Note.fromJson(json)).toList();
   }
 
+  /// Get all notes across all books
+  Future<List<Note>> getAllNotes() async {
+    final db = await database;
+    
+    final result = await db.query(
+      DatabaseConfig.notesTable,
+      orderBy: 'updated_at DESC',
+    );
+    
+    return result.map((json) => Note.fromJson(json)).toList();
+  }
+
   /// Get notes for a specific character range
   Future<List<Note>> getNotesForCharRange(
     String bookId,

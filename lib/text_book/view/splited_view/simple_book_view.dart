@@ -648,21 +648,11 @@ $htmlContentToUse
               ),
               Expanded(
                 flex: 1,
-                child: NotesSidebar(
+                child: _NotesSection(
                   bookId: widget.tab.book.title,
                   onClose: () => context
                       .read<TextBookBloc>()
                       .add(const ToggleNotesSidebar()),
-                  onNavigateToPosition: (start, end) {
-                    // ניווט למיקום ההערה בטקסט
-                    // זה יצריך חישוב של האינדקס המתאים
-                    // לעת עתה נציג הודעה
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('ניווט למיקום $start-$end'),
-                      ),
-                    );
-                  },
                 ),
               ),
             ],
@@ -670,6 +660,35 @@ $htmlContentToUse
         }
 
         return bookView;
+      },
+    );
+  }
+}
+
+/// Widget נפרד לסרגל ההערות כדי למנוע rebuilds מיותרים של הטקסט
+class _NotesSection extends StatelessWidget {
+  final String bookId;
+  final VoidCallback onClose;
+
+  const _NotesSection({
+    required this.bookId,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return NotesSidebar(
+      bookId: bookId,
+      onClose: onClose,
+      onNavigateToPosition: (start, end) {
+        // ניווט למיקום ההערה בטקסט
+        // זה יצריך חישוב של האינדקס המתאים
+        // לעת עתה נציג הודעה
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ניווט למיקום $start-$end'),
+          ),
+        );
       },
     );
   }

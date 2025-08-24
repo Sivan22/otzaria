@@ -32,17 +32,27 @@ class _NotesSidebarState extends State<NotesSidebar> {
   String _searchQuery = '';
   NoteSortOption _sortOption = NoteSortOption.dateDesc;
   NoteStatusFilter _statusFilter = NoteStatusFilter.all;
+  Timer? _refreshTimer;
+  DateTime? _lastRefresh;
 
   @override
   void initState() {
     super.initState();
     _loadNotes();
-    
-    // רענון ההערות כל 2 שניות כדי לתפוס הערות חדשות
-    Timer.periodic(const Duration(seconds: 2), (timer) {
+
+    // רענון ההערות כל 10 שניות
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted && widget.bookId != null) {
+        // בדיקה אם עבר מספיק זמן מהרענון האחרון
+        final now = DateTime.now();
+        if (_lastRefresh != null &&
+            now.difference(_lastRefresh!).inSeconds < 8) {
+          return; // דלג על הרענון אם עבר פחות מ-8 שניות
+        }
+
         try {
           context.read<NotesBloc>().add(LoadNotesEvent(widget.bookId!));
+          _lastRefresh = now;
         } catch (e) {
           // אם ה-BLoC לא זמין, נעצור את הטיימר
           timer.cancel();
@@ -65,9 +75,10 @@ class _NotesSidebarState extends State<NotesSidebar> {
     if (widget.bookId != null) {
       try {
         context.read<NotesBloc>().add(LoadNotesEvent(widget.bookId!));
+        _lastRefresh = DateTime.now();
       } catch (e) {
         // BLoC not available yet - will be handled in build method
-        print('NotesBloc not available: $e');
+        debugPrint('NotesBloc not available: $e');
       }
     }
   }
@@ -76,11 +87,11 @@ class _NotesSidebarState extends State<NotesSidebar> {
     setState(() {
       _searchQuery = query.trim();
     });
-    
+
     if (_searchQuery.isNotEmpty) {
       final stopwatch = Stopwatch()..start();
       context.read<NotesBloc>().add(SearchNotesEvent(_searchQuery));
-      
+
       // Track search performance
       NotesTelemetry.trackSearchPerformance(
         _searchQuery,
@@ -162,7 +173,8 @@ class _NotesSidebarState extends State<NotesSidebar> {
     });
 
     // Navigate to note position if possible
-    if (note.status != NoteStatus.orphan && widget.onNavigateToPosition != null) {
+    if (note.status != NoteStatus.orphan &&
+        widget.onNavigateToPosition != null) {
       widget.onNavigateToPosition!(note.charStart, note.charEnd);
     }
 
@@ -190,7 +202,7 @@ class _NotesSidebarState extends State<NotesSidebar> {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<NotesBloc>().add(DeleteNoteEvent(note.id));
-              
+
               NotesTelemetry.trackUserAction('note_deleted', {
                 'note_count': 1,
                 'status': note.status.name,
@@ -216,8 +228,8 @@ class _NotesSidebarState extends State<NotesSidebar> {
                 child: Text(
                   'הערות אישיות',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
               if (widget.onClose != null)
@@ -239,7 +251,7 @@ class _NotesSidebarState extends State<NotesSidebar> {
               // Search field
               TextField(
                 controller: _searchController,
-                  onChanged: _onSearchChanged,
+                onChanged: _onSearchChanged,
                 decoration: InputDecoration(
                   hintText: 'חפש הערות...',
                   prefixIcon: const Icon(Icons.search),
@@ -257,10 +269,10 @@ class _NotesSidebarState extends State<NotesSidebar> {
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
-                ),
-              
+              ),
+
               const SizedBox(height: 8),
-              
+
               Row(
                 children: [
                   Flexible(
@@ -272,7 +284,8 @@ class _NotesSidebarState extends State<NotesSidebar> {
                         labelText: 'מיון',
                         isDense: true,
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       ),
                       items: NoteSortOption.values.map((option) {
                         return DropdownMenuItem(
@@ -295,7 +308,8 @@ class _NotesSidebarState extends State<NotesSidebar> {
                         labelText: 'סטטוס',
                         isDense: true,
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       ),
                       items: NoteStatusFilter.values.map((filter) {
                         return DropdownMenuItem(
@@ -316,133 +330,145 @@ class _NotesSidebarState extends State<NotesSidebar> {
 
         // Notes list
         Expanded(
-            child: Builder(
-              builder: (context) {
-                try {
-                  return BlocBuilder<NotesBloc, NotesState>(
-                    builder: (context, state) {
-                if (state is NotesLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
+          child: Builder(
+            builder: (context) {
+              try {
+                return BlocBuilder<NotesBloc, NotesState>(
+                  buildWhen: (previous, current) {
+                    // רק rebuild אם יש שינוי אמיתי במצב
+                    return previous.runtimeType != current.runtimeType ||
+                        (current is NotesLoaded &&
+                            previous is NotesLoaded &&
+                            current.notes.length != previous.notes.length) ||
+                        (current is NotesSearchResults &&
+                            previous is NotesSearchResults &&
+                            current.results.length != previous.results.length);
+                  },
+                  builder: (context, state) {
+                    if (state is NotesLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
 
-                if (state is NotesError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
+                    if (state is NotesError) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'שגיאה בטעינת הערות',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              state.message,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadNotes,
+                              child: const Text('נסה שוב'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'שגיאה בטעינת הערות',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          state.message,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadNotes,
-                          child: const Text('נסה שוב'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
 
-                List<Note> notes = [];
-                if (state is NotesLoaded) {
-                  notes = state.notes;
-                } else if (state is NotesSearchResults) {
-                  notes = state.results;
-                }
+                    List<Note> notes = [];
+                    if (state is NotesLoaded) {
+                      notes = state.notes;
+                    } else if (state is NotesSearchResults) {
+                      notes = state.results;
+                    }
 
-                final filteredNotes = _filterAndSortNotes(notes);
+                    final filteredNotes = _filterAndSortNotes(notes);
 
-                if (filteredNotes.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _searchQuery.isNotEmpty 
-                              ? Icons.search_off 
-                              : Icons.note_add_outlined,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    if (filteredNotes.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _searchQuery.isNotEmpty
+                                  ? Icons.search_off
+                                  : Icons.note_add_outlined,
+                              size: 48,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'לא נמצאו תוצאות'
+                                  : 'אין הערות אישיות עדיין',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'נסה מילות חיפוש אחרות'
+                                  : 'בחר טקסט והוסף הערה אישית ראשונה',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchQuery.isNotEmpty 
-                              ? 'לא נמצאו תוצאות'
-                              : 'אין הערות אישיות עדיין',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _searchQuery.isNotEmpty 
-                              ? 'נסה מילות חיפוש אחרות'
-                              : 'בחר טקסט והוסף הערה אישית ראשונה',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
 
-                return ListView.builder(
-                  itemCount: filteredNotes.length,
-                  itemBuilder: (context, index) {
-                    final note = filteredNotes[index];
-                    return _NoteListItem(
-                      note: note,
-                      onPressed: () => _onNotePressed(note),
-                      onEdit: () => _onEditNote(note),
-                      onDelete: () => _onDeleteNote(note),
+                    return ListView.builder(
+                      itemCount: filteredNotes.length,
+                      itemBuilder: (context, index) {
+                        final note = filteredNotes[index];
+                        return _NoteListItem(
+                          note: note,
+                          onPressed: () => _onNotePressed(note),
+                          onEdit: () => _onEditNote(note),
+                          onDelete: () => _onDeleteNote(note),
+                        );
+                      },
                     );
                   },
                 );
-                    },
-                  );
-                } catch (e) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'שגיאה בטעינת הערות',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'NotesBloc לא זמין. נסה לעשות restart לאפליקציה.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              },
-            ),
+              } catch (e) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'שגיאה בטעינת הערות',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'NotesBloc לא זמין. נסה לעשות restart לאפליקציה.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 
   String _getSortOptionLabel(NoteSortOption option) {
@@ -473,6 +499,7 @@ class _NotesSidebarState extends State<NotesSidebar> {
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -514,8 +541,9 @@ class _NoteListItem extends StatelessWidget {
                     child: Text(
                       _formatDate(note.updatedAt),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ),
                   PopupMenuButton<String>(
@@ -554,9 +582,9 @@ class _NoteListItem extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Note content preview
               Text(
                 note.contentMarkdown,
@@ -564,7 +592,7 @@ class _NoteListItem extends StatelessWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
               // Tags if any
               if (note.tags.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -593,7 +621,7 @@ class _NoteListItem extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       return 'היום ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays == 1) {

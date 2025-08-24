@@ -144,7 +144,27 @@ class NotesRepository {
         return [];
       }
       
-      return await _dataProvider.searchNotes(query, bookId: bookId);
+      // For simple queries, use database FTS
+      if (query.length < 3 || query.split(' ').length == 1) {
+        return await _dataProvider.searchNotes(query, bookId: bookId);
+      }
+      
+      // For complex queries, use background processor for better performance
+      final allNotes = bookId != null 
+          ? await _dataProvider.getNotesForBook(bookId)
+          : await _dataProvider.getAllNotes();
+      
+      if (allNotes.length > 100) {
+        // Use isolate for large datasets
+        return await _backgroundProcessor.processTextSearch(
+          query, 
+          allNotes, 
+          bookId: bookId,
+        );
+      } else {
+        // Use database for small datasets
+        return await _dataProvider.searchNotes(query, bookId: bookId);
+      }
     } catch (e) {
       throw RepositoryException('Failed to search notes: $e');
     }
@@ -485,4 +505,172 @@ class RepositoryException implements Exception {
 
   @override
   String toString() => 'RepositoryException: $message';
+}
+
+/// Extension methods for NotesRepository with advanced processing capabilities
+extension NotesRepositoryAdvanced on NotesRepository {
+  /// Export notes in various formats using background processing
+  Future<Map<String, dynamic>> exportNotes({
+    String? bookId,
+    String format = 'json',
+    bool includeMetadata = true,
+  }) async {
+    try {
+      // Get all notes or filter by book
+      final allNotes = await _dataProvider.getAllNotes();
+      final notesToExport = bookId != null 
+          ? allNotes.where((note) => note.bookId == bookId).toList()
+          : allNotes;
+      
+      // Use background processor for export
+      final result = await _backgroundProcessor.processBatchOperation(
+        'export',
+        notesToExport,
+        {
+          'format': format,
+          'includeMetadata': includeMetadata,
+        },
+      );
+      
+      return result;
+    } catch (e) {
+      throw Exception('Failed to export notes: $e');
+    }
+  }
+
+  /// Validate all notes using background processing
+  Future<Map<String, dynamic>> validateAllNotes() async {
+    try {
+      final allNotes = await _dataProvider.getAllNotes();
+      
+      // Use background processor for validation
+      final result = await _backgroundProcessor.processBatchOperation(
+        'validate',
+        allNotes,
+        {},
+      );
+      
+      return result;
+    } catch (e) {
+      throw Exception('Failed to validate notes: $e');
+    }
+  }
+
+  /// Calculate comprehensive statistics using background processing
+  Future<Map<String, dynamic>> calculateStatistics({String? bookId}) async {
+    try {
+      final allNotes = await _dataProvider.getAllNotes();
+      final notesToAnalyze = bookId != null 
+          ? allNotes.where((note) => note.bookId == bookId).toList()
+          : allNotes;
+      
+      // Use background processor for statistics
+      final result = await _backgroundProcessor.processBatchOperation(
+        'statistics',
+        notesToAnalyze,
+        {'bookId': bookId},
+      );
+      
+      return result;
+    } catch (e) {
+      throw Exception('Failed to calculate statistics: $e');
+    }
+  }
+
+  /// Cleanup and optimize notes data using background processing
+  Future<Map<String, dynamic>> cleanupNotes() async {
+    try {
+      final allNotes = await _dataProvider.getAllNotes();
+      
+      // Use background processor for cleanup
+      final result = await _backgroundProcessor.processBatchOperation(
+        'cleanup',
+        allNotes,
+        {},
+      );
+      
+      return result;
+    } catch (e) {
+      throw Exception('Failed to cleanup notes: $e');
+    }
+  }
+
+  /// Process multiple texts in parallel (e.g., for bulk normalization)
+  Future<List<String>> normalizeTextsInParallel(List<String> texts) async {
+    try {
+      // Use parallel processing for normalization
+      final results = await _backgroundProcessor.processParallelOperations<String>(
+        texts,
+        'normalize_texts',
+        {},
+      );
+      
+      return results;
+    } catch (e) {
+      throw Exception('Failed to normalize texts in parallel: $e');
+    }
+  }
+
+  /// Generate hashes for multiple texts in parallel
+  Future<List<String>> generateHashesInParallel(List<String> texts) async {
+    try {
+      // Use parallel processing for hash generation
+      final results = await _backgroundProcessor.processParallelOperations<String>(
+        texts,
+        'generate_hashes',
+        {},
+      );
+      
+      return results;
+    } catch (e) {
+      throw Exception('Failed to generate hashes in parallel: $e');
+    }
+  }
+
+  /// Validate multiple notes in parallel
+  Future<List<bool>> validateNotesInParallel(List<Note> notes) async {
+    try {
+      // Use parallel processing for validation
+      final results = await _backgroundProcessor.processParallelOperations<bool>(
+        notes,
+        'validate_notes',
+        {},
+      );
+      
+      return results;
+    } catch (e) {
+      throw Exception('Failed to validate notes in parallel: $e');
+    }
+  }
+
+  /// Extract keywords from multiple texts in parallel
+  Future<List<List<String>>> extractKeywordsInParallel(List<String> texts) async {
+    try {
+      // Use parallel processing for keyword extraction
+      final results = await _backgroundProcessor.processParallelOperations<List<String>>(
+        texts,
+        'extract_keywords',
+        {},
+      );
+      
+      return results;
+    } catch (e) {
+      throw Exception('Failed to extract keywords in parallel: $e');
+    }
+  }
+
+  /// Get comprehensive performance and cache statistics
+  Map<String, dynamic> getProcessingStatistics() {
+    return _backgroundProcessor.getProcessingStats();
+  }
+
+  /// Clear all cached results to free memory
+  void clearProcessingCache() {
+    _backgroundProcessor.clearCache();
+  }
+
+  /// Reset performance statistics
+  void resetPerformanceStats() {
+    _backgroundProcessor.resetPerformanceStats();
+  }
 }

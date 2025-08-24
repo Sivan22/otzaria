@@ -1,5 +1,6 @@
 import '../config/notes_config.dart';
 import '../utils/text_utils.dart';
+import 'background_processor.dart';
 
 /// Service for normalizing text to ensure consistent hashing and matching.
 /// 
@@ -118,6 +119,26 @@ class TextNormalizer {
       quoteStyle: 'ascii',
       unicodeForm: 'NFKC',
     );
+  }
+
+  /// Normalize text asynchronously using background processor for large texts
+  static Future<String> normalizeAsync(String text, NormalizationConfig config) async {
+    // For small texts, use synchronous normalization
+    if (text.length < 10000) {
+      return normalize(text, config);
+    }
+    
+    // For large texts, use background processor
+    try {
+      final backgroundProcessor = BackgroundProcessor.instance;
+      return await backgroundProcessor.processTextNormalization(
+        text,
+        config.toMap(),
+      );
+    } catch (e) {
+      // Fallback to synchronous normalization
+      return normalize(text, config);
+    }
   }
 
   /// Validate that text normalization is stable

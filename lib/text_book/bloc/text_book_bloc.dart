@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/text_book_repository.dart';
@@ -74,13 +75,20 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final ItemPositionsListener positionsListener =
           ItemPositionsListener.create();
 
-      // Set up position listener
+      // Set up position listener with debouncing to prevent excessive updates
+      Timer? debounceTimer;
       positionsListener.itemPositions.addListener(() {
-        final visibleInecies =
-            positionsListener.itemPositions.value.map((e) => e.index).toList();
-        if (visibleInecies.isNotEmpty) {
-          add(UpdateVisibleIndecies(visibleInecies));
-        }
+        // Cancel previous timer if exists
+        debounceTimer?.cancel();
+        
+        // Set new timer with 100ms delay
+        debounceTimer = Timer(const Duration(milliseconds: 100), () {
+          final visibleInecies =
+              positionsListener.itemPositions.value.map((e) => e.index).toList();
+          if (visibleInecies.isNotEmpty) {
+            add(UpdateVisibleIndecies(visibleInecies));
+          }
+        });
       });
 
       emit(TextBookLoaded(
@@ -188,9 +196,18 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   ) async {
     if (state is TextBookLoaded) {
       final currentState = state as TextBookLoaded;
-      String? newTitle;
+      
+      // בדיקה אם האינדקסים באמת השתנו
+      if (_listsEqual(currentState.visibleIndices, event.visibleIndecies)) {
+        return; // אין שינוי, לא צריך לעדכן
+      }
+      
+      String? newTitle = currentState.currentTitle;
 
-      if (event.visibleIndecies.isNotEmpty) {
+      // עדכון הכותרת רק אם האינדקס הראשון השתנה
+      if (event.visibleIndecies.isNotEmpty && 
+          (currentState.visibleIndices.isEmpty || 
+           currentState.visibleIndices.first != event.visibleIndecies.first)) {
         newTitle = await refFromIndex(event.visibleIndecies.first,
             Future.value(currentState.tableOfContents));
       }
@@ -205,6 +222,15 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           currentTitle: newTitle,
           selectedIndex: index));
     }
+  }
+  
+  /// בדיקה אם שתי רשימות שוות
+  bool _listsEqual(List<int> list1, List<int> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
   }
 
   void _onUpdateSelectedIndex(
