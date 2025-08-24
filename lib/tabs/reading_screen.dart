@@ -340,6 +340,12 @@ class _ReadingScreenState extends State<ReadingScreen>
                                 'ctrl+w')
                             .toUpperCase(),
                     child: IconButton(
+                      constraints: const BoxConstraints(
+                        minWidth: 25,
+                        minHeight: 25,
+                        maxWidth: 25,
+                        maxHeight: 25,
+                      ),
                       onPressed: () => closeTab(tab, context),
                       icon: const Icon(Icons.close, size: 10),
                     ),
