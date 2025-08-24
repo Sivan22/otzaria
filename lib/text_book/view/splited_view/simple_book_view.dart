@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart' as ctx;
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
@@ -55,10 +55,10 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   String? _lastSelectedText;
   int? _lastSelectionStart;
   int? _lastSelectionEnd;
-  
+
   // מעקב אחר האינדקס הנוכחי שנבחר
   int? _currentSelectedIndex;
-  
+
   // מעקב אחר הפסקה שעליה לחץ המשתמש (לתפריט קונטקסט)
   int? _contextMenuParagraphIndex;
 
@@ -244,8 +244,8 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         // העתקה
         ctx.MenuItem(
           label: 'העתק',
-          enabled: (_lastSelectedText ?? _selectedText) != null && 
-                   (_lastSelectedText ?? _selectedText)!.trim().isNotEmpty,
+          enabled: (_lastSelectedText ?? _selectedText) != null &&
+              (_lastSelectedText ?? _selectedText)!.trim().isNotEmpty,
           onSelected: _copyFormattedText,
         ),
         ctx.MenuItem(
@@ -283,14 +283,14 @@ class _SimpleBookViewState extends State<SimpleBookView> {
   /// העתקת הפסקה הנוכחית ללוח
   void _copyCurrentParagraph() async {
     if (_currentSelectedIndex == null) return;
-    
+
     final text = widget.data[_currentSelectedIndex!];
     if (text.trim().isEmpty) return;
 
     final item = DataWriterItem();
     item.add(Formats.plainText(text));
     item.add(Formats.htmlText(_formatTextAsHtml(text)));
-    
+
     await SystemClipboard.instance?.write([item]);
   }
 
@@ -299,21 +299,21 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     // אם לא זוהתה פסקה ספציפית, נשתמש בפסקה הראשונה הנראית
     final state = context.read<TextBookBloc>().state;
     if (state is! TextBookLoaded) return;
-    
+
     int? indexToCopy = _contextMenuParagraphIndex;
     if (indexToCopy == null && state.visibleIndices.isNotEmpty) {
       indexToCopy = state.visibleIndices.first;
     }
-    
+
     if (indexToCopy == null || indexToCopy >= widget.data.length) return;
-    
+
     final text = widget.data[indexToCopy];
     if (text.trim().isEmpty) return;
 
     final item = DataWriterItem();
     item.add(Formats.plainText(text));
     item.add(Formats.htmlText(_formatTextAsHtml(text)));
-    
+
     await SystemClipboard.instance?.write([item]);
   }
 
@@ -338,7 +338,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     final item = DataWriterItem();
     item.add(Formats.plainText(combinedText));
     item.add(Formats.htmlText(combinedHtml));
-    
+
     await SystemClipboard.instance?.write([item]);
   }
 
@@ -381,7 +381,7 @@ $text
         final item = DataWriterItem();
         item.add(Formats.plainText(text));
         await clipboard.write([item]);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -421,30 +421,31 @@ $text
       if (clipboard != null) {
         // קבלת ההגדרות הנוכחיות לעיצוב
         final settingsState = context.read<SettingsBloc>().state;
-        
+
         // ניסיון למצוא את הטקסט המקורי עם תגי HTML
         String htmlContentToUse = plainText;
-        
+
         // אם יש לנו אינדקס נוכחי, ננסה למצוא את הטקסט המקורי
-        if (_currentSelectedIndex != null && 
-            _currentSelectedIndex! >= 0 && 
+        if (_currentSelectedIndex != null &&
+            _currentSelectedIndex! >= 0 &&
             _currentSelectedIndex! < widget.data.length) {
           final originalData = widget.data[_currentSelectedIndex!];
-          
+
           // בדיקה אם הטקסט הפשוט מופיע בטקסט המקורי
-          final plainTextCleaned = plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
+          final plainTextCleaned =
+              plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
           final originalCleaned = originalData
               .replaceAll(RegExp(r'<[^>]*>'), '') // הסרת תגי HTML
               .replaceAll(RegExp(r'\s+'), ' ')
               .trim();
-          
+
           // אם הטקסט הפשוט תואם לטקסט המקורי (או חלק ממנו), נשתמש במקורי
-          if (originalCleaned.contains(plainTextCleaned) || 
+          if (originalCleaned.contains(plainTextCleaned) ||
               plainTextCleaned.contains(originalCleaned)) {
             htmlContentToUse = originalData;
           }
         }
-        
+
         // יצירת HTML מעוצב עם הגדרות הגופן והגודל
         final finalHtmlContent = '''
 <div style="font-family: ${settingsState.fontFamily}; font-size: ${widget.textSize}px; text-align: justify; direction: rtl;">
@@ -454,9 +455,10 @@ $htmlContentToUse
 
         final item = DataWriterItem();
         item.add(Formats.plainText(plainText)); // טקסט רגיל כגיבוי
-        item.add(Formats.htmlText(finalHtmlContent)); // טקסט מעוצב עם תגי HTML מקוריים
+        item.add(Formats.htmlText(
+            finalHtmlContent)); // טקסט מעוצב עם תגי HTML מקוריים
         await clipboard.write([item]);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -575,9 +577,12 @@ $htmlContentToUse
             child: GestureDetector(
               onSecondaryTapDown: (details) {
                 // זיהוי הפסקה לפי מיקום הלחיצה
-                final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                final localPosition = renderBox.globalToLocal(details.globalPosition);
-                _contextMenuParagraphIndex = _findParagraphAtPosition(localPosition, state);
+                final RenderBox renderBox =
+                    context.findRenderObject() as RenderBox;
+                final localPosition =
+                    renderBox.globalToLocal(details.globalPosition);
+                _contextMenuParagraphIndex =
+                    _findParagraphAtPosition(localPosition, state);
               },
               child: ctx.ContextMenuRegion(
                 contextMenu: _buildContextMenu(state),
@@ -592,42 +597,43 @@ $htmlContentToUse
                     return BlocBuilder<SettingsBloc, SettingsState>(
                       builder: (context, settingsState) {
                         String data = widget.data[index];
-                      if (!settingsState.showTeamim) {
-                        data = utils.removeTeamim(data);
-                      }
-                      if (settingsState.replaceHolyNames) {
-                        data = utils.replaceHolyNames(data);
-                      }
-                      return InkWell(
-                        onTap: () {
-                          _currentSelectedIndex = index;
-                          context.read<TextBookBloc>().add(
-                            UpdateSelectedIndex(index),
-                          );
-                        },
-                        child: Html(
-                          // remove nikud if needed
-                          data: state.removeNikud
-                              ? utils.highLight(
-                                  utils.removeVolwels('$data\n'),
-                                  state.searchText,
-                                )
-                              : utils.highLight('$data\n', state.searchText),
-                          style: {
-                            'body': Style(
-                              fontSize: FontSize(widget.textSize),
-                              fontFamily: settingsState.fontFamily,
-                              textAlign: TextAlign.justify,
-                            ),
+                        if (!settingsState.showTeamim) {
+                          data = utils.removeTeamim(data);
+                        }
+                        if (settingsState.replaceHolyNames) {
+                          data = utils.replaceHolyNames(data);
+                        }
+                        return InkWell(
+                          onTap: () {
+                            _currentSelectedIndex = index;
+                            context.read<TextBookBloc>().add(
+                                  UpdateSelectedIndex(index),
+                                );
                           },
-                        ),
-                      );
-                    },
-                  );
-                },
+                          child: DefaultTextStyle.merge(
+                            textAlign: TextAlign.justify,
+                            style: TextStyle(
+                              fontSize: widget.textSize,
+                              fontFamily: settingsState.fontFamily,
+                            ),
+                            child: HtmlWidget(
+                              // remove nikud if needed
+                              state.removeNikud
+                                  ? utils.highLight(
+                                      utils.removeVolwels('$data\n'),
+                                      state.searchText,
+                                    )
+                                  : utils.highLight(
+                                      '$data\n', state.searchText),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
-          ),
           ),
         );
 
