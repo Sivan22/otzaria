@@ -7,7 +7,7 @@ import '../models/phone_report_data.dart';
 /// Service for submitting phone error reports to Google Apps Script
 class PhoneReportService {
   static const String _endpoint =
-      'https://script.google.com/macros/s/AKfycbwlEoUMQf-QwTvnLqk3jD8eIgptRAKR5Rzwx67CxD0xYu6SpWupeE4SI3o9BS3eE5fs/exec';
+      'https://script.google.com/macros/s/AKfycbyhLP5nbbRN33TFb7kR625BNZzzmhEljT8vX9bgckd6Vx6KPSz9Fgh9aDEk4rZe36Bf/exec';
 
   static const Duration _timeout = Duration(seconds: 10);
   static const int _maxRetries = 2;
