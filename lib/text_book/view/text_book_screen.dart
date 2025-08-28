@@ -77,6 +77,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   static const String _reportSeparator = '==============================';
   static const String _reportSeparator2 = '------------------------------';
   static const String _fallbackMail = 'otzaria.200@gmail.com';
+  bool _isInitialFocusDone = false;
 
   String? encodeQueryParameters(Map<String, String> params) {
     return params.entries
@@ -1170,12 +1171,13 @@ $detailsSection
 
   Widget _buildTabBar(TextBookLoaded state) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (state.showLeftPane && !Platform.isAndroid) {
+      if (state.showLeftPane && !Platform.isAndroid && !_isInitialFocusDone) {
         if (tabController.index == 1) {
           textSearchFocusNode.requestFocus();
         } else if (tabController.index == 0) {
           navigationSearchFocusNode.requestFocus();
         }
+        _isInitialFocusDone = true;
       }
     });
     return ValueListenableBuilder<double>(
