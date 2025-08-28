@@ -86,12 +86,29 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
             return Scaffold(
               appBar: AppBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
+                title: Stack(
+                  alignment: Alignment.center,
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: DafYomi(
+                        onDafYomiTap: (tractate, daf) {
+                          openDafYomiBook(context, tractate, ' $daf.');
+                        },
+                      ),
+                    ),
+                    Text(
+                      state.currentCategory?.title ?? '',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           // קבוצת חזור ובית
                           IconButton(
@@ -176,23 +193,6 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                           ),
                         ],
                       ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          state.currentCategory?.title ?? '',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    DafYomi(
-                      onDafYomiTap: (tractate, daf) {
-                        openDafYomiBook(context, tractate, ' $daf.');
-                      },
                     ),
                   ],
                 ),

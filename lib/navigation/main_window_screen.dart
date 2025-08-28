@@ -254,6 +254,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                 ),
                               ),
                             ),
+                            const VerticalDivider(thickness: 1, width: 1),
                             Expanded(child: pageView),
                           ],
                         );

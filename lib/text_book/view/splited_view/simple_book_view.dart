@@ -615,16 +615,14 @@ $htmlContentToUse
                             style: TextStyle(
                               fontSize: widget.textSize,
                               fontFamily: settingsState.fontFamily,
+                              height: 1.5,
                             ),
                             child: HtmlWidget(
-                              // remove nikud if needed
-                              state.removeNikud
-                                  ? utils.highLight(
-                                      utils.removeVolwels('$data\n'),
-                                      state.searchText,
-                                    )
-                                  : utils.highLight(
-                                      '$data\n', state.searchText),
+                              '''
+                              <div style="text-align: justify; direction: rtl;">
+                                ${state.removeNikud ? utils.highLight(utils.removeVolwels('$data\n'), state.searchText) : utils.highLight('$data\n', state.searchText)}
+                              </div>
+                              ''',
                             ),
                           ),
                         );

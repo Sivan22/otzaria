@@ -34,7 +34,16 @@ class _MoreScreenState extends State<MoreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getTitle(_selectedIndex)),
+        backgroundColor:
+            Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        title: Text(
+          _getTitle(_selectedIndex),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: true,
         actions: _getActions(context, _selectedIndex),
       ),

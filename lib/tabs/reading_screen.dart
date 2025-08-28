@@ -156,44 +156,50 @@ class _ReadingScreenState extends State<ReadingScreen>
 
               return Scaffold(
                 appBar: AppBar(
-                  title: Container(
-                    constraints: const BoxConstraints(maxHeight: 50),
-                    child: TabBar(
-                      controller: controller,
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.center,
-                      tabs: state.tabs
-                          .map((tab) => _buildTab(context, tab, state))
-                          .toList(),
-                    ),
-                  ),
-                  leadingWidth: 280,
-                  leading: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  title: Stack(
                     children: [
-                      // קבוצת היסטוריה וסימניות
-                      IconButton(
-                        icon: const Icon(Icons.history),
-                        tooltip: 'הצג היסטוריה',
-                        onPressed: () => _showHistoryDialog(context),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // קבוצת היסטוריה וסימניות
+                          IconButton(
+                            icon: const Icon(Icons.history),
+                            tooltip: 'הצג היסטוריה',
+                            onPressed: () => _showHistoryDialog(context),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.bookmark),
+                            tooltip: 'הצג סימניות',
+                            onPressed: () => _showBookmarksDialog(context),
+                          ),
+                          // קו מפריד
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: Colors.grey.shade400,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                          ),
+                          // קבוצת שולחן עבודה עם אנימציה
+                          SizedBox(
+                            width: 180, // רוחב קבוע למניעת הזזת הטאבים
+                            child: WorkspaceIconButton(
+                              onPressed: () =>
+                                  _showSaveWorkspaceDialog(context),
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.bookmark),
-                        tooltip: 'הצג סימניות',
-                        onPressed: () => _showBookmarksDialog(context),
-                      ),
-                      // קו מפריד
-                      Container(
-                        height: 24,
-                        width: 1,
-                        color: Colors.grey.shade400,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                      ),
-                      // קבוצת שולחן עבודה עם אנימציה
-                      SizedBox(
-                        width: 180, // רוחב קבוע למניעת הזזת הטאבים
-                        child: WorkspaceIconButton(
-                          onPressed: () => _showSaveWorkspaceDialog(context),
+                      Center(
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 50),
+                          child: TabBar(
+                            controller: controller,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.center,
+                            tabs: state.tabs
+                                .map((tab) => _buildTab(context, tab, state))
+                                .toList(),
+                          ),
                         ),
                       ),
                     ],

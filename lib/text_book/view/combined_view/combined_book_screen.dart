@@ -616,15 +616,15 @@ $htmlContentToUse
               data = utils.replaceHolyNames(data);
             }
             return HtmlWidget(
-              state.removeNikud
-                  ? utils.highLight(
-                      utils.removeVolwels('$data\n'),
-                      state.searchText,
-                    )
-                  : utils.highLight('$data\n', state.searchText),
+              '''
+              <div style="text-align: justify; direction: rtl;">
+                ${state.removeNikud ? utils.highLight(utils.removeVolwels('$data\n'), state.searchText) : utils.highLight('$data\n', state.searchText)}
+              </div>
+              ''',
               textStyle: TextStyle(
                 fontSize: widget.textSize,
                 fontFamily: settingsState.fontFamily,
+                height: 1.5,
               ),
             );
           },
@@ -678,6 +678,7 @@ $htmlContentToUse
     );
   }
 }
+
 /// Widget נפרד לסרגל ההערות כדי למנוע rebuilds מיותרים של הטקסט
 class _NotesSection extends StatelessWidget {
   final String bookId;
