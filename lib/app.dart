@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:otzaria/core/scaffold_messenger.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
@@ -14,6 +15,7 @@ class App extends StatelessWidget {
       builder: (context, settingsState) {
         final state = settingsState;
         return MaterialApp(
+          scaffoldMessengerKey: scaffoldMessengerKey,
           localizationsDelegates: const [
             GlobalCupertinoLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,

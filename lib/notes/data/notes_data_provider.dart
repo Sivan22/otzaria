@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
+import 'package:otzaria/core/app_paths.dart';
 import '../models/note.dart';
 
 import '../config/notes_config.dart';
@@ -27,19 +28,43 @@ class NotesDataProvider {
 
   /// Initialize the database with schema and optimizations
   Future<Database> _initDatabase() async {
-    // Always use persistent database - even in debug mode
-    // In-memory database would lose data when app closes
-    
-    final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, NotesEnvironment.databasePath);
+    final newPath = await resolveNotesDbPath(NotesEnvironment.databasePath);
 
-    return await openDatabase(
-      path,
-      version: DatabaseConfig.databaseVersion,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-      onOpen: _onOpen,
-    );
+    // Migrate old database file (if it exists)
+    final oldBase = await getDatabasesPath();
+    final oldPath = p.join(oldBase, NotesEnvironment.databasePath);
+
+    try {
+      final parent = Directory(p.dirname(newPath));
+      if (!await parent.exists()) await parent.create(recursive: true);
+
+      if (!await File(newPath).exists() && await File(oldPath).exists()) {
+        // move instead of copy to preserve permissions and filename
+        await File(oldPath).rename(newPath);
+      }
+
+      return await openDatabase(
+        newPath,
+        version: DatabaseConfig.databaseVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+        onOpen: _onOpen,
+      );
+    } catch (e, st) {
+      // Write detailed log next to the DB (what the user can send)
+      final logPath = p.join(p.dirname(newPath), 'notes_db_error.log');
+      final log = [
+            'When: ${DateTime.now().toIso8601String()}',
+            'OS: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
+            'Tried path: $newPath',
+            'Error: $e',
+            'Stack:\n$st',
+          ].join('\n') +
+          '\n\n';
+      await File(logPath).writeAsString(log, mode: FileMode.append);
+
+      rethrow; // rethrow to the upper layers - the UI will show a neat message
+    }
   }
 
   /// Create database schema on first run
@@ -93,10 +118,10 @@ class NotesDataProvider {
   Future<bool> validateSchema() async {
     try {
       final db = await database;
-      
+
       for (final entry in DatabaseSchema.validationQueries.entries) {
         final result = await db.rawQuery(entry.value);
-        
+
         switch (entry.key) {
           case 'notes_table_exists':
           case 'canonical_docs_table_exists':
@@ -113,7 +138,7 @@ class NotesDataProvider {
             break;
         }
       }
-      
+
       return true;
     } catch (e) {
       return false;
@@ -123,7 +148,7 @@ class NotesDataProvider {
   /// Create a new note
   Future<Note> createNote(Note note) async {
     final db = await database;
-    
+
     await db.transaction((txn) async {
       await txn.insert(
         DatabaseConfig.notesTable,
@@ -131,21 +156,21 @@ class NotesDataProvider {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
-    
+
     return note;
   }
 
   /// Get a note by ID
   Future<Note?> getNoteById(String noteId) async {
     final db = await database;
-    
+
     final result = await db.query(
       DatabaseConfig.notesTable,
       where: 'note_id = ?',
       whereArgs: [noteId],
       limit: 1,
     );
-    
+
     if (result.isEmpty) return null;
     return Note.fromJson(result.first);
   }
@@ -153,26 +178,26 @@ class NotesDataProvider {
   /// Get all notes for a book
   Future<List<Note>> getNotesForBook(String bookId) async {
     final db = await database;
-    
+
     final result = await db.query(
       DatabaseConfig.notesTable,
       where: 'book_id = ?',
       whereArgs: [bookId],
       orderBy: 'char_start ASC',
     );
-    
+
     return result.map((json) => Note.fromJson(json)).toList();
   }
 
   /// Get all notes across all books
   Future<List<Note>> getAllNotes() async {
     final db = await database;
-    
+
     final result = await db.query(
       DatabaseConfig.notesTable,
       orderBy: 'updated_at DESC',
     );
-    
+
     return result.map((json) => Note.fromJson(json)).toList();
   }
 
@@ -183,7 +208,7 @@ class NotesDataProvider {
     int endChar,
   ) async {
     final db = await database;
-    
+
     final result = await db.query(
       DatabaseConfig.notesTable,
       where: '''
@@ -192,19 +217,27 @@ class NotesDataProvider {
          (char_end >= ? AND char_end <= ?) OR 
          (char_start <= ? AND char_end >= ?))
       ''',
-      whereArgs: [bookId, startChar, endChar, startChar, endChar, startChar, endChar],
+      whereArgs: [
+        bookId,
+        startChar,
+        endChar,
+        startChar,
+        endChar,
+        startChar,
+        endChar
+      ],
       orderBy: 'char_start ASC',
     );
-    
+
     return result.map((json) => Note.fromJson(json)).toList();
   }
 
   /// Update an existing note
   Future<Note> updateNote(Note note) async {
     final db = await database;
-    
+
     final updatedNote = note.copyWith(updatedAt: DateTime.now());
-    
+
     await db.transaction((txn) async {
       await txn.update(
         DatabaseConfig.notesTable,
@@ -213,14 +246,14 @@ class NotesDataProvider {
         whereArgs: [note.id],
       );
     });
-    
+
     return updatedNote;
   }
 
   /// Delete a note
   Future<void> deleteNote(String noteId) async {
     final db = await database;
-    
+
     await db.transaction((txn) async {
       await txn.delete(
         DatabaseConfig.notesTable,
@@ -233,15 +266,15 @@ class NotesDataProvider {
   /// Search notes using FTS
   Future<List<Note>> searchNotes(String query, {String? bookId}) async {
     final db = await database;
-    
+
     String whereClause = 'notes_fts MATCH ?';
     List<dynamic> whereArgs = [query];
-    
+
     if (bookId != null) {
       whereClause += ' AND notes.book_id = ?';
       whereArgs.add(bookId);
     }
-    
+
     final result = await db.rawQuery('''
       SELECT notes.* FROM notes_fts
       JOIN notes ON notes.rowid = notes_fts.rowid
@@ -249,29 +282,30 @@ class NotesDataProvider {
       ORDER BY bm25(notes_fts) ASC
       LIMIT 100
     ''', whereArgs);
-    
+
     return result.map((json) => Note.fromJson(json)).toList();
   }
 
   /// Get notes by status
-  Future<List<Note>> getNotesByStatus(NoteStatus status, {String? bookId}) async {
+  Future<List<Note>> getNotesByStatus(NoteStatus status,
+      {String? bookId}) async {
     final db = await database;
-    
+
     String whereClause = 'status = ?';
     List<dynamic> whereArgs = [status.name];
-    
+
     if (bookId != null) {
       whereClause += ' AND book_id = ?';
       whereArgs.add(bookId);
     }
-    
+
     final result = await db.query(
       DatabaseConfig.notesTable,
       where: whereClause,
       whereArgs: whereArgs,
       orderBy: 'updated_at DESC',
     );
-    
+
     return result.map((json) => Note.fromJson(json)).toList();
   }
 
@@ -281,20 +315,22 @@ class NotesDataProvider {
   }
 
   /// Update note status (for re-anchoring)
-  Future<void> updateNoteStatus(String noteId, NoteStatus status, {
+  Future<void> updateNoteStatus(
+    String noteId,
+    NoteStatus status, {
     int? newStart,
     int? newEnd,
   }) async {
     final db = await database;
-    
+
     final updateData = <String, dynamic>{
       'status': status.name,
       'updated_at': DateTime.now().toIso8601String(),
     };
-    
+
     if (newStart != null) updateData['char_start'] = newStart;
     if (newEnd != null) updateData['char_end'] = newEnd;
-    
+
     await db.transaction((txn) async {
       await txn.update(
         DatabaseConfig.notesTable,
@@ -308,7 +344,7 @@ class NotesDataProvider {
   /// Batch update multiple notes (for re-anchoring)
   Future<void> batchUpdateNotes(List<Note> notes) async {
     final db = await database;
-    
+
     await db.transaction((txn) async {
       for (final note in notes) {
         await txn.update(
@@ -324,19 +360,23 @@ class NotesDataProvider {
   /// Get database statistics
   Future<Map<String, int>> getDatabaseStats() async {
     final db = await database;
-    
+
     final notesCount = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM notes'),
-    ) ?? 0;
-    
+          await db.rawQuery('SELECT COUNT(*) FROM notes'),
+        ) ??
+        0;
+
     final canonicalDocsCount = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM canonical_documents'),
-    ) ?? 0;
-    
+          await db.rawQuery('SELECT COUNT(*) FROM canonical_documents'),
+        ) ??
+        0;
+
     final orphanNotesCount = Sqflite.firstIntValue(
-      await db.rawQuery("SELECT COUNT(*) FROM notes WHERE status = 'orphan'"),
-    ) ?? 0;
-    
+          await db
+              .rawQuery("SELECT COUNT(*) FROM notes WHERE status = 'orphan'"),
+        ) ??
+        0;
+
     return {
       'total_notes': notesCount,
       'canonical_documents': canonicalDocsCount,
@@ -355,13 +395,12 @@ class NotesDataProvider {
   /// Reset the database (for testing)
   Future<void> reset() async {
     await close();
-    final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, NotesEnvironment.databasePath);
-    
+    final path = await resolveNotesDbPath(NotesEnvironment.databasePath);
+
     if (await File(path).exists()) {
       await File(path).delete();
     }
-    
+
     _database = null;
   }
 }

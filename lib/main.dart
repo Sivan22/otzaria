@@ -41,7 +41,6 @@ import 'package:otzaria/data/data_providers/hive_data_provider.dart';
 import 'package:otzaria/notes/data/database_schema.dart';
 import 'package:otzaria/notes/bloc/notes_bloc.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
 import 'package:search_engine/search_engine.dart';
 
 /// Application entry point that initializes necessary components and launches the app.
@@ -153,14 +152,14 @@ Future<void> initialize() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  
+
   await RustLib.init();
   await Settings.init(cacheProvider: HiveCache());
   await initLibraryPath();
   await initHive();
   await createDirs();
   await loadCerts();
-  
+
   // Initialize notes database
   try {
     await DatabaseSchema.initializeDatabase();
@@ -211,10 +210,9 @@ Future<void> initLibraryPath() async {
   // Check existing library path setting
   String? libraryPath = Settings.getValue('key-library-path');
 
-    if (libraryPath == null && (Platform.isLinux || Platform.isMacOS)) {
+  if (libraryPath == null && (Platform.isLinux || Platform.isMacOS)) {
     // Use the working directory for Linux and macOS
-    await Settings.setValue(
-        'key-library-path', '.');
+    await Settings.setValue('key-library-path', '.');
   }
 
   // Set default Windows path if not configured
