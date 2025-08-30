@@ -618,7 +618,14 @@ $htmlContentToUse
             return HtmlWidget(
               '''
               <div style="text-align: justify; direction: rtl;">
-                ${state.removeNikud ? utils.highLight(utils.removeVolwels('$data\n'), state.searchText) : utils.highLight('$data\n', state.searchText)}
+                ${() {
+                String processedData = state.removeNikud
+                    ? utils.highLight(
+                        utils.removeVolwels('$data\n'), state.searchText)
+                    : utils.highLight('$data\n', state.searchText);
+                // החלת עיצוב הסוגריים העגולים
+                return utils.formatTextWithParentheses(processedData);
+              }()}
               </div>
               ''',
               textStyle: TextStyle(

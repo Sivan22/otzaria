@@ -201,7 +201,7 @@ class _SimpleBookViewState extends State<SimpleBookView> {
         ),
         ctx.MenuItem.submenu(
           label: 'קישורים',
-          enabled: LinksViewer.getLinks(state).isNotEmpty, // <--- חדש
+          enabled: LinksViewer.getLinks(state).isNotEmpty,
           items: LinksViewer.getLinks(state)
               .map(
                 (link) => ctx.MenuItem(
@@ -620,7 +620,17 @@ $htmlContentToUse
                             child: HtmlWidget(
                               '''
                               <div style="text-align: justify; direction: rtl;">
-                                ${state.removeNikud ? utils.highLight(utils.removeVolwels('$data\n'), state.searchText) : utils.highLight('$data\n', state.searchText)}
+                                ${() {
+                                String processedData = state.removeNikud
+                                    ? utils.highLight(
+                                        utils.removeVolwels('$data\n'),
+                                        state.searchText)
+                                    : utils.highLight(
+                                        '$data\n', state.searchText);
+                                // החלת עיצוב הסוגריים העגולים
+                                return utils
+                                    .formatTextWithParentheses(processedData);
+                              }()}
                               </div>
                               ''',
                             ),

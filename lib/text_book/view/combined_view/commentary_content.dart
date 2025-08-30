@@ -83,6 +83,10 @@ class _CommentaryContentState extends State<CommentaryContent> {
 
               text = utils.highLight(text, widget.searchQuery,
                   currentIndex: widget.currentSearchIndex);
+
+              // החלת עיצוב הסוגריים העגולים
+              text = utils.formatTextWithParentheses(text);
+
               return BlocBuilder<SettingsBloc, SettingsState>(
                 builder: (context, settingsState) {
                   return DefaultTextStyle.merge(

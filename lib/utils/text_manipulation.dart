@@ -19,34 +19,36 @@ String removeVolwels(String s) {
 
 String highLight(String data, String searchQuery, {int currentIndex = -1}) {
   if (searchQuery.isEmpty) return data;
-  
+
   final regex = RegExp(RegExp.escape(searchQuery), caseSensitive: false);
   final matches = regex.allMatches(data).toList();
-  
+
   if (matches.isEmpty) return data;
-  
+
   // אם לא צוין אינדקס נוכחי, נדגיש את כל התוצאות באדום
   if (currentIndex == -1) {
     return data.replaceAll(regex, '<font color=red>$searchQuery</font>');
   }
-  
+
   // נדגיש את התוצאה הנוכחית בכחול ואת השאר באדום
   String result = data;
   int offset = 0;
-  
+
   for (int i = 0; i < matches.length; i++) {
     final match = matches[i];
     final color = i == currentIndex ? 'blue' : 'red';
-    final backgroundColor = i == currentIndex ? ' style="background-color: yellow;"' : '';
-    final replacement = '<font color=$color$backgroundColor>${match.group(0)}</font>';
-    
+    final backgroundColor =
+        i == currentIndex ? ' style="background-color: yellow;"' : '';
+    final replacement =
+        '<font color=$color$backgroundColor>${match.group(0)}</font>';
+
     final start = match.start + offset;
     final end = match.end + offset;
-    
+
     result = result.substring(0, start) + replacement + result.substring(end);
     offset += replacement.length - match.group(0)!.length;
   }
-  
+
   return result;
 }
 
@@ -55,13 +57,13 @@ String getTitleFromPath(String path) {
       .replaceAll('/', Platform.pathSeparator)
       .replaceAll('\\', Platform.pathSeparator);
   final fileName = path.split(Platform.pathSeparator).last;
-  
+
   // אם אין נקודה בשם הקובץ, נחזיר את השם כמו שהוא
   final lastDotIndex = fileName.lastIndexOf('.');
   if (lastDotIndex == -1) {
     return fileName;
   }
-  
+
   // נסיר רק את הסיומת (החלק האחרון אחרי הנקודה האחרונה)
   return fileName.substring(0, lastDotIndex);
 }
@@ -92,10 +94,9 @@ Future<bool> hasTopic(String title, String topic) async {
   return titleToPath[title]?.contains(topic) ?? false;
 }
 
-
 Future<void> _loadCsvCache() async {
   _csvCache = {};
-  
+
   try {
     final libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
     final csvPath =
@@ -186,6 +187,66 @@ final RegExp _holyNameRegex = RegExp(
   unicode: true,
 );
 
+/// מקטין טקסט בתוך סוגריים עגולים
+/// תנאים:
+/// 1. אם יש סוגר פותח נוסף בפנים - מתעלם מהסוגר החיצוני ומקטין רק את הפנימיים
+/// 2. אם אין סוגר סוגר עד סוף המקטע - לא מקטין כלום
+String formatTextWithParentheses(String text) {
+  if (text.isEmpty) return text;
+
+  final StringBuffer result = StringBuffer();
+  int i = 0;
+
+  while (i < text.length) {
+    if (text[i] == '(') {
+      // מחפשים את הסוגר הסוגר המתאים
+      int openCount = 1;
+      int j = i + 1;
+      int innerOpenIndex = -1;
+
+      // בודקים אם יש סוגר פותח נוסף בפנים
+      while (j < text.length && openCount > 0) {
+        if (text[j] == '(') {
+          if (innerOpenIndex == -1) {
+            innerOpenIndex = j; // שומרים את המיקום של הסוגר הפנימי הראשון
+          }
+          openCount++;
+        } else if (text[j] == ')') {
+          openCount--;
+        }
+        j++;
+      }
+
+      // אם לא מצאנו סוגר סוגר - מוסיפים הכל כמו שהוא
+      if (openCount > 0) {
+        result.write(text[i]);
+        i++;
+        continue;
+      }
+
+      // אם יש סוגר פנימי - מתעלמים מהחיצוני ומעבדים רק את הפנימי
+      if (innerOpenIndex != -1) {
+        // מוסיפים את החלק עד הסוגר הפנימי
+        result.write(text.substring(i, innerOpenIndex));
+        // ממשיכים מהסוגר הפנימי
+        i = innerOpenIndex;
+        continue;
+      }
+
+      // אם אין סוגר פנימי - מקטינים את כל התוכן
+      final content = text.substring(i + 1, j - 1);
+      result.write('<small>(');
+      result.write(content);
+      result.write(')</small>');
+      i = j;
+    } else {
+      result.write(text[i]);
+      i++;
+    }
+  }
+
+  return result.toString();
+}
 
 String replaceHolyNames(String s) {
   return s.replaceAllMapped(
