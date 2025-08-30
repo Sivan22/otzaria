@@ -67,7 +67,7 @@ const Map<String, Map<String, double>> lengthConversionFactors = {
 };
 
 const Map<String, Map<String, double>> modernLengthFactors = {
-  'מדות ושיעורי תורה, בדעת הרמב"ם': {
+  'רמב"ם': {
     'אצבע': 1.9, // cm
     'טפח': 7.6, // cm
     'זרת': 22.8, // cm
@@ -184,7 +184,7 @@ const Map<String, double> areaInSquareAmot = {
 };
 
 const Map<String, Map<String, double>> modernAreaFactors = {
-  'מדות ושיעורי תורה, בדעת הרמב"ם': {
+  'רמב"ם': {
     'בית רובע': 21 + 2 / 3, // m^2
     'בית קב': 86 + 2 / 3, // m^2
     'בית סאה': 520, // m^2
@@ -337,7 +337,7 @@ const Map<String, Map<String, double>> volumeConversionFactors = {
 };
 
 const Map<String, Map<String, double>> modernVolumeFactors = {
-  'מדות ושיעורי תורה, בדעת הרמב"ם': {
+  'רמב"ם': {
     'רביעית': 76.4, // cm^3
     'לוג': 305.6, // cm^3
     'קב': 1.22, // L
@@ -496,7 +496,7 @@ const Map<String, Map<String, double>> weightConversionFactors = {
 };
 
 const Map<String, Map<String, double>> modernWeightFactors = {
-  'מדות ושיעורי תורה, בדעת רש"י': {
+  'רש"י': {
     'דינר': 3.54, // g
     'שקל': 7.08, // g
     'סלע': 14.16, // g
@@ -523,7 +523,7 @@ const Map<String, Map<String, double>> modernWeightFactors = {
     'כיכר': 23.7, // kg
     'קנטר': 39.5, // kg
   },
-  'מדות ושיעורי תורה, בדעת הגאונים והרמב"ם': {
+  'גאונים ורמב"ם': {
     'דינר': 4.25, // g
     'שקל': 8.5, // g
     'סלע': 17, // g
