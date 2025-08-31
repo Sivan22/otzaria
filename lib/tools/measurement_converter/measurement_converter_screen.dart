@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
 import 'measurement_data.dart';
 
 // START OF ADDITIONS - MODERN UNITS
@@ -25,6 +26,11 @@ class _MeasurementConverterScreenState
   String? _selectedOpinion;
   final TextEditingController _inputController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
+
+  // Maps to remember user selections for each category
+  final Map<String, String> _rememberedFromUnits = {};
+  final Map<String, String> _rememberedToUnits = {};
+  final Map<String, String> _rememberedOpinions = {};
 
   // Updated to include modern units
   final Map<String, List<String>> _units = {
@@ -53,12 +59,37 @@ class _MeasurementConverterScreenState
 
   void _resetDropdowns() {
     setState(() {
-      _selectedFromUnit = _units[_selectedCategory]!.first;
-      _selectedToUnit = _units[_selectedCategory]!.first;
-      _selectedOpinion = _opinions[_selectedCategory]?.first;
+      // Restore remembered selections or use defaults
+      _selectedFromUnit = _rememberedFromUnits[_selectedCategory] ?? _units[_selectedCategory]!.first;
+      _selectedToUnit = _rememberedToUnits[_selectedCategory] ?? _units[_selectedCategory]!.first;
+      _selectedOpinion = _rememberedOpinions[_selectedCategory] ?? _opinions[_selectedCategory]?.first;
+      
+      // Validate that remembered selections are still valid for current category
+      if (!_units[_selectedCategory]!.contains(_selectedFromUnit)) {
+        _selectedFromUnit = _units[_selectedCategory]!.first;
+      }
+      if (!_units[_selectedCategory]!.contains(_selectedToUnit)) {
+        _selectedToUnit = _units[_selectedCategory]!.first;
+      }
+      if (_opinions[_selectedCategory] != null && !_opinions[_selectedCategory]!.contains(_selectedOpinion)) {
+        _selectedOpinion = _opinions[_selectedCategory]?.first;
+      }
+      
       _inputController.clear();
       _resultController.clear();
     });
+  }
+
+  void _saveCurrentSelections() {
+    if (_selectedFromUnit != null) {
+      _rememberedFromUnits[_selectedCategory] = _selectedFromUnit!;
+    }
+    if (_selectedToUnit != null) {
+      _rememberedToUnits[_selectedCategory] = _selectedToUnit!;
+    }
+    if (_selectedOpinion != null) {
+      _rememberedOpinions[_selectedCategory] = _selectedOpinion!;
+    }
   }
 
   // Helper function to handle small inconsistencies in unit names
@@ -112,10 +143,12 @@ class _MeasurementConverterScreenState
           final value = modernLengthFactors[opinion]![normalizedUnit];
           if (value == null) return null;
           // Units in data are cm, m, km. Convert all to cm.
-          if (['קנה', 'מיל'].contains(normalizedUnit))
+          if (['קנה', 'מיל'].contains(normalizedUnit)) {
             return value * 100; // m to cm
-          if (['פרסה'].contains(normalizedUnit))
+          }
+          if (['פרסה'].contains(normalizedUnit)) {
             return value * 100000; // km to cm
+          }
           return value; // Already in cm
         }
         break;
@@ -289,75 +322,232 @@ class _MeasurementConverterScreenState
   }
 
   Widget _buildCategorySelector() {
-    return DropdownButtonFormField<String>(
-      value: _selectedCategory,
-      decoration: const InputDecoration(
-        labelText: 'קטגוריה',
-        border: OutlineInputBorder(),
+    final categories = ['אורך', 'שטח', 'נפח', 'משקל', 'זמן'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate if all buttons can fit in one row
+          const double minButtonWidth = 80.0; // Minimum width to ensure text fits in one line
+          const double spacing = 12.0;
+          final double totalSpacing = spacing * (categories.length - 1);
+          final double availableWidth = constraints.maxWidth - totalSpacing;
+          final double buttonWidth = availableWidth / categories.length;
+          
+          // If buttons would be too small, use Wrap for multiple rows
+          if (buttonWidth < minButtonWidth) {
+            return Wrap(
+              spacing: spacing,
+              runSpacing: 12.0,
+              children: categories.map((category) => _buildCategoryButton(category, minButtonWidth)).toList(),
+            );
+          }
+          
+          // Otherwise, use Row with equal-width buttons
+          return Row(
+            children: categories.asMap().entries.map((entry) {
+              final index = entry.key;
+              final category = entry.value;
+              return Expanded(
+                child: Container(
+                  margin: EdgeInsets.only(
+                    left: index < categories.length - 1 ? spacing / 2 : 0,
+                    right: index > 0 ? spacing / 2 : 0,
+                  ),
+                  child: _buildCategoryButton(category, null),
+                ),
+              );
+            }).toList(),
+          );
+        },
       ),
-      items: _units.keys.map((String category) {
-        return DropdownMenuItem<String>(
-          value: category,
-          child: Text(category),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        if (newValue != null) {
+    );
+  }
+
+  Widget _buildCategoryButton(String category, double? minWidth) {
+    final isSelected = _selectedCategory == category;
+    
+    return GestureDetector(
+      onTap: () {
+        if (category != _selectedCategory) {
+          _saveCurrentSelections(); // Save current selections before changing category
           setState(() {
-            _selectedCategory = newValue;
+            _selectedCategory = category;
             _resetDropdowns();
           });
         }
       },
+      child: Container(
+        width: minWidth,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+        ),
+        child: Text(
+          category,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Theme.of(context).colorScheme.primary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 16.0,
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildUnitSelectors() {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-            child: _buildDropdown('מ', _selectedFromUnit, (val) {
-          setState(() => _selectedFromUnit = val);
-          _convert();
-        })),
+          child: _buildUnitGrid('מ', _selectedFromUnit, (val) {
+            setState(() => _selectedFromUnit = val);
+            _rememberedFromUnits[_selectedCategory] = val!;
+            _convert();
+          }),
+        ),
         const SizedBox(width: 10),
-        IconButton(
-          icon: const Icon(Icons.swap_horiz),
-          onPressed: () {
-            setState(() {
-              final temp = _selectedFromUnit;
-              _selectedFromUnit = _selectedToUnit;
-              _selectedToUnit = temp;
-              _convert();
-            });
-          },
+        Column(
+          children: [
+            const SizedBox(height: 20), // Align with the grid content
+            IconButton(
+              icon: const Icon(Icons.swap_horiz),
+              onPressed: () {
+                setState(() {
+                  final temp = _selectedFromUnit;
+                  _selectedFromUnit = _selectedToUnit;
+                  _selectedToUnit = temp;
+                  _convert();
+                });
+              },
+            ),
+          ],
         ),
         const SizedBox(width: 10),
         Expanded(
-            child: _buildDropdown('אל', _selectedToUnit, (val) {
-          setState(() => _selectedToUnit = val);
-          _convert();
-        })),
+          child: _buildUnitGrid('אל', _selectedToUnit, (val) {
+            setState(() => _selectedToUnit = val);
+            _rememberedToUnits[_selectedCategory] = val!;
+            _convert();
+          }),
+        ),
       ],
     );
   }
 
-  Widget _buildDropdown(
-      String label, String? value, ValueChanged<String?> onChanged) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      isExpanded: true,
+  Widget _buildUnitGrid(String label, String? selectedValue, ValueChanged<String?> onChanged) {
+    final units = _units[_selectedCategory]!;
+    
+    // Separate modern and ancient units
+    final modernUnits = _getModernUnitsForCategory(_selectedCategory);
+    final ancientUnits = units.where((unit) => !modernUnits.contains(unit)).toList();
+    
+    return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(fontSize: 19.0, fontWeight: FontWeight.w500),
         border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.fromLTRB(12.0, 26.0, 12.0, 12.0),
       ),
-      items: _units[_selectedCategory]!.map((String unit) {
-        return DropdownMenuItem<String>(
-          value: unit,
-          child: Text(unit, overflow: TextOverflow.ellipsis),
-        );
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Ancient units rows
+          if (ancientUnits.isNotEmpty) ...[
+            _buildUnitsWrap(ancientUnits, selectedValue, onChanged),
+            if (modernUnits.isNotEmpty) const SizedBox(height: 12.0),
+          ],
+          // Modern units rows (if any)
+          if (modernUnits.isNotEmpty)
+            _buildUnitsWrap(modernUnits, selectedValue, onChanged),
+        ],
+      ),
+    );
+  }
+
+  List<String> _getModernUnitsForCategory(String category) {
+    switch (category) {
+      case 'אורך':
+        return modernLengthUnits;
+      case 'שטח':
+        return modernAreaUnits;
+      case 'נפח':
+        return modernVolumeUnits;
+      case 'משקל':
+        return modernWeightUnits;
+      default:
+        return [];
+    }
+  }
+
+
+  Widget _buildUnitsWrap(List<String> units, String? selectedValue, ValueChanged<String?> onChanged) {
+    // Calculate the maximum width needed for any unit in this category
+    double maxWidth = 0;
+    for (String unit in units) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: unit,
+          style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.rtl,
+      );
+      textPainter.layout();
+      maxWidth = math.max(maxWidth, textPainter.width + 32.0); // Add padding
+    }
+
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: units.map((unit) {
+        return _buildUnitButton(unit, selectedValue == unit, onChanged, maxWidth);
       }).toList(),
-      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildUnitButton(String unit, bool isSelected, ValueChanged<String?> onChanged, double? fixedWidth) {
+    return GestureDetector(
+      onTap: () => onChanged(unit),
+      child: Container(
+        width: fixedWidth,
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6.0),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary,
+            width: isSelected ? 1.5 : 0.5,
+          ),
+        ),
+        child: Text(
+          unit,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Theme.of(context).colorScheme.primary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14.0,
+          ),
+        ),
+      ),
     );
   }
 
@@ -408,6 +598,9 @@ class _MeasurementConverterScreenState
               ? (String? newValue) {
                   setState(() {
                     _selectedOpinion = newValue;
+                    if (newValue != null) {
+                      _rememberedOpinions[_selectedCategory] = newValue;
+                    }
                     _convert();
                   });
                 }
