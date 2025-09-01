@@ -11,10 +11,14 @@ import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 
 class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   final TextBookRepository _repository;
+  final ItemScrollController scrollController;
+  final ItemPositionsListener positionsListener;
 
   TextBookBloc({
     required TextBookRepository repository,
     required TextBookInitial initialState,
+    required this.scrollController,
+    required this.positionsListener,
   })  : _repository = repository,
         super(initialState) {
     on<LoadContent>(_onLoadContent);
@@ -49,6 +53,8 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
     final book = initial.book;
     final searchText = initial.searchText;
 
+    print('DEBUG: TextBookBloc טוען תוכן עם אינדקס ראשוני: ${initial.index}');
+
     emit(TextBookLoading(
         book, initial.index, initial.showLeftPane, initial.commentators));
     try {
@@ -68,25 +74,29 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final removeNikud =
           defaultRemoveNikud && (removeNikudFromTanach || !isTanach);
 
-      // Create controllers if this is the first load
-      final ItemScrollController scrollController = ItemScrollController();
-      final ScrollOffsetController scrollOffsetController =
-          ScrollOffsetController();
-      final ItemPositionsListener positionsListener =
-          ItemPositionsListener.create();
-
       // Set up position listener with debouncing to prevent excessive updates
       Timer? debounceTimer;
       positionsListener.itemPositions.addListener(() {
         // Cancel previous timer if exists
         debounceTimer?.cancel();
-        
+
         // Set new timer with 100ms delay
         debounceTimer = Timer(const Duration(milliseconds: 100), () {
-          final visibleInecies =
-              positionsListener.itemPositions.value.map((e) => e.index).toList();
+          final visibleInecies = positionsListener.itemPositions.value
+              .map((e) => e.index)
+              .toList();
           if (visibleInecies.isNotEmpty) {
             add(UpdateVisibleIndecies(visibleInecies));
+            // עדכון המיקום בטאב כדי למנוע בלבול במעבר בין תצוגות
+            if (state is TextBookLoaded) {
+              final currentState = state as TextBookLoaded;
+              // מעדכנים את המיקום בטאב רק אם יש שינוי משמעותי
+              final newIndex = visibleInecies.first;
+              if ((currentState.visibleIndices.isEmpty ||
+                  (currentState.visibleIndices.first - newIndex).abs() > 5)) {
+                // כאן נצטרך לעדכן את הטאב - נעשה זאת בהמשך
+              }
+            }
           }
         });
       });
@@ -112,7 +122,6 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
         searchText: searchText,
         scrollController: scrollController,
-        scrollOffsetController: scrollOffsetController,
         positionsListener: positionsListener,
         showNotesSidebar: false,
         selectedTextForNote: null,
@@ -196,18 +205,19 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
   ) async {
     if (state is TextBookLoaded) {
       final currentState = state as TextBookLoaded;
-      
+
       // בדיקה אם האינדקסים באמת השתנו
       if (_listsEqual(currentState.visibleIndices, event.visibleIndecies)) {
         return; // אין שינוי, לא צריך לעדכן
       }
-      
+
       String? newTitle = currentState.currentTitle;
 
       // עדכון הכותרת רק אם האינדקס הראשון השתנה
-      if (event.visibleIndecies.isNotEmpty && 
-          (currentState.visibleIndices.isEmpty || 
-           currentState.visibleIndices.first != event.visibleIndecies.first)) {
+      if (event.visibleIndecies.isNotEmpty &&
+          (currentState.visibleIndices.isEmpty ||
+              currentState.visibleIndices.first !=
+                  event.visibleIndecies.first)) {
         newTitle = await refFromIndex(event.visibleIndecies.first,
             Future.value(currentState.tableOfContents));
       }
@@ -223,7 +233,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
           selectedIndex: index));
     }
   }
-  
+
   /// בדיקה אם שתי רשימות שוות
   bool _listsEqual(List<int> list1, List<int> list2) {
     if (list1.length != list2.length) return false;

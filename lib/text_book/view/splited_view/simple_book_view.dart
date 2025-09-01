@@ -43,6 +43,31 @@ class SimpleBookView extends StatefulWidget {
 class _SimpleBookViewState extends State<SimpleBookView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
+  bool _didInitialJump = false;
+
+  void _jumpToInitialIndexWhenReady() {
+    int attempts = 0;
+    void tryJump(Duration _) {
+      if (!mounted) return;
+      final ctrl = widget.tab.scrollController;
+      if (ctrl.isAttached) {
+        ctrl.jumpTo(index: widget.tab.index);
+      } else if (attempts++ < 5) {
+        WidgetsBinding.instance.addPostFrameCallback(tryJump);
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback(tryJump);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didInitialJump) {
+      _didInitialJump = true;
+      _jumpToInitialIndexWhenReady();
+    }
+  }
 
   // הוסרנו את _showNotesSidebar המקומי - נשתמש ב-state מה-BLoC
 
@@ -539,7 +564,7 @@ $htmlContentToUse
         if (state is! TextBookLoaded) return const Center();
 
         final bookView = ProgressiveScroll(
-          scrollController: state.scrollOffsetController,
+          scrollController: widget.tab.mainOffsetController,
           maxSpeed: 10000.0,
           curve: 10.0,
           accelerationFactor: 5,
@@ -587,11 +612,10 @@ $htmlContentToUse
               child: ctx.ContextMenuRegion(
                 contextMenu: _buildContextMenu(state),
                 child: ScrollablePositionedList.builder(
-                  key: PageStorageKey(widget.tab),
-                  initialScrollIndex: state.visibleIndices.first,
-                  itemPositionsListener: state.positionsListener,
-                  itemScrollController: state.scrollController,
-                  scrollOffsetController: state.scrollOffsetController,
+                  key: ValueKey('simple-${widget.tab.book.title}'),
+                  itemPositionsListener: widget.tab.positionsListener,
+                  itemScrollController: widget.tab.scrollController,
+                  scrollOffsetController: widget.tab.mainOffsetController,
                   itemCount: widget.data.length,
                   itemBuilder: (context, index) {
                     return BlocBuilder<SettingsBloc, SettingsState>(

@@ -146,10 +146,14 @@ class _ReadingScreenState extends State<ReadingScreen>
               controller.addListener(() {
                 if (controller.indexIsChanging &&
                     state.currentTabIndex < state.tabs.length) {
+                  // שמירת המצב הנוכחי לפני המעבר לטאב אחר
+                  print(
+                      'DEBUG: מעבר בין טאבים - שמירת מצב טאב ${state.currentTabIndex}');
                   context.read<HistoryBloc>().add(CaptureStateForHistory(
                       state.tabs[state.currentTabIndex]));
                 }
                 if (controller.index != state.currentTabIndex) {
+                  print('DEBUG: עדכון טאב נוכחי ל-${controller.index}');
                   context.read<TabsBloc>().add(SetCurrentTab(controller.index));
                 }
               });

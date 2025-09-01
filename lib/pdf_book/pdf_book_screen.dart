@@ -128,6 +128,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     // 3. שמור את הבקר בטאב כדי ששאר חלקי האפליקציה יוכלו להשתמש בו.
     widget.tab.pdfViewerController = pdfController;
 
+    // וודא שהמיקום הנוכחי נשמר בטאב
+    print('DEBUG: אתחול PDF טאב - דף התחלתי: ${widget.tab.pageNumber}');
+
     _sidebarWidth = ValueNotifier<double>(
         Settings.getValue<double>('key-sidebar-width', defaultValue: 300)!);
 
@@ -183,15 +186,17 @@ class _PdfBookScreenState extends State<PdfBookScreen>
     });
   }
 
-  void _onPdfViewerControllerUpdate() {
-    if (widget.tab.pdfViewerController.isReady) {
-      widget.tab.pageNumber = widget.tab.pdfViewerController.pageNumber ?? 1;
-      () async {
-        widget.tab.currentTitle.value = await refFromPageNumber(
-            widget.tab.pageNumber,
-            widget.tab.outline.value,
-            widget.tab.book.title);
-      }();
+  int _lastComputedForPage = -1;
+  void _onPdfViewerControllerUpdate() async {
+    if (!widget.tab.pdfViewerController.isReady) return;
+    final newPage = widget.tab.pdfViewerController.pageNumber ?? 1;
+    if (newPage == widget.tab.pageNumber) return;
+    widget.tab.pageNumber = newPage;
+    final token = _lastComputedForPage = newPage;
+    final title = await refFromPageNumber(
+        newPage, widget.tab.outline.value ?? [], widget.tab.book.title);
+    if (token == _lastComputedForPage) {
+      widget.tab.currentTitle.value = title;
     }
   }
 
@@ -416,7 +421,9 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                           passwordProvider: () => passwordDialog(context),
                           controller: widget.tab.pdfViewerController,
                           params: PdfViewerParams(
-                            backgroundColor: Theme.of(context).colorScheme.surface, // צבע רקע המסך, בתצוגת ספרי PDF 
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .surface, // צבע רקע המסך, בתצוגת ספרי PDF
                             maxScale: 10,
                             horizontalCacheExtent: 5,
                             verticalCacheExtent: 5,
@@ -565,9 +572,19 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                               Row(
                                 children: [
                                   Expanded(child: _buildCustomTab('ניווט', 0)),
-                                  Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                                  Container(
+                                      height: 24,
+                                      width: 1,
+                                      color: Colors.grey.shade400,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 2)),
                                   Expanded(child: _buildCustomTab('חיפוש', 1)),
-                                  Container(height: 24, width: 1, color: Colors.grey.shade400, margin: const EdgeInsets.symmetric(horizontal: 2)),
+                                  Container(
+                                      height: 24,
+                                      width: 1,
+                                      color: Colors.grey.shade400,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 2)),
                                   Expanded(child: _buildCustomTab('דפים', 2)),
                                 ],
                               ),
@@ -720,7 +737,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
         ),
       );
     }
-    
+
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
@@ -777,12 +794,17 @@ class _PdfBookScreenState extends State<PdfBookScreen>
               icon: const Icon(Icons.article),
               tooltip: 'פתח טקסט',
               onPressed: () async {
+                final currentPage = controller.isReady
+                    ? controller.pageNumber ?? 1
+                    : widget.tab.pageNumber;
+                widget.tab.pageNumber = currentPage;
+                final currentOutline = widget.tab.outline.value ?? [];
+
                 final index = await pdfToTextPage(
-                    book,
-                    widget.tab.outline.value ?? [],
-                    controller.pageNumber ?? 1,
-                    context);
-                openBook(context, snapshot.data!, index ?? 0, '');
+                    book, currentOutline, currentPage, context);
+
+                openBook(context, snapshot.data!, index ?? 0, '',
+                    ignoreHistory: true);
               })
           : const SizedBox.shrink(),
     );

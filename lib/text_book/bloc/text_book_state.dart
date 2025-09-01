@@ -71,7 +71,6 @@ class TextBookLoaded extends TextBookState {
 
   // Controllers
   final ItemScrollController scrollController;
-  final ScrollOffsetController scrollOffsetController;
   final ItemPositionsListener positionsListener;
 
   const TextBookLoaded({
@@ -95,7 +94,6 @@ class TextBookLoaded extends TextBookState {
     required this.pinLeftPane,
     required this.searchText,
     required this.scrollController,
-    required this.scrollOffsetController,
     required this.positionsListener,
     this.currentTitle,
     required this.showNotesSidebar,
@@ -130,7 +128,6 @@ class TextBookLoaded extends TextBookState {
       pinLeftPane: Settings.getValue<bool>('key-pin-sidebar') ?? false,
       searchText: '',
       scrollController: ItemScrollController(),
-      scrollOffsetController: ScrollOffsetController(),
       positionsListener: ItemPositionsListener.create(),
       visibleIndices: [index],
       showNotesSidebar: false,
@@ -161,7 +158,6 @@ class TextBookLoaded extends TextBookState {
     bool? pinLeftPane,
     String? searchText,
     ItemScrollController? scrollController,
-    ScrollOffsetController? scrollOffsetController,
     ItemPositionsListener? positionsListener,
     String? currentTitle,
     bool? showNotesSidebar,
@@ -191,8 +187,6 @@ class TextBookLoaded extends TextBookState {
       pinLeftPane: pinLeftPane ?? this.pinLeftPane,
       searchText: searchText ?? this.searchText,
       scrollController: scrollController ?? this.scrollController,
-      scrollOffsetController:
-          scrollOffsetController ?? this.scrollOffsetController,
       positionsListener: positionsListener ?? this.positionsListener,
       currentTitle: currentTitle ?? this.currentTitle,
       showNotesSidebar: showNotesSidebar ?? this.showNotesSidebar,

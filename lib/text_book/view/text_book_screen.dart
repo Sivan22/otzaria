@@ -110,6 +110,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   void initState() {
     super.initState();
 
+    // וודא שהמיקום הנוכחי נשמר בטאב
+    print('DEBUG: אתחול טקסט טאב - אינדקס התחלתי: ${widget.tab.index}');
+
     // אם יש טקסט חיפוש (searchText), נתחיל בלשונית 'חיפוש' (שנמצאת במקום ה-1)
     // אחרת, נתחיל בלשונית 'ניווט' (שנמצאת במקום ה-0)
     final int initialIndex = widget.tab.searchText.isNotEmpty ? 1 : 0;
@@ -290,18 +293,22 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
               icon: const Icon(Icons.picture_as_pdf),
               tooltip: 'פתח ספר במהדורה מודפסת ',
               onPressed: () async {
-                final library = DataRepository.instance.library;
-                final book = await library.then(
+                final currentIndex = state
+                        .positionsListener.itemPositions.value.isNotEmpty
+                    ? state.positionsListener.itemPositions.value.first.index
+                    : 0;
+                widget.tab.index = currentIndex;
+
+                final book = await DataRepository.instance.library.then(
                   (library) =>
                       library.findBookByTitle(state.book.title, PdfBook),
                 );
                 final index = await textToPdfPage(
                   state.book,
-                  state.positionsListener.itemPositions.value.isNotEmpty
-                      ? state.positionsListener.itemPositions.value.first.index
-                      : 0,
+                  currentIndex,
                 );
-                openBook(context, book!, index ?? 0, '');
+
+                openBook(context, book!, index ?? 1, '', ignoreHistory: true);
               },
             )
           : const SizedBox.shrink(),

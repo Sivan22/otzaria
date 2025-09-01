@@ -46,6 +46,31 @@ class CombinedView extends StatefulWidget {
 class _CombinedViewState extends State<CombinedView> {
   final GlobalKey<SelectionAreaState> _selectionKey =
       GlobalKey<SelectionAreaState>();
+  bool _didInitialJump = false;
+
+  void _jumpToInitialIndexWhenReady() {
+    int attempts = 0;
+    void tryJump(Duration _) {
+      if (!mounted) return;
+      final ctrl = widget.tab.scrollController;
+      if (ctrl.isAttached) {
+        ctrl.jumpTo(index: widget.tab.index);
+      } else if (attempts++ < 5) {
+        WidgetsBinding.instance.addPostFrameCallback(tryJump);
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback(tryJump);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didInitialJump) {
+      _didInitialJump = true;
+      _jumpToInitialIndexWhenReady();
+    }
+  }
 
   // הוסרנו את _showNotesSidebar המקומי - נשתמש ב-state מה-BLoC
 
@@ -533,7 +558,7 @@ $htmlContentToUse
           maxSpeed: 10000.0,
           curve: 10.0,
           accelerationFactor: 5,
-          scrollController: state.scrollOffsetController,
+          scrollController: widget.tab.mainOffsetController,
           child: SelectionArea(
             key: _selectionKey,
             contextMenuBuilder: (_, __) => const SizedBox.shrink(),
@@ -578,11 +603,10 @@ $htmlContentToUse
 
   Widget buildOuterList(TextBookLoaded state) {
     return ScrollablePositionedList.builder(
-      key: PageStorageKey(widget.tab),
-      initialScrollIndex: state.visibleIndices.first,
-      itemPositionsListener: state.positionsListener,
-      itemScrollController: state.scrollController,
-      scrollOffsetController: state.scrollOffsetController,
+      key: ValueKey('combined-${widget.tab.book.title}'),
+      itemPositionsListener: widget.tab.positionsListener,
+      itemScrollController: widget.tab.scrollController,
+      scrollOffsetController: widget.tab.mainOffsetController,
       itemCount: widget.data.length,
       itemBuilder: (context, index) {
         ExpansibleController controller = ExpansibleController();
