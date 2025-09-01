@@ -92,7 +92,7 @@ class _MoreScreenState extends State<MoreScreen> {
       case 1:
         return 'זכור ושמור';
       case 2:
-        return 'ממיר מידות';
+        return 'ממיר מידות תורני';
       case 3:
         return 'גימטריות';
       default:
