@@ -31,6 +31,7 @@ class _MeasurementConverterScreenState
   final Map<String, String> _rememberedFromUnits = {};
   final Map<String, String> _rememberedToUnits = {};
   final Map<String, String> _rememberedOpinions = {};
+  final Map<String, String> _rememberedInputValues = {};
 
   // Updated to include modern units
   final Map<String, List<String>> _units = {
@@ -60,10 +61,13 @@ class _MeasurementConverterScreenState
   void _resetDropdowns() {
     setState(() {
       // Restore remembered selections or use defaults
-      _selectedFromUnit = _rememberedFromUnits[_selectedCategory] ?? _units[_selectedCategory]!.first;
-      _selectedToUnit = _rememberedToUnits[_selectedCategory] ?? _units[_selectedCategory]!.first;
-      _selectedOpinion = _rememberedOpinions[_selectedCategory] ?? _opinions[_selectedCategory]?.first;
-      
+      _selectedFromUnit = _rememberedFromUnits[_selectedCategory] ??
+          _units[_selectedCategory]!.first;
+      _selectedToUnit = _rememberedToUnits[_selectedCategory] ??
+          _units[_selectedCategory]!.first;
+      _selectedOpinion = _rememberedOpinions[_selectedCategory] ??
+          _opinions[_selectedCategory]?.first;
+
       // Validate that remembered selections are still valid for current category
       if (!_units[_selectedCategory]!.contains(_selectedFromUnit)) {
         _selectedFromUnit = _units[_selectedCategory]!.first;
@@ -71,12 +75,20 @@ class _MeasurementConverterScreenState
       if (!_units[_selectedCategory]!.contains(_selectedToUnit)) {
         _selectedToUnit = _units[_selectedCategory]!.first;
       }
-      if (_opinions[_selectedCategory] != null && !_opinions[_selectedCategory]!.contains(_selectedOpinion)) {
+      if (_opinions[_selectedCategory] != null &&
+          !_opinions[_selectedCategory]!.contains(_selectedOpinion)) {
         _selectedOpinion = _opinions[_selectedCategory]?.first;
       }
-      
-      _inputController.clear();
+
+      // Restore remembered input value or clear
+      _inputController.text = _rememberedInputValues[_selectedCategory] ?? '';
       _resultController.clear();
+      
+      // Convert if there's a remembered input value
+      if (_rememberedInputValues[_selectedCategory] != null && 
+          _rememberedInputValues[_selectedCategory]!.isNotEmpty) {
+        _convert();
+      }
     });
   }
 
@@ -89,6 +101,10 @@ class _MeasurementConverterScreenState
     }
     if (_selectedOpinion != null) {
       _rememberedOpinions[_selectedCategory] = _selectedOpinion!;
+    }
+    // Save the current input value
+    if (_inputController.text.isNotEmpty) {
+      _rememberedInputValues[_selectedCategory] = _inputController.text;
     }
   }
 
@@ -305,9 +321,10 @@ class _MeasurementConverterScreenState
               _buildUnitSelectors(),
               const SizedBox(height: 20),
               if (_opinions.containsKey(_selectedCategory) &&
-                  _opinions[_selectedCategory]!.isNotEmpty)
+                  _opinions[_selectedCategory]!.isNotEmpty) ...[
                 _buildOpinionSelector(),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
+              ],
               _buildInputField(),
               const SizedBox(height: 20),
               _buildResultDisplay(),
@@ -326,21 +343,25 @@ class _MeasurementConverterScreenState
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Calculate if all buttons can fit in one row
-          const double minButtonWidth = 80.0; // Minimum width to ensure text fits in one line
+          const double minButtonWidth =
+              80.0; // Minimum width to ensure text fits in one line
           const double spacing = 12.0;
           final double totalSpacing = spacing * (categories.length - 1);
           final double availableWidth = constraints.maxWidth - totalSpacing;
           final double buttonWidth = availableWidth / categories.length;
-          
+
           // If buttons would be too small, use Wrap for multiple rows
           if (buttonWidth < minButtonWidth) {
             return Wrap(
               spacing: spacing,
               runSpacing: 12.0,
-              children: categories.map((category) => _buildCategoryButton(category, minButtonWidth)).toList(),
+              children: categories
+                  .map((category) =>
+                      _buildCategoryButton(category, minButtonWidth))
+                  .toList(),
             );
           }
-          
+
           // Otherwise, use Row with equal-width buttons
           return Row(
             children: categories.asMap().entries.map((entry) {
@@ -364,7 +385,7 @@ class _MeasurementConverterScreenState
 
   Widget _buildCategoryButton(String category, double? minWidth) {
     final isSelected = _selectedCategory == category;
-    
+
     return GestureDetector(
       onTap: () {
         if (category != _selectedCategory) {
@@ -381,7 +402,7 @@ class _MeasurementConverterScreenState
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8.0),
           border: Border.all(
             color: Theme.of(context).colorScheme.primary,
@@ -445,17 +466,20 @@ class _MeasurementConverterScreenState
     );
   }
 
-  Widget _buildUnitGrid(String label, String? selectedValue, ValueChanged<String?> onChanged) {
+  Widget _buildUnitGrid(
+      String label, String? selectedValue, ValueChanged<String?> onChanged) {
     final units = _units[_selectedCategory]!;
-    
+
     // Separate modern and ancient units
     final modernUnits = _getModernUnitsForCategory(_selectedCategory);
-    final ancientUnits = units.where((unit) => !modernUnits.contains(unit)).toList();
-    
+    final ancientUnits =
+        units.where((unit) => !modernUnits.contains(unit)).toList();
+
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontSize: 19.0, fontWeight: FontWeight.w500),
+        labelStyle:
+            const TextStyle(fontSize: 19.0, fontWeight: FontWeight.w500),
         border: const OutlineInputBorder(),
         contentPadding: const EdgeInsets.fromLTRB(12.0, 26.0, 12.0, 12.0),
       ),
@@ -490,8 +514,8 @@ class _MeasurementConverterScreenState
     }
   }
 
-
-  Widget _buildUnitsWrap(List<String> units, String? selectedValue, ValueChanged<String?> onChanged) {
+  Widget _buildUnitsWrap(List<String> units, String? selectedValue,
+      ValueChanged<String?> onChanged) {
     // Calculate the maximum width needed for any unit in this category
     double maxWidth = 0;
     for (String unit in units) {
@@ -510,12 +534,14 @@ class _MeasurementConverterScreenState
       spacing: 8.0,
       runSpacing: 8.0,
       children: units.map((unit) {
-        return _buildUnitButton(unit, selectedValue == unit, onChanged, maxWidth);
+        return _buildUnitButton(
+            unit, selectedValue == unit, onChanged, maxWidth);
       }).toList(),
     );
   }
 
-  Widget _buildUnitButton(String unit, bool isSelected, ValueChanged<String?> onChanged, double? fixedWidth) {
+  Widget _buildUnitButton(String unit, bool isSelected,
+      ValueChanged<String?> onChanged, double? fixedWidth) {
     return GestureDetector(
       onTap: () => onChanged(unit),
       child: Container(
@@ -524,7 +550,7 @@ class _MeasurementConverterScreenState
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6.0),
           border: Border.all(
             color: Theme.of(context).colorScheme.primary,
@@ -572,48 +598,154 @@ class _MeasurementConverterScreenState
       }
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        DropdownButtonFormField<String>(
-          value: _selectedOpinion,
-          decoration: InputDecoration(
-            labelText: 'שיטה',
-            border: const OutlineInputBorder(),
-            // Make the field gray if it's disabled
-            filled: !isOpinionEnabled,
-            fillColor: Colors.grey[200],
-          ),
-          items: _opinions[_selectedCategory]!.map((String opinion) {
-            return DropdownMenuItem<String>(
-              value: opinion,
-              child: Text(opinion, overflow: TextOverflow.ellipsis),
-            );
-          }).toList(),
-          // Set onChanged to null to disable the dropdown
-          onChanged: isOpinionEnabled
-              ? (String? newValue) {
-                  setState(() {
-                    _selectedOpinion = newValue;
-                    if (newValue != null) {
-                      _rememberedOpinions[_selectedCategory] = newValue;
-                    }
-                    _convert();
-                  });
-                }
-              : null,
-        ),
-        // Show a helper text only when the dropdown is disabled
-        if (!isOpinionEnabled)
+    // If not enabled, don't show the selector at all
+    if (!isOpinionEnabled) {
+      return const SizedBox.shrink();
+    }
+
+    final opinions = _opinions[_selectedCategory]!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Padding(
-            padding: const EdgeInsets.only(top: 4.0, right: 8.0),
+            padding: const EdgeInsets.only(bottom: 8.0, right: 4.0),
             child: Text(
-              'השיטה אינה רלוונטית להמרה בין מידות חז"ל.',
-              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-              textAlign: TextAlign.right,
+              'שיטה',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
-      ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double spacing = 12.0;
+              const double padding = 16.0;
+
+              // Calculate the natural width needed for each opinion text
+              List<double> textWidths = opinions.map((opinion) {
+                final textPainter = TextPainter(
+                  text: TextSpan(
+                    text: opinion,
+                    style: const TextStyle(
+                        fontSize: 14.0, fontWeight: FontWeight.bold),
+                  ),
+                  textDirection:
+                      TextDirection.ltr, // Changed to LTR to fix Hebrew display
+                );
+                textPainter.layout();
+                return textPainter.width +
+                    (padding * 2); // Add horizontal padding
+              }).toList();
+
+              final double maxTextWidth =
+                  textWidths.reduce((a, b) => a > b ? a : b);
+              final double totalSpacing = spacing * (opinions.length - 1);
+              final double totalEqualWidth =
+                  (maxTextWidth * opinions.length) + totalSpacing;
+
+              // First preference: Try equal-width buttons if they fit
+              if (totalEqualWidth <= constraints.maxWidth) {
+                return Row(
+                  children: opinions.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final opinion = entry.value;
+
+                    return Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(
+                          left: index < opinions.length - 1 ? spacing / 2 : 0,
+                          right: index > 0 ? spacing / 2 : 0,
+                        ),
+                        child: _buildOpinionButton(opinion, null),
+                      ),
+                    );
+                  }).toList(),
+                );
+              }
+
+              // Second preference: Try proportional widths if natural sizes fit
+              final double totalNaturalWidth =
+                  textWidths.reduce((a, b) => a + b) + totalSpacing;
+              if (totalNaturalWidth <= constraints.maxWidth) {
+                final double totalFlex = textWidths.reduce((a, b) => a + b);
+
+                return Row(
+                  children: opinions.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final opinion = entry.value;
+                    final flex = (textWidths[index] / totalFlex * 1000).round();
+
+                    return Expanded(
+                      flex: flex,
+                      child: Container(
+                        margin: EdgeInsets.only(
+                          left: index < opinions.length - 1 ? spacing / 2 : 0,
+                          right: index > 0 ? spacing / 2 : 0,
+                        ),
+                        child: _buildOpinionButton(opinion, null),
+                      ),
+                    );
+                  }).toList(),
+                );
+              }
+
+              // Last resort: Use Wrap for multiple rows
+              return Wrap(
+                spacing: spacing,
+                runSpacing: 12.0,
+                children: opinions
+                    .map((opinion) => _buildOpinionButton(opinion, null))
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOpinionButton(String opinion, double? minWidth) {
+    final isSelected = _selectedOpinion == opinion;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedOpinion = opinion;
+          _rememberedOpinions[_selectedCategory] = opinion;
+          _convert();
+        });
+      },
+      child: Container(
+        width: minWidth,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+        ),
+        child: Text(
+          opinion,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          style: TextStyle(
+            color: isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Theme.of(context).colorScheme.primary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14.0,
+          ),
+        ),
+      ),
     );
   }
 
@@ -628,7 +760,15 @@ class _MeasurementConverterScreenState
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
       ],
-      onChanged: (value) => _convert(),
+      onChanged: (value) {
+        // Save the input value when it changes
+        if (value.isNotEmpty) {
+          _rememberedInputValues[_selectedCategory] = value;
+        } else {
+          _rememberedInputValues.remove(_selectedCategory);
+        }
+        _convert();
+      },
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.right,
     );
