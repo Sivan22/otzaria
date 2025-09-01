@@ -402,12 +402,12 @@ class CalendarWidget extends StatelessWidget {
                     ? Theme.of(context).primaryColor
                     : isToday
                         ? Theme.of(context).primaryColor.withAlpha(76)
-                        : Colors.transparent,
+                        : Theme.of(context).primaryColor.withAlpha(10),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isToday
                       ? Theme.of(context).primaryColor
-                      : Colors.grey.shade300,
+                      : Theme.of(context).primaryColor.withAlpha(102),
                   width: isToday ? 2 : 1,
                 ),
               ),
@@ -475,11 +475,11 @@ class CalendarWidget extends StatelessWidget {
               ? Theme.of(context).primaryColor
               : isToday
                   ? Theme.of(context).primaryColor.withAlpha(76)
-                  : Colors.transparent,
+                  : Theme.of(context).primaryColor.withAlpha(10),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
-                isToday ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                isToday ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withAlpha(102),
             width: isToday ? 2 : 1,
           ),
         ),
@@ -536,11 +536,11 @@ class CalendarWidget extends StatelessWidget {
               ? Theme.of(context).primaryColor
               : isToday
                   ? Theme.of(context).primaryColor.withAlpha(76)
-                  : Colors.transparent,
+                  : Theme.of(context).primaryColor.withAlpha(10),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
-                isToday ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                isToday ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withAlpha(102),
             width: isToday ? 2 : 1,
           ),
         ),
