@@ -30,6 +30,8 @@ class ReadingScreen extends StatefulWidget {
   State<ReadingScreen> createState() => _ReadingScreenState();
 }
 
+const double _kAppBarControlsWidth = 280.0;
+
 class _ReadingScreenState extends State<ReadingScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   @override
@@ -160,54 +162,55 @@ class _ReadingScreenState extends State<ReadingScreen>
 
               return Scaffold(
                 appBar: AppBar(
-                  title: Stack(
+                  // 1. משתמשים בקבוע שהגדרנו עבור הרוחב
+                  leadingWidth: _kAppBarControlsWidth,
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // קבוצת היסטוריה וסימניות
-                          IconButton(
-                            icon: const Icon(Icons.history),
-                            tooltip: 'הצג היסטוריה',
-                            onPressed: () => _showHistoryDialog(context),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.bookmark),
-                            tooltip: 'הצג סימניות',
-                            onPressed: () => _showBookmarksDialog(context),
-                          ),
-                          // קו מפריד
-                          Container(
-                            height: 24,
-                            width: 1,
-                            color: Colors.grey.shade400,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                          ),
-                          // קבוצת שולחן עבודה עם אנימציה
-                          SizedBox(
-                            width: 180, // רוחב קבוע למניעת הזזת הטאבים
-                            child: WorkspaceIconButton(
-                              onPressed: () =>
-                                  _showSaveWorkspaceDialog(context),
-                            ),
-                          ),
-                        ],
+                      // קבוצת היסטוריה וסימניות
+                      IconButton(
+                        icon: const Icon(Icons.history),
+                        tooltip: 'הצג היסטוריה',
+                        onPressed: () => _showHistoryDialog(context),
                       ),
-                      Center(
-                        child: Container(
-                          constraints: const BoxConstraints(maxHeight: 50),
-                          child: TabBar(
-                            controller: controller,
-                            isScrollable: true,
-                            tabAlignment: TabAlignment.center,
-                            tabs: state.tabs
-                                .map((tab) => _buildTab(context, tab, state))
-                                .toList(),
-                          ),
+                      IconButton(
+                        icon: const Icon(Icons.bookmark),
+                        tooltip: 'הצג סימניות',
+                        onPressed: () => _showBookmarksDialog(context),
+                      ),
+                      // קו מפריד
+                      Container(
+                        height: 24,
+                        width: 1,
+                        color: Colors.grey.shade400,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                      ),
+                      // קבוצת שולחן עבודה עם אנימציה
+                      SizedBox(
+                        width: 180,
+                        child: WorkspaceIconButton(
+                          onPressed: () => _showSaveWorkspaceDialog(context),
                         ),
                       ),
                     ],
                   ),
+                  title: Container(
+                    constraints: const BoxConstraints(maxHeight: 50),
+                    child: TabBar(
+                      controller: controller,
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.center,
+                      tabs: state.tabs
+                          .map((tab) => _buildTab(context, tab, state))
+                          .toList(),
+                    ),
+                  ),
+                  centerTitle: true,
+
+                  // 2. משתמשים באותו קבוע בדיוק עבור ווידג'ט הדמה
+                  actions: const [
+                    SizedBox(width: _kAppBarControlsWidth),
+                  ],
                 ),
                 body: SizedBox.fromSize(
                   size: MediaQuery.of(context).size,
