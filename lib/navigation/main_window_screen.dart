@@ -7,6 +7,7 @@ import 'package:otzaria/indexing/bloc/indexing_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/utils/isolate_manager.dart';
 
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
@@ -59,7 +60,19 @@ class MainWindowScreenState extends State<MainWindowScreen>
   @override
   void dispose() {
     pageController.dispose();
+    // סגירת כל ה-Isolates בעת יציאה מהאפליקציה
+    _cleanupIsolates();
     super.dispose();
+  }
+
+  /// ניקוי כל ה-Isolates
+  void _cleanupIsolates() async {
+    try {
+      await IsolateManager.killAll();
+    } catch (e) {
+      // אם יש שגיאה בניקוי, נמשיך בכל זאת
+      debugPrint('Error cleaning up isolates: $e');
+    }
   }
 
   void _handleOrientationChange(BuildContext context, Orientation orientation) {

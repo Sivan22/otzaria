@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:otzaria/data/data_providers/tantivy_data_provider.dart';
-import 'package:otzaria/search/utils/hebrew_morphology.dart';
 import 'package:otzaria/search/utils/regex_patterns.dart';
+import 'package:otzaria/search/services/search_isolate_service.dart';
 import 'package:search_engine/search_engine.dart';
 
 /// Performs a search operation across indexed texts.
@@ -45,8 +45,60 @@ class SearchRepository {
     final finalPattern =
         SearchRegexPatterns.createSpellingWithPrefixPattern('ראשית');
     print('🔍 Final createSpellingWithPrefixPattern result: $finalPattern');
-    final index = await TantivyDataProvider.instance.engine;
+    // בדיקה אם האינדקס רץ - אם כן, נשתמש ב-Isolate לחיפוש
+    final isIndexing = TantivyDataProvider.instance.isIndexing.value;
 
+    if (isIndexing) {
+      print('🔄 Indexing in progress, using isolate search service');
+      // שימוש ב-SearchIsolateService כשהאינדקס רץ
+      final isolateSearchOptions = SearchOptions(
+        fuzzy: fuzzy,
+        distance: distance,
+        customSpacing: customSpacing,
+        alternativeWords: alternativeWords,
+        searchOptions: searchOptions,
+        order: order,
+      );
+
+      final resultWrapper = await SearchIsolateService.searchTexts(
+        query,
+        facets,
+        limit,
+        isolateSearchOptions,
+      );
+
+      if (resultWrapper.error != null) {
+        print('❌ Search isolate error: ${resultWrapper.error}');
+        // fallback לחיפוש רגיל
+        final index = await TantivyDataProvider.instance.engine;
+        return await _performDirectSearch(index, query, facets, limit, order,
+            fuzzy, distance, customSpacing, alternativeWords, searchOptions);
+      }
+
+      print(
+          '✅ Isolate search completed, found ${resultWrapper.results.length} results');
+      return resultWrapper.results;
+    } else {
+      // שימוש רגיל כשהאינדקס לא רץ
+      final index = await TantivyDataProvider.instance.engine;
+      return await _performDirectSearch(index, query, facets, limit, order,
+          fuzzy, distance, customSpacing, alternativeWords, searchOptions);
+    }
+  }
+
+  /// ביצוע חיפוש ישיר (ללא Isolate)
+  Future<List<SearchResult>> _performDirectSearch(
+    SearchEngine index,
+    String query,
+    List<String> facets,
+    int limit,
+    ResultsOrder order,
+    bool fuzzy,
+    int distance,
+    Map<String, String>? customSpacing,
+    Map<int, List<String>>? alternativeWords,
+    Map<String, Map<String, bool>>? searchOptions,
+  ) async {
     // בדיקה אם יש מרווחים מותאמים אישית, מילים חילופיות או אפשרויות חיפוש
     final hasCustomSpacing = customSpacing != null && customSpacing.isNotEmpty;
     final hasAlternativeWords =
@@ -128,7 +180,7 @@ class SearchRepository {
         maxExpansions: maxExpansions,
         order: order);
 
-    print('✅ Search completed, found ${results.length} results');
+    print('✅ Direct search completed, found ${results.length} results');
     return results;
   }
 
