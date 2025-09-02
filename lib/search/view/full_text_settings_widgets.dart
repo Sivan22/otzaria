@@ -153,7 +153,7 @@ class NumOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 150,
+          width: 154,
           height: 52, // גובה קבוע
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -565,8 +565,8 @@ class OrderOfResults extends StatelessWidget {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         return SizedBox(
-          width: 175, // רוחב גדול יותר לטקסט הארוך
-          height: 52, // גובה קבוע כמו NumOfResults
+          width: 183,
+          height: 52,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: DropdownButtonFormField<ResultsOrder>(
