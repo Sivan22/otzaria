@@ -179,8 +179,6 @@ class TextBookSearchViewState extends State<TextBookSearchView>
                     if (settingsState.replaceHolyNames) {
                       snippet = utils.replaceHolyNames(snippet);
                     }
-                    // החלת עיצוב הסוגריים העגולים
-                    snippet = utils.formatTextWithParentheses(snippet);
 
                     return ListTile(
                         subtitle: SearchHighlightText(snippet,
