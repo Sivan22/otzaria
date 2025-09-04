@@ -109,6 +109,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.0
   shared_preferences: ^2.5.3
   super_clipboard: ^0.9.1
+  flutter_single_instance: ^1.1.2
 
 dependency_overrides:
   #  it forces the version of the intl package to be 0.19.0 across all dependencies, even if some packages specify a different compatible version.

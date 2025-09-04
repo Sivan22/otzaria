@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import 'package:otzaria/app.dart';
@@ -74,6 +75,14 @@ void main() async {
   };
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Check for single instance
+  FlutterSingleInstance flutterSingleInstance = FlutterSingleInstance();
+  bool isFirstInstance = await flutterSingleInstance.isFirstInstance();
+  if (!isFirstInstance) {
+    // If not the first instance, exit the app
+    exit(0);
+  }
 
   // Initialize bloc observer for debugging
   Bloc.observer = AppBlocObserver();
