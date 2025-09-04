@@ -19,6 +19,7 @@ import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/daf_yomi/daf_yomi_helper.dart';
 import 'package:otzaria/file_sync/file_sync_bloc.dart';
 import 'package:otzaria/file_sync/file_sync_repository.dart';
+import 'package:otzaria/file_sync/file_sync_state.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/daf_yomi/daf_yomi.dart';
 import 'package:otzaria/file_sync/file_sync_widget.dart';
@@ -147,7 +148,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                             color: Colors.grey.shade400,
                             margin: const EdgeInsets.symmetric(horizontal: 2),
                           ),
-                          // קבוצת סינכרון
+                          // קבוצת טעינה מחדש וסנכרון
                           BlocProvider(
                             create: (context) => FileSyncBloc(
                               repository: FileSyncRepository(
@@ -156,7 +157,25 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                                 branch: "main",
                               ),
                             ),
-                            child: const SyncIconButton(),
+                            child: BlocListener<FileSyncBloc, FileSyncState>(
+                              listener: (context, syncState) {
+                                // אם הסינכרון הושלם או הופסק והיו קבצים חדשים
+                                if ((syncState.status == FileSyncStatus.completed || 
+                                     syncState.status == FileSyncStatus.error) && 
+                                    syncState.hasNewSync) {
+                                  // הפעלת רענון אוטומטי של הספרייה
+                                  context.read<LibraryBloc>().add(RefreshLibrary());
+                                }
+                              },
+                              child: const SyncIconButton(),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            tooltip: 'טעינה מחדש של רשימת הספרים',
+                            onPressed: () {
+                              context.read<LibraryBloc>().add(RefreshLibrary());
+                            },
                           ),
                           // קו מפריד
                           Container(
