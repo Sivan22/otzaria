@@ -8,14 +8,13 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/utils/ref_helper.dart';
-import 'package:otzaria/indexing/services/indexing_isolate_service.dart';
 
 class IndexingRepository {
   final TantivyDataProvider _tantivyDataProvider;
 
   IndexingRepository(this._tantivyDataProvider);
 
-  /// Indexes all books in the provided library using an Isolate.
+  /// Indexes all books in the provided library.
   ///
   /// [library] The library containing books to index
   /// [onProgress] Callback function to report progress
@@ -24,39 +23,63 @@ class IndexingRepository {
     void Function(int processed, int total) onProgress,
   ) async {
     _tantivyDataProvider.isIndexing.value = true;
-    
-    try {
-      // הפעלת האינדוקס ב-Isolate
-      final progressStream = await IndexingIsolateService.startIndexing(library);
-      
-      // האזנה להתקדמות מה-Isolate
-      await for (final progress in progressStream) {
-        if (progress.error != null) {
-          debugPrint('Indexing error: ${progress.error}');
-          _tantivyDataProvider.isIndexing.value = false;
-          throw Exception(progress.error);
-        }
-        
-        // דיווח התקדמות
-        onProgress(progress.processed, progress.total);
-        
-        // עדכון רשימת הספרים שהושלמו
-        if (progress.currentBook != null) {
-          _tantivyDataProvider.booksDone.add('${progress.currentBook}textBook');
-          _tantivyDataProvider.booksDone.add('${progress.currentBook}pdfBook');
-          saveIndexedBooks();
-        }
-        
-        if (progress.isComplete) {
-          _tantivyDataProvider.isIndexing.value = false;
-          break;
-        }
+    final allBooks = library.getAllBooks();
+    final totalBooks = allBooks.length;
+    int processedBooks = 0;
+
+    for (Book book in allBooks) {
+      // Check if indexing was cancelled
+      if (!_tantivyDataProvider.isIndexing.value) {
+        return;
       }
-    } catch (e) {
-      _tantivyDataProvider.isIndexing.value = false;
-      debugPrint('Error in indexing: $e');
-      rethrow;
+
+      try {
+        // Check if this book has already been indexed
+        if (book is TextBook) {
+          if (!_tantivyDataProvider.booksDone
+              .contains("${book.title}textBook")) {
+            if (_tantivyDataProvider.booksDone.contains(
+                sha1.convert(utf8.encode((await book.text))).toString())) {
+              _tantivyDataProvider.booksDone.add("${book.title}textBook");
+            } else {
+              await _indexTextBook(book);
+              _tantivyDataProvider.booksDone.add("${book.title}textBook");
+            }
+          }
+        } else if (book is PdfBook) {
+          if (!_tantivyDataProvider.booksDone
+              .contains("${book.title}pdfBook")) {
+            if (_tantivyDataProvider.booksDone.contains(
+                sha1.convert(await File(book.path).readAsBytes()).toString())) {
+              _tantivyDataProvider.booksDone.add("${book.title}pdfBook");
+            } else {
+              await _indexPdfBook(book);
+              _tantivyDataProvider.booksDone.add("${book.title}pdfBook");
+            }
+          }
+        }
+
+        processedBooks++;
+        // Report progress
+        onProgress(processedBooks, totalBooks);
+      } catch (e) {
+        // Use async error handling to prevent event loop blocking
+        await Future.microtask(() {
+          debugPrint('Error adding ${book.title} to index: $e');
+        });
+        processedBooks++;
+        // Still report progress even after error
+        onProgress(processedBooks, totalBooks);
+        // Yield control back to event loop after error
+        await Future.delayed(Duration.zero);
+      }
+
+    await Future.delayed(Duration.zero); 
+
     }
+
+    // Reset indexing flag after completion
+    _tantivyDataProvider.isIndexing.value = false;
   }
 
   /// Indexes a text-based book by processing its content and adding it to the search index and reference index.
@@ -175,7 +198,6 @@ class IndexingRepository {
   /// Cancels the ongoing indexing process.
   void cancelIndexing() {
     _tantivyDataProvider.isIndexing.value = false;
-    IndexingIsolateService.cancelIndexing();
   }
 
   /// Persists the list of indexed books to disk.
