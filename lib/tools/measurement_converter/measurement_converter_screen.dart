@@ -27,6 +27,8 @@ class _MeasurementConverterScreenState
   String? _selectedOpinion;
   final TextEditingController _inputController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
+  final FocusNode _inputFocusNode = FocusNode();
+  final FocusNode _screenFocusNode = FocusNode();
 
   // Maps to remember user selections for each category
   final Map<String, String> _rememberedFromUnits = {};
@@ -57,6 +59,13 @@ class _MeasurementConverterScreenState
     _resetDropdowns();
   }
 
+  @override
+  void dispose() {
+    _inputFocusNode.dispose();
+    _screenFocusNode.dispose();
+    super.dispose();
+  }
+
   void _resetDropdowns() {
     setState(() {
       // Restore remembered selections or use defaults
@@ -82,9 +91,9 @@ class _MeasurementConverterScreenState
       // Restore remembered input value or clear
       _inputController.text = _rememberedInputValues[_selectedCategory] ?? '';
       _resultController.clear();
-      
+
       // Convert if there's a remembered input value
-      if (_rememberedInputValues[_selectedCategory] != null && 
+      if (_rememberedInputValues[_selectedCategory] != null &&
           _rememberedInputValues[_selectedCategory]!.isNotEmpty) {
         _convert();
       }
@@ -217,7 +226,6 @@ class _MeasurementConverterScreenState
           if (unit == 'דקות') return 60.0;
           if (unit == 'שעות') return 3600.0;
           if (unit == 'ימים') return 86400.0;
-
         } else {
           final value = modernTimeFactors[opinion]![unit];
           if (value == null) return null;
@@ -314,25 +322,81 @@ class _MeasurementConverterScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildCategorySelector(),
-              const SizedBox(height: 20),
-              _buildUnitSelectors(),
-              const SizedBox(height: 20),
-              if (_opinions.containsKey(_selectedCategory) &&
-                  _opinions[_selectedCategory]!.isNotEmpty) ...[
-                _buildOpinionSelector(),
+      body: Focus(
+        focusNode: _screenFocusNode,
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            final String character = event.character ?? '';
+            
+            // Check if the pressed key is a number or decimal point
+            if (RegExp(r'[0-9.]').hasMatch(character)) {
+              // Auto-focus the input field and add the character
+              if (!_inputFocusNode.hasFocus) {
+                _inputFocusNode.requestFocus();
+                // Add the typed character to the input field
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final currentText = _inputController.text;
+                  final newText = currentText + character;
+                  _inputController.text = newText;
+                  _inputController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: newText.length),
+                  );
+                  _convert();
+                });
+                return KeyEventResult.handled;
+              }
+            }
+            // Check if the pressed key is a delete/backspace key
+            else if (event.logicalKey == LogicalKeyboardKey.backspace ||
+                     event.logicalKey == LogicalKeyboardKey.delete) {
+              // Auto-focus the input field and handle deletion
+              if (!_inputFocusNode.hasFocus) {
+                _inputFocusNode.requestFocus();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final currentText = _inputController.text;
+                  if (currentText.isNotEmpty) {
+                    String newText;
+                    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+                      // Remove last character
+                      newText = currentText.substring(0, currentText.length - 1);
+                    } else {
+                      // Delete key - remove first character (or handle as backspace for simplicity)
+                      newText = currentText.substring(0, currentText.length - 1);
+                    }
+                    _inputController.text = newText;
+                    _inputController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: newText.length),
+                    );
+                    _convert();
+                  }
+                });
+                return KeyEventResult.handled;
+              }
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildCategorySelector(),
                 const SizedBox(height: 20),
+                _buildUnitSelectors(),
+                const SizedBox(height: 20),
+                if (_opinions.containsKey(_selectedCategory) &&
+                    _opinions[_selectedCategory]!.isNotEmpty) ...[
+                  _buildOpinionSelector(),
+                  const SizedBox(height: 20),
+                ],
+                _buildInputField(),
+                const SizedBox(height: 20),
+                _buildResultDisplay(),
               ],
-              _buildInputField(),
-              const SizedBox(height: 20),
-              _buildResultDisplay(),
-            ],
+            ),
           ),
         ),
       ),
@@ -398,6 +462,10 @@ class _MeasurementConverterScreenState
             _selectedCategory = category;
             _resetDropdowns();
           });
+          // Restore focus to the screen after category change
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _screenFocusNode.requestFocus();
+          });
         }
       },
       child: Container(
@@ -439,6 +507,10 @@ class _MeasurementConverterScreenState
             setState(() => _selectedFromUnit = val);
             _rememberedFromUnits[_selectedCategory] = val!;
             _convert();
+            // Restore focus to the screen after unit change
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _screenFocusNode.requestFocus();
+            });
           }),
         ),
         const SizedBox(width: 10),
@@ -454,6 +526,10 @@ class _MeasurementConverterScreenState
                   _selectedToUnit = temp;
                   _convert();
                 });
+                // Restore focus to the screen after swap
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _screenFocusNode.requestFocus();
+                });
               },
             ),
           ],
@@ -464,6 +540,10 @@ class _MeasurementConverterScreenState
             setState(() => _selectedToUnit = val);
             _rememberedToUnits[_selectedCategory] = val!;
             _convert();
+            // Restore focus to the screen after unit change
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _screenFocusNode.requestFocus();
+            });
           }),
         ),
       ],
@@ -719,6 +799,10 @@ class _MeasurementConverterScreenState
           _rememberedOpinions[_selectedCategory] = opinion;
           _convert();
         });
+        // Restore focus to the screen after opinion change
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _screenFocusNode.requestFocus();
+        });
       },
       child: Container(
         width: minWidth,
@@ -752,6 +836,7 @@ class _MeasurementConverterScreenState
   Widget _buildInputField() {
     return TextField(
       controller: _inputController,
+      focusNode: _inputFocusNode,
       decoration: const InputDecoration(
         labelText: 'ערך להמרה',
         border: OutlineInputBorder(),
