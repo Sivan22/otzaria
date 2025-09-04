@@ -8,6 +8,7 @@ const List<String> modernLengthUnits = ['ס"מ', 'מטר', 'ק"מ'];
 const List<String> modernAreaUnits = ['מ"ר', 'דונם'];
 const List<String> modernVolumeUnits = ['סמ"ק', 'ליטר'];
 const List<String> modernWeightUnits = ['גרם', 'ק"ג'];
+const List<String> modernTimeUnits = ['שניות', 'דקות', 'שעות', 'ימים'];
 // END OF ADDITIONS
 
 class MeasurementConverterScreen extends StatefulWidget {
@@ -39,9 +40,7 @@ class _MeasurementConverterScreenState
     'שטח': areaConversionFactors.keys.toList()..addAll(modernAreaUnits),
     'נפח': volumeConversionFactors.keys.toList()..addAll(modernVolumeUnits),
     'משקל': weightConversionFactors.keys.toList()..addAll(modernWeightUnits),
-    'זמן': timeConversionFactors.keys.first.isNotEmpty
-        ? timeConversionFactors[timeConversionFactors.keys.first]!.keys.toList()
-        : [],
+    'זמן': timeConversionFactors.keys.toList()..addAll(modernTimeUnits),
   };
 
   final Map<String, List<String>> _opinions = {
@@ -49,7 +48,7 @@ class _MeasurementConverterScreenState
     'שטח': modernAreaFactors.keys.toList(),
     'נפח': modernVolumeFactors.keys.toList(),
     'משקל': modernWeightFactors.keys.toList(),
-    'זמן': timeConversionFactors.keys.toList(),
+    'זמן': modernTimeFactors.keys.toList(),
   };
 
   @override
@@ -212,6 +211,19 @@ class _MeasurementConverterScreenState
           return value; // Already in g
         }
         break;
+      case 'זמן': // Base unit: seconds
+        if (modernTimeUnits.contains(unit)) {
+          if (unit == 'שניות') return 1.0;
+          if (unit == 'דקות') return 60.0;
+          if (unit == 'שעות') return 3600.0;
+          if (unit == 'ימים') return 86400.0;
+
+        } else {
+          final value = modernTimeFactors[opinion]![unit];
+          if (value == null) return null;
+          return value; // Already in seconds
+        }
+        break;
     }
     return null;
   }
@@ -229,26 +241,14 @@ class _MeasurementConverterScreenState
     }
 
     // Check if both units are ancient
-    bool fromIsAncient = !(_units[_selectedCategory]!
-        .sublist(_units[_selectedCategory]!.length - modernLengthUnits.length)
-        .contains(_selectedFromUnit));
-    bool toIsAncient = !(_units[_selectedCategory]!
-        .sublist(_units[_selectedCategory]!.length - modernLengthUnits.length)
-        .contains(_selectedToUnit));
+    final modernUnits = _getModernUnitsForCategory(_selectedCategory);
+    bool fromIsAncient = !modernUnits.contains(_selectedFromUnit);
+    bool toIsAncient = !modernUnits.contains(_selectedToUnit);
 
     double result = 0.0;
 
     // ----- CONVERSION LOGIC -----
-    if (_selectedCategory == 'זמן') {
-      if (_selectedOpinion != null) {
-        final fromFactor =
-            timeConversionFactors[_selectedOpinion]![_selectedFromUnit]!;
-        final toFactor =
-            timeConversionFactors[_selectedOpinion]![_selectedToUnit]!;
-        final conversionFactor = fromFactor / toFactor;
-        result = input * conversionFactor;
-      }
-    } else if (fromIsAncient && toIsAncient) {
+    if (fromIsAncient && toIsAncient) {
       // Case 1: Ancient to Ancient conversion (doesn't need opinion)
       double conversionFactor = 1.0;
       switch (_selectedCategory) {
@@ -267,6 +267,10 @@ class _MeasurementConverterScreenState
         case 'משקל':
           conversionFactor =
               weightConversionFactors[_selectedFromUnit]![_selectedToUnit]!;
+          break;
+        case 'זמן':
+          conversionFactor =
+              timeConversionFactors[_selectedFromUnit]![_selectedToUnit]!;
           break;
       }
       result = input * conversionFactor;
@@ -509,6 +513,8 @@ class _MeasurementConverterScreenState
         return modernVolumeUnits;
       case 'משקל':
         return modernWeightUnits;
+      case 'זמן':
+        return modernTimeUnits;
       default:
         return [];
     }
@@ -580,23 +586,17 @@ class _MeasurementConverterScreenState
     'שטח': modernAreaUnits,
     'נפח': modernVolumeUnits,
     'משקל': modernWeightUnits,
+    'זמן': modernTimeUnits,
   };
 
   Widget _buildOpinionSelector() {
-    // Default to enabled
-    bool isOpinionEnabled = true;
+    // Check if opinion selector should be shown
+    final moderns = _modernUnits[_selectedCategory] ?? [];
+    final bool isFromModern = moderns.contains(_selectedFromUnit);
+    final bool isToModern = moderns.contains(_selectedToUnit);
 
-    // For categories other than 'זמן'
-    if (_selectedCategory != 'זמן') {
-      final moderns = _modernUnits[_selectedCategory] ?? [];
-      final bool isFromModern = moderns.contains(_selectedFromUnit);
-      final bool isToModern = moderns.contains(_selectedToUnit);
-
-      // Disable ONLY if converting from ancient to ancient
-      if (!isFromModern && !isToModern) {
-        isOpinionEnabled = false;
-      }
-    }
+    // Show opinion selector ONLY if at least one unit is modern
+    bool isOpinionEnabled = isFromModern || isToModern;
 
     // If not enabled, don't show the selector at all
     if (!isOpinionEnabled) {
