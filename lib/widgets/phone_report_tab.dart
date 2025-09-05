@@ -165,30 +165,32 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
                 fontSize: widget.fontSize,
                 fontFamily: Settings.getValue('key-font-family') ?? 'candara',
               ),
+              textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
               onSelectionChanged: (selection, cause) {
                 if (selection.start != selection.end) {
-                  final newContent = widget.visibleText.substring(
+                  final selectedText = widget.visibleText.substring(
                     selection.start,
                     selection.end,
                   );
 
-                  // --- כאן הלוגיקה הנכונה והמתוקנת ---
+                  // חישוב מספר השורה על בסיס הטקסט הנבחר
                   final textBeforeSelection =
                       widget.visibleText.substring(0, selection.start);
                   final lineOffset =
                       '\n'.allMatches(textBeforeSelection).length;
                   final newLineNumber = widget.lineNumber + lineOffset;
-                  // --- סוף הלוגיקה ---
 
-                  if (newContent.isNotEmpty) {
+                  if (selectedText.isNotEmpty) {
                     setState(() {
-                      _selectedText = newContent;
-                      _updatedLineNumber =
-                          newLineNumber; // עדכון מספר השורה ב-state
+                      _selectedText = selectedText;
+                      _updatedLineNumber = newLineNumber;
                     });
                   }
                 }
+              },
+              contextMenuBuilder: (context, editableTextState) {
+                return const SizedBox.shrink();
               },
             ),
           ),

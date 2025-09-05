@@ -576,14 +576,6 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     BuildContext context,
     TextBookLoaded state,
   ) async {
-    final currentRef = await refFromIndex(
-      state.positionsListener.itemPositions.value.isNotEmpty
-          ? state.positionsListener.itemPositions.value.first.index
-          : 0,
-      state.book.tableOfContents,
-    );
-
-    final bookDetails = await _getBookDetails(state.book.title);
     final allText = state.content;
     final visiblePositions = state.positionsListener.itemPositions.value
         .toList()
@@ -594,12 +586,28 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     if (!mounted) return;
 
+    // התחל לטעון את הנתונים הכבדים במקביל (ללא await)
+    final currentRefFuture = refFromIndex(
+      state.positionsListener.itemPositions.value.isNotEmpty
+          ? state.positionsListener.itemPositions.value.first.index
+          : 0,
+      state.book.tableOfContents,
+    );
+    final bookDetailsFuture = _getBookDetails(state.book.title);
+
     final dynamic result = await _showTabbedReportDialog(
       context,
       visibleText,
       state.fontSize,
       state.book.title,
     );
+
+    if (result == null) return; // בוטל
+    if (!mounted) return;
+
+    // עכשיו נחכה לנתונים שכבר רצים ברקע
+    final currentRef = await currentRefFuture;
+    final bookDetails = await bookDetailsFuture;
 
     if (result == null) return; // בוטל
     if (!mounted) return;
@@ -1371,7 +1379,6 @@ class _TabbedReportDialogState extends State<_TabbedReportDialog>
   }
 
   Future<void> _loadPhoneReportData() async {
-    // קוד זה נשאר זהה
     try {
       final availability =
           await _dataService.checkDataAvailability(widget.bookTitle);
@@ -1555,6 +1562,8 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                     fontFamily:
                         Settings.getValue('key-font-family') ?? 'candara',
                   ),
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
                   onSelectionChanged: (selection, cause) {
                     if (selection.start != selection.end) {
                       final newContent = widget.visibleText.substring(
@@ -1568,6 +1577,9 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                         widget.onTextSelected(newContent);
                       }
                     }
+                  },
+                  contextMenuBuilder: (context, editableTextState) {
+                    return const SizedBox.shrink();
                   },
                 ),
               ),
@@ -1625,3 +1637,5 @@ class _RegularReportTabState extends State<_RegularReportTab> {
     );
   }
 }
+
+
