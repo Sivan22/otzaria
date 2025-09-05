@@ -29,6 +29,7 @@ class _MeasurementConverterScreenState
   final TextEditingController _resultController = TextEditingController();
   final FocusNode _inputFocusNode = FocusNode();
   final FocusNode _screenFocusNode = FocusNode();
+  bool _showResultField = false;
 
   // Maps to remember user selections for each category
   final Map<String, String> _rememberedFromUnits = {};
@@ -91,6 +92,9 @@ class _MeasurementConverterScreenState
       // Restore remembered input value or clear
       _inputController.text = _rememberedInputValues[_selectedCategory] ?? '';
       _resultController.clear();
+
+      // Update result field visibility based on input
+      _showResultField = _inputController.text.isNotEmpty;
 
       // Convert if there's a remembered input value
       if (_rememberedInputValues[_selectedCategory] != null &&
@@ -328,7 +332,7 @@ class _MeasurementConverterScreenState
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
             final String character = event.character ?? '';
-            
+
             // Check if the pressed key is a number or decimal point
             if (RegExp(r'[0-9.]').hasMatch(character)) {
               // Auto-focus the input field and add the character
@@ -342,6 +346,9 @@ class _MeasurementConverterScreenState
                   _inputController.selection = TextSelection.fromPosition(
                     TextPosition(offset: newText.length),
                   );
+                  setState(() {
+                    _showResultField = newText.isNotEmpty;
+                  });
                   _convert();
                 });
                 return KeyEventResult.handled;
@@ -349,7 +356,7 @@ class _MeasurementConverterScreenState
             }
             // Check if the pressed key is a delete/backspace key
             else if (event.logicalKey == LogicalKeyboardKey.backspace ||
-                     event.logicalKey == LogicalKeyboardKey.delete) {
+                event.logicalKey == LogicalKeyboardKey.delete) {
               // Auto-focus the input field and handle deletion
               if (!_inputFocusNode.hasFocus) {
                 _inputFocusNode.requestFocus();
@@ -359,15 +366,20 @@ class _MeasurementConverterScreenState
                     String newText;
                     if (event.logicalKey == LogicalKeyboardKey.backspace) {
                       // Remove last character
-                      newText = currentText.substring(0, currentText.length - 1);
+                      newText =
+                          currentText.substring(0, currentText.length - 1);
                     } else {
                       // Delete key - remove first character (or handle as backspace for simplicity)
-                      newText = currentText.substring(0, currentText.length - 1);
+                      newText =
+                          currentText.substring(0, currentText.length - 1);
                     }
                     _inputController.text = newText;
                     _inputController.selection = TextSelection.fromPosition(
                       TextPosition(offset: newText.length),
                     );
+                    setState(() {
+                      _showResultField = newText.isNotEmpty;
+                    });
                     _convert();
                   }
                 });
@@ -393,8 +405,10 @@ class _MeasurementConverterScreenState
                   const SizedBox(height: 20),
                 ],
                 _buildInputField(),
-                const SizedBox(height: 20),
-                _buildResultDisplay(),
+                if (_showResultField) ...[
+                  const SizedBox(height: 20),
+                  _buildResultDisplay(),
+                ],
               ],
             ),
           ),
@@ -846,6 +860,11 @@ class _MeasurementConverterScreenState
         FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
       ],
       onChanged: (value) {
+        setState(() {
+          // Update result field visibility based on input
+          _showResultField = value.isNotEmpty;
+        });
+
         // Save the input value when it changes
         if (value.isNotEmpty) {
           _rememberedInputValues[_selectedCategory] = value;
