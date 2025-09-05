@@ -78,6 +78,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   static const String _reportSeparator2 = '------------------------------';
   static const String _fallbackMail = 'otzaria.200@gmail.com';
   bool _isInitialFocusDone = false;
+  
+  // משתנים לשמירת נתונים כבדים שנטענים ברקע
+  Future<Map<String, dynamic>>? _preloadedHeavyData;
+  bool _isLoadingHeavyData = false;
 
   String? encodeQueryParameters(Map<String, String> params) {
     return params.entries
@@ -586,47 +590,70 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
 
     if (!mounted) return;
 
-    // התחל לטעון את הנתונים הכבדים במקביל (ללא await)
-    final currentRefFuture = refFromIndex(
-      state.positionsListener.itemPositions.value.isNotEmpty
-          ? state.positionsListener.itemPositions.value.first.index
-          : 0,
-      state.book.tableOfContents,
-    );
-    final bookDetailsFuture = _getBookDetails(state.book.title);
-
     final dynamic result = await _showTabbedReportDialog(
       context,
       visibleText,
       state.fontSize,
       state.book.title,
+      state, // העבר את ה-state לדיאלוג
     );
 
-    if (result == null) return; // בוטל
-    if (!mounted) return;
+    try {
+      if (result == null) return; // בוטל
+      if (!mounted) return;
 
-    // עכשיו נחכה לנתונים שכבר רצים ברקע
-    final currentRef = await currentRefFuture;
-    final bookDetails = await bookDetailsFuture;
+      // Handle different result types
+      if (result is ReportedErrorData) {
+        // Regular report - the heavy data should already be loaded by now
+        final ReportAction? action =
+            await _showConfirmationDialog(context, result);
 
-    if (result == null) return; // בוטל
-    if (!mounted) return;
+        if (action == null || action == ReportAction.cancel) return;
 
-    // Handle different result types
-    if (result is ReportedErrorData) {
-      // Regular report - continue with existing flow
-      final ReportAction? action =
-          await _showConfirmationDialog(context, result);
+        // Get the heavy data that was loaded in background
+        final heavyData = await _getPreloadedHeavyData(state);
 
-      if (action == null || action == ReportAction.cancel) return;
-
-      // Handle regular report actions
-      await _handleRegularReportAction(
-          action, result, state, currentRef, bookDetails);
-    } else if (result is PhoneReportData) {
-      // Phone report - handle directly
-      await _handlePhoneReport(result);
+        // Handle regular report actions
+        await _handleRegularReportAction(action, result, state,
+            heavyData['currentRef'], heavyData['bookDetails']);
+      } else if (result is PhoneReportData) {
+        // Phone report - handle directly
+        await _handlePhoneReport(result);
+      }
+    } finally {
+      // נקה את הנתונים הכבדים מהזיכרון בכל מקרה (דיווח או ביטול)
+      _clearHeavyDataFromMemory();
     }
+  }
+
+  /// Load heavy data for regular report in background
+  Future<Map<String, dynamic>> _loadHeavyDataForRegularReport(
+      TextBookLoaded state) async {
+    final currentRef = await refFromIndex(
+      state.positionsListener.itemPositions.value.isNotEmpty
+          ? state.positionsListener.itemPositions.value.first.index
+          : 0,
+      state.book.tableOfContents,
+    );
+
+    final bookDetails = await _getBookDetails(state.book.title);
+
+    return {'currentRef': currentRef, 'bookDetails': bookDetails};
+  }
+
+  /// Get preloaded heavy data or load it if not ready
+  Future<Map<String, dynamic>> _getPreloadedHeavyData(TextBookLoaded state) async {
+    if (_preloadedHeavyData != null) {
+      return await _preloadedHeavyData!;
+    } else {
+      return await _loadHeavyDataForRegularReport(state);
+    }
+  }
+
+  /// Clear heavy data from memory to free up resources
+  void _clearHeavyDataFromMemory() {
+    _preloadedHeavyData = null;
+    _isLoadingHeavyData = false;
   }
 
   Future<dynamic> _showTabbedReportDialog(
@@ -634,9 +661,13 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     String text,
     double fontSize,
     String bookTitle,
+    TextBookLoaded state,
   ) async {
     // קבל את מספר השורה ההתחלתי לפני פתיחת הדיאלוג
     final currentLineNumber = _getCurrentLineNumber();
+
+    // התחל לטעון נתונים כבדים ברקע מיד אחרי פתיחת הדיאלוג
+    _startLoadingHeavyDataInBackground(state);
 
     return showDialog<dynamic>(
       context: context,
@@ -645,11 +676,27 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
           visibleText: text,
           fontSize: fontSize,
           bookTitle: bookTitle,
-          // העבר רק את מספר השורה ההתחלתי
           currentLineNumber: currentLineNumber,
+          state: state, // העבר את ה-state לדיאלוג
         );
       },
     );
+  }
+
+  /// Start loading heavy data in background immediately after dialog opens
+  void _startLoadingHeavyDataInBackground(TextBookLoaded state) {
+    if (_isLoadingHeavyData) return; // כבר טוען
+    
+    _isLoadingHeavyData = true;
+    
+    // התחל טעינה ברקע
+    _preloadedHeavyData = _loadHeavyDataForRegularReport(state).then((data) {
+      _isLoadingHeavyData = false;
+      return data;
+    }).catchError((error) {
+      _isLoadingHeavyData = false;
+      throw error;
+    });
   }
 
   Future<ReportAction?> _showConfirmationDialog(
@@ -1338,13 +1385,15 @@ class _TabbedReportDialog extends StatefulWidget {
   final String visibleText;
   final double fontSize;
   final String bookTitle;
-  final int currentLineNumber; // חזרנו לפרמטר המקורי והנכון
+  final int currentLineNumber;
+  final TextBookLoaded state;
 
   const _TabbedReportDialog({
     required this.visibleText,
     required this.fontSize,
     required this.bookTitle,
-    required this.currentLineNumber, // וגם כאן
+    required this.currentLineNumber,
+    required this.state,
   });
 
   @override
@@ -1369,7 +1418,13 @@ class _TabbedReportDialogState extends State<_TabbedReportDialog>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadPhoneReportData();
+
+    // טען נתוני דיווח טלפוני רק אחרי שהדיאלוג נפתח
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadPhoneReportData();
+      }
+    });
   }
 
   @override
@@ -1383,18 +1438,22 @@ class _TabbedReportDialogState extends State<_TabbedReportDialog>
       final availability =
           await _dataService.checkDataAvailability(widget.bookTitle);
 
-      setState(() {
-        _libraryVersion = availability['libraryVersion'] ?? 'unknown';
-        _bookId = availability['bookId'];
-        _dataErrors = List<String>.from(availability['errors'] ?? []);
-        _isLoadingData = false;
-      });
+      if (mounted) {
+        setState(() {
+          _libraryVersion = availability['libraryVersion'] ?? 'unknown';
+          _bookId = availability['bookId'];
+          _dataErrors = List<String>.from(availability['errors'] ?? []);
+          _isLoadingData = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading phone report data: $e');
-      setState(() {
-        _dataErrors = ['שגיאה בטעינת נתוני הדיווח'];
-        _isLoadingData = false;
-      });
+      if (mounted) {
+        setState(() {
+          _dataErrors = ['שגיאה בטעינת נתוני הדיווח'];
+          _isLoadingData = false;
+        });
+      }
     }
   }
 
@@ -1637,5 +1696,3 @@ class _RegularReportTabState extends State<_RegularReportTab> {
     );
   }
 }
-
-
