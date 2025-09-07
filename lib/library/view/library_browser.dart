@@ -585,10 +585,12 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     LibraryState state,
     SettingsState settingsState,
   ) {
+    final searchText = context.read<FocusRepository>().librarySearchController.text;
+    // Remove all quotation marks from the search query
+    final cleanSearchText = searchText.replaceAll('"', '');
+    
     context.read<LibraryBloc>().add(
-          UpdateSearchQuery(
-            context.read<FocusRepository>().librarySearchController.text,
-          ),
+          UpdateSearchQuery(cleanSearchText),
         );
     context.read<LibraryBloc>().add(
           SearchBooks(
