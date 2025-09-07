@@ -352,8 +352,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
                   icon: const Icon(Icons.print),
                   tooltip: 'הדפס',
                   onPressed: () async {
+                    final file = File(widget.tab.book.path);
+                    final fileName = file.uri.pathSegments.last;
                     await Printing.sharePdf(
-                      bytes: File(widget.tab.book.path).readAsBytesSync(),
+                      bytes: await file.readAsBytes(),
+                      filename: fileName,
                     );
                   },
                 ),
