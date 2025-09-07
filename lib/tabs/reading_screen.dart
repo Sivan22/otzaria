@@ -22,6 +22,7 @@ import 'package:otzaria/history/history_dialog.dart';
 import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/widgets/workspace_icon_button.dart';
+import 'package:otzaria/widgets/scrollable_tab_bar.dart';
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -196,9 +197,8 @@ class _ReadingScreenState extends State<ReadingScreen>
                   ),
                   title: Container(
                     constraints: const BoxConstraints(maxHeight: 50),
-                    child: TabBar(
+                    child: ScrollableTabBarWithArrows(
                       controller: controller,
-                      isScrollable: true,
                       tabAlignment: TabAlignment.center,
                       tabs: state.tabs
                           .map((tab) => _buildTab(context, tab, state))
