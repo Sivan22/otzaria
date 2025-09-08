@@ -3,186 +3,196 @@ import 'package:otzaria/data/repository/data_repository.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:pdfrx/pdfrx.dart';
 
-/// Represents a node in the hierarchy with its full path
-class HierarchyNode<T> {
-  final T node;
-  final List<String> path;
+// A cache for the generated page maps to avoid rebuilding them on every conversion.
+final _pageMapCache = <String, _PageMap>{};
 
-  HierarchyNode(this.node, this.path);
-}
-
-/// Converts a text book page index to the corresponding PDF page number
+/// Converts a text book page index to the corresponding PDF page number.
 ///
-/// [bookTitle] is the title of the book
-/// [textIndex] is the index in the text version
-/// Returns the corresponding page number in the PDF version, or null if not found
+/// This function uses a cached, anchor-based map with local interpolation for accuracy and performance.
 Future<int?> textToPdfPage(TextBook textBook, int textIndex) async {
-  final library = await DataRepository.instance.library;
-
-  // Get both text and PDF versions of the book
-
-  final pdfBook = library.findBookByTitle(textBook.title, PdfBook) as PdfBook?;
-
+  final pdfBook = (await DataRepository.instance.library)
+      .findBookByTitle(textBook.title, PdfBook) as PdfBook?;
   if (pdfBook == null) {
     return null;
   }
-  // Find the closest TOC entry with its full hierarchy
-  final toc = await textBook.tableOfContents;
-  final hierarchyNode = _findClosestEntryWithHierarchy(toc, textIndex);
-  if (hierarchyNode == null) {
-    return null;
-  }
 
-  // Find matching outline entry in PDF using the hierarchy
-  final outlines =
+  // It's better to get the outline from a provider/tab if available than to load it every time.
+  // For now, we load it directly as a fallback.
+  final outline =
       await PdfDocument.openFile(pdfBook.path).then((doc) => doc.loadOutline());
-  final outlineEntry =
-      _findMatchingOutlineByHierarchy(outlines, hierarchyNode.path);
+  final key = '${pdfBook.path}::${textBook.title}';
+  final map =
+      _pageMapCache[key] ??= await _buildPageMap(pdfBook, outline, textBook);
 
-  return outlineEntry?.dest?.pageNumber;
+  return map.textToPdf(textIndex);
 }
 
-/// Converts a PDF page number to the corresponding text book index
+/// Converts a PDF page number to the corresponding text book index.
 ///
-/// [bookTitle] is the title of the book
-/// [pdfPage] is the page number in the PDF version
-/// Returns the corresponding index in the text version, or null if not found
+/// This function uses a cached, anchor-based map with local interpolation for accuracy and performance.
 Future<int?> pdfToTextPage(PdfBook pdfBook, List<PdfOutlineNode> outline,
-    int pdfPage, BuildContext context) async {
-  final library = await DataRepository.instance.library;
-
-  // Get both text and PDF versions of the book
-  final textBook =
-      library.findBookByTitle(pdfBook.title, TextBook) as TextBook?;
-
+    int pdfPage, BuildContext ctx) async {
+  final textBook = (await DataRepository.instance.library)
+      .findBookByTitle(pdfBook.title, TextBook) as TextBook?;
   if (textBook == null) {
     return null;
   }
+  final key = '${pdfBook.path}::${textBook.title}';
+  final map =
+      _pageMapCache[key] ??= await _buildPageMap(pdfBook, outline, textBook);
 
-  // Find the outline entry with its full hierarchy
-
-  final hierarchyNode = _findOutlineByPageWithHierarchy(outline, pdfPage);
-  if (hierarchyNode == null) {
-    return null;
-  }
-
-  // Find matching TOC entry using the hierarchy
-  final toc = await textBook.tableOfContents;
-  final tocEntry = _findMatchingTocByHierarchy(toc, hierarchyNode.path);
-
-  return tocEntry?.index;
+  return map.pdfToText(pdfPage);
 }
 
-/// Finds the closest TOC entry before the target index and builds its hierarchy
-HierarchyNode<TocEntry>? _findClosestEntryWithHierarchy(
-    List<TocEntry> entries, int targetIndex,
-    [List<String> currentPath = const []]) {
-  HierarchyNode<TocEntry>? closest;
+/// A class that holds a synchronized map of PDF pages and text indices
+/// and performs interpolation between them.
+class _PageMap {
+  // Sorted lists of corresponding anchor points.
+  final List<int> pdfPages; // 1-based
+  final List<int> textIndices; // 0-based
 
-  for (var entry in entries) {
-    final path = [...currentPath, entry.text.trim()];
+  _PageMap(this.pdfPages, this.textIndices);
 
-    // Check if this entry is before target and later than current closest
-    if (entry.index <= targetIndex &&
-        (closest == null || entry.index > closest.node.index)) {
-      closest = HierarchyNode(entry, path);
-    }
+  /// Converts a PDF page to a text index using binary search and linear interpolation.
+  int? pdfToText(int page) {
+    if (pdfPages.isEmpty) return null;
 
-    // Recursively search children with updated path
-    final childResult =
-        _findClosestEntryWithHierarchy(entry.children, targetIndex, path);
-    if (childResult != null &&
-        (closest == null || childResult.node.index > closest.node.index)) {
-      closest = childResult;
-    }
+    final i = _lowerBound(pdfPages, page);
+    if (i == 0) return textIndices.first;
+    if (i >= pdfPages.length) return textIndices.last;
+
+    final pA = pdfPages[i - 1], pB = pdfPages[i];
+    final tA = textIndices[i - 1], tB = textIndices[i];
+
+    if (pB == pA) return tA; // Avoid division by zero
+
+    // Linear interpolation
+    final t = tA + ((page - pA) * (tB - tA) / (pB - pA)).round();
+    return t;
   }
 
-  return closest;
-}
+  /// Converts a text index to a PDF page using binary search and linear interpolation.
+  int? textToPdf(int index) {
+    if (textIndices.isEmpty) return null;
 
-/// Finds an outline entry by page number and builds its hierarchy
-HierarchyNode<PdfOutlineNode>? _findOutlineByPageWithHierarchy(
-    List<PdfOutlineNode> outlines, int targetPage,
-    [List<String> currentPath = const []]) {
-  HierarchyNode<PdfOutlineNode>? closest;
+    final i = _lowerBound(textIndices, index);
+    if (i == 0) return pdfPages.first;
+    if (i >= textIndices.length) return pdfPages.last;
 
-  for (var outline in outlines) {
-    final path = [...currentPath, outline.title.trim()];
+    final tA = textIndices[i - 1], tB = textIndices[i];
+    final pA = pdfPages[i - 1], pB = pdfPages[i];
 
-    final page = outline.dest?.pageNumber;
-    if (page != null &&
-        page <= targetPage &&
-        (closest == null || page > (closest.node.dest?.pageNumber ?? -1))) {
-      closest = HierarchyNode(outline, path);
-    }
+    if (tB == tA) return pA; // Avoid division by zero
 
-    // Recursively search children with updated path
-    final result =
-        _findOutlineByPageWithHierarchy(outline.children, targetPage, path);
-    if (result != null &&
-        result.node.dest?.pageNumber != null &&
-        (closest == null ||
-            (result.node.dest!.pageNumber > (closest.node.dest?.pageNumber ?? -1)))) {
-      closest = result;
-    }
-  }
-  return closest;
-}
-
-/// Finds a matching outline entry using a hierarchy path
-PdfOutlineNode? _findMatchingOutlineByHierarchy(
-    List<PdfOutlineNode> outlines, List<String> targetPath,
-    [int level = 0]) {
-  if (level >= targetPath.length) {
-    return null;
+    // Linear interpolation
+    final p = pA + ((index - tA) * (pB - pA) / (tB - tA)).round();
+    return p;
   }
 
-  final targetTitle = targetPath[level];
-
-  for (var outline in outlines) {
-    if (outline.title.trim() == targetTitle) {
-      // If we've reached the last level, this is our match
-      if (level == targetPath.length - 1) {
-        return outline;
-      }
-
-      // Otherwise, search the next level in the children
-      final result = _findMatchingOutlineByHierarchy(
-          outline.children, targetPath, level + 1);
-      if (result != null) {
-        return result;
+  /// Custom implementation of lower_bound for binary search on a sorted list.
+  int _lowerBound(List<int> a, int x) {
+    var lo = 0, hi = a.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (a[mid] < x) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
       }
     }
+    return lo;
   }
-
-  return null;
 }
 
-/// Finds a matching TOC entry using a hierarchy path
-TocEntry? _findMatchingTocByHierarchy(
-    List<TocEntry> entries, List<String> targetPath,
-    [int level = 0]) {
-  if (level >= targetPath.length) {
-    return null;
+/// Builds the synchronized anchor map from PDF outline and text Table of Contents.
+Future<_PageMap> _buildPageMap(
+    PdfBook pdf, List<PdfOutlineNode> outline, TextBook text) async {
+  // 1. Collect PDF anchors: (page, normalized_path)
+  final anchorsPdf = _collectPdfAnchors(outline);
+
+  // 2. Collect text anchors from TOC: (index, normalized_path)
+  final toc = await text.tableOfContents;
+  final anchorsText = _collectTextAnchors(toc);
+
+  // 3. Match anchors by the normalized path.
+  final pdfPages = <int>[];
+  final textIndices = <int>[];
+  final mapTextByRef = <String, int>{};
+
+  for (final a in anchorsText) {
+    mapTextByRef[a.ref] = a.index;
   }
 
-  final targetText = targetPath[level];
-
-  for (var entry in entries) {
-    if (entry.text.trim() == targetText) {
-      // If we've reached the last level, this is our match
-      if (level == targetPath.length - 1) {
-        return entry;
-      }
-
-      // Otherwise, search the next level in the children
-      final result =
-          _findMatchingTocByHierarchy(entry.children, targetPath, level + 1);
-      if (result != null) {
-        return result;
+  for (final p in anchorsPdf) {
+    final idx = mapTextByRef[p.ref];
+    if (idx != null) {
+      // To avoid duplicates which can break interpolation logic
+      if (!pdfPages.contains(p.page) && !textIndices.contains(idx)) {
+        pdfPages.add(p.page);
+        textIndices.add(idx);
       }
     }
   }
 
-  return null;
+  // Ensure the lists are sorted, as matching might break order.
+  final zipped =
+      List.generate(pdfPages.length, (i) => Tuple(pdfPages[i], textIndices[i]));
+  zipped.sort((a, b) => a.item1.compareTo(b.item1));
+
+  final sortedPdfPages = zipped.map((e) => e.item1).toList();
+  final sortedTextIndices = zipped.map((e) => e.item2).toList();
+
+  // Fallback: if there are too few matches, add start/end points.
+  if (sortedPdfPages.length < 2) {
+    if (sortedPdfPages.isEmpty) {
+      sortedPdfPages.add(1);
+      sortedTextIndices.add(0);
+    }
+    // Potentially add last page and last index as another anchor.
+  }
+
+  return _PageMap(sortedPdfPages, sortedTextIndices);
+}
+
+List<({int page, String ref})> _collectPdfAnchors(List<PdfOutlineNode> nodes,
+    [String prefix = '']) {
+  final List<({int page, String ref})> anchors = [];
+  for (final node in nodes) {
+    final page = node.dest?.pageNumber;
+    if (page != null && page > 0) {
+      final currentPath =
+          prefix.isEmpty ? node.title.trim() : '$prefix/${node.title.trim()}';
+      anchors.add((page: page, ref: _normalize(currentPath)));
+      anchors.addAll(_collectPdfAnchors(node.children, currentPath));
+    }
+  }
+  return anchors;
+}
+
+List<({int index, String ref})> _collectTextAnchors(List<TocEntry> entries,
+    [String prefix = '']) {
+  final List<({int index, String ref})> anchors = [];
+  for (final entry in entries) {
+    final currentPath =
+        prefix.isEmpty ? entry.text.trim() : '$prefix/${entry.text.trim()}';
+    anchors.add((index: entry.index, ref: _normalize(currentPath)));
+    anchors.addAll(_collectTextAnchors(entry.children, currentPath));
+  }
+  return anchors;
+}
+
+/// Normalizes a string for comparison by removing extra whitespace, punctuation, etc.
+String _normalize(String s) {
+  return s
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAll(RegExp(r'[^\p{L}\p{N}\s/.-]', unicode: true), '')
+      .toLowerCase()
+      .trim();
+}
+
+// A simple tuple class for sorting pairs.
+class Tuple<T1, T2> {
+  final T1 item1;
+  final T2 item2;
+  Tuple(this.item1, this.item2);
 }

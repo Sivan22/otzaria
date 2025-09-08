@@ -105,6 +105,8 @@ class TextBookSearchViewState extends State<TextBookSearchView>
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   searchTextController.clear();
+                  context.read<TextBookBloc>().add(UpdateSearchText(''));
+                  _searchTextUpdated();
                   widget.focusNode.requestFocus();
                 },
               ),
@@ -177,6 +179,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
                     if (settingsState.replaceHolyNames) {
                       snippet = utils.replaceHolyNames(snippet);
                     }
+
                     return ListTile(
                         subtitle: SearchHighlightText(snippet,
                             searchText: result.query),

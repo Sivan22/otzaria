@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
+import 'package:otzaria/search/utils/regex_patterns.dart';
 
 String stripHtmlIfNeeded(String text) {
-  return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
+  return text.replaceAll(SearchRegexPatterns.htmlStripper, '');
 }
 
 String truncate(String text, int length) {
@@ -12,26 +14,171 @@ String truncate(String text, int length) {
 
 String removeVolwels(String s) {
   s = s.replaceAll('־', ' ').replaceAll(' ׀', '');
-  return s.replaceAll(RegExp(r'[\u0591-\u05C7]'), '');
+  return s.replaceAll(SearchRegexPatterns.vowelsAndCantillation, '');
 }
 
-String highLight(String data, String searchQuery) {
-  if (searchQuery.isNotEmpty) {
-    return data.replaceAll(searchQuery, '<font color=red>$searchQuery</font>');
+String highLight(String data, String searchQuery, {int currentIndex = -1}) {
+  if (searchQuery.isEmpty) return data;
+
+  final regex = RegExp(RegExp.escape(searchQuery), caseSensitive: false);
+  final matches = regex.allMatches(data).toList();
+
+  if (matches.isEmpty) return data;
+
+  // אם לא צוין אינדקס נוכחי, נדגיש את כל התוצאות באדום
+  if (currentIndex == -1) {
+    return data.replaceAll(regex, '<font color=red>$searchQuery</font>');
   }
-  return data;
+
+  // נדגיש את התוצאה הנוכחית בכחול ואת השאר באדום
+  String result = data;
+  int offset = 0;
+
+  for (int i = 0; i < matches.length; i++) {
+    final match = matches[i];
+    final color = i == currentIndex ? 'blue' : 'red';
+    final backgroundColor =
+        i == currentIndex ? ' style="background-color: yellow;"' : '';
+    final replacement =
+        '<font color=$color$backgroundColor>${match.group(0)}</font>';
+
+    final start = match.start + offset;
+    final end = match.end + offset;
+
+    result = result.substring(0, start) + replacement + result.substring(end);
+    offset += replacement.length - match.group(0)!.length;
+  }
+
+  return result;
 }
 
 String getTitleFromPath(String path) {
   path = path
       .replaceAll('/', Platform.pathSeparator)
       .replaceAll('\\', Platform.pathSeparator);
-  return path.split(Platform.pathSeparator).last.split('.').first;
+  final fileName = path.split(Platform.pathSeparator).last;
+
+  // אם אין נקודה בשם הקובץ, נחזיר את השם כמו שהוא
+  final lastDotIndex = fileName.lastIndexOf('.');
+  if (lastDotIndex == -1) {
+    return fileName;
+  }
+
+  // נסיר רק את הסיומת (החלק האחרון אחרי הנקודה האחרונה)
+  return fileName.substring(0, lastDotIndex);
 }
 
+// Cache for the CSV data to avoid reading the file multiple times
+Map<String, String>? _csvCache;
+
 Future<bool> hasTopic(String title, String topic) async {
+  // Load CSV data once and cache it
+  if (_csvCache == null) {
+    await _loadCsvCache();
+  }
+
+  // Check if title exists in CSV cache
+  if (_csvCache!.containsKey(title)) {
+    final generation = _csvCache![title]!;
+    final mappedCategory = _mapGenerationToCategory(generation);
+    return mappedCategory == topic;
+  }
+
+  // Book not found in CSV, it's "מפרשים נוספים"
+  if (topic == 'מפרשים נוספים') {
+    return true;
+  }
+
+  // Fallback to original path-based logic
   final titleToPath = await FileSystemData.instance.titleToPath;
   return titleToPath[title]?.contains(topic) ?? false;
+}
+
+Future<void> _loadCsvCache() async {
+  _csvCache = {};
+
+  try {
+    final libraryPath = Settings.getValue<String>('key-library-path') ?? '.';
+    final csvPath =
+        '$libraryPath${Platform.pathSeparator}אוצריא${Platform.pathSeparator}אודות התוכנה${Platform.pathSeparator}סדר הדורות.csv';
+    final csvFile = File(csvPath);
+
+    if (await csvFile.exists()) {
+      final csvString = await csvFile.readAsString();
+      final lines = csvString.split('\n');
+
+      // Skip header and parse all lines
+      for (int i = 1; i < lines.length; i++) {
+        final line = lines[i].trim();
+        if (line.isEmpty) continue;
+
+        // Parse CSV line properly - handle commas inside quoted fields
+        final parts = _parseCsvLine(line);
+        if (parts.length >= 2) {
+          final bookTitle = parts[0].trim();
+          final generation = parts[1].trim();
+          _csvCache![bookTitle] = generation;
+        }
+      }
+    }
+  } catch (e) {
+    // If CSV fails, keep empty cache
+    _csvCache = {};
+  }
+}
+
+/// Clears the CSV cache to force reload on next access
+void clearCommentatorOrderCache() {
+  _csvCache = null;
+}
+
+// Helper function to parse CSV line with proper comma handling
+List<String> _parseCsvLine(String line) {
+  final List<String> result = [];
+  bool inQuotes = false;
+  String currentField = '';
+
+  for (int i = 0; i < line.length; i++) {
+    final char = line[i];
+
+    if (char == '"') {
+      // Handle escaped quotes (double quotes)
+      if (i + 1 < line.length && line[i + 1] == '"' && inQuotes) {
+        currentField += '"';
+        i++; // Skip the next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char == ',' && !inQuotes) {
+      result.add(currentField.trim());
+      currentField = '';
+    } else {
+      currentField += char;
+    }
+  }
+
+  // Add the last field
+  result.add(currentField.trim());
+
+  return result;
+}
+
+// Helper function to map CSV generation to our categories
+String _mapGenerationToCategory(String generation) {
+  switch (generation) {
+    case 'תורה שבכתב':
+      return 'תורה שבכתב';
+    case 'חז"ל':
+      return 'חז"ל';
+    case 'ראשונים':
+      return 'ראשונים';
+    case 'אחרונים':
+      return 'אחרונים';
+    case 'מחברי זמננו':
+      return 'מחברי זמננו';
+    default:
+      return 'מפרשים נוספים';
+  }
 }
 
 // Matches the Tetragrammaton with any Hebrew diacritics or cantillation marks.
@@ -40,9 +187,70 @@ final RegExp _holyNameRegex = RegExp(
   unicode: true,
 );
 
+/// מקטין טקסט בתוך סוגריים עגולים
+/// תנאים:
+/// 1. אם יש סוגר פותח נוסף בפנים - מתעלם מהסוגר החיצוני ומקטין רק את הפנימיים
+/// 2. אם אין סוגר סוגר עד סוף המקטע - לא מקטין כלום
+String formatTextWithParentheses(String text) {
+  if (text.isEmpty) return text;
+
+  final StringBuffer result = StringBuffer();
+  int i = 0;
+
+  while (i < text.length) {
+    if (text[i] == '(') {
+      // מחפשים את הסוגר הסוגר המתאים
+      int openCount = 1;
+      int j = i + 1;
+      int innerOpenIndex = -1;
+
+      // בודקים אם יש סוגר פותח נוסף בפנים
+      while (j < text.length && openCount > 0) {
+        if (text[j] == '(') {
+          if (innerOpenIndex == -1) {
+            innerOpenIndex = j; // שומרים את המיקום של הסוגר הפנימי הראשון
+          }
+          openCount++;
+        } else if (text[j] == ')') {
+          openCount--;
+        }
+        j++;
+      }
+
+      // אם לא מצאנו סוגר סוגר - מוסיפים הכל כמו שהוא
+      if (openCount > 0) {
+        result.write(text[i]);
+        i++;
+        continue;
+      }
+
+      // אם יש סוגר פנימי - מתעלמים מהחיצוני ומעבדים רק את הפנימי
+      if (innerOpenIndex != -1) {
+        // מוסיפים את החלק עד הסוגר הפנימי
+        result.write(text.substring(i, innerOpenIndex));
+        // ממשיכים מהסוגר הפנימי
+        i = innerOpenIndex;
+        continue;
+      }
+
+      // אם אין סוגר פנימי - מקטינים את כל התוכן
+      final content = text.substring(i + 1, j - 1);
+      result.write('<small>(');
+      result.write(content);
+      result.write(')</small>');
+      i = j;
+    } else {
+      result.write(text[i]);
+      i++;
+    }
+  }
+
+  return result.toString();
+}
+
 String replaceHolyNames(String s) {
   return s.replaceAllMapped(
-    _holyNameRegex,
+    SearchRegexPatterns.holyName,
     (match) => 'י${match[1]}ק${match[2]}ו${match[3]}ק${match[4]}',
   );
 }
@@ -52,7 +260,7 @@ String removeTeamim(String s) => s
     .replaceAll(' ׀', '')
     .replaceAll('ֽ', '')
     .replaceAll('׀', '')
-    .replaceAll(RegExp(r'[\u0591-\u05AF]'), '');
+    .replaceAll(SearchRegexPatterns.cantillationOnly, '');
 
 String removeSectionNames(String s) => s
     .replaceAll('פרק', '')
@@ -139,6 +347,10 @@ String replaceParaphrases(String s) {
       .replaceAll(' הלכ', ' הלכות')
       .replaceAll(' הלכה', ' הלכות')
       .replaceAll(' המשנה', ' המשניות')
+      .replaceAll(' הרב', ' ר')
+      .replaceAll(' הרב', ' רבי')
+      .replaceAll(' הרב', ' רבינו')
+      .replaceAll(' הרב', ' רבנו')
       .replaceAll(' ויקר', ' ויקרא רבה')
       .replaceAll(' ויר', ' ויקרא רבה')
       .replaceAll(' זהח', ' זוהר חדש')
@@ -191,6 +403,9 @@ String replaceParaphrases(String s) {
       .replaceAll(' מדר', ' מדרש')
       .replaceAll(' מדרש רבא', ' מדרש רבה')
       .replaceAll(' מדת', ' מדרש תהלים')
+      .replaceAll(' מהדורא תנינא', ' מהדות')
+      .replaceAll(' מהדורא', ' מהדורה')
+      .replaceAll(' מהדורה', ' מהדורא')
       .replaceAll(' מהרשא', ' חדושי אגדות')
       .replaceAll(' מהרשא', ' חדושי הלכות')
       .replaceAll(' מונ', ' מורה נבוכים')
@@ -224,7 +439,7 @@ String replaceParaphrases(String s) {
       .replaceAll(' ספהמצ', ' ספר המצוות')
       .replaceAll(' ספר המצות', ' ספר המצוות')
       .replaceAll(' ספרא', ' תורת כהנים')
-      .replaceAll(' ע"מ', ' עמוד')
+      .replaceAll(' עמ', ' עמוד')
       .replaceAll(' עא', ' עמוד א')
       .replaceAll(' עב', ' עמוד ב')
       .replaceAll(' עהש', ' ערוך השולחן')
@@ -240,12 +455,15 @@ String replaceParaphrases(String s) {
       .replaceAll(' פירו', ' פירוש')
       .replaceAll(' פירוש המשנה', ' פירוש המשניות')
       .replaceAll(' פמג', ' פרי מגדים')
+      .replaceAll(' פני', ' פני יהושע')
       .replaceAll(' פסז', ' פסיקתא זוטרתא')
       .replaceAll(' פסיקתא זוטא', ' פסיקתא זוטרתא')
       .replaceAll(' פסיקתא רבה', ' פסיקתא רבתי')
       .replaceAll(' פסר', ' פסיקתא רבתי')
       .replaceAll(' פעח', ' פרי עץ חיים')
       .replaceAll(' פרח', ' פרי חדש')
+      .replaceAll(' פרמג', ' פרי מגדים')
+      .replaceAll(' פתש', ' פתחי תשובה')
       .replaceAll(' צפנפ', ' צפנת פענח')
       .replaceAll(' קדושל', ' קדושת לוי')
       .replaceAll(' קוא', ' קול אליהו')
@@ -257,7 +475,11 @@ String replaceParaphrases(String s) {
       .replaceAll(' קצשוע', ' קיצור שולחן ערוך')
       .replaceAll(' קשוע', ' קיצור שולחן ערוך')
       .replaceAll(' ר חיים', ' הגרח')
+      .replaceAll(' ר', ' הרב')
+      .replaceAll(' ר', ' ר')
       .replaceAll(' ר', ' רבי')
+      .replaceAll(' ר', ' רבינו')
+      .replaceAll(' ר', ' רבנו')
       .replaceAll(' רא בהרמ', ' רבי אברהם בן הרמבם')
       .replaceAll(' ראבע', ' אבן עזרא')
       .replaceAll(' ראשיח', ' ראשית חכמה')
@@ -266,8 +488,16 @@ String replaceParaphrases(String s) {
       .replaceAll(' רבי חיים', ' הגרח')
       .replaceAll(' רבי נחמן', ' מוהרן')
       .replaceAll(' רבי נתן', ' מוהרנת')
+      .replaceAll(' רבי', ' הרב')
+      .replaceAll(' רבי', ' רבינו')
+      .replaceAll(' רבי', ' רבנו')
       .replaceAll(' רבינו חיים', ' הגרח')
+      .replaceAll(' רבינו', ' הרב')
+      .replaceAll(' רבינו', ' ר')
       .replaceAll(' רבינו', ' רבי')
+      .replaceAll(' רבינו', ' רבנו')
+      .replaceAll(' רבנו', ' הרב')
+      .replaceAll(' רבנו', ' ר')
       .replaceAll(' רבנו', ' רבי')
       .replaceAll(' רבנו', ' רבינו')
       .replaceAll(' רח', ' רבנו חננאל')
@@ -316,6 +546,8 @@ String replaceParaphrases(String s) {
       .replaceAll(' תנדא', ' תנא דבי אליהו')
       .replaceAll(' תנדבא', ' תנא דבי אליהו')
       .replaceAll(' תנח', ' תנחומא')
+      .replaceAll(' תניינא', ' תנינא')
+      .replaceAll(' תנינא', ' תניינא')
       .replaceAll(' תקוז', ' תיקוני זוהר')
       .replaceAll(' תשו', ' שות')
       .replaceAll(' תשו', ' תשובה')
@@ -329,11 +561,7 @@ String replaceParaphrases(String s) {
       .replaceAll(' תשובת', ' שות')
       .replaceAll(' תשובת', ' תשו')
       .replaceAll(' תשובת', ' תשובה')
-      .replaceAll(' תשובת', ' תשובות')
-      .replaceAll('משנב', ' משנה ברורה ')
-      .replaceAll('פרמג', ' פרי מגדים ')
-      .replaceAll('פתש', ' פתחי תשובה ')
-      .replaceAll('שטמק', ' שיטה מקובצת ');
+      .replaceAll(' תשובת', ' תשובות');
 
   if (s.startsWith("טז")) {
     s = s.replaceFirst("טז", "טורי זהב");
@@ -350,22 +578,34 @@ String replaceParaphrases(String s) {
 Future<Map<String, List<String>>> splitByEra(
   List<String> titles,
 ) async {
-  // יוצרים מבנה נתונים ריק לכל שלוש הקטגוריות
+  // יוצרים מבנה נתונים ריק לכל הקטגוריות החדשות
   final Map<String, List<String>> byEra = {
+    'תורה שבכתב': [],
+    'חז"ל': [],
     'ראשונים': [],
     'אחרונים': [],
     'מחברי זמננו': [],
+    'מפרשים נוספים': [],
   };
 
   // ממיינים כל פרשן לקטגוריה הראשונה שמתאימה לו
   for (final t in titles) {
-    if (await hasTopic(t, 'ראשונים')) {
+    if (await hasTopic(t, 'תורה שבכתב')) {
+      byEra['תורה שבכתב']!.add(t);
+    } else if (await hasTopic(t, 'חז"ל')) {
+      byEra['חז"ל']!.add(t);
+    } else if (await hasTopic(t, 'ראשונים')) {
       byEra['ראשונים']!.add(t);
     } else if (await hasTopic(t, 'אחרונים')) {
       byEra['אחרונים']!.add(t);
     } else if (await hasTopic(t, 'מחברי זמננו')) {
       byEra['מחברי זמננו']!.add(t);
+    } else {
+      // כל ספר שלא נמצא בקטגוריות הקודמות יוכנס ל"מפרשים נוספים"
+      byEra['מפרשים נוספים']!.add(t);
     }
   }
+
+  // מחזירים את כל הקטגוריות, גם אם הן ריקות
   return byEra;
 }

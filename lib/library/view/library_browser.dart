@@ -19,6 +19,7 @@ import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/daf_yomi/daf_yomi_helper.dart';
 import 'package:otzaria/file_sync/file_sync_bloc.dart';
 import 'package:otzaria/file_sync/file_sync_repository.dart';
+import 'package:otzaria/file_sync/file_sync_state.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/daf_yomi/daf_yomi.dart';
 import 'package:otzaria/file_sync/file_sync_widget.dart';
@@ -26,6 +27,12 @@ import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
 import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
 import 'package:otzaria/library/view/grid_items.dart';
 import 'package:otzaria/library/view/otzar_book_dialog.dart';
+import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
+import 'package:otzaria/history/history_dialog.dart';
+import 'package:otzaria/history/bloc/history_bloc.dart';
+import 'package:otzaria/history/bloc/history_event.dart';
+import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
+import 'package:otzaria/widgets/workspace_icon_button.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({Key? key}) : super(key: key);
@@ -55,164 +62,235 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   Widget build(BuildContext context) {
     super.build(context);
     return BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settingsState) {
-      return BlocBuilder<LibraryBloc, LibraryState>(
-        builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(
+      builder: (context, settingsState) {
+        return BlocBuilder<LibraryBloc, LibraryState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(
                 child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                Text('טוען ספרייה...'),
-              ],
-            ));
-          }
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    Text('טוען ספרייה...'),
+                  ],
+                ),
+              );
+            }
 
-          if (state.error != null) {
-            return Center(child: Text('Error: ${state.error}'));
-          }
+            if (state.error != null) {
+              return Center(child: Text('Error: ${state.error}'));
+            }
 
-          if (state.library == null) {
-            return const Center(child: Text('No library data available'));
-          }
+            if (state.library == null) {
+              return const Center(child: Text('No library data available'));
+            }
 
-          return Scaffold(
-            appBar: AppBar(
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.home),
-                          tooltip: 'חזרה לתיקיה הראשית',
-                          onPressed: () {
-                            setState(() => _depth = 0);
-                            context.read<LibraryBloc>().add(LoadLibrary());
-                            context
-                                .read<FocusRepository>()
-                                .librarySearchController
-                                .clear();
-                            _update(context, state, settingsState);
-                            _refocusSearchBar(selectAll: true);
-                          },
-                        ),
-                        BlocProvider(
-                          create: (context) => FileSyncBloc(
-                            repository: FileSyncRepository(
-                              githubOwner: "zevisvei",
-                              repositoryName: "otzaria-library",
-                              branch: "main",
+            return Scaffold(
+              appBar: AppBar(
+                title: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: DafYomi(
+                        onDafYomiTap: (tractate, daf) {
+                          openDafYomiBook(context, tractate, ' $daf.');
+                        },
+                      ),
+                    ),
+                    Text(
+                      state.currentCategory?.title ?? '',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // קבוצת חזור ובית
+                          IconButton(
+                            icon: const Icon(Icons.arrow_upward),
+                            tooltip: 'חזרה לתיקיה הקודמת',
+                            onPressed: () {
+                              if (state.currentCategory?.parent != null) {
+                                setState(
+                                    () => _depth = _depth > 0 ? _depth - 1 : 0);
+                                context.read<LibraryBloc>().add(NavigateUp());
+                                context
+                                    .read<LibraryBloc>()
+                                    .add(const SearchBooks());
+                                _refocusSearchBar(selectAll: true);
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.home),
+                            tooltip: 'חזרה לתיקיה הראשית',
+                            onPressed: () {
+                              setState(() => _depth = 0);
+                              context.read<LibraryBloc>().add(LoadLibrary());
+                              context
+                                  .read<FocusRepository>()
+                                  .librarySearchController
+                                  .clear();
+                              _update(context, state, settingsState);
+                              _refocusSearchBar(selectAll: true);
+                            },
+                          ),
+                          // קו מפריד
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: Colors.grey.shade400,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                          ),
+                          // קבוצת טעינה מחדש וסנכרון
+                          BlocProvider(
+                            create: (context) => FileSyncBloc(
+                              repository: FileSyncRepository(
+                                githubOwner: "zevisvei",
+                                repositoryName: "otzaria-library",
+                                branch: "main",
+                              ),
+                            ),
+                            child: BlocListener<FileSyncBloc, FileSyncState>(
+                              listener: (context, syncState) {
+                                // אם הסינכרון הושלם או הופסק והיו קבצים חדשים
+                                if ((syncState.status == FileSyncStatus.completed || 
+                                     syncState.status == FileSyncStatus.error) && 
+                                    syncState.hasNewSync) {
+                                  // הפעלת רענון אוטומטי של הספרייה
+                                  context.read<LibraryBloc>().add(RefreshLibrary());
+                                }
+                              },
+                              child: const SyncIconButton(),
                             ),
                           ),
-                          child: const SyncIconButton(),
-                        ),
-                      ],
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            tooltip: 'טעינה מחדש של רשימת הספרים',
+                            onPressed: () {
+                              context.read<LibraryBloc>().add(RefreshLibrary());
+                            },
+                          ),
+                          // קו מפריד
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: Colors.grey.shade400,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                          ),
+                          // קבוצת שולחן עבודה, היסטוריה ומועדפים
+                          IconButton(
+                            icon: const Icon(Icons.history),
+                            tooltip: 'הצג היסטוריה',
+                            onPressed: () => _showHistoryDialog(context),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.bookmark),
+                            tooltip: 'הצג סימניות',
+                            onPressed: () => _showBookmarksDialog(context),
+                          ),
+                          // קו מפריד
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: Colors.grey.shade400,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                          ),
+                          SizedBox(
+                            width: 180, // רוחב קבוע למניעת הזזת הטקסט
+                            child: WorkspaceIconButton(
+                              // שולחנות עבודה
+                              onPressed: () =>
+                                  _showSwitchWorkspaceDialog(context),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Center(
-                        child: Text(state.currentCategory?.title ?? '',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.secondary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ))),
-                  ),
-                  DafYomi(
-                    onDafYomiTap: (tractate, daf) {
-                      openDafYomiBook(context, tractate, ' $daf.');
-                    },
-                  )
+                  ],
+                ),
+              ),
+              body: Column(
+                children: [
+                  _buildSearchBar(state),
+                  if (context
+                          .read<FocusRepository>()
+                          .librarySearchController
+                          .text
+                          .length >
+                      2)
+                    _buildTopicsSelection(context, state, settingsState),
+                  Expanded(child: _buildContent(state)),
                 ],
               ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_upward),
-                tooltip: 'חזרה לתיקיה הקודמת',
-                onPressed: () {
-                  if (state.currentCategory?.parent != null) {
-                    setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
-                    context.read<LibraryBloc>().add(NavigateUp());
-                    context.read<LibraryBloc>().add(const SearchBooks());
-                    _refocusSearchBar(selectAll: true);
-                  }
-                },
-              ),
-            ),
-            body: Column(
-              children: [
-                _buildSearchBar(state),
-                if (context
-                        .read<FocusRepository>()
-                        .librarySearchController
-                        .text
-                        .length >
-                    2)
-                  _buildTopicsSelection(context, state, settingsState),
-                Expanded(
-                  child: _buildContent(state),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    });
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildSearchBar(LibraryState state) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: BlocBuilder<SettingsBloc, SettingsState>(
-          builder: (context, settingsState) {
-        final focusRepository = context.read<FocusRepository>();
-        return Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: focusRepository.librarySearchController,
-                focusNode:
-                    context.read<FocusRepository>().librarySearchFocusNode,
-                autofocus: true,
-                decoration: InputDecoration(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      focusRepository.librarySearchController.clear();
-                      _update(context, state, settingsState);
-                      _refocusSearchBar();
-                    },
-                    icon: const Icon(Icons.cancel),
+        builder: (context, settingsState) {
+          final focusRepository = context.read<FocusRepository>();
+          return Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: focusRepository.librarySearchController,
+                  focusNode:
+                      context.read<FocusRepository>().librarySearchFocusNode,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        focusRepository.librarySearchController.clear();
+                        _update(context, state, settingsState);
+                        _refocusSearchBar();
+                      },
+                      icon: const Icon(Icons.cancel),
+                    ),
+                    border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                    ),
+                    hintText:
+                        'איתור ספר ב${state.currentCategory?.title ?? ""}',
                   ),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                  ),
-                  hintText: 'איתור ספר ב${state.currentCategory?.title ?? ""}',
+                  onChanged: (value) {
+                    context.read<LibraryBloc>().add(UpdateSearchQuery(value));
+                    context.read<LibraryBloc>().add(const SelectTopics([]));
+                    _update(context, state, settingsState);
+                  },
                 ),
-                onChanged: (value) {
-                  context.read<LibraryBloc>().add(UpdateSearchQuery(value));
-                  context.read<LibraryBloc>().add(const SelectTopics([]));
-                  _update(context, state, settingsState);
-                },
               ),
-            ),
-            if (settingsState.showExternalBooks)
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                onPressed: () => _showFilterDialog(context, state),
-              ),
-          ],
-        );
-      }),
+              if (settingsState.showExternalBooks)
+                IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: () => _showFilterDialog(context, state),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
   Widget _buildTopicsSelection(
-      BuildContext context, LibraryState state, SettingsState settingsState) {
+    BuildContext context,
+    LibraryState state,
+    SettingsState settingsState,
+  ) {
     if (state.searchResults == null) {
       return const SizedBox.shrink();
     }
@@ -232,7 +310,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       "שות",
       "ראשונים",
       "אחרונים",
-      "מחברי זמננו"
+      "מחברי זמננו",
     ];
 
     final allTopics = _getAllTopics(state.searchResults!);
@@ -259,10 +337,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       choiceChipLabel: (p0) => p0,
       hideSelectedTextCount: true,
       choiceChipBuilder: (context, item, isSelected) => Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 3,
-          vertical: 2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
         child: Chip(
           label: Text(item),
           backgroundColor:
@@ -355,34 +430,30 @@ class _LibraryBrowserState extends State<LibraryBrowser>
         items.add(Center(child: HeaderItem(category: subCategory)));
         items.add(
           MyGridView(
-            items: Future.value(
-              [
-                ...subCategory.books.map((book) => _buildBookItem(book)),
-                ...subCategory.subCategories.map(
-                  (cat) => CategoryGridItem(
-                    category: cat,
-                    onCategoryClickCallback: () => _openCategory(cat),
-                  ),
+            items: Future.value([
+              ...subCategory.books.map((book) => _buildBookItem(book)),
+              ...subCategory.subCategories.map(
+                (cat) => CategoryGridItem(
+                  category: cat,
+                  onCategoryClickCallback: () => _openCategory(cat),
                 ),
-              ],
-            ),
+              ),
+            ]),
           ),
         );
       }
     } else {
       items.add(
         MyGridView(
-          items: Future.value(
-            [
-              ...category.books.map((book) => _buildBookItem(book)),
-              ...category.subCategories.map(
-                (cat) => CategoryGridItem(
-                  category: cat,
-                  onCategoryClickCallback: () => _openCategory(cat),
-                ),
+          items: Future.value([
+            ...category.books.map((book) => _buildBookItem(book)),
+            ...category.subCategories.map(
+              (cat) => CategoryGridItem(
+                category: cat,
+                onCategoryClickCallback: () => _openCategory(cat),
               ),
-            ],
-          ),
+            ),
+          ]),
         ),
       );
     }
@@ -408,21 +479,31 @@ class _LibraryBrowserState extends State<LibraryBrowser>
 
   void _openBook(Book book) {
     if (book is PdfBook) {
-      context.read<TabsBloc>().add(AddTab(PdfBookTab(
-            book: book,
-            pageNumber: 1,
-            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ??
-                    false) ||
-                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
-          )));
+      context.read<TabsBloc>().add(
+            AddTab(
+              PdfBookTab(
+                book: book,
+                pageNumber: 1,
+                openLeftPane:
+                    (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                        (Settings.getValue<bool>('key-default-sidebar-open') ??
+                            false),
+              ),
+            ),
+          );
     } else if (book is TextBook) {
-      context.read<TabsBloc>().add(AddTab(TextBookTab(
-            book: book,
-            index: 0,
-            openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ??
-                    false) ||
-                (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
-          )));
+      context.read<TabsBloc>().add(
+            AddTab(
+              TextBookTab(
+                book: book,
+                index: 0,
+                openLeftPane:
+                    (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+                        (Settings.getValue<bool>('key-default-sidebar-open') ??
+                            false),
+              ),
+            ),
+          );
     }
     context.read<NavigationBloc>().add(const NavigateToScreen(Screen.reading));
   }
@@ -443,42 +524,50 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     _refocusSearchBar();
   }
 
+  void _showSwitchWorkspaceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const WorkspaceSwitcherDialog(),
+    );
+  }
+
   void _showFilterDialog(BuildContext context, LibraryState state) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         content: BlocBuilder<SettingsBloc, SettingsState>(
-            builder: (context, settingsState) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CheckboxListTile(
-                title: const Text('הצג ספרים מאוצר החכמה'),
-                value: settingsState.showOtzarHachochma,
-                onChanged: (bool? value) {
-                  setState(() {
-                    context
-                        .read<SettingsBloc>()
-                        .add(UpdateShowOtzarHachochma(value!));
-                    _update(context, state, settingsState);
-                  });
-                },
-              ),
-              CheckboxListTile(
-                title: const Text('הצג ספרים מהיברובוקס'),
-                value: settingsState.showHebrewBooks,
-                onChanged: (bool? value) {
-                  setState(() {
-                    context
-                        .read<SettingsBloc>()
-                        .add(UpdateShowHebrewBooks(value!));
-                    _update(context, state, settingsState);
-                  });
-                },
-              ),
-            ],
-          );
-        }),
+          builder: (context, settingsState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CheckboxListTile(
+                  title: const Text('הצג ספרים מאוצר החכמה'),
+                  value: settingsState.showOtzarHachochma,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      context.read<SettingsBloc>().add(
+                            UpdateShowOtzarHachochma(value!),
+                          );
+                      _update(context, state, settingsState);
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: const Text('הצג ספרים מהיברובוקס'),
+                  value: settingsState.showHebrewBooks,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      context.read<SettingsBloc>().add(
+                            UpdateShowHebrewBooks(value!),
+                          );
+                      _update(context, state, settingsState);
+                    });
+                  },
+                ),
+              ],
+            );
+          },
+        ),
       ),
     ).then((_) => _refocusSearchBar());
   }
@@ -492,9 +581,17 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   }
 
   void _update(
-      BuildContext context, LibraryState state, SettingsState settingsState) {
-    context.read<LibraryBloc>().add(UpdateSearchQuery(
-        context.read<FocusRepository>().librarySearchController.text));
+    BuildContext context,
+    LibraryState state,
+    SettingsState settingsState,
+  ) {
+    final searchText = context.read<FocusRepository>().librarySearchController.text;
+    // Remove all quotation marks from the search query
+    final cleanSearchText = searchText.replaceAll('"', '');
+    
+    context.read<LibraryBloc>().add(
+          UpdateSearchQuery(cleanSearchText),
+        );
     context.read<LibraryBloc>().add(
           SearchBooks(
             showHebrewBooks: settingsState.showHebrewBooks,
@@ -508,5 +605,20 @@ class _LibraryBrowserState extends State<LibraryBrowser>
   void _refocusSearchBar({bool selectAll = false}) {
     final focusRepository = context.read<FocusRepository>();
     focusRepository.requestLibrarySearchFocus(selectAll: selectAll);
+  }
+
+  void _showHistoryDialog(BuildContext context) {
+    context.read<HistoryBloc>().add(FlushHistory());
+    showDialog(
+      context: context,
+      builder: (context) => const HistoryDialog(),
+    );
+  }
+
+  void _showBookmarksDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const BookmarksDialog(),
+    );
   }
 }

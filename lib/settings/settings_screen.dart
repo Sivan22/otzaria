@@ -442,11 +442,13 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
                     SwitchSettingsTile(
-                      title: 'סינכרון אוטומטי',
-                      leading: const Icon(Icons.sync),
+
+                      title: 'סינכרון הספרייה באופן אוטומטי',
+                      leading: Icon(Icons.sync),
+
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
-                      enabledLabel: 'מאגר הספרים יתעדכן אוטומטית',
+                      enabledLabel: 'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
@@ -565,21 +567,24 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             }
                           },
                         ),
-                        SimpleSettingsTile(
-                          title: 'מיקום ספרי HebrewBooks',
-                          subtitle: Settings.getValue<String>(
-                                  'key-hebrew-books-path') ??
-                              'לא קיים',
-                          leading: const Icon(Icons.folder),
-                          onTap: () async {
-                            String? path =
-                                await FilePicker.platform.getDirectoryPath();
-                            if (path != null) {
-                              context
-                                  .read<LibraryBloc>()
-                                  .add(UpdateHebrewBooksPath(path));
-                            }
-                          },
+                        Tooltip(
+                          message: 'במידה וקיימים ברשותכם ספרים ממאגר זה',
+                          child: SimpleSettingsTile(
+                            title: 'מיקום ספרי HebrewBooks (היברובוקס)',
+                            subtitle: Settings.getValue<String>(
+                                    'key-hebrew-books-path') ??
+                                'לא קיים',
+                            leading: const Icon(Icons.folder),
+                            onTap: () async {
+                              String? path =
+                                  await FilePicker.platform.getDirectoryPath();
+                              if (path != null) {
+                                context
+                                    .read<LibraryBloc>()
+                                    .add(UpdateHebrewBooksPath(path));
+                              }
+                            },
+                          ),
                         ),
                       ]),
                     SwitchSettingsTile(
@@ -590,6 +595,51 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
                       leading: const Icon(Icons.bug_report),
                       activeColor: Theme.of(context).cardColor,
+                    ),
+                    SimpleSettingsTile(
+                      title: 'איפוס הגדרות',
+                      subtitle:
+                          'פעולה זו תמחק את כל ההגדרות ותחזיר את התוכנה למצב התחלתי',
+                      leading: const Icon(Icons.restore, color: Colors.red),
+                      onTap: () async {
+                        // דיאלוג לאישור המשתמש
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('איפוס הגדרות?'),
+                            content: const Text(
+                                'כל ההגדרות האישיות שלך ימחקו. פעולה זו אינה הפיכה. האם להמשיך?'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('ביטול')),
+                              TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('אישור',
+                                      style: TextStyle(color: Colors.red))),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true && context.mounted) {
+                          Settings.clearCache();
+
+                          // הודעה למשתמש שנדרשת הפעלה מחדש
+                          await showDialog<void>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => AlertDialog(
+                                      title: const Text('ההגדרות אופסו'),
+                                      content: const Text(
+                                          'יש לסגור ולהפעיל מחדש את התוכנה כדי שהשינויים יכנסו לתוקף.'),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () => exit(0),
+                                            child: const Text('סגור את התוכנה'))
+                                      ]));
+                        }
+                      },
                     ),
                     FutureBuilder(
                         future: PackageInfo.fromPlatform(),

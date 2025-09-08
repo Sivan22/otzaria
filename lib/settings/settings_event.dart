@@ -153,3 +153,21 @@ class UpdatePinSidebar extends SettingsEvent {
   @override
   List<Object?> get props => [pinSidebar];
 }
+
+class UpdateSidebarWidth extends SettingsEvent {
+  final double sidebarWidth;
+
+  const UpdateSidebarWidth(this.sidebarWidth);
+
+  @override
+  List<Object?> get props => [sidebarWidth];
+}
+
+class UpdateFacetFilteringWidth extends SettingsEvent {
+  final double facetFilteringWidth;
+
+  const UpdateFacetFilteringWidth(this.facetFilteringWidth);
+
+  @override
+  List<Object?> get props => [facetFilteringWidth];
+}

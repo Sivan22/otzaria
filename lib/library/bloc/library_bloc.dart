@@ -48,15 +48,32 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   ) async {
     emit(state.copyWith(isLoading: true));
     try {
+      // שמירת המיקום הנוכחי בספרייה
+      final currentCategoryPath = _getCurrentCategoryPath(state.currentCategory);
+      
       final libraryPath = Settings.getValue<String>('key-library-path');
       if (libraryPath != null) {
         FileSystemData.instance.libraryPath = libraryPath;
       }
+      
+      // רענון הספרייה מהמערכת קבצים
+      DataRepository.instance.library = FileSystemData.instance.getLibrary();
       final library = await _repository.library;
-      TantivyDataProvider.instance.reopenIndex();
+      
+      try {
+        TantivyDataProvider.instance.reopenIndex();
+      } catch (e) {
+        // אם יש בעיה עם פתיחת האינדקס מחדש, נמשיך בלי זה
+        // הספרייה עדיין תתרענן אבל החיפוש עלול לא לעבוד עד להפעלה מחדש
+        print('Warning: Could not reopen search index: $e');
+      }
+      
+      // חזרה לאותה תיקייה שהיתה פתוחה קודם
+      final targetCategory = _findCategoryByPath(library, currentCategoryPath);
+      
       emit(state.copyWith(
         library: library,
-        currentCategory: library,
+        currentCategory: targetCategory ?? library,
         isLoading: false,
       ));
     } catch (e) {
@@ -65,6 +82,47 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         isLoading: false,
       ));
     }
+  }
+  
+  /// מחזיר את הנתיב של התיקייה הנוכחית
+  List<String> _getCurrentCategoryPath(Category? category) {
+    if (category == null) return [];
+    
+    final path = <String>[];
+    Category? current = category;
+    final visited = <Category>{};  // למניעת לולאות אינסופיות
+    
+    while (current != null && current.parent != null && current.parent != current) {
+      // בדיקה שלא ביקרנו כבר בקטגוריה הזו (למניעת לולאה אינסופית)
+      if (visited.contains(current)) {
+        break;
+      }
+      visited.add(current);
+      
+      path.insert(0, current.title);
+      current = current.parent;
+    }
+    
+    return path;
+  }
+  
+  /// מוצא תיקייה לפי נתיב
+  Category? _findCategoryByPath(Category rootCategory, List<String> path) {
+    if (path.isEmpty) return rootCategory;
+    
+    Category current = rootCategory;
+    
+    for (final categoryName in path) {
+      try {
+        final found = current.subCategories.where((cat) => cat.title == categoryName).first;
+        current = found;
+      } catch (e) {
+        // אם לא מצאנו את התיקייה, נחזיר את הקרובה ביותר
+        return current;
+      }
+    }
+    
+    return current;
   }
 
   Future<void> _onUpdateLibraryPath(

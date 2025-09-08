@@ -29,11 +29,13 @@ class _TocViewerState extends State<TocViewer>
   @override
   bool get wantKeepAlive => true;
 
-final TextEditingController searchController = TextEditingController();
+  final Map<int, ExpansionTileController> _controllers = {};
+  final TextEditingController searchController = TextEditingController();
   final ScrollController _tocScrollController = ScrollController();
   final Map<int, GlobalKey> _tocItemKeys = {};
   bool _isManuallyScrolling = false;
   int? _lastScrolledTocIndex;
+  final Map<int, bool> _expanded = {};
 
   @override
   void dispose() {
@@ -41,6 +43,34 @@ final TextEditingController searchController = TextEditingController();
     searchController.dispose();
     super.dispose();
   }
+
+  void _ensureParentsOpen(List<TocEntry> entries, int targetIndex) {
+    final path = _findPath(entries, targetIndex);
+    if (path.isEmpty) return;
+    
+    for (final entry in path) {
+      if (entry.children.isNotEmpty && _expanded[entry.index] != true) {
+        _expanded[entry.index] = true;
+        _controllers[entry.index]?.expand();
+      }
+    }
+  }
+
+  List<TocEntry> _findPath(List<TocEntry> entries, int targetIndex) {
+    for (final entry in entries) {
+      if (entry.index == targetIndex) {
+        return [entry];
+      }
+      
+      final subPath = _findPath(entry.children, targetIndex);
+      if (subPath.isNotEmpty) {
+        return [entry, ...subPath];
+      }
+    }
+    return [];
+  }
+
+
 
   void _scrollToActiveItem(TextBookLoaded state) {
     if (_isManuallyScrolling) return;
@@ -50,38 +80,49 @@ final TextEditingController searchController = TextEditingController();
             ? closestTocEntryIndex(
                 state.tableOfContents, state.visibleIndices.first)
             : null);
- 
+
     if (activeIndex == null || activeIndex == _lastScrolledTocIndex) return;
 
-    // נחכה פריים אחד נוסף כדי שה-setState יסיים וה-UI יתעדכן
+    _ensureParentsOpen(state.tableOfContents, activeIndex);
+
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _isManuallyScrolling) return;
+      if (!mounted) return;
 
-      final key = _tocItemKeys[activeIndex];
-      final itemContext = key?.currentContext;
-      if (itemContext == null) return;
-      
-      final itemRenderObject = itemContext.findRenderObject();
-      if (itemRenderObject is! RenderBox) return;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _isManuallyScrolling) return;
 
-      final scrollableBox = _tocScrollController.position.context.storageContext.findRenderObject() as RenderBox;
-      
-      final itemOffset = itemRenderObject.localToGlobal(Offset.zero, ancestor: scrollableBox).dy;
-      final viewportHeight = scrollableBox.size.height;
-      final itemHeight = itemRenderObject.size.height;
-      
-      final target = _tocScrollController.offset + itemOffset - (viewportHeight / 2) + (itemHeight / 2);
-      
-      _tocScrollController.animateTo(
-        target.clamp(
-          0.0,
-          _tocScrollController.position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+        final key = _tocItemKeys[activeIndex];
+        final itemContext = key?.currentContext;
+        if (itemContext == null) return;
 
-      _lastScrolledTocIndex = activeIndex;
+        final itemRenderObject = itemContext.findRenderObject();
+        if (itemRenderObject is! RenderBox) return;
+
+        final scrollableBox = _tocScrollController.position.context.storageContext
+            .findRenderObject() as RenderBox;
+
+        final itemOffset = itemRenderObject
+            .localToGlobal(Offset.zero, ancestor: scrollableBox)
+            .dy;
+        final viewportHeight = scrollableBox.size.height;
+        final itemHeight = itemRenderObject.size.height;
+
+        final target = _tocScrollController.offset +
+            itemOffset -
+            (viewportHeight / 2) +
+            (itemHeight / 2);
+
+        _tocScrollController.animateTo(
+          target.clamp(
+            0.0,
+            _tocScrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+
+        _lastScrolledTocIndex = activeIndex;
+      });
     });
   }
 
@@ -107,27 +148,27 @@ final TextEditingController searchController = TextEditingController();
           return Padding(
             padding: EdgeInsets.fromLTRB(
                 0, 0, 10 * allEntries[index].level.toDouble(), 0),
-        child: allEntries[index].children.isEmpty
-            ? Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  title: Text(allEntries[index].fullText),
-                  onTap: () {
-                      setState(() {
-                        _isManuallyScrolling = false;
-                        _lastScrolledTocIndex = null;
-                      });
-                      widget.scrollController.scrollTo(
-                        index: allEntries[index].index,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.ease,
-                      );
-                      if (Platform.isAndroid) {
-                        widget.closeLeftPaneCallback();
-                      }
-                    },
-                  ),
-                )
+            child: allEntries[index].children.isEmpty
+                ? Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      title: Text(allEntries[index].fullText),
+                      onTap: () {
+                        setState(() {
+                          _isManuallyScrolling = false;
+                          _lastScrolledTocIndex = null;
+                        });
+                        widget.scrollController.scrollTo(
+                          index: allEntries[index].index,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.ease,
+                        );
+                        if (Platform.isAndroid) {
+                          widget.closeLeftPaneCallback();
+                        }
+                      },
+                    ),
+                  )
                 : _buildTocItem(allEntries[index], showFullText: true),
           );
         });
@@ -171,7 +212,8 @@ final TextEditingController searchController = TextEditingController();
               child: ListTile(
                 title: Text(entry.text),
                 selected: selected,
-                selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                selectedColor:
+                    Theme.of(context).colorScheme.onSecondaryContainer,
                 selectedTileColor:
                     Theme.of(context).colorScheme.secondaryContainer,
                 onTap: navigateToEntry,
@@ -181,6 +223,17 @@ final TextEditingController searchController = TextEditingController();
         ),
       );
     } else {
+      final controller = _controllers.putIfAbsent(entry.index, () => ExpansionTileController());
+      final bool isExpanded = _expanded[entry.index] ?? (entry.level == 1);
+
+if (controller.isExpanded != isExpanded) {
+  if (isExpanded) {
+    controller.expand();
+  } else {
+    controller.collapse();
+  }
+}
+      
       return Padding(
         key: itemKey,
         padding: EdgeInsets.fromLTRB(0, 0, 10 * entry.level.toDouble(), 0),
@@ -189,7 +242,13 @@ final TextEditingController searchController = TextEditingController();
             dividerColor: Colors.transparent,
           ),
           child: ExpansionTile(
-            initiallyExpanded: entry.level == 1,
+            controller: controller,
+            key: ValueKey(entry.index),
+            onExpansionChanged: (val) {
+              setState(() {
+                _expanded[entry.index] = val;
+              });
+            },
             title: BlocBuilder<TextBookBloc, TextBookState>(
               builder: (context, state) {
                 final int? autoIndex = state is TextBookLoaded &&
@@ -208,8 +267,10 @@ final TextEditingController searchController = TextEditingController();
                     title: Text(showFullText ? entry.fullText : entry.text),
                     selected: selected,
                     selectedColor: Theme.of(context).colorScheme.onSecondary,
-                    selectedTileColor:
-                        Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                    selectedTileColor: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withValues(alpha: 0.2),
                     onTap: navigateToEntry,
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -238,91 +299,92 @@ final TextEditingController searchController = TextEditingController();
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  super.build(context);
-  // הוספנו BlocListener שעוטף את כל מה שהיה קודם
-  return BlocListener<TextBookBloc, TextBookState>(
-    // listenWhen קובע מתי ה-listener יופעל, כדי למנוע הפעלות מיותרות
-    listenWhen: (previous, current) {
-      if (current is! TextBookLoaded) return false;
-      if (previous is! TextBookLoaded) return true; // הפעלה ראשונה
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return BlocListener<TextBookBloc, TextBookState>(
+      listenWhen: (previous, current) {
+        if (current is! TextBookLoaded) return false;
+        if (previous is! TextBookLoaded) return true;
 
-      // הפעל רק אם האינדקס הנבחר או האינדקס הנראה השתנו
-      final prevVisibleIndex = previous.visibleIndices.isNotEmpty ? previous.visibleIndices.first : -1;
-      final currVisibleIndex = current.visibleIndices.isNotEmpty ? current.visibleIndices.first : -1;
-      
-      return previous.selectedIndex != current.selectedIndex || prevVisibleIndex != currVisibleIndex;
-    },
-    // listener היא הפונקציה שתרוץ כשהתנאי ב-listenWhen מתקיים
-    listener: (context, state) {
-      if (state is TextBookLoaded) {
-        _scrollToActiveItem(state);
-      }
-    },
-    // ה-child הוא ה-UI הקיים שלא השתנה
-    child: BlocBuilder<TextBookBloc, TextBookState>(
-      bloc: context.read<TextBookBloc>(),
-      builder: (context, state) {
-        if (state is! TextBookLoaded) return const Center();
-        // שימו לב שכאן כבר אין קריאה ל-_scrollToActiveItem
-        return Column(
-          children: [
-            TextField(
-                controller: searchController,
-                onChanged: (value) => setState(() {}),
-                focusNode: widget.focusNode,
-                autofocus: true,
-                onSubmitted: (_) {
-                  widget.focusNode.requestFocus();
-                },
-                decoration: InputDecoration(
-                  hintText: 'איתור כותרת...',
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            searchController.clear();
-                          });
-                        },
-                      ),
-                    ],
+        // הפעל רק אם האינדקס הנבחר או האינדקס הנראה השתנו
+        final prevVisibleIndex = previous.visibleIndices.isNotEmpty
+            ? previous.visibleIndices.first
+            : -1;
+        final currVisibleIndex = current.visibleIndices.isNotEmpty
+            ? current.visibleIndices.first
+            : -1;
+
+        return previous.selectedIndex != current.selectedIndex ||
+            prevVisibleIndex != currVisibleIndex;
+      },
+      listener: (context, state) {
+        if (state is TextBookLoaded) {
+          _scrollToActiveItem(state);
+        }
+      },
+      child: BlocBuilder<TextBookBloc, TextBookState>(
+          bloc: context.read<TextBookBloc>(),
+          builder: (context, state) {
+            if (state is! TextBookLoaded) return const Center();
+            return Column(
+              children: [
+                TextField(
+                  controller: searchController,
+                  onChanged: (value) => setState(() {}),
+                  focusNode: widget.focusNode,
+                  autofocus: true,
+                  onSubmitted: (_) {
+                    widget.focusNode.requestFocus();
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'איתור כותרת...',
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              searchController.clear();
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification is ScrollStartNotification && notification.dragDetails != null) {
-                      setState(() {
-                        _isManuallyScrolling = true;
-                      });
-                    } else if (notification is ScrollEndNotification) {
-                      setState(() {
-                        _isManuallyScrolling = false;
-                      });
-                    }
-                    return false;
-                  },
-                  child: SingleChildScrollView( // אנחנו עדיין משאירים את המבנה המקורי שלך
-                    controller: _tocScrollController,
-                    child: searchController.text.isEmpty
-                      ? ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: state.tableOfContents.length,
-                          itemBuilder: (context, index) =>
-                              _buildTocItem(state.tableOfContents[index]))
-                      : _buildFilteredList(state.tableOfContents, context),
+                Expanded(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification is ScrollStartNotification &&
+                          notification.dragDetails != null) {
+                        setState(() {
+                          _isManuallyScrolling = true;
+                        });
+                      } else if (notification is ScrollEndNotification) {
+                        setState(() {
+                          _isManuallyScrolling = false;
+                        });
+                      }
+                      return false;
+                    },
+                    child: SingleChildScrollView(
+                      controller: _tocScrollController,
+                      child: searchController.text.isEmpty
+                          ? ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: state.tableOfContents.length,
+                              itemBuilder: (context, index) =>
+                                  _buildTocItem(state.tableOfContents[index]))
+                          : _buildFilteredList(state.tableOfContents, context),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            ],
-          );
-        }),
-  );
+              ],
+            );
+          }),
+    );
   }
 }

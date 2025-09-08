@@ -30,7 +30,7 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
       final workspaces = _repository.loadWorkspaces();
       if (workspaces.$1.isEmpty) {
         workspaces.$1
-            .add(Workspace(name: "ברירת מחדל", tabs: [], currentTab: 0));
+            .add(Workspace(name: "שולחן עבודה 1", tabs: [], currentTab: 0));
       }
 
       final currentWorkSpace = workspaces.$2;

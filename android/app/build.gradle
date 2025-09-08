@@ -25,8 +25,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.otzaria"
-    compileSdkVersion 34
-    ndkVersion flutter.ndkVersion
+    compileSdkVersion 35
+    ndkVersion "27.0.12077973"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -47,7 +47,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion 23
-        targetSdkVersion flutter.targetSdkVersion
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

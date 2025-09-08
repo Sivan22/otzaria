@@ -10,6 +10,10 @@ on:
       - main
       - dev
       - dev_dev2
+      - n-search2
+      - ns2new
+      - n-search2.1
+
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:

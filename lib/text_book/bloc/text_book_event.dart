@@ -102,3 +102,28 @@ class UpdateSearchText extends TextBookEvent {
   @override
   List<Object?> get props => [text];
 }
+
+class ToggleNotesSidebar extends TextBookEvent {
+  const ToggleNotesSidebar();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class CreateNoteFromToolbar extends TextBookEvent {
+  const CreateNoteFromToolbar();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class UpdateSelectedTextForNote extends TextBookEvent {
+  final String? text;
+  final int? start;
+  final int? end;
+
+  const UpdateSelectedTextForNote(this.text, this.start, this.end);
+
+  @override
+  List<Object?> get props => [text, start, end];
+}

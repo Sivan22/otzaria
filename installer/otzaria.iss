@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "אוצריא"
-#define MyAppVersion "0.2.7"
+#define MyAppVersion "0.9.48"
 #define MyAppPublisher "sivan22"
 #define MyAppURL "https://github.com/Sivan22/otzaria"
 #define MyAppExeName "otzaria.exe"
@@ -32,7 +32,6 @@ WizardStyle=modern
 DisableDirPage=auto
 
 [InstallDelete]
-Type: filesandordirs; Name: "{app}\index";
 Type: filesandordirs; Name: "{app}\default.isar";
 
 [Tasks]
@@ -49,5 +48,7 @@ Filename: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"; WorkingDi
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 
 [Files]
-Source: "..\build\windows\x64\runner\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\windows\x64\runner\Release\*"; \
+    Excludes: "*.msix,*.msixbundle,*.appx,*.appxbundle,*.appinstaller"; \
+    DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "uninstall_msix.ps1"; DestDir: "{app}"; Flags: ignoreversion
