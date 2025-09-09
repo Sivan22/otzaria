@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// TabBar הניתן לגלילה עם חיצים (בהשראת אקסל).
+/// TabBar גלילה עם חיצים לשמאל/ימין.
 class ScrollableTabBarWithArrows extends StatefulWidget {
   final TabController controller;
   final List<Widget> tabs;
   final TabAlignment? tabAlignment;
+  // מאפשר לדעת אם יש גלילה אופקית (יש Overflow)
+  final ValueChanged<bool>? onOverflowChanged;
 
   const ScrollableTabBarWithArrows({
     super.key,
     required this.controller,
     required this.tabs,
     this.tabAlignment,
+    this.onOverflowChanged,
   });
 
   @override
@@ -20,11 +23,12 @@ class ScrollableTabBarWithArrows extends StatefulWidget {
 
 class _ScrollableTabBarWithArrowsState
     extends State<ScrollableTabBarWithArrows> {
-  // נשתמש ב־ScrollPosition הפנימי של ה-TabBar (isScrollable:true)
+  // נאתר את ה-ScrollPosition של ה-TabBar (isScrollable:true)
   ScrollPosition? _tabBarPosition;
   BuildContext? _scrollContext;
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
+  bool? _lastOverflow;
 
   @override
   void dispose() {
@@ -45,7 +49,7 @@ class _ScrollableTabBarWithArrowsState
     final state = Scrollable.of(ctx);
     final newPos = state?.position;
     if (newPos == null) return;
-    // נאמץ רק ScrollPosition אופקי, כדי לא לגלול את כל המסך בטעות
+    // וידוא שמדובר בציר אופקי
     final isHorizontal = newPos.axisDirection == AxisDirection.left ||
         newPos.axisDirection == AxisDirection.right;
     if (!isHorizontal) return;
@@ -67,6 +71,7 @@ class _ScrollableTabBarWithArrowsState
         _canScrollLeft = canLeft;
         _canScrollRight = canRight;
       });
+      _emitOverflowIfChanged();
     }
   }
 
@@ -78,14 +83,23 @@ class _ScrollableTabBarWithArrowsState
         _canScrollLeft = canLeft;
         _canScrollRight = canRight;
       });
+      _emitOverflowIfChanged();
+    }
+  }
+
+  void _emitOverflowIfChanged() {
+    final overflow = _canScrollLeft || _canScrollRight;
+    if (_lastOverflow != overflow) {
+      _lastOverflow = overflow;
+      widget.onOverflowChanged?.call(overflow);
     }
   }
 
   void _scrollBy(double delta) {
     final pos = _tabBarPosition;
     if (pos == null) return;
-    final target = (pos.pixels + delta)
-        .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+    final target =
+        (pos.pixels + delta).clamp(pos.minScrollExtent, pos.maxScrollExtent);
     pos.animateTo(
       target,
       duration: const Duration(milliseconds: 250),
@@ -100,27 +114,34 @@ class _ScrollableTabBarWithArrowsState
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // חץ שמאל
-        AnimatedOpacity(
-          opacity: _canScrollLeft ? 1.0 : 0.3,
-          duration: const Duration(milliseconds: 200),
-          child: IconButton(
-            onPressed: _canScrollLeft ? _scrollLeft : null,
-            icon: const Icon(Icons.chevron_left),
-            iconSize: 20,
-            constraints: const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
+        // חץ שמאלי – משמרים מקום קבוע כדי למנוע קפיצות ברוחב
+        SizedBox(
+          width: 36,
+          height: 32,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _canScrollLeft ? 1.0 : 0.0,
+            child: IgnorePointer(
+              ignoring: !_canScrollLeft,
+              child: IconButton(
+                key: const ValueKey('left-arrow'),
+                onPressed: _scrollLeft,
+                icon: const Icon(Icons.chevron_left),
+                iconSize: 20,
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
+                ),
+                tooltip: 'גלול שמאלה',
+              ),
             ),
-            tooltip: 'גלול שמאלה',
           ),
         ),
-        // TabBar במצב isScrollable כדי לייצר גלילה רוחבית פנימית
+        // TabBar עם isScrollable – לוכדים נוטיפיקציות כדי לדעת אם יש Overflow
         Expanded(
           child: NotificationListener<ScrollMetricsNotification>(
             onNotification: (metricsNotification) {
               final metrics = metricsNotification.metrics;
-              // נאתחל אוטומטית מיד כשהמידות זמינות (גם בלי גלילה ידנית)
               if (metrics.axis == Axis.horizontal) {
                 final ctx = metricsNotification.context;
                 if (ctx != null) _adoptPositionFrom(ctx);
@@ -131,7 +152,6 @@ class _ScrollableTabBarWithArrowsState
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification.metrics.axis == Axis.horizontal) {
-                  // לאמץ את ה-ScrollPosition האופקי מתוך ההודעה
                   final ctx = notification.context;
                   if (ctx != null) {
                     _adoptPositionFrom(ctx);
@@ -142,7 +162,7 @@ class _ScrollableTabBarWithArrowsState
               },
               child: Builder(
                 builder: (scrollCtx) {
-                  // נשמור הקשר פנימי כדי לאתחל את ה-ScrollPosition אחרי הפריים
+                  // נשמור context כדי לאמץ את ה-ScrollPosition לאחר הבניה
                   if (!identical(_scrollContext, scrollCtx)) {
                     _scrollContext = scrollCtx;
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -155,25 +175,38 @@ class _ScrollableTabBarWithArrowsState
                     tabs: widget.tabs,
                     indicatorSize: TabBarIndicatorSize.tab,
                     tabAlignment: widget.tabAlignment,
+                    padding: EdgeInsets.zero,
+                    // לא רוצים קו מפריד מתחת ל-TabBar בתוך ה-AppBar
+                    dividerColor: Colors.transparent,
+                    // הזזת האינדיקטור מעט, כדי שייראה נקי ב-AppBar
+                    indicatorPadding: const EdgeInsets.only(bottom: -0),
                   );
                 },
               ),
             ),
           ),
         ),
-        // חץ ימין
-        AnimatedOpacity(
-          opacity: _canScrollRight ? 1.0 : 0.3,
-          duration: const Duration(milliseconds: 200),
-          child: IconButton(
-            onPressed: _canScrollRight ? _scrollRight : null,
-            icon: const Icon(Icons.chevron_right),
-            iconSize: 20,
-            constraints: const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
+        // חץ ימני – משמרים מקום קבוע כדי למנוע קפיצות ברוחב
+        SizedBox(
+          width: 36,
+          height: 32,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _canScrollRight ? 1.0 : 0.0,
+            child: IgnorePointer(
+              ignoring: !_canScrollRight,
+              child: IconButton(
+                key: const ValueKey('right-arrow'),
+                onPressed: _scrollRight,
+                icon: const Icon(Icons.chevron_right),
+                iconSize: 20,
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
+                ),
+                tooltip: 'גלול ימינה',
+              ),
             ),
-            tooltip: 'גלול ימינה',
           ),
         ),
       ],
