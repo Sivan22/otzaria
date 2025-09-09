@@ -38,6 +38,8 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
   bool _isSubmitting = false;
 
   late int _updatedLineNumber;
+  int? _selectionStart;
+  int? _selectionEnd;
 
   @override
   void initState() {
@@ -159,20 +161,47 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: SingleChildScrollView(
-            child: SelectableText(
-              widget.visibleText,
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                fontFamily: Settings.getValue('key-font-family') ?? 'candara',
-              ),
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-              onSelectionChanged: (selection, cause) {
-                if (selection.start != selection.end) {
-                  final selectedText = widget.visibleText.substring(
-                    selection.start,
-                    selection.end,
-                  );
+            child: Builder(
+              builder: (context) => TextSelectionTheme(
+                data: const TextSelectionThemeData(
+                  selectionColor: Colors.transparent,
+                ),
+                child: SelectableText.rich(
+                  TextSpan(
+                    children: () {
+                      final text = widget.visibleText;
+                      final start = _selectionStart ?? -1;
+                      final end = _selectionEnd ?? -1;
+                      final hasSel = start >= 0 && end > start && end <= text.length;
+                      if (!hasSel) {
+                        return [TextSpan(text: text)];
+                      }
+                      final highlight = Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.25);
+                      return [
+                        if (start > 0) TextSpan(text: text.substring(0, start)),
+                        TextSpan(
+                          text: text.substring(start, end),
+                          style: TextStyle(backgroundColor: highlight),
+                        ),
+                        if (end < text.length) TextSpan(text: text.substring(end)),
+                      ];
+                    }(),
+                    style: TextStyle(
+                      fontSize: widget.fontSize,
+                      fontFamily: Settings.getValue('key-font-family') ?? 'candara',
+                    ),
+                  ),
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  onSelectionChanged: (selection, cause) {
+                    if (selection.start != selection.end) {
+                      final selectedText = widget.visibleText.substring(
+                        selection.start,
+                        selection.end,
+                      );
 
                   // חישוב מספר השורה על בסיס הטקסט הנבחר
                   final textBeforeSelection =
@@ -181,18 +210,22 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
                       '\n'.allMatches(textBeforeSelection).length;
                   final newLineNumber = widget.lineNumber + lineOffset;
 
-                  if (selectedText.isNotEmpty) {
-                    setState(() {
-                      _selectedText = selectedText;
-                      _updatedLineNumber = newLineNumber;
-                    });
-                  }
+                      if (selectedText.isNotEmpty) {
+                        setState(() {
+                          _selectedText = selectedText;
+                          _selectionStart = selection.start;
+                          _selectionEnd = selection.end;
+                          _updatedLineNumber = newLineNumber;
+                        });
+                      }
                 }
-              },
-              contextMenuBuilder: (context, editableTextState) {
-                return const SizedBox.shrink();
-              },
+                  },
+                  contextMenuBuilder: (context, editableTextState) {
+                    return const SizedBox.shrink();
+                  },
+                ),
             ),
+          ),
           ),
         ),
         if (_selectedText != null && _selectedText!.isNotEmpty) ...[
