@@ -212,7 +212,7 @@ class CalendarWidget extends StatelessWidget {
                         day,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -239,7 +239,7 @@ class CalendarWidget extends StatelessWidget {
                         day,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -290,7 +290,7 @@ class CalendarWidget extends StatelessWidget {
               '${state.selectedGregorianDate.day} ${_getGregorianMonthName(state.selectedGregorianDate.month)} ${state.selectedGregorianDate.year}',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -399,15 +399,23 @@ class CalendarWidget extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Theme.of(context).primaryColor
+                    ? Theme.of(context).colorScheme.primaryContainer
                     : isToday
-                        ? Theme.of(context).primaryColor.withAlpha(76)
-                        : Theme.of(context).primaryColor.withAlpha(10),
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.25)
+                        : Theme.of(context)
+                            .colorScheme
+                            .surfaceContainer
+                            .withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isToday
-                      ? Theme.of(context).primaryColor
-                      : Theme.of(context).primaryColor.withAlpha(102),
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : isToday
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outlineVariant,
                   width: isToday ? 2 : 1,
                 ),
               ),
@@ -418,7 +426,9 @@ class CalendarWidget extends StatelessWidget {
                     Text(
                       '${dayDate.day}',
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimaryContainer
+                            : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isSelected || isToday
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -429,7 +439,12 @@ class CalendarWidget extends StatelessWidget {
                     Text(
                       _formatHebrewDay(jewishDate.getJewishDayOfMonth()),
                       style: TextStyle(
-                        color: isSelected ? Colors.white70 : Colors.grey[600],
+                        color: isSelected
+                            ? Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer
+                                .withOpacity(0.85)
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -472,14 +487,23 @@ class CalendarWidget extends StatelessWidget {
         height: 50,
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).primaryColor
+              ? Theme.of(context).colorScheme.primaryContainer
               : isToday
-                  ? Theme.of(context).primaryColor.withAlpha(76)
-                  : Theme.of(context).primaryColor.withAlpha(10),
+                  ? Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withOpacity(0.25)
+                  : Theme.of(context)
+                      .colorScheme
+                      .surfaceContainer
+                      .withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color:
-                isToday ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withAlpha(102),
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : isToday
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outlineVariant,
             width: isToday ? 2 : 1,
           ),
         ),
@@ -490,7 +514,9 @@ class CalendarWidget extends StatelessWidget {
               Text(
                 _formatHebrewDay(day),
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize:
                       state.calendarType == CalendarType.combined ? 14 : 16,
@@ -500,7 +526,12 @@ class CalendarWidget extends StatelessWidget {
                 Text(
                   '${gregorianDate.day}',
                   style: TextStyle(
-                    color: isSelected ? Colors.white70 : Colors.grey[600],
+                    color: isSelected
+                        ? Theme.of(context)
+                            .colorScheme
+                            .onPrimaryContainer
+                            .withOpacity(0.85)
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 10,
                   ),
                 ),
@@ -533,14 +564,23 @@ class CalendarWidget extends StatelessWidget {
         height: 50,
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).primaryColor
+              ? Theme.of(context).colorScheme.primaryContainer
               : isToday
-                  ? Theme.of(context).primaryColor.withAlpha(76)
-                  : Theme.of(context).primaryColor.withAlpha(10),
+                  ? Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withOpacity(0.25)
+                  : Theme.of(context)
+                      .colorScheme
+                      .surfaceContainer
+                      .withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color:
-                isToday ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withAlpha(102),
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : isToday
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outlineVariant,
             width: isToday ? 2 : 1,
           ),
         ),
@@ -551,7 +591,9 @@ class CalendarWidget extends StatelessWidget {
               Text(
                 '$day',
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize:
                       state.calendarType == CalendarType.combined ? 14 : 16,
@@ -561,7 +603,12 @@ class CalendarWidget extends StatelessWidget {
                 Text(
                   _formatHebrewDay(jewishDate.getJewishDayOfMonth()),
                   style: TextStyle(
-                    color: isSelected ? Colors.white70 : Colors.grey[600],
+                    color: isSelected
+                        ? Theme.of(context)
+                            .colorScheme
+                            .onPrimaryContainer
+                            .withOpacity(0.85)
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 10,
                   ),
                 ),
@@ -611,7 +658,9 @@ class CalendarWidget extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             gregorianDateStr,
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -804,6 +853,9 @@ class CalendarWidget extends StatelessWidget {
     final filteredTimesList =
         timesList.where((timeData) => timeData['time'] != null).toList();
 
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -817,16 +869,23 @@ class CalendarWidget extends StatelessWidget {
       itemBuilder: (context, index) {
         final timeData = filteredTimesList[index];
         final isSpecialTime = _isSpecialTime(timeData['name']!);
+        final bgColor = isSpecialTime
+            ? scheme.tertiaryContainer
+            : scheme.surfaceVariant;
+        final border = isSpecialTime
+            ? Border.all(color: scheme.tertiary, width: 1)
+            : null;
+        final titleColor =
+            isSpecialTime ? scheme.onTertiaryContainer : scheme.onSurfaceVariant;
+        final timeColor =
+            isSpecialTime ? scheme.onTertiaryContainer : scheme.onSurface;
 
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color:
-                isSpecialTime ? Colors.orange.withAlpha(51) : Colors.grey[100],
+            color: bgColor,
             borderRadius: BorderRadius.circular(8),
-            border: isSpecialTime
-                ? Border.all(color: Colors.orange, width: 1)
-                : null,
+            border: border,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,7 +896,7 @@ class CalendarWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: isSpecialTime ? Colors.orange.shade800 : null,
+                  color: titleColor,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -848,7 +907,7 @@ class CalendarWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isSpecialTime ? Colors.orange.shade800 : null,
+                  color: timeColor,
                 ),
               ),
             ],
