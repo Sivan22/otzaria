@@ -23,6 +23,7 @@ class SettingsRepository {
   static const String keyFacetFilteringWidth = 'key-facet-filtering-width';
   static const String keyCalendarType = 'key-calendar-type';
   static const String keySelectedCity = 'key-selected-city';
+  static const String keyCalendarEvents = 'key-calendar-events';
 
   final SettingsWrapper _settings;
 
@@ -100,6 +101,10 @@ class SettingsRepository {
       'selectedCity': _settings.getValue<String>(
         keySelectedCity,
         defaultValue: 'ירושלים',
+      ),
+      'calendarEvents': _settings.getValue<String>(
+        keyCalendarEvents,
+        defaultValue: '[]',
       ),
     };
   }
@@ -184,6 +189,10 @@ class SettingsRepository {
     await _settings.setValue(keySelectedCity, value);
   }
 
+  Future<void> updateCalendarEvents(String eventsJson) async {
+    await _settings.setValue(keyCalendarEvents, eventsJson);
+  }
+
   /// Initialize default settings to disk if this is the first app launch
   Future<void> _initializeDefaultsIfNeeded() async {
     if (await _checkIfDefaultsNeeded()) {
@@ -220,6 +229,7 @@ class SettingsRepository {
     await _settings.setValue(keyFacetFilteringWidth, 235.0);
     await _settings.setValue(keyCalendarType, 'combined');
     await _settings.setValue(keySelectedCity, 'ירושלים');
+    await _settings.setValue(keyCalendarEvents, '[]');
 
     // Mark as initialized
     await _settings.setValue('settings_initialized', true);
