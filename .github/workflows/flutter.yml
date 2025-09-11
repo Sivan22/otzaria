@@ -20,25 +20,60 @@ on:
 
 jobs:
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4      
-     
+        uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Install Inno Setup
+      # נסה קודם את הסקריפט שלך (אם הוא מטפל בהתקנה/הוספת PATH)
+      - name: Install Inno Setup (project script + fallback)
+        shell: pwsh
         run: |
-          ./installer/install_inno_setup.ps1
+          $ErrorActionPreference = 'Stop'
+
+          # 1) נסיון להריץ את הסקריפט המקומי אם קיים
+          if (Test-Path .\installer\install_inno_setup.ps1) {
+            Write-Host "Running local installer script..."
+            .\installer\install_inno_setup.ps1
+          } else {
+            Write-Host "Local installer script not found, skipping."
+          }
+
+          # 2) אם עדיין אין iscc במערכת - התקנה אמינה דרך winget/Chocolatey
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+              Write-Host "Installing Inno Setup via winget..."
+              winget install -e --id JRSoftware.InnoSetup --silent --accept-package-agreements --accept-source-agreements
+            } else {
+              Write-Host "winget not found, installing via Chocolatey..."
+              choco install innosetup -y --no-progress
+            }
+          }
+
+          # 3) מציאת המיקום של ISCC.exe והזרקתו ל־ENV
+          $iscc = (Get-ChildItem "C:\Program Files*\Inno Setup*\ISCC.exe" -Recurse -ErrorAction SilentlyContinue |
+                   Select-Object -First 1 -ExpandProperty FullName)
+          if (-not $iscc) { throw "ISCC.exe not found after installation" }
+
+          "ISCC=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "ISCC resolved to: $iscc"
+
+      - name: Verify Inno Setup (iscc)
+        shell: pwsh
+        run: |
+          & "$env:ISCC" /?
       
       - name: Build Flutter Windows app
+        shell: pwsh
         run: |
           flutter build windows --release
-      
+
       - name: Zip Windows build
         shell: pwsh
         run: |
@@ -49,12 +84,16 @@ jobs:
           Compress-Archive -Path "$relDir\runner\Release\*" -DestinationPath otzaria-windows.zip
 
       - name: Build MSIX package
-        run: dart run msix:create --install-certificate false
-             
-      - name: Build Inno Setup installer
+        shell: pwsh
         run: |
-          iscc installer\otzaria.iss
-      
+          dart run msix:create --install-certificate false
+
+      - name: Build Inno Setup installer
+        shell: pwsh
+        run: |
+          # שימוש בנתיב המלא/ENV כדי לא להיות תלוי ב-PATH
+          & "$env:ISCC" installer\otzaria.iss
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
