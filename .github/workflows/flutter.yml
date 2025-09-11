@@ -63,11 +63,6 @@ jobs:
 
           "ISCC=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "ISCC resolved to: $iscc"
-
-      - name: Verify Inno Setup (iscc)
-        shell: pwsh
-        run: |
-          & "$env:ISCC" /?
       
       - name: Build Flutter Windows app
         shell: pwsh
