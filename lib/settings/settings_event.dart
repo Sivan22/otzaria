@@ -171,3 +171,21 @@ class UpdateFacetFilteringWidth extends SettingsEvent {
   @override
   List<Object?> get props => [facetFilteringWidth];
 }
+
+class UpdateCopyWithHeaders extends SettingsEvent {
+  final String copyWithHeaders;
+
+  const UpdateCopyWithHeaders(this.copyWithHeaders);
+
+  @override
+  List<Object?> get props => [copyWithHeaders];
+}
+
+class UpdateCopyHeaderFormat extends SettingsEvent {
+  final String copyHeaderFormat;
+
+  const UpdateCopyHeaderFormat(this.copyHeaderFormat);
+
+  @override
+  List<Object?> get props => [copyHeaderFormat];
+}

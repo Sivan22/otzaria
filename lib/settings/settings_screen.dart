@@ -437,6 +437,50 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   ],
                 ),
                 SettingsGroup(
+                  title: 'הגדרות העתקה',
+                  titleAlignment: Alignment.centerRight,
+                  titleTextStyle: const TextStyle(fontSize: 25),
+                  children: [
+                    _buildColumns(2, [
+                      DropDownSettingsTile<String>(
+                        title: 'העתקה עם כותרות',
+                        settingKey: 'key-copy-with-headers',
+                        values: const <String, String>{
+                          'none': 'ללא',
+                          'book_name': 'העתקה עם שם הספר בלבד',
+                          'book_and_path': 'העתקה עם שם הספר+הנתיב',
+                        },
+                        selected: state.copyWithHeaders,
+                        leading: const Icon(Icons.content_copy),
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateCopyWithHeaders(value));
+                        },
+                      ),
+                      DropDownSettingsTile<String>(
+                        title: 'עיצוב ההעתקה',
+                        settingKey: 'key-copy-header-format',
+                        values: const <String, String>{
+                          'same_line_after_brackets': 'באותה שורה אחרי הכיתוב (עם סוגריים)',
+                          'same_line_after_no_brackets': 'באותה שורה אחרי הכיתוב (בלי סוגריים)',
+                          'same_line_before_brackets': 'באותה שורה לפני הכיתוב (עם סוגריים)',
+                          'same_line_before_no_brackets': 'באותה שורה לפני הכיתוב (בלי סוגריים)',
+                          'separate_line_after': 'בפסקה בפני עצמה אחרי הכיתוב',
+                          'separate_line_before': 'בפסקה בפני עצמה לפני הכיתוב',
+                        },
+                        selected: state.copyHeaderFormat,
+                        leading: const Icon(Icons.format_align_right),
+                        onChange: (value) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateCopyHeaderFormat(value));
+                        },
+                      ),
+                    ]),
+                  ],
+                ),
+                SettingsGroup(
                   title: 'כללי',
                   titleAlignment: Alignment.centerRight,
                   titleTextStyle: const TextStyle(fontSize: 25),

@@ -78,7 +78,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   static const String _reportSeparator2 = '------------------------------';
   static const String _fallbackMail = 'otzaria.200@gmail.com';
   bool _isInitialFocusDone = false;
-  
+
   // משתנים לשמירת נתונים כבדים שנטענים ברקע
   Future<Map<String, dynamic>>? _preloadedHeavyData;
   bool _isLoadingHeavyData = false;
@@ -153,9 +153,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       }
     }
 
-    final ctxStart = (startWordIndex - wordsBefore) < 0
-        ? 0
-        : (startWordIndex - wordsBefore);
+    final ctxStart =
+        (startWordIndex - wordsBefore) < 0 ? 0 : (startWordIndex - wordsBefore);
     final ctxEnd = (endWordIndex + wordsAfter) >= matches.length
         ? matches.length - 1
         : (endWordIndex + wordsAfter);
@@ -724,7 +723,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   /// Get preloaded heavy data or load it if not ready
-  Future<Map<String, dynamic>> _getPreloadedHeavyData(TextBookLoaded state) async {
+  Future<Map<String, dynamic>> _getPreloadedHeavyData(
+      TextBookLoaded state) async {
     if (_preloadedHeavyData != null) {
       return await _preloadedHeavyData!;
     } else {
@@ -768,9 +768,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   /// Start loading heavy data in background immediately after dialog opens
   void _startLoadingHeavyDataInBackground(TextBookLoaded state) {
     if (_isLoadingHeavyData) return; // כבר טוען
-    
+
     _isLoadingHeavyData = true;
-    
+
     // התחל טעינה ברקע
     _preloadedHeavyData = _loadHeavyDataForRegularReport(state).then((data) {
       _isLoadingHeavyData = false;
@@ -843,8 +843,10 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   ) {
     final detailsSection = (() {
       final base = errorDetails.isEmpty ? '' : '\n$errorDetails';
-      final extra = '\n\nמספר שורה: ' + lineNumber.toString() +
-          '\nהקשר (4 מילים לפני ואחרי):\n' + contextText;
+      final extra = '\n\nמספר שורה: ' +
+          lineNumber.toString() +
+          '\nהקשר (4 מילים לפני ואחרי):\n' +
+          contextText;
       return base + extra;
     })();
 
@@ -1720,7 +1722,8 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                           final text = widget.visibleText;
                           final start = _selectionStart ?? -1;
                           final end = _selectionEnd ?? -1;
-                          final hasSel = start >= 0 && end > start && end <= text.length;
+                          final hasSel =
+                              start >= 0 && end > start && end <= text.length;
                           if (!hasSel) {
                             return [TextSpan(text: text)];
                           }
@@ -1729,12 +1732,14 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                               .primary
                               .withOpacity(0.25);
                           return [
-                            if (start > 0) TextSpan(text: text.substring(0, start)),
+                            if (start > 0)
+                              TextSpan(text: text.substring(0, start)),
                             TextSpan(
                               text: text.substring(start, end),
                               style: TextStyle(backgroundColor: highlight),
                             ),
-                            if (end < text.length) TextSpan(text: text.substring(end)),
+                            if (end < text.length)
+                              TextSpan(text: text.substring(end)),
                           ];
                         }(),
                         style: TextStyle(

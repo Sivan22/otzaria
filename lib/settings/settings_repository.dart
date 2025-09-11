@@ -24,6 +24,8 @@ class SettingsRepository {
   static const String keyCalendarType = 'key-calendar-type';
   static const String keySelectedCity = 'key-selected-city';
   static const String keyCalendarEvents = 'key-calendar-events';
+  static const String keyCopyWithHeaders = 'key-copy-with-headers';
+  static const String keyCopyHeaderFormat = 'key-copy-header-format';
 
   final SettingsWrapper _settings;
 
@@ -105,6 +107,14 @@ class SettingsRepository {
       'calendarEvents': _settings.getValue<String>(
         keyCalendarEvents,
         defaultValue: '[]',
+      ),
+      'copyWithHeaders': _settings.getValue<String>(
+        keyCopyWithHeaders,
+        defaultValue: 'none',
+      ),
+      'copyHeaderFormat': _settings.getValue<String>(
+        keyCopyHeaderFormat,
+        defaultValue: 'same_line_after_brackets',
       ),
     };
   }
@@ -193,6 +203,14 @@ class SettingsRepository {
     await _settings.setValue(keyCalendarEvents, eventsJson);
   }
 
+  Future<void> updateCopyWithHeaders(String value) async {
+    await _settings.setValue(keyCopyWithHeaders, value);
+  }
+
+  Future<void> updateCopyHeaderFormat(String value) async {
+    await _settings.setValue(keyCopyHeaderFormat, value);
+  }
+
   /// Initialize default settings to disk if this is the first app launch
   Future<void> _initializeDefaultsIfNeeded() async {
     if (await _checkIfDefaultsNeeded()) {
@@ -230,6 +248,8 @@ class SettingsRepository {
     await _settings.setValue(keyCalendarType, 'combined');
     await _settings.setValue(keySelectedCity, 'ירושלים');
     await _settings.setValue(keyCalendarEvents, '[]');
+    await _settings.setValue(keyCopyWithHeaders, 'none');
+    await _settings.setValue(keyCopyHeaderFormat, 'same_line_after_brackets');
 
     // Mark as initialized
     await _settings.setValue('settings_initialized', true);
