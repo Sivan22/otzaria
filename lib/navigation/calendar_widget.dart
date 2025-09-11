@@ -1189,9 +1189,28 @@ class CalendarWidget extends StatelessWidget {
   // פונקציות עזר חדשות לפענוח תאריך עברי
   int _hebrewNumberToInt(String hebrew) {
     final Map<String, int> hebrewValue = {
-      'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
-      'י': 10, 'כ': 20, 'ל': 30, 'מ': 40, 'נ': 50, 'ס': 60, 'ע': 70, 'פ': 80, 'צ': 90,
-      'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
+      'א': 1,
+      'ב': 2,
+      'ג': 3,
+      'ד': 4,
+      'ה': 5,
+      'ו': 6,
+      'ז': 7,
+      'ח': 8,
+      'ט': 9,
+      'י': 10,
+      'כ': 20,
+      'ל': 30,
+      'מ': 40,
+      'נ': 50,
+      'ס': 60,
+      'ע': 70,
+      'פ': 80,
+      'צ': 90,
+      'ק': 100,
+      'ר': 200,
+      'ש': 300,
+      'ת': 400
     };
 
     String cleanHebrew = hebrew.replaceAll('"', '').replaceAll("'", "");
@@ -1226,19 +1245,19 @@ class CalendarWidget extends StatelessWidget {
       baseYear = 5000;
       cleanYear = cleanYear.substring(1);
     }
-    
+
     // המר את שאר האותיות למספר
     int yearFromLetters = _hebrewNumberToInt(cleanYear);
 
     // אם לא היתה 'ה' בהתחלה, אבל קיבלנו מספר שנראה כמו שנה,
     // נניח אוטומטית שהכוונה היא לאלף הנוכחי (5000)
     if (baseYear == 0 && yearFromLetters > 0) {
-        baseYear = 5000;
+      baseYear = 5000;
     }
 
     return baseYear + yearFromLetters;
   }
-  
+
   void _showJumpToDateDialog(BuildContext context) {
     DateTime selectedDate = DateTime.now();
     final TextEditingController dateController = TextEditingController();
@@ -1307,13 +1326,13 @@ class CalendarWidget extends StatelessWidget {
 
                     if (dateController.text.isNotEmpty) {
                       // נסה לפרש את הטקסט שהוזן
-                      dateToJump = _parseInputDate(context, dateController.text);
+                      dateToJump =
+                          _parseInputDate(context, dateController.text);
 
                       if (dateToJump == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                                'לא הצלחנו לפרש את התאריך.'),
+                            content: Text('לא הצלחנו לפרש את התאריך.'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -1341,7 +1360,8 @@ class CalendarWidget extends StatelessWidget {
     String cleanInput = input.trim();
 
     // 1. נסה לפרש כתאריך לועזי (יום/חודש/שנה)
-    RegExp gregorianPattern = RegExp(r'^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$');
+    RegExp gregorianPattern =
+        RegExp(r'^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$');
     Match? match = gregorianPattern.firstMatch(cleanInput);
 
     if (match != null) {
@@ -1352,7 +1372,7 @@ class CalendarWidget extends StatelessWidget {
         if (year >= 1900 && year <= 2200) {
           return DateTime(year, month, day);
         }
-      } catch (e) { /* אם נכשל, נמשיך לנסות לפרש כעברי */ }
+      } catch (e) {/* אם נכשל, נמשיך לנסות לפרש כעברי */}
     }
 
     // 2. נסה לפרש כתאריך עברי (למשל: י"ח אלול תשפ"ה)
@@ -1368,7 +1388,11 @@ class CalendarWidget extends StatelessWidget {
         year = _hebrewYearToInt(parts[2]);
       } else {
         // אם השנה הושמטה, נשתמש בשנה העברית הנוכחית שמוצגת בלוח
-        year = context.read<CalendarCubit>().state.currentJewishDate.getJewishYear();
+        year = context
+            .read<CalendarCubit>()
+            .state
+            .currentJewishDate
+            .getJewishYear();
       }
 
       if (day > 0 && month > 0 && year > 5000) {
@@ -1392,11 +1416,15 @@ class CalendarWidget extends StatelessWidget {
         TextEditingController(text: existingEvent?.title);
     final TextEditingController descriptionController =
         TextEditingController(text: existingEvent?.description);
+
+    // בקר חדש שמטפל במספר השנים, יהיה ריק אם האירוע הוא "תמיד"
     final TextEditingController yearsController = TextEditingController(
-        text: existingEvent?.recurringYears?.toString() ?? '1');
+        text: existingEvent?.recurringYears?.toString() ?? '');
 
     bool isRecurring = existingEvent?.recurring ?? false;
     bool useHebrewCalendar = existingEvent?.recurOnHebrew ?? true;
+    // משתנה חדש שבודק אם האירוע מוגדר כ"תמיד"
+    bool recurForever = existingEvent?.recurringYears == null;
 
     showDialog(
       context: context,
@@ -1490,13 +1518,42 @@ class CalendarWidget extends StatelessWidget {
                                     () => useHebrewCalendar = value ?? true),
                               ),
                               const SizedBox(height: 16),
+
+                              // --- כאן נמצא השינוי המרכזי ---
+                              // הוספנו תיבת סימון לבחירת "תמיד"
+                              CheckboxListTile(
+                                title: const Text('חזרה ללא הגבלה (תמיד)'),
+                                value: recurForever,
+                                onChanged: (value) {
+                                  setState(() {
+                                    recurForever = value ?? true;
+                                    // אם המשתמש בחר "תמיד", ננקה את שדה מספר השנים
+                                    if (recurForever) {
+                                      yearsController.clear();
+                                    }
+                                  });
+                                },
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              const SizedBox(height: 8),
+
+                              // שדה מספר השנים מושבת כעת אם "תמיד" מסומן
                               TextField(
                                 controller: yearsController,
                                 keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
+                                enabled: !recurForever, // <-- החלק החשוב
+                                decoration: InputDecoration(
                                   labelText: 'חזור למשך (שנים)',
-                                  hintText: 'השאר ריק לחזרה ללא הגבלה',
-                                  border: OutlineInputBorder(),
+                                  hintText: 'לדוגמה: 5',
+                                  border: const OutlineInputBorder(),
+                                  filled: !recurForever ? false : true,
+                                  fillColor: !recurForever
+                                      ? null
+                                      : Theme.of(context)
+                                          .disabledColor
+                                          .withOpacity(0.1),
                                 ),
                               ),
                             ],
@@ -1523,8 +1580,16 @@ class CalendarWidget extends StatelessWidget {
                       return;
                     }
 
-                    final recurringYears =
-                        int.tryParse(yearsController.text.trim());
+                    // --- לוגיקת שמירה מעודכנת ---
+                    final int? recurringYears;
+                    // אם האירוע חוזר, אבל לא "תמיד", ננסה לקרוא את מספר השנים
+                    if (isRecurring && !recurForever) {
+                      recurringYears =
+                          int.tryParse(yearsController.text.trim());
+                    } else {
+                      // בכל מקרה אחר (לא חוזר, או חוזר "תמיד"), הערך יהיה ריק (null)
+                      recurringYears = null;
+                    }
 
                     if (isEditMode) {
                       final updatedEvent = existingEvent!.copyWith(
@@ -2001,8 +2066,10 @@ class _HoverableDayCellState extends State<_HoverableDayCell> {
                   icon: const Icon(Icons.add),
                   onPressed: widget.onAdd,
                   style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primaryContainer,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onPrimaryContainer,
                     visualDensity:
                         VisualDensity.compact, // הופך אותו לקצת יותר קטן
                   ),

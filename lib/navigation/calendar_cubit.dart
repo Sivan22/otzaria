@@ -113,12 +113,13 @@ class CalendarCubit extends Cubit<CalendarState> {
     final calendarType = _stringToCalendarType(calendarTypeString);
     final selectedCity = settings['selectedCity'] as String;
     final eventsJson = settings['calendarEvents'] as String;
-    
+
     // טעינת אירועים מהאחסון
     List<CustomEvent> events = [];
     try {
       final List<dynamic> eventsList = jsonDecode(eventsJson);
-      events = eventsList.map((eventMap) => CustomEvent.fromJson(eventMap)).toList();
+      events =
+          eventsList.map((eventMap) => CustomEvent.fromJson(eventMap)).toList();
     } catch (e) {
       // אם יש שגיאה בטעינה, נתחיל עם רשימה ריקה
       events = [];
@@ -448,7 +449,8 @@ class CustomEvent extends Equatable {
       title: json['title'] as String,
       description: json['description'] as String,
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
-      baseGregorianDate: DateTime.fromMillisecondsSinceEpoch(json['baseGregorianDate'] as int),
+      baseGregorianDate:
+          DateTime.fromMillisecondsSinceEpoch(json['baseGregorianDate'] as int),
       baseJewishYear: json['baseJewishYear'] as int,
       baseJewishMonth: json['baseJewishMonth'] as int,
       baseJewishDay: json['baseJewishDay'] as int,
@@ -507,6 +509,7 @@ const Map<String, Map<String, Map<String, double>>> cityCoordinates = {
     'נתניה': {'lat': 32.3215, 'lng': 34.8532, 'elevation': 30.0},
     'נצרת עילית': {'lat': 32.6992, 'lng': 35.3289, 'elevation': 400.0},
     'עפולה': {'lat': 32.6078, 'lng': 35.2897, 'elevation': 60.0},
+    'ערד': {'lat': 31.2592, 'lng': 35.2124, 'elevation': 570.0},
     'פתח תקווה': {'lat': 32.0870, 'lng': 34.8873, 'elevation': 80.0},
     'צפת': {'lat': 32.9650, 'lng': 35.4951, 'elevation': 900.0},
     'קרית אונו': {'lat': 32.0539, 'lng': 34.8581, 'elevation': 75.0},
