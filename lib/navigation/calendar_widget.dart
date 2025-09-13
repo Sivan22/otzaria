@@ -102,6 +102,39 @@ class CalendarWidget extends StatelessWidget {
     );
   }
 
+  // פונקציה עזר שמחזירה צבע רקע עדין לשבתות ומועדים
+  Color? _getBackgroundColor(
+      BuildContext context, DateTime date, bool isSelected, bool isToday) {
+    // אין צורך להדגיש תא שכבר נבחר או שהוא 'היום'
+    if (isSelected || isToday) return null;
+
+    final jewishCalendar = JewishCalendar.fromDateTime(date);
+
+    // נבדוק אם מדובר בשבת, יום טוב, או חול המועד
+    final bool isShabbat = jewishCalendar.getDayOfWeek() == 7;
+    final bool isYomTov = jewishCalendar.isYomTov();
+    final bool isCholHamoed = jewishCalendar.isCholHamoed();
+    final bool isTaanis = jewishCalendar.isTaanis();
+    final bool isRoshChodesh = jewishCalendar.isRoshChodesh();
+    final bool isChanukah = jewishCalendar.isChanukah();
+    final int yomTovIndex = jewishCalendar.getYomTovIndex();
+    final bool isPurim = yomTovIndex == JewishCalendar.PURIM ||
+        yomTovIndex == JewishCalendar.SHUSHAN_PURIM;
+
+    if (isShabbat ||
+        isYomTov ||
+        isCholHamoed ||
+        isTaanis ||
+        isRoshChodesh ||
+        isChanukah ||
+        isPurim) {
+      return Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.4);
+    }
+
+    // אם זה יום רגיל, נחזיר null כדי שישתמש בצבע ברירת המחדל
+    return null;
+  }
+
   Widget _buildCalendar(BuildContext context, CalendarState state) {
     return Card(
       child: Padding(
@@ -422,17 +455,19 @@ class CalendarWidget extends StatelessWidget {
                 margin: const EdgeInsets.all(2),
                 height: 88,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : isToday
-                          ? Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.25)
-                          : Theme.of(context)
-                              .colorScheme
-                              .surfaceContainer
-                              .withOpacity(0.2),
+                  color: _getBackgroundColor(
+                          context, dayDate, isSelected, isToday) ??
+                      (isSelected
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : isToday
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.25)
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainer
+                                  .withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected
@@ -517,14 +552,19 @@ class CalendarWidget extends StatelessWidget {
           margin: const EdgeInsets.all(2),
           height: 88,
           decoration: BoxDecoration(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primaryContainer
-                : isToday
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
-                    : Theme.of(context)
-                        .colorScheme
-                        .surfaceContainer
-                        .withOpacity(0.2),
+            color: _getBackgroundColor(
+                    context, gregorianDate, isSelected, isToday) ??
+                (isSelected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : isToday
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.25)
+                        : Theme.of(context)
+                            .colorScheme
+                            .surfaceContainer
+                            .withOpacity(0.2)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
@@ -609,14 +649,19 @@ class CalendarWidget extends StatelessWidget {
           margin: const EdgeInsets.all(2),
           height: 88,
           decoration: BoxDecoration(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primaryContainer
-                : isToday
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
-                    : Theme.of(context)
-                        .colorScheme
-                        .surfaceContainer
-                        .withOpacity(0.2),
+            color: _getBackgroundColor(
+                    context, gregorianDate, isSelected, isToday) ??
+                (isSelected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : isToday
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.25)
+                        : Theme.of(context)
+                            .colorScheme
+                            .surfaceContainer
+                            .withOpacity(0.2)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
