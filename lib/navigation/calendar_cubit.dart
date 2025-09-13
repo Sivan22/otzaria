@@ -19,6 +19,8 @@ class CalendarState extends Equatable {
   final CalendarType calendarType;
   final CalendarView calendarView;
   final List<CustomEvent> events;
+  final String eventSearchQuery;
+  final bool searchInDescriptions;
 
   const CalendarState({
     required this.selectedJewishDate,
@@ -30,6 +32,8 @@ class CalendarState extends Equatable {
     required this.calendarType,
     required this.calendarView,
     this.events = const [],
+    this.eventSearchQuery = '',
+    this.searchInDescriptions = false,
   });
 
   factory CalendarState.initial() {
@@ -46,6 +50,7 @@ class CalendarState extends Equatable {
       calendarType:
           CalendarType.combined, // ברירת מחדל, יעודכן ב-_initializeCalendar
       calendarView: CalendarView.month,
+      searchInDescriptions: false, // ברירת מחדל: חיפוש רק בכותרת
     );
   }
 
@@ -59,6 +64,8 @@ class CalendarState extends Equatable {
     CalendarType? calendarType,
     CalendarView? calendarView,
     List<CustomEvent>? events,
+    String? eventSearchQuery,
+    bool? searchInDescriptions,
   }) {
     return CalendarState(
       selectedJewishDate: selectedJewishDate ?? this.selectedJewishDate,
@@ -71,6 +78,8 @@ class CalendarState extends Equatable {
       calendarType: calendarType ?? this.calendarType,
       calendarView: calendarView ?? this.calendarView,
       events: events ?? this.events,
+      eventSearchQuery: eventSearchQuery ?? this.eventSearchQuery,
+      searchInDescriptions: searchInDescriptions ?? this.searchInDescriptions,
     );
   }
 
@@ -85,6 +94,9 @@ class CalendarState extends Equatable {
         dailyTimes,
         // events – ensure rebuild on changes
         events,
+
+        eventSearchQuery,
+        searchInDescriptions,
 
         // "פירקנו" גם את התאריך של תצוגת החודש
         currentJewishDate.getJewishYear(),
@@ -260,6 +272,14 @@ class CalendarCubit extends Cubit<CalendarState> {
     ));
   }
 
+  void setEventSearchQuery(String query) {
+    emit(state.copyWith(eventSearchQuery: query));
+  }
+
+  void toggleSearchInDescriptions(bool value) {
+    emit(state.copyWith(searchInDescriptions: value));
+  }
+
   Map<String, String> shortTimesFor(DateTime date) {
     final full = _calculateDailyTimes(date, state.selectedCity);
     return {
@@ -353,6 +373,18 @@ class CalendarCubit extends Cubit<CalendarState> {
             e.baseGregorianDate.day == gD;
       }
     }).toList()
+      ..sort((a, b) => a.title.compareTo(b.title));
+  }
+
+  List<CustomEvent> getFilteredEvents(String query) {
+    if (query.isEmpty) {
+      return [];
+    }
+    return state.events
+        .where((e) =>
+            e.title.contains(query) ||
+            (state.searchInDescriptions && e.description.contains(query)))
+        .toList()
       ..sort((a, b) => a.title.compareTo(b.title));
   }
 

@@ -1186,6 +1186,23 @@ class CalendarWidget extends StatelessWidget {
     return months[month - 1];
   }
 
+  String _truncateDescription(String description) {
+    const int maxLength = 50; // Adjust as needed
+    if (description.length <= maxLength) {
+      return description;
+    }
+    return '${description.substring(0, maxLength)}...';
+  }
+
+  String _formatEventDate(DateTime date) {
+    final jewishDate = JewishDate.fromDateTime(date);
+    final hebrewStr =
+        '${_formatHebrewDay(jewishDate.getJewishDayOfMonth())} ${hebrewMonths[jewishDate.getJewishMonth() - 1]}';
+    final gregorianStr =
+        '${date.day} ${_getGregorianMonthName(date.month)} ${date.year}';
+    return '$hebrewStr • $gregorianStr';
+  }
+
   // פונקציות עזר חדשות לפענוח תאריך עברי
   int _hebrewNumberToInt(String hebrew) {
     final Map<String, int> hebrewValue = {
@@ -1426,6 +1443,14 @@ class CalendarWidget extends StatelessWidget {
     // משתנה חדש שבודק אם האירוע מוגדר כ"תמיד"
     bool recurForever = existingEvent?.recurringYears == null;
 
+    // קביעת התאריכים המוצגים - לפי האירוע אם עריכה, אחרת לפי הנבחר
+    final displayedGregorianDate = existingEvent != null
+        ? existingEvent.baseGregorianDate
+        : state.selectedGregorianDate;
+    final displayedJewishDate = existingEvent != null
+        ? JewishDate.fromDateTime(existingEvent.baseGregorianDate)
+        : state.selectedJewishDate;
+
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -1457,7 +1482,7 @@ class CalendarWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // תאריך נבחר
+                      // תאריך נבחר - השתמש בתאריכים המוצגים
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -1469,12 +1494,12 @@ class CalendarWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'תאריך לועזי: ${state.selectedGregorianDate.day}/${state.selectedGregorianDate.month}/${state.selectedGregorianDate.year}',
+                              'תאריך לועזי: ${displayedGregorianDate.day}/${displayedGregorianDate.month}/${displayedGregorianDate.year}',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              'תאריך עברי: ${_formatHebrewDay(state.selectedJewishDate.getJewishDayOfMonth())} ${hebrewMonths[state.selectedJewishDate.getJewishMonth() - 1]} ${_formatHebrewYear(state.selectedJewishDate.getJewishYear())}',
+                              'תאריך עברי: ${_formatHebrewDay(displayedJewishDate.getJewishDayOfMonth())} ${hebrewMonths[displayedJewishDate.getJewishMonth() - 1]} ${_formatHebrewYear(displayedJewishDate.getJewishYear())}',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
@@ -1506,12 +1531,12 @@ class CalendarWidget extends StatelessWidget {
                                   DropdownMenuItem<bool>(
                                     value: true,
                                     child: Text(
-                                        'לוח עברי (${_formatHebrewDay(state.selectedJewishDate.getJewishDayOfMonth())} ${hebrewMonths[state.selectedJewishDate.getJewishMonth() - 1]})'),
+                                        'לוח עברי (${_formatHebrewDay(displayedJewishDate.getJewishDayOfMonth())} ${hebrewMonths[displayedJewishDate.getJewishMonth() - 1]})'),
                                   ),
                                   DropdownMenuItem<bool>(
                                     value: false,
                                     child: Text(
-                                        'לוח לועזי (${state.selectedGregorianDate.day}/${state.selectedGregorianDate.month})'),
+                                        'לוח לועזי (${displayedGregorianDate.day}/${displayedGregorianDate.month})'),
                                   ),
                                 ],
                                 onChanged: (value) => setState(
@@ -1682,20 +1707,66 @@ class CalendarWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            _buildEventsList(context, state),
+            TextField(
+              onChanged: (query) =>
+                  context.read<CalendarCubit>().setEventSearchQuery(query),
+              decoration: InputDecoration(
+                hintText: 'חפש אירועים...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (state.eventSearchQuery.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        tooltip: 'נקה חיפוש',
+                        onPressed: () {
+                          context.read<CalendarCubit>().setEventSearchQuery('');
+                        },
+                      ),
+                    IconButton(
+                      icon: Icon(state.searchInDescriptions
+                          ? Icons.description_outlined
+                          : Icons.title),
+                      tooltip: state.searchInDescriptions
+                          ? 'חפש גם בתיאור'
+                          : 'חפש רק בכותרת',
+                      onPressed: () => context
+                          .read<CalendarCubit>()
+                          .toggleSearchInDescriptions(
+                              !state.searchInDescriptions),
+                    ),
+                  ],
+                ),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 4),
+            _buildEventsList(context, state,
+                isSearch: state.eventSearchQuery.isNotEmpty),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEventsList(BuildContext context, CalendarState state) {
-    final events = context
-        .read<CalendarCubit>()
-        .eventsForDate(state.selectedGregorianDate);
+  Widget _buildEventsList(BuildContext context, CalendarState state,
+      {bool isSearch = false}) {
+    final cubit = context.read<CalendarCubit>();
+    final List<CustomEvent> events;
+
+    if (state.eventSearchQuery.isNotEmpty) {
+      events = cubit.getFilteredEvents(state.eventSearchQuery);
+    } else {
+      events = []; // Show nothing when search is empty
+    }
 
     if (events.isEmpty) {
-      return const Center(child: Text('אין אירועים ליום זה'));
+      if (state.eventSearchQuery.isNotEmpty) {
+        return const Center(child: Text('לא נמצאו אירועים מתאימים'));
+      } else {
+        return const SizedBox(); // Empty when no search
+      }
     }
 
     return ListView.builder(
@@ -1728,16 +1799,25 @@ class CalendarWidget extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
+                    const SizedBox(height: 4),
                     if (event.description.isNotEmpty) ...[
-                      const SizedBox(height: 4),
                       Text(
-                        event.description,
+                        _truncateDescription(event.description),
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      const SizedBox(height: 4),
                     ],
+                    Text(
+                      _formatEventDate(event.baseGregorianDate),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     if (event.recurring) ...[
                       const SizedBox(height: 4),
                       Row(
