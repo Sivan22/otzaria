@@ -190,14 +190,13 @@ class CalendarWidget extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                 ),
 
-                // מעבר בין חודשים
+                // מעבר בין תקופות
                 IconButton(
-                  onPressed: () =>
-                      context.read<CalendarCubit>().previousMonth(),
+                  onPressed: () => context.read<CalendarCubit>().previous(),
                   icon: const Icon(Icons.chevron_left),
                 ),
                 IconButton(
-                  onPressed: () => context.read<CalendarCubit>().nextMonth(),
+                  onPressed: () => context.read<CalendarCubit>().next(),
                   icon: const Icon(Icons.chevron_right),
                 ),
               ],
@@ -1099,23 +1098,36 @@ class CalendarWidget extends StatelessWidget {
 
   // פונקציות העזר שלא תלויות במצב נשארות כאן
   String _getCurrentMonthYearText(CalendarState state) {
-    final gregName = _getGregorianMonthName(state.currentGregorianDate.month);
-    final gregNum = state.currentGregorianDate.month;
-    final hebName = hebrewMonths[state.currentJewishDate.getJewishMonth() - 1];
-    final hebYear = _formatHebrewYear(state.currentJewishDate.getJewishYear());
+    DateTime gregorianDate;
+    JewishDate jewishDate;
+
+    // For month view, use current dates (month reference)
+    // For week/day views, use selected dates (what's being viewed)
+    if (state.calendarView == CalendarView.month) {
+      gregorianDate = state.currentGregorianDate;
+      jewishDate = state.currentJewishDate;
+    } else {
+      gregorianDate = state.selectedGregorianDate;
+      jewishDate = state.selectedJewishDate;
+    }
+
+    final gregName = _getGregorianMonthName(gregorianDate.month);
+    final gregNum = gregorianDate.month;
+    final hebName = hebrewMonths[jewishDate.getJewishMonth() - 1];
+    final hebYear = _formatHebrewYear(jewishDate.getJewishYear());
 
     // Show both calendars for clarity
-    return '$hebName $hebYear • $gregName ($gregNum) ${state.currentGregorianDate.year}';
+    return '$hebName $hebYear • $gregName ($gregNum) ${gregorianDate.year}';
   }
 
   String _formatHebrewYear(int year) {
     final thousands = year ~/ 1000;
     final remainder = year % 1000;
     if (thousands == 5) {
-      final hebrewNumber = _numberToHebrewWithoutQuotes(remainder);
-      return 'ה\'$hebrewNumber';
+      final hebrewRemainder = _numberToHebrewWithQuotes(remainder);
+      return 'ה\'$hebrewRemainder';
     } else {
-      return _numberToHebrewWithoutQuotes(year);
+      return _numberToHebrewWithQuotes(year);
     }
   }
 
@@ -1166,6 +1178,13 @@ class CalendarWidget extends StatelessWidget {
       }
     }
     return result;
+  }
+
+  String _numberToHebrewWithQuotes(int number) {
+    if (number <= 0) return '';
+    if (number < 10) return _numberToHebrewWithoutQuotes(number);
+    if (number < 100) return '${_numberToHebrewWithoutQuotes(number)}׳';
+    return '${_numberToHebrewWithoutQuotes(number)}״';
   }
 
   String _getGregorianMonthName(int month) {
@@ -1729,8 +1748,8 @@ class CalendarWidget extends StatelessWidget {
                           ? Icons.description_outlined
                           : Icons.title),
                       tooltip: state.searchInDescriptions
-                          ? 'חפש גם בתיאור'
-                          : 'חפש רק בכותרת',
+                          ? 'חפש רק בכותרת'
+                          : 'חפש גם בתיאור',
                       onPressed: () => context
                           .read<CalendarCubit>()
                           .toggleSearchInDescriptions(
