@@ -324,7 +324,11 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     if (settingsState.copyWithHeaders != 'none' && textBookState is TextBookLoaded) {
       final bookName = CopyUtils.extractBookName(textBookState.book);
       final currentIndex = _currentSelectedIndex!;
-      final currentPath = await CopyUtils.extractCurrentPath(textBookState.book, currentIndex);
+      final currentPath = await CopyUtils.extractCurrentPath(
+        textBookState.book, 
+        currentIndex,
+        bookContent: textBookState.content,
+      );
       
       finalText = CopyUtils.formatTextWithHeaders(
         originalText: text,
@@ -375,7 +379,11 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     // אם צריך להוסיף כותרות
     if (settingsState.copyWithHeaders != 'none') {
       final bookName = CopyUtils.extractBookName(state.book);
-      final currentPath = await CopyUtils.extractCurrentPath(state.book, indexToCopy);
+      final currentPath = await CopyUtils.extractCurrentPath(
+        state.book, 
+        indexToCopy,
+        bookContent: state.content,
+      );
       
       finalText = CopyUtils.formatTextWithHeaders(
         originalText: text,
@@ -427,7 +435,11 @@ class _SimpleBookViewState extends State<SimpleBookView> {
     if (settingsState.copyWithHeaders != 'none') {
       final bookName = CopyUtils.extractBookName(state.book);
       final firstVisibleIndex = state.visibleIndices.first;
-      final currentPath = await CopyUtils.extractCurrentPath(state.book, firstVisibleIndex);
+      final currentPath = await CopyUtils.extractCurrentPath(
+        state.book, 
+        firstVisibleIndex,
+        bookContent: state.content,
+      );
       
       finalText = CopyUtils.formatTextWithHeaders(
         originalText: combinedText,
@@ -495,7 +507,11 @@ $textWithBreaks
         if (settingsState.copyWithHeaders != 'none' && textBookState is TextBookLoaded) {
           final bookName = CopyUtils.extractBookName(textBookState.book);
           final currentIndex = _currentSelectedIndex ?? 0;
-          final currentPath = await CopyUtils.extractCurrentPath(textBookState.book, currentIndex);
+          final currentPath = await CopyUtils.extractCurrentPath(
+            textBookState.book, 
+            currentIndex,
+            bookContent: textBookState.content,
+          );
           
           finalText = CopyUtils.formatTextWithHeaders(
             originalText: text,
@@ -580,7 +596,11 @@ $textWithBreaks
         if (settingsState.copyWithHeaders != 'none' && textBookState is TextBookLoaded) {
           final bookName = CopyUtils.extractBookName(textBookState.book);
           final currentIndex = _currentSelectedIndex ?? 0;
-          final currentPath = await CopyUtils.extractCurrentPath(textBookState.book, currentIndex);
+          final currentPath = await CopyUtils.extractCurrentPath(
+            textBookState.book, 
+            currentIndex,
+            bookContent: textBookState.content,
+          );
           
           finalPlainText = CopyUtils.formatTextWithHeaders(
             originalText: plainText,
