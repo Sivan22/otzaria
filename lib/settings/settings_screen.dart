@@ -462,10 +462,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         title: 'עיצוב ההעתקה',
                         settingKey: 'key-copy-header-format',
                         values: const <String, String>{
-                          'same_line_after_brackets': 'באותה שורה אחרי הכיתוב (עם סוגריים)',
-                          'same_line_after_no_brackets': 'באותה שורה אחרי הכיתוב (בלי סוגריים)',
-                          'same_line_before_brackets': 'באותה שורה לפני הכיתוב (עם סוגריים)',
-                          'same_line_before_no_brackets': 'באותה שורה לפני הכיתוב (בלי סוגריים)',
+                          'same_line_after_brackets':
+                              'באותה שורה אחרי הכיתוב (עם סוגריים)',
+                          'same_line_after_no_brackets':
+                              'באותה שורה אחרי הכיתוב (בלי סוגריים)',
+                          'same_line_before_brackets':
+                              'באותה שורה לפני הכיתוב (עם סוגריים)',
+                          'same_line_before_no_brackets':
+                              'באותה שורה לפני הכיתוב (בלי סוגריים)',
                           'separate_line_after': 'בפסקה בפני עצמה אחרי הכיתוב',
                           'separate_line_before': 'בפסקה בפני עצמה לפני הכיתוב',
                         },
@@ -486,13 +490,12 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   titleTextStyle: const TextStyle(fontSize: 25),
                   children: [
                     SwitchSettingsTile(
-
                       title: 'סינכרון הספרייה באופן אוטומטי',
                       leading: Icon(Icons.sync),
-
                       settingKey: 'key-auto-sync',
                       defaultValue: true,
-                      enabledLabel: 'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
+                      enabledLabel:
+                          'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
                       disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
                       activeColor: Theme.of(context).cardColor,
                     ),
@@ -775,38 +778,40 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-      onPanUpdate: (details) {
-        setState(() {
-          double newMargin =
-              isLeft ? _margin + details.delta.dx : _margin - details.delta.dx;
+        onPanUpdate: (details) {
+          setState(() {
+            double newMargin = isLeft
+                ? _margin + details.delta.dx
+                : _margin - details.delta.dx;
 
-          // מגבילים את המרחב לפי רוחב הווידג'ט והגדרות המשתמש
-          final maxWidth = (context.findRenderObject() as RenderBox).size.width;
-          _margin = newMargin
-              .clamp(widget.min, maxWidth / 2)
-              .clamp(widget.min, widget.max);
-        });
-        widget.onChanged(_margin);
-      },
-      onPanStart: (_) => _handleDragStart(),
-      onPanEnd: (_) => _handleDragEnd(),
-      child: Container(
-        width: thumbSize * 2, // אזור לחיצה גדול יותר מהנראות
-        height: thumbSize * 2,
-        color: Colors.transparent, // אזור הלחיצה שקוף
-        alignment: Alignment.center,
+            // מגבילים את המרחב לפי רוחב הווידג'ט והגדרות המשתמש
+            final maxWidth =
+                (context.findRenderObject() as RenderBox).size.width;
+            _margin = newMargin
+                .clamp(widget.min, maxWidth / 2)
+                .clamp(widget.min, widget.max);
+          });
+          widget.onChanged(_margin);
+        },
+        onPanStart: (_) => _handleDragStart(),
+        onPanEnd: (_) => _handleDragEnd(),
         child: Container(
-          // --- שינוי 1: עיצוב הידית מחדש ---
-          width: thumbSize,
-          height: thumbSize,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary, // צבע ראשי
-            shape: BoxShape.circle,
-            boxShadow: kElevationToShadow[1], // הצללה סטנדרטית של פלאטר
+          width: thumbSize * 2, // אזור לחיצה גדול יותר מהנראות
+          height: thumbSize * 2,
+          color: Colors.transparent, // אזור הלחיצה שקוף
+          alignment: Alignment.center,
+          child: Container(
+            // --- שינוי 1: עיצוב הידית מחדש ---
+            width: thumbSize,
+            height: thumbSize,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary, // צבע ראשי
+              shape: BoxShape.circle,
+              boxShadow: kElevationToShadow[1], // הצללה סטנדרטית של פלאטר
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -828,120 +833,124 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTapDown: (details) {
-                  // חישוב המיקום החדש לפי הלחיצה
-                  final RenderBox renderBox =
-                      context.findRenderObject() as RenderBox;
-                  final localPosition =
-                      renderBox.globalToLocal(details.globalPosition);
-                  final tapX = localPosition.dx;
+                    // חישוב המיקום החדש לפי הלחיצה
+                    final RenderBox renderBox =
+                        context.findRenderObject() as RenderBox;
+                    final localPosition =
+                        renderBox.globalToLocal(details.globalPosition);
+                    final tapX = localPosition.dx;
 
-                  // חישוב השוליים החדשים - לוגיקה נכונה
-                  double newMargin;
+                    // חישוב השוליים החדשים - לוגיקה נכונה
+                    double newMargin;
 
-                  // אם לחצנו במרכז - השוליים יהיו מקסימליים
-                  // אם לחצנו בקצוות - השוליים יהיו מינימליים
-                  double distanceFromCenter = (tapX - fullWidth / 2).abs();
-                  newMargin = (fullWidth / 2) - distanceFromCenter;
+                    // אם לחצנו במרכז - השוליים יהיו מקסימליים
+                    // אם לחצנו בקצוות - השוליים יהיו מינימליים
+                    double distanceFromCenter = (tapX - fullWidth / 2).abs();
+                    newMargin = (fullWidth / 2) - distanceFromCenter;
 
-                  // הגבלת הערכים
-                  newMargin = newMargin
-                      .clamp(widget.min, widget.max)
-                      .clamp(widget.min, fullWidth / 2);
+                    // הגבלת הערכים
+                    newMargin = newMargin
+                        .clamp(widget.min, widget.max)
+                        .clamp(widget.min, fullWidth / 2);
 
-                  setState(() {
-                    _margin = newMargin;
-                  });
+                    setState(() {
+                      _margin = newMargin;
+                    });
 
-                  widget.onChanged(_margin);
-                  _handleDragStart();
-                  _handleDragEnd();
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // אזור לחיצה מורחב - שקוף וגדול יותר מהפס
-                    Container(
-                      height: thumbSize * 2, // גובה כמו הידיות
-                      color: Colors.transparent,
-                    ),
-
-                    // קו הרקע
-                    Container(
-                      height: trackHeight,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).dividerColor.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(trackHeight / 2),
+                    widget.onChanged(_margin);
+                    _handleDragStart();
+                    _handleDragEnd();
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // אזור לחיצה מורחב - שקוף וגדול יותר מהפס
+                      Container(
+                        height: thumbSize * 2, // גובה כמו הידיות
+                        color: Colors.transparent,
                       ),
-                    ),
 
-                    // הקו הפעיל (מייצג את רוחב הטקסט)
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: _margin),
-                      child: Container(
+                      // קו הרקע
+                      Container(
                         height: trackHeight,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
+                          color:
+                              Theme.of(context).dividerColor.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(trackHeight / 2),
                         ),
                       ),
-                    ),
 
-                    // הצגת הערך מעל הידית (רק בזמן תצוגה)
-                    if (_showPreview)
-                      Positioned(
-                        left: _margin - 10,
-                        top: 0,
+                      // הקו הפעיל (מייצג את רוחב הטקסט)
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _margin),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                          height: trackHeight,
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _margin.toStringAsFixed(0),
-                            style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontSize: 12),
+                            borderRadius:
+                                BorderRadius.circular(trackHeight / 2),
                           ),
                         ),
                       ),
 
-                    if (_showPreview)
-                      Positioned(
-                        right: _margin - 10,
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _margin.toStringAsFixed(0),
-                            style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontSize: 12),
+                      // הצגת הערך מעל הידית (רק בזמן תצוגה)
+                      if (_showPreview)
+                        Positioned(
+                          left: _margin - 10,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _margin.toStringAsFixed(0),
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  fontSize: 12),
+                            ),
                           ),
                         ),
+
+                      if (_showPreview)
+                        Positioned(
+                          right: _margin - 10,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _margin.toStringAsFixed(0),
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  fontSize: 12),
+                            ),
+                          ),
+                        ),
+
+                      // הכפתור השמאלי
+                      Positioned(
+                        left: _margin - (thumbSize),
+                        child: _buildThumb(isLeft: true),
                       ),
 
-                    // הכפתור השמאלי
-                    Positioned(
-                      left: _margin - (thumbSize),
-                      child: _buildThumb(isLeft: true),
-                    ),
-
-                    // הכפתור הימני
-                    Positioned(
-                      right: _margin - (thumbSize),
-                      child: _buildThumb(isLeft: false),
-                    ),
-                  ],
+                      // הכפתור הימני
+                      Positioned(
+                        right: _margin - (thumbSize),
+                        child: _buildThumb(isLeft: false),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
 
             const SizedBox(height: 8),
@@ -979,7 +988,6 @@ class _MarginSliderPreviewState extends State<MarginSliderPreview> {
                 ),
               ),
             ),
-          
           ],
         );
       },
