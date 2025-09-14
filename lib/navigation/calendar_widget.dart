@@ -103,35 +103,22 @@ class CalendarWidget extends StatelessWidget {
   }
 
   // פונקציה עזר שמחזירה צבע רקע עדין לשבתות ומועדים
-  Color? _getBackgroundColor(
-      BuildContext context, DateTime date, bool isSelected, bool isToday) {
-    // אין צורך להדגיש תא שכבר נבחר או שהוא 'היום'
+  Color? _getBackgroundColor(BuildContext context, DateTime date,
+      bool isSelected, bool isToday, bool inIsrael) {
     if (isSelected || isToday) return null;
 
-    final jewishCalendar = JewishCalendar.fromDateTime(date);
+    final jewishCalendar = JewishCalendar.fromDateTime(date)
+      ..inIsrael = inIsrael;
 
-    // נבדוק אם מדובר בשבת, יום טוב, או חול המועד
     final bool isShabbat = jewishCalendar.getDayOfWeek() == 7;
     final bool isYomTov = jewishCalendar.isYomTov();
-    final bool isCholHamoed = jewishCalendar.isCholHamoed();
     final bool isTaanis = jewishCalendar.isTaanis();
     final bool isRoshChodesh = jewishCalendar.isRoshChodesh();
-    final bool isChanukah = jewishCalendar.isChanukah();
-    final int yomTovIndex = jewishCalendar.getYomTovIndex();
-    final bool isPurim = yomTovIndex == JewishCalendar.PURIM ||
-        yomTovIndex == JewishCalendar.SHUSHAN_PURIM;
 
-    if (isShabbat ||
-        isYomTov ||
-        isCholHamoed ||
-        isTaanis ||
-        isRoshChodesh ||
-        isChanukah ||
-        isPurim) {
+    if (isShabbat || isYomTov || isTaanis || isRoshChodesh) {
       return Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.4);
     }
 
-    // אם זה יום רגיל, נחזיר null כדי שישתמש בצבע ברירת המחדל
     return null;
   }
 
@@ -455,8 +442,8 @@ class CalendarWidget extends StatelessWidget {
                 margin: const EdgeInsets.all(2),
                 height: 88,
                 decoration: BoxDecoration(
-                  color: _getBackgroundColor(
-                          context, dayDate, isSelected, isToday) ??
+                  color: _getBackgroundColor(context, dayDate, isSelected,
+                          isToday, state.inIsrael) ??
                       (isSelected
                           ? Theme.of(context).colorScheme.primaryContainer
                           : isToday
@@ -510,7 +497,7 @@ class CalendarWidget extends StatelessWidget {
                       const SizedBox(height: 2),
                       _DayExtras(
                         date: dayDate,
-                        jewishCalendar: JewishCalendar.fromDateTime(dayDate),
+                        inIsrael: state.inIsrael,
                       ),
                     ],
                   ),
@@ -552,8 +539,8 @@ class CalendarWidget extends StatelessWidget {
           margin: const EdgeInsets.all(2),
           height: 88,
           decoration: BoxDecoration(
-            color: _getBackgroundColor(
-                    context, gregorianDate, isSelected, isToday) ??
+            color: _getBackgroundColor(context, gregorianDate, isSelected,
+                    isToday, state.inIsrael) ??
                 (isSelected
                     ? Theme.of(context).colorScheme.primaryContainer
                     : isToday
@@ -616,7 +603,7 @@ class CalendarWidget extends StatelessWidget {
                 right: 4,
                 child: _DayExtras(
                   date: gregorianDate,
-                  jewishCalendar: JewishCalendar.fromDateTime(gregorianDate),
+                  inIsrael: state.inIsrael,
                 ),
               ),
             ],
@@ -649,8 +636,8 @@ class CalendarWidget extends StatelessWidget {
           margin: const EdgeInsets.all(2),
           height: 88,
           decoration: BoxDecoration(
-            color: _getBackgroundColor(
-                    context, gregorianDate, isSelected, isToday) ??
+            color: _getBackgroundColor(context, gregorianDate, isSelected,
+                    isToday, state.inIsrael) ??
                 (isSelected
                     ? Theme.of(context).colorScheme.primaryContainer
                     : isToday
@@ -713,7 +700,7 @@ class CalendarWidget extends StatelessWidget {
                 right: 4,
                 child: _DayExtras(
                   date: gregorianDate,
-                  jewishCalendar: JewishCalendar.fromDateTime(gregorianDate),
+                  inIsrael: state.inIsrael,
                 ),
               ),
             ],
@@ -1166,14 +1153,34 @@ class CalendarWidget extends StatelessWidget {
   }
 
   String _formatHebrewYear(int year) {
+    final hdf = HebrewDateFormatter();
+    hdf.hebrewFormat = true;
+
     final thousands = year ~/ 1000;
     final remainder = year % 1000;
-    if (thousands == 5) {
-      final hebrewRemainder = _numberToHebrewWithQuotes(remainder);
-      return 'ה\'$hebrewRemainder';
+
+    String remainderStr = hdf.formatHebrewNumber(remainder);
+
+    String cleanRemainderStr = remainderStr
+        .replaceAll('"', '')
+        .replaceAll("'", "")
+        .replaceAll('׳', '')
+        .replaceAll('״', '');
+
+    String formattedRemainder;
+    if (cleanRemainderStr.length > 1) {
+      formattedRemainder =
+          '${cleanRemainderStr.substring(0, cleanRemainderStr.length - 1)}״${cleanRemainderStr.substring(cleanRemainderStr.length - 1)}';
+    } else if (cleanRemainderStr.length == 1) {
+      formattedRemainder = '$cleanRemainderStr׳';
     } else {
-      return _numberToHebrewWithQuotes(year);
+      formattedRemainder = cleanRemainderStr;
     }
+    if (thousands == 5) {
+      return 'ה׳$formattedRemainder';
+    }
+
+    return formattedRemainder;
   }
 
   String _formatHebrewDay(int day) {
@@ -1957,18 +1964,24 @@ class CalendarWidget extends StatelessWidget {
   }
 }
 
-// מציג תוספות קטנות בכל יום: זמני זריחה/שקיעה, מועדים, וכמות אירועים מותאמים
+// מציג תוספות קטנות בכל יום: מועדים ואירועים מותאמים
 class _DayExtras extends StatelessWidget {
   final DateTime date;
-  final JewishCalendar jewishCalendar;
-  const _DayExtras({required this.date, required this.jewishCalendar});
+  final bool inIsrael;
+
+  const _DayExtras({
+    required this.date,
+    required this.inIsrael,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<CalendarCubit>();
     final events = cubit.eventsForDate(date);
-
     final List<Widget> lines = [];
+
+    final jewishCalendar = JewishCalendar.fromDateTime(date)
+      ..inIsrael = inIsrael;
 
     for (final e in _calcJewishEvents(jewishCalendar).take(2)) {
       lines.add(Text(
@@ -2001,59 +2014,78 @@ class _DayExtras extends StatelessWidget {
     );
   }
 
+  static String _numberToHebrewLetter(int n) {
+    const letters = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח'];
+    if (n > 0 && n <= letters.length) {
+      return letters[n - 1];
+    }
+    return '';
+  }
+
   static List<String> _calcJewishEvents(JewishCalendar jc) {
     final List<String> l = [];
-    if (jc.isRoshChodesh()) l.add('ר"ח');
 
-    // טיפול מיוחד בתעניות - הצגת השם המלא במקום "צום"
-    switch (jc.getYomTovIndex()) {
-      case JewishCalendar.ROSH_HASHANA:
-        l.add('ראש השנה');
-        break;
-      case JewishCalendar.YOM_KIPPUR:
-        l.add('יום כיפור');
-        break;
-      case JewishCalendar.SUCCOS:
-        l.add('סוכות');
-        break;
-      case JewishCalendar.SHEMINI_ATZERES:
-        l.add('שמיני עצרת');
-        break;
-      case JewishCalendar.SIMCHAS_TORAH:
-        l.add('שמחת תורה');
-        break;
-      case JewishCalendar.PESACH:
-        l.add('פסח');
-        break;
-      case JewishCalendar.SHAVUOS:
-        l.add('שבועות');
-        break;
-      case JewishCalendar.CHANUKAH:
-        l.add('חנוכה');
-        break;
+    // 1. שימוש ב-Formatter הייעודי של החבילה כדי לקבל את כל שמות המועדים
+    final hdf = HebrewDateFormatter();
+    hdf.hebrewFormat = true; // כדי לקבל שמות בעברית
 
-      default:
-        // בדיקה נוספת לתעניות שלא מזוהות בYomTovIndex
-        if (jc.isTaanis()) {
-          // אם זה תענית שלא זוהתה למעלה, נציג שם כללי
-          final jewishMonth = jc.getJewishMonth();
-          final jewishDay = jc.getJewishDayOfMonth();
-
-          if (jewishMonth == 7 && jewishDay == 3) {
-            l.add('צום גדליה');
-          } else if (jewishMonth == 10 && jewishDay == 10) {
-            l.add('עשרה בטבת');
-          } else if (jewishMonth == 4 && jewishDay == 17) {
-            l.add('שבעה עשר בתמוז');
-          } else if (jewishMonth == 5 && jewishDay == 9) {
-            l.add('תשעה באב');
-          } else {
-            l.add('תענית');
-          }
-        }
-        break;
+    // הפונקציה formatYomTov מחזירה את שם החג, המועד, התענית או היום המיוחד
+    final yomTov = hdf.formatYomTov(jc);
+    if (yomTov != null && yomTov.isNotEmpty) {
+      // הפונקציה יכולה להחזיר מספר אירועים מופרדים בפסיק, למשל "ערב שבת, ערב ראש חודש"
+      // לכן אנחנו מפצלים אותם ומוסיפים כל אחד בנפרד
+      l.addAll(yomTov.split(',').map((e) => e.trim()));
     }
-    return l;
+
+    // 2. ה-Formatter לא תמיד מתייחס לר"ח כאל "יום טוב", אז נוסיף אותו ידנית אם צריך
+    if (jc.isRoshChodesh() && !l.contains('ראש חודש')) {
+      l.add('ר"ח');
+    }
+
+    // 3. שיפורים והתאמות אישיות שלנו על המידע מהחבילה
+    final yomTovIndex = jc.getYomTovIndex();
+
+    // פירוט ימי חול המועד (דורס את הטקסט הכללי "חול המועד")
+    if (yomTovIndex == JewishCalendar.CHOL_HAMOED_SUCCOS ||
+        yomTovIndex == JewishCalendar.CHOL_HAMOED_PESACH) {
+      l.removeWhere((e) => e.contains('חול המועד')); // הסרת הטקסט הכללי
+      final dayOfCholHamoed = jc.getJewishDayOfMonth() - 15;
+      l.add('${_numberToHebrewLetter(dayOfCholHamoed)} דחוה"מ');
+    }
+
+    // פירוט ימי חנוכה (דורס את הטקסט הכללי "חנוכה")
+    if (yomTovIndex == JewishCalendar.CHANUKAH) {
+      // החלפנו את l.remove ל-l.removeWhere כדי לתפוס כל טקסט עם המילה "חנוכה"
+      l.removeWhere((e) => e.contains('חנוכה'));
+
+      // והוספנו את הטקסט המדויק שלנו
+      final dayOfChanukah = jc.getDayOfChanukah();
+      if (dayOfChanukah != -1) {
+        l.add('נר ${_numberToHebrewLetter(dayOfChanukah)} דחנוכה');
+      }
+    }
+
+    // הוספת פירוט להושענא רבה
+    if (yomTovIndex == JewishCalendar.HOSHANA_RABBA) {
+      l.add("ו' דחוה\"מ");
+    }
+
+    // וידוא שהלוגיקה של שמיני עצרת ושמחת תורה נשמרת
+    if (jc.getJewishMonth() == 7) {
+      if (jc.getJewishDayOfMonth() == 22) {
+        // כ"ב בתשרי
+        if (!l.contains('שמיני עצרת')) l.add('שמיני עצרת');
+        if (jc.inIsrael && !l.contains('שמחת תורה')) {
+          l.add('שמחת תורה');
+        }
+      }
+      if (jc.getJewishDayOfMonth() == 23 && !jc.inIsrael) {
+        if (!l.contains('שמחת תורה')) l.add('שמחת תורה');
+      }
+    }
+
+    // מסיר כפילויות אפשריות (למשל אם הוספנו משהו שכבר היה קיים)
+    return l.toSet().toList();
   }
 }
 

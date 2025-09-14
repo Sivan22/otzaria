@@ -21,6 +21,7 @@ class CalendarState extends Equatable {
   final List<CustomEvent> events;
   final String eventSearchQuery;
   final bool searchInDescriptions;
+  final bool inIsrael;
 
   const CalendarState({
     required this.selectedJewishDate,
@@ -31,6 +32,7 @@ class CalendarState extends Equatable {
     required this.currentGregorianDate,
     required this.calendarType,
     required this.calendarView,
+    required this.inIsrael,
     this.events = const [],
     this.eventSearchQuery = '',
     this.searchInDescriptions = false,
@@ -47,10 +49,10 @@ class CalendarState extends Equatable {
       dailyTimes: const {},
       currentJewishDate: jewishNow,
       currentGregorianDate: now,
-      calendarType:
-          CalendarType.combined, // ברירת מחדל, יעודכן ב-_initializeCalendar
+      calendarType: CalendarType.combined,
       calendarView: CalendarView.month,
-      searchInDescriptions: false, // ברירת מחדל: חיפוש רק בכותרת
+      searchInDescriptions: false,
+      inIsrael: true,
     );
   }
 
@@ -66,6 +68,7 @@ class CalendarState extends Equatable {
     List<CustomEvent>? events,
     String? eventSearchQuery,
     bool? searchInDescriptions,
+    bool? inIsrael,
   }) {
     return CalendarState(
       selectedJewishDate: selectedJewishDate ?? this.selectedJewishDate,
@@ -80,6 +83,7 @@ class CalendarState extends Equatable {
       events: events ?? this.events,
       eventSearchQuery: eventSearchQuery ?? this.eventSearchQuery,
       searchInDescriptions: searchInDescriptions ?? this.searchInDescriptions,
+      inIsrael: inIsrael ?? this.inIsrael,
     );
   }
 
@@ -105,7 +109,8 @@ class CalendarState extends Equatable {
 
         currentGregorianDate,
         calendarType,
-        calendarView
+        calendarView,
+        inIsrael,
       ];
 }
 
@@ -125,6 +130,7 @@ class CalendarCubit extends Cubit<CalendarState> {
     final calendarType = _stringToCalendarType(calendarTypeString);
     final selectedCity = settings['selectedCity'] as String;
     final eventsJson = settings['calendarEvents'] as String;
+    final bool inIsrael = _isCityInIsrael(selectedCity);
 
     // טעינת אירועים מהאחסון
     List<CustomEvent> events = [];
@@ -141,6 +147,7 @@ class CalendarCubit extends Cubit<CalendarState> {
       calendarType: calendarType,
       selectedCity: selectedCity,
       events: events,
+      inIsrael: inIsrael,
     ));
     _updateTimesForDate(state.selectedGregorianDate, selectedCity);
   }
@@ -161,9 +168,11 @@ class CalendarCubit extends Cubit<CalendarState> {
 
   void changeCity(String newCity) {
     final newTimes = _calculateDailyTimes(state.selectedGregorianDate, newCity);
+    final bool inIsrael = _isCityInIsrael(newCity);
     emit(state.copyWith(
       selectedCity: newCity,
       dailyTimes: newTimes,
+      inIsrael: inIsrael,
     ));
     // שמור את הבחירה בהגדרות
     _settingsRepository.updateSelectedCity(newCity);
@@ -809,6 +818,10 @@ const Map<String, Map<String, Map<String, double>>> cityCoordinates = {
   },
 };
 
+bool _isCityInIsrael(String cityName) {
+  return cityCoordinates['ארץ ישראל']!.containsKey(cityName);
+}
+
 Map<String, double>? _getCityData(String cityName) {
   for (var country in cityCoordinates.values) {
     if (country.containsKey(cityName)) {
@@ -839,7 +852,10 @@ Map<String, String> _calculateDailyTimes(DateTime date, String city) {
 
   final zmanimCalendar = ComplexZmanimCalendar.intGeoLocation(location);
 
+  final bool isInIsrael = _isCityInIsrael(city);
   final jewishCalendar = JewishCalendar.fromDateTime(date);
+  jewishCalendar.inIsrael = isInIsrael;
+
   final Map<String, String> times = {
     'alos': _formatTime(zmanimCalendar.getAlosHashachar()!),
     'alos16point1Degrees':
