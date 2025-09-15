@@ -19,6 +19,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/notes/notes_system.dart';
+import 'package:otzaria/utils/copy_utils.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
 class CombinedView extends StatefulWidget {
@@ -335,9 +336,42 @@ class _CombinedViewState extends State<CombinedView> {
     final text = widget.data[index];
     if (text.trim().isEmpty) return;
 
+    // קבלת ההגדרות הנוכחיות
+    final settingsState = context.read<SettingsBloc>().state;
+    final textBookState = context.read<TextBookBloc>().state;
+    
+    String finalText = text;
+    String finalHtmlText = text;
+    
+    // אם צריך להוסיף כותרות
+    if (settingsState.copyWithHeaders != 'none' && textBookState is TextBookLoaded) {
+      final bookName = CopyUtils.extractBookName(textBookState.book);
+      final currentPath = await CopyUtils.extractCurrentPath(
+        textBookState.book, 
+        index,
+        bookContent: textBookState.content,
+      );
+      
+      finalText = CopyUtils.formatTextWithHeaders(
+        originalText: text,
+        copyWithHeaders: settingsState.copyWithHeaders,
+        copyHeaderFormat: settingsState.copyHeaderFormat,
+        bookName: bookName,
+        currentPath: currentPath,
+      );
+      
+      finalHtmlText = CopyUtils.formatTextWithHeaders(
+        originalText: text,
+        copyWithHeaders: settingsState.copyWithHeaders,
+        copyHeaderFormat: settingsState.copyHeaderFormat,
+        bookName: bookName,
+        currentPath: currentPath,
+      );
+    }
+
     final item = DataWriterItem();
-    item.add(Formats.plainText(text));
-    item.add(Formats.htmlText(_formatTextAsHtml(text)));
+    item.add(Formats.plainText(finalText));
+    item.add(Formats.htmlText(_formatTextAsHtml(finalHtmlText)));
 
     await SystemClipboard.instance?.write([item]);
   }
@@ -358,10 +392,35 @@ class _CombinedViewState extends State<CombinedView> {
     if (visibleTexts.isEmpty) return;
 
     final combinedText = visibleTexts.join('\n\n');
-    final combinedHtml = visibleTexts.map(_formatTextAsHtml).join('<br><br>');
+    
+    // קבלת ההגדרות הנוכחיות
+    final settingsState = context.read<SettingsBloc>().state;
+    
+    String finalText = combinedText;
+    
+    // אם צריך להוסיף כותרות
+    if (settingsState.copyWithHeaders != 'none') {
+      final bookName = CopyUtils.extractBookName(state.book);
+      final firstVisibleIndex = state.visibleIndices.first;
+      final currentPath = await CopyUtils.extractCurrentPath(
+        state.book, 
+        firstVisibleIndex,
+        bookContent: state.content,
+      );
+      
+      finalText = CopyUtils.formatTextWithHeaders(
+        originalText: combinedText,
+        copyWithHeaders: settingsState.copyWithHeaders,
+        copyHeaderFormat: settingsState.copyHeaderFormat,
+        bookName: bookName,
+        currentPath: currentPath,
+      );
+    }
+    
+    final combinedHtml = finalText.split('\n\n').map(_formatTextAsHtml).join('<br><br>');
 
     final item = DataWriterItem();
-    item.add(Formats.plainText(combinedText));
+    item.add(Formats.plainText(finalText));
     item.add(Formats.htmlText(combinedHtml));
 
     await SystemClipboard.instance?.write([item]);
@@ -370,9 +429,11 @@ class _CombinedViewState extends State<CombinedView> {
   /// עיצוב טקסט כ-HTML עם הגדרות הגופן הנוכחיות
   String _formatTextAsHtml(String text) {
     final settingsState = context.read<SettingsBloc>().state;
+    // ממיר \n ל-<br> ב-HTML
+    final textWithBreaks = text.replaceAll('\n', '<br>');
     return '''
 <div style="font-family: ${settingsState.fontFamily}; font-size: ${widget.textSize}px; text-align: justify; direction: rtl;">
-$text
+$textWithBreaks
 </div>
 ''';
   }
@@ -393,8 +454,33 @@ $text
     try {
       final clipboard = SystemClipboard.instance;
       if (clipboard != null) {
+        // קבלת ההגדרות הנוכחיות
+        final settingsState = context.read<SettingsBloc>().state;
+        final textBookState = context.read<TextBookBloc>().state;
+        
+        String finalText = text;
+        
+        // אם צריך להוסיף כותרות
+        if (settingsState.copyWithHeaders != 'none' && textBookState is TextBookLoaded) {
+          final bookName = CopyUtils.extractBookName(textBookState.book);
+          final currentIndex = _currentSelectedIndex ?? 0;
+          final currentPath = await CopyUtils.extractCurrentPath(
+            textBookState.book, 
+            currentIndex,
+            bookContent: textBookState.content,
+          );
+          
+          finalText = CopyUtils.formatTextWithHeaders(
+            originalText: text,
+            copyWithHeaders: settingsState.copyWithHeaders,
+            copyHeaderFormat: settingsState.copyHeaderFormat,
+            bookName: bookName,
+            currentPath: currentPath,
+          );
+        }
+
         final item = DataWriterItem();
-        item.add(Formats.plainText(text));
+        item.add(Formats.plainText(finalText));
         await clipboard.write([item]);
 
         if (mounted) {
@@ -436,6 +522,7 @@ $text
       if (clipboard != null) {
         // קבלת ההגדרות הנוכחיות לעיצוב
         final settingsState = context.read<SettingsBloc>().state;
+        final textBookState = context.read<TextBookBloc>().state;
 
         // ניסיון למצוא את הטקסט המקורי עם תגי HTML
         String htmlContentToUse = plainText;
@@ -461,15 +548,46 @@ $text
           }
         }
 
+        // הוספת כותרות אם נדרש
+        String finalPlainText = plainText;
+        if (settingsState.copyWithHeaders != 'none' && textBookState is TextBookLoaded) {
+          final bookName = CopyUtils.extractBookName(textBookState.book);
+          final currentIndex = _currentSelectedIndex ?? 0;
+          final currentPath = await CopyUtils.extractCurrentPath(
+            textBookState.book, 
+            currentIndex,
+            bookContent: textBookState.content,
+          );
+          
+          finalPlainText = CopyUtils.formatTextWithHeaders(
+            originalText: plainText,
+            copyWithHeaders: settingsState.copyWithHeaders,
+            copyHeaderFormat: settingsState.copyHeaderFormat,
+            bookName: bookName,
+            currentPath: currentPath,
+          );
+          
+          // גם עדכון ה-HTML עם הכותרות
+          htmlContentToUse = CopyUtils.formatTextWithHeaders(
+            originalText: htmlContentToUse,
+            copyWithHeaders: settingsState.copyWithHeaders,
+            copyHeaderFormat: settingsState.copyHeaderFormat,
+            bookName: bookName,
+            currentPath: currentPath,
+          );
+        }
+
         // יצירת HTML מעוצב עם הגדרות הגופן והגודל
+        // ממיר \n ל-<br> ב-HTML
+        final htmlWithBreaks = htmlContentToUse.replaceAll('\n', '<br>');
         final finalHtmlContent = '''
 <div style="font-family: ${settingsState.fontFamily}; font-size: ${widget.textSize}px; text-align: justify; direction: rtl;">
-$htmlContentToUse
+$htmlWithBreaks
 </div>
 ''';
 
         final item = DataWriterItem();
-        item.add(Formats.plainText(plainText)); // טקסט רגיל כגיבוי
+        item.add(Formats.plainText(finalPlainText)); // טקסט רגיל כגיבוי
         item.add(Formats.htmlText(
             finalHtmlContent)); // טקסט מעוצב עם תגי HTML מקוריים
         await clipboard.write([item]);

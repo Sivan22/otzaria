@@ -16,8 +16,40 @@ import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
-class HistoryView extends StatelessWidget {
+class HistoryView extends StatefulWidget {
   const HistoryView({Key? key}) : super(key: key);
+
+  @override
+  State<HistoryView> createState() => _HistoryViewState();
+}
+
+class _HistoryViewState extends State<HistoryView> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
+
+    // Auto-focus the search field when the screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFocusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
   void _openBook(
       BuildContext context, Book book, int index, List<String>? commentators) {
     final tab = book is PdfBook
@@ -77,13 +109,48 @@ class HistoryView extends StatelessWidget {
           return const Center(child: Text('אין היסטוריה'));
         }
 
+        // Filter history based on search query
+        final filteredHistory = _searchQuery.isEmpty
+            ? state.history
+            : state.history.where((item) =>
+                item.ref.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+
         return Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                decoration: InputDecoration(
+                  hintText: 'חפש בהיסטוריה...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+                ),
+              ),
+            ),
             Expanded(
-              child: ListView.builder(
-                itemCount: state.history.length,
+              child: filteredHistory.isEmpty
+                  ? const Center(child: Text('לא נמצאו תוצאות'))
+                  : ListView.builder(
+                itemCount: filteredHistory.length,
                 itemBuilder: (context, index) {
-                  final historyItem = state.history[index];
+                  final historyItem = filteredHistory[index];
+                  final originalIndex = state.history.indexOf(historyItem);
                   return ListTile(
                     leading:
                         _getLeadingIcon(historyItem.book, historyItem.isSearch),
@@ -134,7 +201,7 @@ class HistoryView extends StatelessWidget {
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_forever),
                       onPressed: () {
-                        context.read<HistoryBloc>().add(RemoveHistory(index));
+                        context.read<HistoryBloc>().add(RemoveHistory(originalIndex));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('נמחק בהצלחה')),
                         );

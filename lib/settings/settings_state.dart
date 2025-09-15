@@ -20,6 +20,8 @@ class SettingsState extends Equatable {
   final bool pinSidebar;
   final double sidebarWidth;
   final double facetFilteringWidth;
+  final String copyWithHeaders;
+  final String copyHeaderFormat;
 
   const SettingsState({
     required this.isDarkMode,
@@ -40,6 +42,8 @@ class SettingsState extends Equatable {
     required this.pinSidebar,
     required this.sidebarWidth,
     required this.facetFilteringWidth,
+    required this.copyWithHeaders,
+    required this.copyHeaderFormat,
   });
 
   factory SettingsState.initial() {
@@ -62,6 +66,8 @@ class SettingsState extends Equatable {
       pinSidebar: false,
       sidebarWidth: 300,
       facetFilteringWidth: 235,
+      copyWithHeaders: 'none',
+      copyHeaderFormat: 'same_line_after_brackets',
     );
   }
 
@@ -84,6 +90,8 @@ class SettingsState extends Equatable {
     bool? pinSidebar,
     double? sidebarWidth,
     double? facetFilteringWidth,
+    String? copyWithHeaders,
+    String? copyHeaderFormat,
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -105,6 +113,8 @@ class SettingsState extends Equatable {
       pinSidebar: pinSidebar ?? this.pinSidebar,
       sidebarWidth: sidebarWidth ?? this.sidebarWidth,
       facetFilteringWidth: facetFilteringWidth ?? this.facetFilteringWidth,
+      copyWithHeaders: copyWithHeaders ?? this.copyWithHeaders,
+      copyHeaderFormat: copyHeaderFormat ?? this.copyHeaderFormat,
     );
   }
 
@@ -128,5 +138,7 @@ class SettingsState extends Equatable {
         pinSidebar,
         sidebarWidth,
         facetFilteringWidth,
+        copyWithHeaders,
+        copyHeaderFormat,
       ];
 }

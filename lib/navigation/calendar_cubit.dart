@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 import 'package:otzaria/settings/settings_repository.dart';
+import 'dart:convert';
 
 enum CalendarType { hebrew, gregorian, combined }
 
@@ -17,6 +18,10 @@ class CalendarState extends Equatable {
   final DateTime currentGregorianDate;
   final CalendarType calendarType;
   final CalendarView calendarView;
+  final List<CustomEvent> events;
+  final String eventSearchQuery;
+  final bool searchInDescriptions;
+  final bool inIsrael;
 
   const CalendarState({
     required this.selectedJewishDate,
@@ -27,6 +32,10 @@ class CalendarState extends Equatable {
     required this.currentGregorianDate,
     required this.calendarType,
     required this.calendarView,
+    required this.inIsrael,
+    this.events = const [],
+    this.eventSearchQuery = '',
+    this.searchInDescriptions = false,
   });
 
   factory CalendarState.initial() {
@@ -40,9 +49,10 @@ class CalendarState extends Equatable {
       dailyTimes: const {},
       currentJewishDate: jewishNow,
       currentGregorianDate: now,
-      calendarType:
-          CalendarType.combined, // ברירת מחדל, יעודכן ב-_initializeCalendar
+      calendarType: CalendarType.combined,
       calendarView: CalendarView.month,
+      searchInDescriptions: false,
+      inIsrael: true,
     );
   }
 
@@ -55,6 +65,10 @@ class CalendarState extends Equatable {
     DateTime? currentGregorianDate,
     CalendarType? calendarType,
     CalendarView? calendarView,
+    List<CustomEvent>? events,
+    String? eventSearchQuery,
+    bool? searchInDescriptions,
+    bool? inIsrael,
   }) {
     return CalendarState(
       selectedJewishDate: selectedJewishDate ?? this.selectedJewishDate,
@@ -66,6 +80,10 @@ class CalendarState extends Equatable {
       currentGregorianDate: currentGregorianDate ?? this.currentGregorianDate,
       calendarType: calendarType ?? this.calendarType,
       calendarView: calendarView ?? this.calendarView,
+      events: events ?? this.events,
+      eventSearchQuery: eventSearchQuery ?? this.eventSearchQuery,
+      searchInDescriptions: searchInDescriptions ?? this.searchInDescriptions,
+      inIsrael: inIsrael ?? this.inIsrael,
     );
   }
 
@@ -78,6 +96,11 @@ class CalendarState extends Equatable {
         selectedGregorianDate,
         selectedCity,
         dailyTimes,
+        // events – ensure rebuild on changes
+        events,
+
+        eventSearchQuery,
+        searchInDescriptions,
 
         // "פירקנו" גם את התאריך של תצוגת החודש
         currentJewishDate.getJewishYear(),
@@ -86,7 +109,8 @@ class CalendarState extends Equatable {
 
         currentGregorianDate,
         calendarType,
-        calendarView
+        calendarView,
+        inIsrael,
       ];
 }
 
@@ -105,10 +129,25 @@ class CalendarCubit extends Cubit<CalendarState> {
     final calendarTypeString = settings['calendarType'] as String;
     final calendarType = _stringToCalendarType(calendarTypeString);
     final selectedCity = settings['selectedCity'] as String;
+    final eventsJson = settings['calendarEvents'] as String;
+    final bool inIsrael = _isCityInIsrael(selectedCity);
+
+    // טעינת אירועים מהאחסון
+    List<CustomEvent> events = [];
+    try {
+      final List<dynamic> eventsList = jsonDecode(eventsJson);
+      events =
+          eventsList.map((eventMap) => CustomEvent.fromJson(eventMap)).toList();
+    } catch (e) {
+      // אם יש שגיאה בטעינה, נתחיל עם רשימה ריקה
+      events = [];
+    }
 
     emit(state.copyWith(
       calendarType: calendarType,
       selectedCity: selectedCity,
+      events: events,
+      inIsrael: inIsrael,
     ));
     _updateTimesForDate(state.selectedGregorianDate, selectedCity);
   }
@@ -129,35 +168,39 @@ class CalendarCubit extends Cubit<CalendarState> {
 
   void changeCity(String newCity) {
     final newTimes = _calculateDailyTimes(state.selectedGregorianDate, newCity);
+    final bool inIsrael = _isCityInIsrael(newCity);
     emit(state.copyWith(
       selectedCity: newCity,
       dailyTimes: newTimes,
+      inIsrael: inIsrael,
     ));
     // שמור את הבחירה בהגדרות
     _settingsRepository.updateSelectedCity(newCity);
   }
 
-  void previousMonth() {
+  void _previousMonth() {
     if (state.calendarType == CalendarType.gregorian) {
       final current = state.currentGregorianDate;
       final newDate = current.month == 1
           ? DateTime(current.year - 1, 12, 1)
           : DateTime(current.year, current.month - 1, 1);
-      emit(state.copyWith(currentGregorianDate: newDate));
+      final newTimes = _calculateDailyTimes(newDate, state.selectedCity);
+      emit(state.copyWith(
+        currentGregorianDate: newDate,
+        selectedGregorianDate: newDate,
+        selectedJewishDate: JewishDate.fromDateTime(newDate),
+        dailyTimes: newTimes,
+      ));
     } else {
       final current = state.currentJewishDate;
       final newJewishDate = JewishDate();
       if (current.getJewishMonth() == 1) {
-        // אם אנחנו בניסן (חודש 1), עוברים לאדר של השנה הקודמת
-        // אבל השנה לא משתנה כי השנה מתחלפת בתשרי
         newJewishDate.setJewishDate(
           current.getJewishYear(),
           12,
           1,
         );
       } else if (current.getJewishMonth() == 7) {
-        // אם אנחנו בתשרי (חודש 7), עוברים לאלול של השנה הקודמת
-        // כאן כן משתנה השנה כי תשרי הוא תחילת השנה
         newJewishDate.setJewishDate(
           current.getJewishYear() - 1,
           6,
@@ -170,31 +213,40 @@ class CalendarCubit extends Cubit<CalendarState> {
           1,
         );
       }
-      emit(state.copyWith(currentJewishDate: newJewishDate));
+      final newGregorian = newJewishDate.getGregorianCalendar();
+      final newTimes = _calculateDailyTimes(newGregorian, state.selectedCity);
+      emit(state.copyWith(
+        currentJewishDate: newJewishDate,
+        selectedGregorianDate: newGregorian,
+        selectedJewishDate: newJewishDate,
+        dailyTimes: newTimes,
+      ));
     }
   }
 
-  void nextMonth() {
+  void _nextMonth() {
     if (state.calendarType == CalendarType.gregorian) {
       final current = state.currentGregorianDate;
       final newDate = current.month == 12
           ? DateTime(current.year + 1, 1, 1)
           : DateTime(current.year, current.month + 1, 1);
-      emit(state.copyWith(currentGregorianDate: newDate));
+      final newTimes = _calculateDailyTimes(newDate, state.selectedCity);
+      emit(state.copyWith(
+        currentGregorianDate: newDate,
+        selectedGregorianDate: newDate,
+        selectedJewishDate: JewishDate.fromDateTime(newDate),
+        dailyTimes: newTimes,
+      ));
     } else {
       final current = state.currentJewishDate;
       final newJewishDate = JewishDate();
       if (current.getJewishMonth() == 12) {
-        // אם אנחנו באדר (חודש 12), עוברים לניסן של אותה שנה
-        // השנה לא משתנה כי השנה מתחלפת בתשרי
         newJewishDate.setJewishDate(
           current.getJewishYear(),
           1,
           1,
         );
       } else if (current.getJewishMonth() == 6) {
-        // אם אנחנו באלול (חודש 6), עוברים לתשרי של השנה הבאה
-        // כאן כן משתנה השנה כי תשרי הוא תחילת השנה
         newJewishDate.setJewishDate(
           current.getJewishYear() + 1,
           7,
@@ -207,8 +259,59 @@ class CalendarCubit extends Cubit<CalendarState> {
           1,
         );
       }
-      emit(state.copyWith(currentJewishDate: newJewishDate));
+      final newGregorian = newJewishDate.getGregorianCalendar();
+      final newTimes = _calculateDailyTimes(newGregorian, state.selectedCity);
+      emit(state.copyWith(
+        currentJewishDate: newJewishDate,
+        selectedGregorianDate: newGregorian,
+        selectedJewishDate: newJewishDate,
+        dailyTimes: newTimes,
+      ));
     }
+  }
+
+  void _previousWeek() {
+    final newDate = state.selectedGregorianDate.subtract(Duration(days: 7));
+    final newJewishDate = JewishDate.fromDateTime(newDate);
+    final newTimes = _calculateDailyTimes(newDate, state.selectedCity);
+    emit(state.copyWith(
+      selectedGregorianDate: newDate,
+      selectedJewishDate: newJewishDate,
+      dailyTimes: newTimes,
+    ));
+  }
+
+  void _nextWeek() {
+    final newDate = state.selectedGregorianDate.add(Duration(days: 7));
+    final newJewishDate = JewishDate.fromDateTime(newDate);
+    final newTimes = _calculateDailyTimes(newDate, state.selectedCity);
+    emit(state.copyWith(
+      selectedGregorianDate: newDate,
+      selectedJewishDate: newJewishDate,
+      dailyTimes: newTimes,
+    ));
+  }
+
+  void _previousDay() {
+    final newDate = state.selectedGregorianDate.subtract(Duration(days: 1));
+    final newJewishDate = JewishDate.fromDateTime(newDate);
+    final newTimes = _calculateDailyTimes(newDate, state.selectedCity);
+    emit(state.copyWith(
+      selectedGregorianDate: newDate,
+      selectedJewishDate: newJewishDate,
+      dailyTimes: newTimes,
+    ));
+  }
+
+  void _nextDay() {
+    final newDate = state.selectedGregorianDate.add(Duration(days: 1));
+    final newJewishDate = JewishDate.fromDateTime(newDate);
+    final newTimes = _calculateDailyTimes(newDate, state.selectedCity);
+    emit(state.copyWith(
+      selectedGregorianDate: newDate,
+      selectedJewishDate: newJewishDate,
+      dailyTimes: newTimes,
+    ));
   }
 
   void changeCalendarType(CalendarType type) {
@@ -219,6 +322,34 @@ class CalendarCubit extends Cubit<CalendarState> {
 
   void changeCalendarView(CalendarView view) {
     emit(state.copyWith(calendarView: view));
+  }
+
+  void previous() {
+    switch (state.calendarView) {
+      case CalendarView.month:
+        _previousMonth();
+        break;
+      case CalendarView.week:
+        _previousWeek();
+        break;
+      case CalendarView.day:
+        _previousDay();
+        break;
+    }
+  }
+
+  void next() {
+    switch (state.calendarView) {
+      case CalendarView.month:
+        _nextMonth();
+        break;
+      case CalendarView.week:
+        _nextWeek();
+        break;
+      case CalendarView.day:
+        _nextDay();
+        break;
+    }
   }
 
   void jumpToToday() {
@@ -247,6 +378,241 @@ class CalendarCubit extends Cubit<CalendarState> {
       dailyTimes: newTimes,
     ));
   }
+
+  void setEventSearchQuery(String query) {
+    emit(state.copyWith(eventSearchQuery: query));
+  }
+
+  void toggleSearchInDescriptions(bool value) {
+    emit(state.copyWith(searchInDescriptions: value));
+  }
+
+  Map<String, String> shortTimesFor(DateTime date) {
+    final full = _calculateDailyTimes(date, state.selectedCity);
+    return {
+      if (full['sunrise'] != null) 'sunrise': full['sunrise']!,
+      if (full['sunset'] != null) 'sunset': full['sunset']!,
+    };
+  }
+
+  // --- ניהול אירועים ---
+
+  void addEvent({
+    required String title,
+    String? description,
+    required DateTime baseGregorianDate,
+    required bool isRecurring,
+    required bool recurOnHebrew,
+    int? recurringYears,
+  }) {
+    final baseJewish = JewishDate.fromDateTime(baseGregorianDate);
+    final newEvent = CustomEvent(
+      id: DateTime.now().millisecondsSinceEpoch.toString(), // יצירת ID ייחודי
+      title: title,
+      description: description ?? '',
+      createdAt: DateTime.now(),
+      baseGregorianDate: DateTime(
+        baseGregorianDate.year,
+        baseGregorianDate.month,
+        baseGregorianDate.day,
+      ),
+      baseJewishYear: baseJewish.getJewishYear(),
+      baseJewishMonth: baseJewish.getJewishMonth(),
+      baseJewishDay: baseJewish.getJewishDayOfMonth(),
+      recurring: isRecurring,
+      recurOnHebrew: recurOnHebrew,
+      recurringYears: recurringYears,
+    );
+    final updated = List<CustomEvent>.from(state.events)..add(newEvent);
+    emit(state.copyWith(events: updated));
+    _saveEventsToStorage(updated);
+  }
+
+  void updateEvent(CustomEvent updatedEvent) {
+    final events = List<CustomEvent>.from(state.events);
+    final index = events.indexWhere((e) => e.id == updatedEvent.id);
+    if (index != -1) {
+      events[index] = updatedEvent;
+      emit(state.copyWith(events: events));
+      _saveEventsToStorage(events);
+    }
+  }
+
+  void deleteEvent(String eventId) {
+    final events = List<CustomEvent>.from(state.events)
+      ..removeWhere((e) => e.id == eventId);
+    emit(state.copyWith(events: events));
+    _saveEventsToStorage(events);
+  }
+
+  List<CustomEvent> eventsForDate(DateTime date) {
+    final jd = JewishDate.fromDateTime(date);
+    final gY = date.year, gM = date.month, gD = date.day;
+    final hY = jd.getJewishYear(),
+        hM = jd.getJewishMonth(),
+        hD = jd.getJewishDayOfMonth();
+
+    return state.events.where((e) {
+      if (e.recurring) {
+        // בדוק אם האירוע החוזר עדיין בתוקף
+        if (e.recurringYears != null && e.recurringYears! > 0) {
+          if (e.recurOnHebrew) {
+            if (hY >= e.baseJewishYear + e.recurringYears!) {
+              return false; // עבר זמנו
+            }
+          } else {
+            if (gY >= e.baseGregorianDate.year + e.recurringYears!) {
+              return false; // עבר זמנו
+            }
+          }
+        }
+        // אם הוא בתוקף, בדוק אם התאריך מתאים
+        if (e.recurOnHebrew) {
+          return e.baseJewishMonth == hM && e.baseJewishDay == hD;
+        } else {
+          return e.baseGregorianDate.month == gM &&
+              e.baseGregorianDate.day == gD;
+        }
+      } else {
+        // אירוע רגיל
+        return e.baseGregorianDate.year == gY &&
+            e.baseGregorianDate.month == gM &&
+            e.baseGregorianDate.day == gD;
+      }
+    }).toList()
+      ..sort((a, b) => a.title.compareTo(b.title));
+  }
+
+  List<CustomEvent> getFilteredEvents(String query) {
+    if (query.isEmpty) {
+      return [];
+    }
+    return state.events
+        .where((e) =>
+            e.title.contains(query) ||
+            (state.searchInDescriptions && e.description.contains(query)))
+        .toList()
+      ..sort((a, b) => a.title.compareTo(b.title));
+  }
+
+  // שמירת אירועים לאחסון קבוע
+  Future<void> _saveEventsToStorage(List<CustomEvent> events) async {
+    try {
+      final eventsJson = jsonEncode(events.map((e) => e.toJson()).toList());
+      await _settingsRepository.updateCalendarEvents(eventsJson);
+    } catch (e) {
+      // במקרה של שגיאה, נדפיס הודעה לקונסול
+      print('שגיאה בשמירת אירועים: $e');
+    }
+  }
+}
+
+// Simple event model kept here for scope
+class CustomEvent extends Equatable {
+  final String id; // מזהה ייחודי
+  final String title;
+  final String description;
+  final DateTime createdAt;
+  final DateTime baseGregorianDate;
+  final int baseJewishYear;
+  final int baseJewishMonth;
+  final int baseJewishDay;
+  final bool recurring;
+  final bool recurOnHebrew;
+  final int? recurringYears; // כמה שנים האירוע יחזור
+
+  const CustomEvent({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.createdAt,
+    required this.baseGregorianDate,
+    required this.baseJewishYear,
+    required this.baseJewishMonth,
+    required this.baseJewishDay,
+    required this.recurring,
+    required this.recurOnHebrew,
+    this.recurringYears,
+  });
+
+  // פונקציה שמאפשרת ליצור עותק של אירוע עם שינויים
+  CustomEvent copyWith({
+    String? id,
+    String? title,
+    String? description,
+    DateTime? createdAt,
+    DateTime? baseGregorianDate,
+    int? baseJewishYear,
+    int? baseJewishMonth,
+    int? baseJewishDay,
+    bool? recurring,
+    bool? recurOnHebrew,
+    int? recurringYears,
+  }) {
+    return CustomEvent(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      baseGregorianDate: baseGregorianDate ?? this.baseGregorianDate,
+      baseJewishYear: baseJewishYear ?? this.baseJewishYear,
+      baseJewishMonth: baseJewishMonth ?? this.baseJewishMonth,
+      baseJewishDay: baseJewishDay ?? this.baseJewishDay,
+      recurring: recurring ?? this.recurring,
+      recurOnHebrew: recurOnHebrew ?? this.recurOnHebrew,
+      recurringYears: recurringYears ?? this.recurringYears,
+    );
+  }
+
+  // המרה ל-JSON לשמירה
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'baseGregorianDate': baseGregorianDate.millisecondsSinceEpoch,
+      'baseJewishYear': baseJewishYear,
+      'baseJewishMonth': baseJewishMonth,
+      'baseJewishDay': baseJewishDay,
+      'recurring': recurring,
+      'recurOnHebrew': recurOnHebrew,
+      'recurringYears': recurringYears,
+    };
+  }
+
+  // יצירה מ-JSON לטעינה
+  factory CustomEvent.fromJson(Map<String, dynamic> json) {
+    return CustomEvent(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+      baseGregorianDate:
+          DateTime.fromMillisecondsSinceEpoch(json['baseGregorianDate'] as int),
+      baseJewishYear: json['baseJewishYear'] as int,
+      baseJewishMonth: json['baseJewishMonth'] as int,
+      baseJewishDay: json['baseJewishDay'] as int,
+      recurring: json['recurring'] as bool,
+      recurOnHebrew: json['recurOnHebrew'] as bool,
+      recurringYears: json['recurringYears'] as int?,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        title,
+        description,
+        createdAt,
+        baseGregorianDate,
+        baseJewishYear,
+        baseJewishMonth,
+        baseJewishDay,
+        recurring,
+        recurOnHebrew,
+        recurringYears,
+      ];
 }
 
 // City coordinates map - מסודר לפי מדינות ובסדר א-ב
@@ -282,6 +648,7 @@ const Map<String, Map<String, Map<String, double>>> cityCoordinates = {
     'נתניה': {'lat': 32.3215, 'lng': 34.8532, 'elevation': 30.0},
     'נצרת עילית': {'lat': 32.6992, 'lng': 35.3289, 'elevation': 400.0},
     'עפולה': {'lat': 32.6078, 'lng': 35.2897, 'elevation': 60.0},
+    'ערד': {'lat': 31.2592, 'lng': 35.2124, 'elevation': 570.0},
     'פתח תקווה': {'lat': 32.0870, 'lng': 34.8873, 'elevation': 80.0},
     'צפת': {'lat': 32.9650, 'lng': 35.4951, 'elevation': 900.0},
     'קרית אונו': {'lat': 32.0539, 'lng': 34.8581, 'elevation': 75.0},
@@ -451,6 +818,10 @@ const Map<String, Map<String, Map<String, double>>> cityCoordinates = {
   },
 };
 
+bool _isCityInIsrael(String cityName) {
+  return cityCoordinates['ארץ ישראל']!.containsKey(cityName);
+}
+
 Map<String, double>? _getCityData(String cityName) {
   for (var country in cityCoordinates.values) {
     if (country.containsKey(cityName)) {
@@ -481,7 +852,10 @@ Map<String, String> _calculateDailyTimes(DateTime date, String city) {
 
   final zmanimCalendar = ComplexZmanimCalendar.intGeoLocation(location);
 
+  final bool isInIsrael = _isCityInIsrael(city);
   final jewishCalendar = JewishCalendar.fromDateTime(date);
+  jewishCalendar.inIsrael = isInIsrael;
+
   final Map<String, String> times = {
     'alos': _formatTime(zmanimCalendar.getAlosHashachar()!),
     'alos16point1Degrees':
@@ -628,15 +1002,20 @@ void _addSpecialTimes(Map<String, String> times, JewishCalendar jewishCalendar,
   }
 
   // זמני קידוש לבנה
-  final tchilasKidushLevana = zmanimCalendar.getTchilasZmanKidushLevana3Days();
-  final sofZmanKidushLevana =
-      zmanimCalendar.getSofZmanKidushLevanaBetweenMoldos();
+  try {
+    final tchilasKidushLevana =
+        zmanimCalendar.getTchilasZmanKidushLevana3Days();
+    final sofZmanKidushLevana =
+        zmanimCalendar.getSofZmanKidushLevanaBetweenMoldos();
 
-  if (tchilasKidushLevana != null) {
-    times['tchilasKidushLevana'] = _formatTime(tchilasKidushLevana);
-  }
-  if (sofZmanKidushLevana != null) {
-    times['sofZmanKidushLevana'] = _formatTime(sofZmanKidushLevana);
+    if (tchilasKidushLevana != null) {
+      times['tchilasKidushLevana'] = _formatTime(tchilasKidushLevana);
+    }
+    if (sofZmanKidushLevana != null) {
+      times['sofZmanKidushLevana'] = _formatTime(sofZmanKidushLevana);
+    }
+  } catch (e) {
+    // Ignore errors in calculating moon times for certain dates
   }
 }
 

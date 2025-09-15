@@ -61,6 +61,16 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
       final content = await _repository.getBookContent(book);
       final links = await _repository.getBookLinks(book);
       final tableOfContents = await _repository.getTableOfContents(book);
+      // Pre-compute initial current title (location) so it appears immediately on open
+      String? initialTitle;
+      try {
+        initialTitle = await refFromIndex(
+          initial.index,
+          Future.value(tableOfContents),
+        );
+      } catch (_) {
+        initialTitle = null;
+      }
       final availableCommentators =
           await _repository.getAvailableCommentators(links);
       // ממיינים את רשימת המפרשים לקבוצות לפי תקופה
@@ -123,6 +133,7 @@ class TextBookBloc extends Bloc<TextBookEvent, TextBookState> {
         searchText: searchText,
         scrollController: scrollController,
         positionsListener: positionsListener,
+        currentTitle: initialTitle,
         showNotesSidebar: false,
         selectedTextForNote: null,
         selectedTextStart: null,

@@ -160,7 +160,7 @@ class EmptyLibraryBloc extends Bloc<EmptyLibraryEvent, EmptyLibraryState> {
       final request = http.Request(
         'GET',
         Uri.parse(
-            'https://github.com/Sivan22/otzaria-library/releases/download/latest/otzaria_latest.zip'),
+            'https://github.com/zevisvei/otzaria-library/releases/download/latest/otzaria_latest.zip'),
       );
       final response = await http.Client().send(request);
 

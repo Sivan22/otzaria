@@ -45,6 +45,8 @@ void main() {
         'pinSidebar': true,
         'sidebarWidth': 300.0,
         'facetFilteringWidth': 235.0,
+        'copyWithHeaders': 'none',
+        'copyHeaderFormat': 'same_line_after_brackets',
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -76,6 +78,8 @@ void main() {
             pinSidebar: mockSettings['pinSidebar'] as bool,
             sidebarWidth: mockSettings['sidebarWidth'] as double,
             facetFilteringWidth: mockSettings['facetFilteringWidth'] as double,
+            copyWithHeaders: mockSettings['copyWithHeaders'] as String,
+            copyHeaderFormat: mockSettings['copyHeaderFormat'] as String,
           ),
         ],
         verify: (_) {

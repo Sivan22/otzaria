@@ -78,7 +78,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   static const String _reportSeparator2 = '------------------------------';
   static const String _fallbackMail = 'otzaria.200@gmail.com';
   bool _isInitialFocusDone = false;
-  
+
   // משתנים לשמירת נתונים כבדים שנטענים ברקע
   Future<Map<String, dynamic>>? _preloadedHeavyData;
   bool _isLoadingHeavyData = false;
@@ -108,6 +108,61 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       debugPrint('Error getting current line number: $e');
       return 1;
     }
+  }
+
+  // Build 4+4 words context around a selection range within fullText
+  String _buildContextAroundSelection(
+    String fullText,
+    int selectionStart,
+    int selectionEnd, {
+    int wordsBefore = 4,
+    int wordsAfter = 4,
+  }) {
+    if (selectionStart < 0 || selectionEnd <= selectionStart) {
+      return fullText;
+    }
+    final wordRegex = RegExp("\\S+", multiLine: true);
+    final matches = wordRegex.allMatches(fullText).toList();
+    if (matches.isEmpty) return fullText;
+
+    int startWordIndex = 0;
+    int endWordIndex = matches.length - 1;
+
+    for (int i = 0; i < matches.length; i++) {
+      final m = matches[i];
+      if (selectionStart >= m.start && selectionStart < m.end) {
+        startWordIndex = i;
+        break;
+      }
+      if (selectionStart < m.start) {
+        startWordIndex = i;
+        break;
+      }
+    }
+
+    for (int i = matches.length - 1; i >= 0; i--) {
+      final m = matches[i];
+      final selEndMinusOne = selectionEnd - 1;
+      if (selEndMinusOne >= m.start && selEndMinusOne < m.end) {
+        endWordIndex = i;
+        break;
+      }
+      if (selEndMinusOne > m.end) {
+        endWordIndex = i;
+        break;
+      }
+    }
+
+    final ctxStart =
+        (startWordIndex - wordsBefore) < 0 ? 0 : (startWordIndex - wordsBefore);
+    final ctxEnd = (endWordIndex + wordsAfter) >= matches.length
+        ? matches.length - 1
+        : (endWordIndex + wordsAfter);
+
+    final from = matches[ctxStart].start;
+    final to = matches[ctxEnd].end;
+    if (from < 0 || to <= from || to > fullText.length) return fullText;
+    return fullText.substring(from, to);
   }
 
   @override
@@ -613,9 +668,35 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
         // Get the heavy data that was loaded in background
         final heavyData = await _getPreloadedHeavyData(state);
 
+        // Compute accurate line number and 4+4 words context based on selection
+        final baseLineNumber = _getCurrentLineNumber();
+        final selectionStart = visibleText.indexOf(result.selectedText);
+        int computedLineNumber = baseLineNumber;
+        if (selectionStart >= 0) {
+          final before = visibleText.substring(0, selectionStart);
+          final offset = '\n'.allMatches(before).length;
+          computedLineNumber = baseLineNumber + offset;
+        }
+        final safeStart = selectionStart >= 0 ? selectionStart : 0;
+        final safeEnd = safeStart + result.selectedText.length;
+        final contextText = _buildContextAroundSelection(
+          visibleText,
+          safeStart,
+          safeEnd,
+          wordsBefore: 4,
+          wordsAfter: 4,
+        );
+
         // Handle regular report actions
-        await _handleRegularReportAction(action, result, state,
-            heavyData['currentRef'], heavyData['bookDetails']);
+        await _handleRegularReportAction(
+          action,
+          result,
+          state,
+          heavyData['currentRef'],
+          heavyData['bookDetails'],
+          computedLineNumber,
+          contextText,
+        );
       } else if (result is PhoneReportData) {
         // Phone report - handle directly
         await _handlePhoneReport(result);
@@ -642,7 +723,8 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   /// Get preloaded heavy data or load it if not ready
-  Future<Map<String, dynamic>> _getPreloadedHeavyData(TextBookLoaded state) async {
+  Future<Map<String, dynamic>> _getPreloadedHeavyData(
+      TextBookLoaded state) async {
     if (_preloadedHeavyData != null) {
       return await _preloadedHeavyData!;
     } else {
@@ -686,9 +768,9 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   /// Start loading heavy data in background immediately after dialog opens
   void _startLoadingHeavyDataInBackground(TextBookLoaded state) {
     if (_isLoadingHeavyData) return; // כבר טוען
-    
+
     _isLoadingHeavyData = true;
-    
+
     // התחל טעינה ברקע
     _preloadedHeavyData = _loadHeavyDataForRegularReport(state).then((data) {
       _isLoadingHeavyData = false;
@@ -756,8 +838,17 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     Map<String, String> bookDetails,
     String selectedText,
     String errorDetails,
+    int lineNumber,
+    String contextText,
   ) {
-    final detailsSection = errorDetails.isEmpty ? '' : '\n$errorDetails';
+    final detailsSection = (() {
+      final base = errorDetails.isEmpty ? '' : '\n$errorDetails';
+      final extra = '\n\nמספר שורה: ' +
+          lineNumber.toString() +
+          '\nהקשר (4 מילים לפני ואחרי):\n' +
+          contextText;
+      return base + extra;
+    })();
 
     return '''
 שם הספר: $bookTitle
@@ -781,6 +872,8 @@ $detailsSection
     TextBookLoaded state,
     String currentRef,
     Map<String, String> bookDetails,
+    int lineNumber,
+    String contextText,
   ) async {
     final emailBody = _buildEmailBody(
       state.book.title,
@@ -788,6 +881,8 @@ $detailsSection
       bookDetails,
       reportData.selectedText,
       reportData.errorDetails,
+      lineNumber,
+      contextText,
     );
 
     if (action == ReportAction.sendEmail) {
@@ -1585,6 +1680,8 @@ class _RegularReportTab extends StatefulWidget {
 class _RegularReportTabState extends State<_RegularReportTab> {
   String? _selectedContent;
   final TextEditingController _detailsController = TextEditingController();
+  int? _selectionStart;
+  int? _selectionEnd;
 
   @override
   void initState() {
@@ -1614,32 +1711,66 @@ class _RegularReportTabState extends State<_RegularReportTab> {
             child: Container(
               padding: const EdgeInsets.all(8),
               child: SingleChildScrollView(
-                child: SelectableText(
-                  widget.visibleText,
-                  style: TextStyle(
-                    fontSize: widget.fontSize,
-                    fontFamily:
-                        Settings.getValue('key-font-family') ?? 'candara',
+                child: Builder(
+                  builder: (context) => TextSelectionTheme(
+                    data: const TextSelectionThemeData(
+                      selectionColor: Colors.transparent,
+                    ),
+                    child: SelectableText.rich(
+                      TextSpan(
+                        children: () {
+                          final text = widget.visibleText;
+                          final start = _selectionStart ?? -1;
+                          final end = _selectionEnd ?? -1;
+                          final hasSel =
+                              start >= 0 && end > start && end <= text.length;
+                          if (!hasSel) {
+                            return [TextSpan(text: text)];
+                          }
+                          final highlight = Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.25);
+                          return [
+                            if (start > 0)
+                              TextSpan(text: text.substring(0, start)),
+                            TextSpan(
+                              text: text.substring(start, end),
+                              style: TextStyle(backgroundColor: highlight),
+                            ),
+                            if (end < text.length)
+                              TextSpan(text: text.substring(end)),
+                          ];
+                        }(),
+                        style: TextStyle(
+                          fontSize: widget.fontSize,
+                          fontFamily:
+                              Settings.getValue('key-font-family') ?? 'candara',
+                        ),
+                      ),
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                      onSelectionChanged: (selection, cause) {
+                        if (selection.start != selection.end) {
+                          final newContent = widget.visibleText.substring(
+                            selection.start,
+                            selection.end,
+                          );
+                          if (newContent.isNotEmpty) {
+                            setState(() {
+                              _selectedContent = newContent;
+                              _selectionStart = selection.start;
+                              _selectionEnd = selection.end;
+                            });
+                            widget.onTextSelected(newContent);
+                          }
+                        }
+                      },
+                      contextMenuBuilder: (context, editableTextState) {
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
-                  textAlign: TextAlign.right,
-                  textDirection: TextDirection.rtl,
-                  onSelectionChanged: (selection, cause) {
-                    if (selection.start != selection.end) {
-                      final newContent = widget.visibleText.substring(
-                        selection.start,
-                        selection.end,
-                      );
-                      if (newContent.isNotEmpty) {
-                        setState(() {
-                          _selectedContent = newContent;
-                        });
-                        widget.onTextSelected(newContent);
-                      }
-                    }
-                  },
-                  contextMenuBuilder: (context, editableTextState) {
-                    return const SizedBox.shrink();
-                  },
                 ),
               ),
             ),
