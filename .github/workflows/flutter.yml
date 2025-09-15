@@ -373,7 +373,7 @@ jobs:
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION-pr-${{ github.event.number }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "tag=$VERSION-pr-${{ github.event.number }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
           echo "title=Otzaria v$VERSION - PR #${{ github.event.number }} Preview" >> $GITHUB_OUTPUT
 
       - name: Get commit message
