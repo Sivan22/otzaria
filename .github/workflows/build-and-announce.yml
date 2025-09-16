@@ -195,10 +195,12 @@ jobs:
           echo "--- Spec file AFTER fix ---"
           cat "$SPEC_FILE"
 
-          # 4. בנה את חבילת ה-rpm מחדש מהקובץ המתוקן
-          RPM_TOP_DIR=$(dirname "$SPEC_FILE" | xargs dirname)
-          echo "Re-packaging using top directory: $RPM_TOP_DIR"
-          rpmbuild --define "_topdir $RPM_TOP_DIR" -bb "$SPEC_FILE"
+          # 4. בנה את חבילת ה-rpm מחדש, תוך שימוש בנתיב מוחלט
+          RPM_TOP_DIR_REL=$(dirname "$SPEC_FILE" | xargs dirname)
+          RPM_TOP_DIR_ABS="$(pwd)/$RPM_TOP_DIR_REL"
+          
+          echo "Re-packaging using absolute top directory: $RPM_TOP_DIR_ABS"
+          rpmbuild --define "_topdir $RPM_TOP_DIR_ABS" -bb "$SPEC_FILE"
 
           echo "Successfully patched and rebuilt the .rpm package."
       
