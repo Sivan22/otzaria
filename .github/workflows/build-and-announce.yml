@@ -1,11 +1,10 @@
-name: "Build for all platforms"
-permissions: 
-  contents: write
- 
+name: "Build, Release and Announce"
 
+permissions:
+  contents: write
 
 on:
-  push: 
+  push:
     branches:
       - main
       - dev
@@ -18,8 +17,13 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
+  # טריגר לפרסום בלבד
+  release:
+    types: [published]
+
 jobs:
   build_windows:
+    if: github.event_name != 'release'
     runs-on: windows-2022
     steps:
       - name: Clone repository
@@ -31,21 +35,16 @@ jobs:
           channel: stable
           cache: true
 
-      # נסה קודם את הסקריפט שלך (אם הוא מטפל בהתקנה/הוספת PATH)
       - name: Install Inno Setup (project script + fallback)
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-
-          # 1) נסיון להריץ את הסקריפט המקומי אם קיים
           if (Test-Path .\installer\install_inno_setup.ps1) {
             Write-Host "Running local installer script..."
             .\installer\install_inno_setup.ps1
           } else {
             Write-Host "Local installer script not found, skipping."
           }
-
-          # 2) אם עדיין אין iscc במערכת - התקנה אמינה דרך winget/Chocolatey
           if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
             if (Get-Command winget -ErrorAction SilentlyContinue) {
               Write-Host "Installing Inno Setup via winget..."
@@ -55,12 +54,9 @@ jobs:
               choco install innosetup -y --no-progress
             }
           }
-
-          # 3) מציאת המיקום של ISCC.exe והזרקתו ל־ENV
           $iscc = (Get-ChildItem "C:\Program Files*\Inno Setup*\ISCC.exe" -Recurse -ErrorAction SilentlyContinue |
                    Select-Object -First 1 -ExpandProperty FullName)
           if (-not $iscc) { throw "ISCC.exe not found after installation" }
-
           "ISCC=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "ISCC resolved to: $iscc"
       
@@ -86,7 +82,6 @@ jobs:
       - name: Build Inno Setup installer
         shell: pwsh
         run: |
-          # שימוש בנתיב המלא/ENV כדי לא להיות תלוי ב-PATH
           & "$env:ISCC" installer\otzaria.iss
 
       - name: Upload Windows installer
@@ -108,6 +103,7 @@ jobs:
           path: build/windows/x64/runner/release/*.msix
 
   build_linux:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -131,30 +127,25 @@ jobs:
         run: |
           flutter build linux
       
-      # - name: Build Linux DEB package
-      #   run: flutter_distributor release --name=production --jobs=release-linux-deb
+      - name: Build Linux DEB package
+        run: flutter_distributor release --name=production --jobs=release-linux-deb
         
-      # - name: Build Linux RPM package  
-      #   run: flutter_distributor release --name=production --jobs=release-linux-rpm
+      - name: Build Linux RPM package  
+        run: flutter_distributor release --name=production --jobs=release-linux-rpm
       
       - name: Find and prepare Linux packages
         id: find_packages
         run: |
-          # Find DEB file
           DEB_FILE=$(find dist/production/release-linux-deb -name "*.deb" | head -n 1)
           if [ -n "$DEB_FILE" ]; then
             echo "deb_file=$DEB_FILE" >> $GITHUB_OUTPUT
             echo "deb_name=$(basename $DEB_FILE)" >> $GITHUB_OUTPUT
           fi
-          
-          # Find RPM file
           RPM_FILE=$(find dist/production/release-linux-rpm -name "*.rpm" | head -n 1)
           if [ -n "$RPM_FILE" ]; then
             echo "rpm_file=$RPM_FILE" >> $GITHUB_OUTPUT
             echo "rpm_name=$(basename $RPM_FILE)" >> $GITHUB_OUTPUT
           fi
-          
-          # Also keep the raw build for compatibility
           mkdir -p linux-build
           cp -r build/linux/x64/release/bundle/* linux-build/
       
@@ -179,12 +170,12 @@ jobs:
           path: linux-build/*
 
   build_android:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
 
-      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -205,6 +196,7 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
 
   build_macos:
+    if: github.event_name != 'release'
     runs-on: macos-latest
     steps:
       - name: Clone repository
@@ -227,10 +219,10 @@ jobs:
           path: build/macos/Build/Products/Release
 
   create_release:
-  
+    if: github.event_name != 'release'
     needs: [build_windows, build_linux, build_android, build_macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -246,15 +238,16 @@ jobs:
           VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           
-          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            echo "tag=v$VERSION-dev-${{ github.run_number }}" >> $GITHUB_OUTPUT
-            echo "prerelease=true" >> $GITHUB_OUTPUT
-            echo "title=Otzaria v$VERSION Development Build #${{ github.run_number }}" >> $GITHUB_OUTPUT
-          else
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "tag=v$VERSION" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
-          echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
+            echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v$VERSION-${{ github.ref_name }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "title=Otzaria v$VERSION (Preview from ${{ github.ref_name }})" >> $GITHUB_OUTPUT
           fi
+
 
       - name: Get commit message
         id: commit
@@ -313,6 +306,7 @@ jobs:
           ls -la release-files/
       
       - name: Create Release
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.tag }}
@@ -321,7 +315,6 @@ jobs:
           files: release-files/*
           body: |
             ## Changes in this release
-            
             Built from commit: ${{ github.sha }} - ${{ steps.commit.outputs.message }}
             Branch: ${{ github.ref_name }}
             
@@ -335,27 +328,12 @@ jobs:
             - **Android**: Install the `.apk` file
             - **macOS**: Download and extract the `.zip` file
             
-            ### Installation Commands:
-            
-            **Debian/Ubuntu (.deb)**:
-            ```bash
-            sudo dpkg -i otzaria-*.deb
-            # or
-            sudo apt install ./otzaria-*.deb
-            ```
-            
-            **Fedora/RHEL (.rpm)**:
-            ```bash
-            sudo dnf localinstall ./otzaria-*.rpm
-            # or  
-            sudo rpm -i otzaria-*.rpm
-            ```
-            
             ${{ github.ref_name == 'dev' && '⚠️ **This is a development build** - Use at your own risk!' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          
   create_pr_prerelease:
+    if: github.event_name != 'release'
     needs: [build_windows, build_linux, build_android, build_macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -431,7 +409,6 @@ jobs:
           files: release-files/*
           body: |
             ## 🔄 PR Preview Build #${{ github.event.number }}
-            
             **This is a preview build for testing PR changes before merge.**
             
             ### PR Information:
@@ -444,7 +421,6 @@ jobs:
             ${{ github.event.pull_request.body }}
             
             ---
-            
             Built from commit: ${{ github.sha }} - ${{ steps.commit.outputs.message }}
             
             ### Downloads:
@@ -460,3 +436,78 @@ jobs:
             ⚠️ **This is a preview build for testing purposes** - Use at your own risk!
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # --- הכרזה על גרסה שפורסמה ---
+  announce_release:
+    # תנאי לריצה רק כשיש אירוע של פרסום release
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # חובה כדי לאפשר גישה לכל ההיסטוריה והתגים
+          fetch-tags: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies for webhook script
+        run: pip install bs4 requests pyluach
+
+      - name: Build commit list since previous release
+        id: changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          git fetch --tags --force
+          
+          # מצא את התג הקודם (הכי עדכני שהוא לא התג הנוכחי)
+          PREV_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:strip=2)' refs/tags | grep -v "^$CURRENT_TAG$" | head -n1 || true)
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="$PREV_TAG..$CURRENT_TAG"
+            # צור רשימה של כותרות הקומיטים בטווח
+            COMMITS=$(git log --pretty=format:'- %s' "$RANGE" || true)
+          else
+            # אם אין תג קודם, קח רק את הקומיט של התג הנוכחי
+            SHA=$(git rev-list -n 1 "$CURRENT_TAG")
+            COMMITS=$(git log --pretty=format:'- %s' "${SHA}^..${SHA}" || true)
+          fi
+
+          if [ -z "${COMMITS// /}" ]; then
+            COMMITS="(לא נמצאו כותרות קומיטים חדשות להצגה)"
+          fi
+
+          # העבר את רשימת הקומיטים והתג הקודם לשלבים הבאים
+          {
+            echo "prev_tag=${PREV_TAG}"
+            echo "commits<<EOF"
+            echo "$COMMITS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run announcement script (Mitmachim + Yemot)
+        env:
+          # פרטי ה-Release נלקחים מאירוע ה-Webhook של GitHub
+          RELEASE_TAG:  ${{ github.event.release.tag_name }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_URL:  ${{ github.event.release.html_url }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }} # חיוני כדי שהסקריפט ימצא את קבצי ההורדה
+
+          # הרכבת גוף ההודעה: התיאור מה-Release + רשימת הקומיטים שיצרנו
+          RELEASE_BODY: |
+            ${{ github.event.release.body }}
+
+            השינויים מאז הגרסה הקודמת${{ steps.changelog.outputs.prev_tag && format(' ({0})', steps.changelog.outputs.prev_tag) || '' }}:
+            ${{ steps.changelog.outputs.commits }}
+
+          # סודות להתחברות לשירותים החיצוניים
+          USER_NAME:  ${{ secrets.USER_NAME }}
+          PASSWORD:   ${{ secrets.PASSWORD }}
+          TOKEN_YEMOT: ${{ secrets.TOKEN_YEMOT }}
+        run: |
+          python webhooks/main.py
