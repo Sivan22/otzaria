@@ -333,10 +333,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
   create_pr_prerelease:
-    if: github.event_name != 'release'
+    if: github.event_name == 'pull_request' 
     needs: [build_windows, build_linux, build_android, build_macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
