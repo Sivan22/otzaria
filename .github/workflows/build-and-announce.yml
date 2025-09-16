@@ -127,8 +127,47 @@ jobs:
         run: |
           flutter build linux
       
-      - name: Build Linux DEB package
-        run: flutter_distributor release --name=production --jobs=release-linux-deb
+      - name: Build and Patch Linux DEB package
+        shell: bash
+        run: |
+          set -e
+
+          # 1. הרץ את פקודת הבנייה, אבל תפוס את הכישלון כדי שנוכל לתקן אחריו
+          echo "Attempting to build with flutter_distributor, it might fail..."
+          flutter_distributor release --name=production --jobs=release-linux-deb || true
+
+          # 2. מצא את קובץ ה-control שנוצר. אם לא נמצא, זה כישלון אמיתי
+          CONTROL_FILE=$(find dist -type f -name "control" | head -n 1)
+          if [ -z "$CONTROL_FILE" ]; then
+            echo "::error::Fatal: Could not find the DEBIAN/control file. The distributor failed before creating it."
+            exit 1
+          fi
+
+          echo "Found control file to patch at: $CONTROL_FILE"
+          echo "--- Control file BEFORE fix ---"
+          cat "$CONTROL_FILE"
+
+          # 3. תקן את כל הבעיות האפשריות בקובץ
+          # המרת סיומות שורה (CRLF -> LF)
+          sed -i 's/\r$//' "$CONTROL_FILE"
+          # הסרת שורת Depends ריקה
+          sed -i '/^Depends:\s*$/d' "$CONTROL_FILE"
+          # ודא שיש שורת סיום (newline) בסוף הקובץ
+          if [ -n "$(tail -c1 "$CONTROL_FILE")" ]; then
+            echo >> "$CONTROL_FILE"
+          fi
+
+          echo "--- Control file AFTER fix ---"
+          cat "$CONTROL_FILE"
+
+          # 4. בנה את חבילת ה-deb מחדש מהקבצים המתוקנים
+          DEB_DIR=$(dirname "$CONTROL_FILE" | xargs dirname)
+          DEB_OUTPUT_FILE="dist/$(basename "$DEB_DIR" | sed 's/-linux_deb$//')-linux.deb"
+          
+          echo "Re-packaging from directory: $DEB_DIR into $DEB_OUTPUT_FILE"
+          dpkg-deb --build --root-owner-group "$DEB_DIR" "$DEB_OUTPUT_FILE"
+
+          echo "Successfully patched and rebuilt the .deb package."
         
       - name: Build Linux RPM package  
         run: flutter_distributor release --name=production --jobs=release-linux-rpm
@@ -136,7 +175,7 @@ jobs:
       - name: Find and prepare Linux packages
         id: find_packages
         run: |
-          DEB_FILE=$(find dist/production/release-linux-deb -name "*.deb" | head -n 1)
+          DEB_FILE=$(find dist -maxdepth 1 -name "*-linux.deb" | head -n 1)
           if [ -n "$DEB_FILE" ]; then
             echo "deb_file=$DEB_FILE" >> $GITHUB_OUTPUT
             echo "deb_name=$(basename $DEB_FILE)" >> $GITHUB_OUTPUT
@@ -169,31 +208,31 @@ jobs:
           name: otzaria-linux-raw
           path: linux-build/*
 
-  build_android:
-    if: github.event_name != 'release'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
+  # build_android:
+  #   if: github.event_name != 'release'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v4
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
+  #     - name: Set up Flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: stable
+  #         cache: true
       
-      - run: sudo apt install ninja-build
+  #     - run: sudo apt install ninja-build
       
-      - name: Build Android APK
-        run: |
-          flutter pub get
-          flutter build apk
+  #     - name: Build Android APK
+  #       run: |
+  #         flutter pub get
+  #         flutter build apk
       
-      - name: Upload apk
-        uses: actions/upload-artifact@v4
-        with:
-          name: otzaria-android.apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+  #     - name: Upload apk
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: otzaria-android.apk
+  #         path: build/app/outputs/flutter-apk/app-release.apk
 
   build_macos:
     if: github.event_name != 'release'
@@ -220,7 +259,7 @@ jobs:
 
   create_release:
     if: github.event_name != 'release'
-    needs: [build_windows, build_linux, build_android, build_macos]
+    needs: [build_windows, build_linux, build_macos]
     runs-on: ubuntu-latest
 
     steps:
@@ -334,7 +373,7 @@ jobs:
           
   create_pr_prerelease:
     if: github.event_name == 'pull_request' 
-    needs: [build_windows, build_linux, build_android, build_macos]
+    needs: [build_windows, build_linux, build_macos]
     runs-on: ubuntu-latest
 
     steps:
