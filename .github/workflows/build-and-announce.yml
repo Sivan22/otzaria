@@ -169,8 +169,38 @@ jobs:
 
           echo "Successfully patched and rebuilt the .deb package."
         
-      - name: Build Linux RPM package  
-        run: flutter_distributor release --name=production --jobs=release-linux-rpm
+      - name: Build and Patch Linux RPM package
+        shell: bash
+        run: |
+          set -e
+
+          # 1. הרץ את פקודת הבנייה הבעייתית, ותפוס את הכישלון
+          echo "Attempting to build with flutter_distributor, expecting it to fail..."
+          flutter_distributor release --name=production --jobs=release-linux-rpm || true
+
+          # 2. מצא את קובץ ה-spec הפגום שהכלי יצר
+          SPEC_FILE=$(find dist -type f -name "*.spec" | head -n 1)
+          if [ -z "$SPEC_FILE" ]; then
+            echo "::error::Fatal: Could not find the .spec file to patch."
+            exit 1
+          fi
+
+          echo "Found spec file to patch at: $SPEC_FILE"
+          echo "--- Spec file BEFORE fix ---"
+          cat "$SPEC_FILE"
+
+          # 3. תקן את הקובץ: מחק את שורת ה-Requires הריקה
+          sed -i '/^Requires:\s*$/d' "$SPEC_FILE"
+
+          echo "--- Spec file AFTER fix ---"
+          cat "$SPEC_FILE"
+
+          # 4. בנה את חבילת ה-rpm מחדש מהקובץ המתוקן
+          RPM_TOP_DIR=$(dirname "$SPEC_FILE" | xargs dirname)
+          echo "Re-packaging using top directory: $RPM_TOP_DIR"
+          rpmbuild --define "_topdir $RPM_TOP_DIR" -bb "$SPEC_FILE"
+
+          echo "Successfully patched and rebuilt the .rpm package."
       
       - name: Find and prepare Linux packages
         id: find_packages
@@ -180,7 +210,7 @@ jobs:
             echo "deb_file=$DEB_FILE" >> $GITHUB_OUTPUT
             echo "deb_name=$(basename $DEB_FILE)" >> $GITHUB_OUTPUT
           fi
-          RPM_FILE=$(find dist/production/release-linux-rpm -name "*.rpm" | head -n 1)
+          RPM_FILE=$(find dist -type f -name "*.rpm" | head -n 1)
           if [ -n "$RPM_FILE" ]; then
             echo "rpm_file=$RPM_FILE" >> $GITHUB_OUTPUT
             echo "rpm_name=$(basename $RPM_FILE)" >> $GITHUB_OUTPUT
@@ -208,31 +238,31 @@ jobs:
           name: otzaria-linux-raw
           path: linux-build/*
 
-  # build_android:
-  #   if: github.event_name != 'release'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Clone repository
-  #       uses: actions/checkout@v4
+  build_android:
+    if: github.event_name != 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
 
-  #     - name: Set up Flutter
-  #       uses: subosito/flutter-action@v2
-  #       with:
-  #         channel: stable
-  #         cache: true
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
       
-  #     - run: sudo apt install ninja-build
+      - run: sudo apt install ninja-build
       
-  #     - name: Build Android APK
-  #       run: |
-  #         flutter pub get
-  #         flutter build apk
+      - name: Build Android APK
+        run: |
+          flutter pub get
+          flutter build apk
       
-  #     - name: Upload apk
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: otzaria-android.apk
-  #         path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-android.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
   build_macos:
     if: github.event_name != 'release'
@@ -259,7 +289,7 @@ jobs:
 
   create_release:
     if: github.event_name != 'release'
-    needs: [build_windows, build_linux, build_macos]
+    needs: [build_windows, build_linux, build_android, build_macos]
     runs-on: ubuntu-latest
 
     steps:
@@ -373,7 +403,7 @@ jobs:
           
   create_pr_prerelease:
     if: github.event_name == 'pull_request' 
-    needs: [build_windows, build_linux, build_macos]
+    needs: [build_windows, build_linux, build_android, build_macos]
     runs-on: ubuntu-latest
 
     steps:
