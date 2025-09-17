@@ -43,6 +43,10 @@ void main() {
         'removeNikudFromTanach': true,
         'defaultSidebarOpen': true,
         'pinSidebar': true,
+        'sidebarWidth': 300.0,
+        'facetFilteringWidth': 235.0,
+        'copyWithHeaders': 'none',
+        'copyHeaderFormat': 'same_line_after_brackets',
       };
 
       blocTest<SettingsBloc, SettingsState>(
@@ -72,6 +76,10 @@ void main() {
                 mockSettings['removeNikudFromTanach'] as bool,
             defaultSidebarOpen: mockSettings['defaultSidebarOpen'] as bool,
             pinSidebar: mockSettings['pinSidebar'] as bool,
+            sidebarWidth: mockSettings['sidebarWidth'] as double,
+            facetFilteringWidth: mockSettings['facetFilteringWidth'] as double,
+            copyWithHeaders: mockSettings['copyWithHeaders'] as String,
+            copyHeaderFormat: mockSettings['copyHeaderFormat'] as String,
           ),
         ],
         verify: (_) {
@@ -194,6 +202,21 @@ void main() {
         ],
         verify: (_) {
           verify(mockRepository.updatePinSidebar(true)).called(1);
+        },
+      );
+    });
+    group('UpdateSidebarWidth', () {
+      const newWidth = 350.0;
+
+      blocTest<SettingsBloc, SettingsState>(
+        'emits updated state when UpdateSidebarWidth is added',
+        build: () => settingsBloc,
+        act: (bloc) => bloc.add(const UpdateSidebarWidth(newWidth)),
+        expect: () => [
+          settingsBloc.state.copyWith(sidebarWidth: newWidth),
+        ],
+        verify: (_) {
+          verify(mockRepository.updateSidebarWidth(newWidth)).called(1);
         },
       );
     });

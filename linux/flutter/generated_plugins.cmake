@@ -3,9 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  irondash_engine_context
   isar_flutter_libs
   printing
   screen_retriever
+  super_native_extensions
   url_launcher_linux
   window_manager
 )

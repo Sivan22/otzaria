@@ -20,12 +20,14 @@ class OutlineView extends StatefulWidget {
 
 class _OutlineViewState extends State<OutlineView>
     with AutomaticKeepAliveClientMixin {
-    final TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   final ScrollController _tocScrollController = ScrollController();
   final Map<PdfOutlineNode, GlobalKey> _tocItemKeys = {};
   bool _isManuallyScrolling = false;
   int? _lastScrolledPage;
+  final Map<PdfOutlineNode, bool> _expanded = {};
+  final Map<PdfOutlineNode, ExpansionTileController> _controllers = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -58,6 +60,57 @@ class _OutlineViewState extends State<OutlineView>
       _scrollToActiveItem();
     }
   }
+
+  void _ensureParentsOpen(
+      List<PdfOutlineNode> nodes, PdfOutlineNode targetNode) {
+    final path = _findPath(nodes, targetNode);
+    if (path.isEmpty) return;
+
+    // מוצא את הרמה של הצומת היעד
+    int targetLevel = _getNodeLevel(nodes, targetNode);
+
+    // אם הצומת ברמה 2 ומעלה (שזה רמה 3 ומעלה בספירה רגילה), פתח את כל ההורים
+    if (targetLevel >= 2) {
+      for (final node in path) {
+        if (node.children.isNotEmpty && _expanded[node] != true) {
+          _expanded[node] = true;
+          _controllers[node]?.expand();
+        }
+      }
+    }
+  }
+
+  int _getNodeLevel(List<PdfOutlineNode> nodes, PdfOutlineNode targetNode,
+      [int currentLevel = 0]) {
+    for (final node in nodes) {
+      if (node == targetNode) {
+        return currentLevel;
+      }
+
+      final childLevel =
+          _getNodeLevel(node.children, targetNode, currentLevel + 1);
+      if (childLevel != -1) {
+        return childLevel;
+      }
+    }
+    return -1;
+  }
+
+  List<PdfOutlineNode> _findPath(
+      List<PdfOutlineNode> nodes, PdfOutlineNode targetNode) {
+    for (final node in nodes) {
+      if (node == targetNode) {
+        return [node];
+      }
+
+      final subPath = _findPath(node.children, targetNode);
+      if (subPath.isNotEmpty) {
+        return [node, ...subPath];
+      }
+    }
+    return [];
+  }
+
   void _scrollToActiveItem() {
     if (_isManuallyScrolling || !widget.controller.isReady) return;
 
@@ -86,6 +139,10 @@ class _OutlineViewState extends State<OutlineView>
       activeNode = findClosestNode(widget.outline!, currentPage);
     }
 
+    if (activeNode != null && widget.outline != null) {
+      _ensureParentsOpen(widget.outline!, activeNode);
+    }
+
     // קריאה ל-setState כדי לוודא שהפריט הנכון מודגש לפני הגלילה
     if (mounted) {
       setState(() {});
@@ -103,28 +160,34 @@ class _OutlineViewState extends State<OutlineView>
       final key = _tocItemKeys[activeNode];
       final itemContext = key?.currentContext;
       if (itemContext == null) return;
-      
+
       final itemRenderObject = itemContext.findRenderObject();
       if (itemRenderObject is! RenderBox) return;
 
       // --- התחלה: החישוב הנכון והבדוק ---
       // זהו החישוב מההצעה של ה-AI השני, מותאם לקוד שלנו.
-      
-      final scrollableBox = _tocScrollController.position.context.storageContext.findRenderObject() as RenderBox;
-      
+
+      final scrollableBox = _tocScrollController.position.context.storageContext
+          .findRenderObject() as RenderBox;
+
       // המיקום של הפריט ביחס ל-viewport של הגלילה
-      final itemOffset = itemRenderObject.localToGlobal(Offset.zero, ancestor: scrollableBox).dy;
-      
+      final itemOffset = itemRenderObject
+          .localToGlobal(Offset.zero, ancestor: scrollableBox)
+          .dy;
+
       // גובה ה-viewport (האזור הנראה)
       final viewportHeight = scrollableBox.size.height;
-      
+
       // גובה הפריט עצמו
       final itemHeight = itemRenderObject.size.height;
 
       // מיקום היעד המדויק למירוכז
-      final target = _tocScrollController.offset + itemOffset - (viewportHeight / 2) + (itemHeight / 2);
+      final target = _tocScrollController.offset +
+          itemOffset -
+          (viewportHeight / 2) +
+          (itemHeight / 2);
       // --- סיום: החישוב הנכון והבדוק ---
-      
+
       _tocScrollController.animateTo(
         target.clamp(
           0.0,
@@ -178,7 +241,8 @@ class _OutlineViewState extends State<OutlineView>
         Expanded(
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
-              if (notification is ScrollStartNotification && notification.dragDetails != null) {
+              if (notification is ScrollStartNotification &&
+                  notification.dragDetails != null) {
                 setState(() {
                   _isManuallyScrolling = true;
                 });
@@ -253,6 +317,20 @@ class _OutlineViewState extends State<OutlineView>
       }
     }
 
+    if (node.children.isNotEmpty) {
+      final controller =
+          _controllers.putIfAbsent(node, () => ExpansionTileController());
+      final bool isExpanded = _expanded[node] ?? (level == 0);
+
+      if (controller.isExpanded != isExpanded) {
+        if (isExpanded) {
+          controller.expand();
+        } else {
+          controller.collapse();
+        }
+      }
+    }
+
     return Padding(
       key: itemKey,
       padding: EdgeInsets.fromLTRB(0, 0, 10 * level.toDouble(), 0),
@@ -266,10 +344,12 @@ class _OutlineViewState extends State<OutlineView>
                 child: ListTile(
                   title: Text(node.title),
                   selected: widget.controller.isReady &&
-                      node.dest?.pageNumber ==
-                          widget.controller.pageNumber,
-                  selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
-                  selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,                  onTap: navigateToEntry,
+                      node.dest?.pageNumber == widget.controller.pageNumber,
+                  selectedColor:
+                      Theme.of(context).colorScheme.onSecondaryContainer,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.secondaryContainer,
+                  onTap: navigateToEntry,
                   hoverColor: Theme.of(context).hoverColor,
                   mouseCursor: SystemMouseCursors.click,
                 ),
@@ -278,19 +358,24 @@ class _OutlineViewState extends State<OutlineView>
                 color: Colors.transparent,
                 child: ExpansionTile(
                   key: PageStorageKey(node),
-                  initiallyExpanded: level == 0,
+                  controller: _controllers.putIfAbsent(
+                      node, () => ExpansionTileController()),
+                  initiallyExpanded: _expanded[node] ?? (level == 0),
+                  onExpansionChanged: (val) {
+                    setState(() {
+                      _expanded[node] = val;
+                    });
+                  },
                   // גם לכותרת של הצומת המורחב נוסיף ListTile
                   title: ListTile(
                     title: Text(node.title),
                     selected: widget.controller.isReady &&
-                        node.dest?.pageNumber ==
-                            widget.controller.pageNumber,
-                    selectedColor:
-                        Theme.of(context).colorScheme.onSecondary,
+                        node.dest?.pageNumber == widget.controller.pageNumber,
+                    selectedColor: Theme.of(context).colorScheme.onSecondary,
                     selectedTileColor: Theme.of(context)
                         .colorScheme
                         .secondary
-                        .withOpacity(0.2),
+                        .withValues(alpha: 0.2),
                     onTap: navigateToEntry,
                     hoverColor: Theme.of(context).hoverColor,
                     mouseCursor: SystemMouseCursors.click,

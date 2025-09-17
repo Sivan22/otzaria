@@ -1,5 +1,3 @@
-// ignore_for_file: unused_import
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -17,16 +15,14 @@ import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/search/view/full_text_search_screen.dart';
-import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
-import 'package:otzaria/text_book/bloc/text_book_event.dart';
-import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/text_book/view/text_book_screen.dart';
-import 'package:otzaria/daf_yomi/calendar.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/workspaces/view/workspace_switcher_dialog.dart';
 import 'package:otzaria/history/history_dialog.dart';
+import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
-
+// הוסר: WorkspaceIconButton (עברנו ל-IconButton פשוט)
+import 'package:otzaria/widgets/scrollable_tab_bar.dart';
 
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({Key? key}) : super(key: key);
@@ -35,16 +31,28 @@ class ReadingScreen extends StatefulWidget {
   State<ReadingScreen> createState() => _ReadingScreenState();
 }
 
+const double _kAppBarControlsWidth = 125.0;
+
 class _ReadingScreenState extends State<ReadingScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+  // האם יש אוברפלואו בטאבים (גלילה)? משמש לקביעת placeholder לדינמיות מרכוז/התפרשות
+  bool _tabsOverflow = false;
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    // Check if widget is still mounted before accessing context
+    if (mounted) {
+      try {
+        context.read<HistoryBloc>().add(FlushHistory());
+      } catch (e) {
+        // Ignore errors during disposal
+      }
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -53,91 +61,176 @@ class _ReadingScreenState extends State<ReadingScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.hidden ||
         state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      BlocProvider.of<TabsBloc>(context, listen: false).add(const SaveTabs());
+        state == AppLifecycleState.paused) {
+      context.read<HistoryBloc>().add(FlushHistory());
+      context.read<TabsBloc>().add(const SaveTabs());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TabsBloc, TabsState>(
-      builder: (context, state) {
-        if (!state.hasOpenTabs) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('לא נבחרו ספרים'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    onPressed: () {
-                      context.read<NavigationBloc>().add(
-                            const NavigateToScreen(Screen.library),
-                          );
-                    },
-                    child: const Text('דפדף בספרייה'),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    onPressed: () {
-                      _showHistoryDialog(context);
-                    },
-                    child: const Text('הצג היסטוריה'),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    onPressed: () {
-                      _showSaveWorkspaceDialog(context);
-                    },
-                    child: const Text('החלף שולחן עבודה'),
-                  ),
-                )
-              ],
-            ),
-          );
+    return BlocListener<TabsBloc, TabsState>(
+      listener: (context, state) {
+        if (state.hasOpenTabs) {
+          context
+              .read<HistoryBloc>()
+              .add(CaptureStateForHistory(state.currentTab!));
         }
-
-        return Builder(
-          builder: (context) {
-            final controller = TabController(
-              length: state.tabs.length,
-              vsync: this,
-              initialIndex: state.currentTabIndex,
+      },
+      listenWhen: (previous, current) =>
+          previous.currentTabIndex != current.currentTabIndex,
+      child: BlocBuilder<TabsBloc, TabsState>(
+        builder: (context, state) {
+          if (!state.hasOpenTabs) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('לא נבחרו ספרים'),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      onPressed: () {
+                        context.read<NavigationBloc>().add(
+                              const NavigateToScreen(Screen.library),
+                            );
+                      },
+                      child: const Text('דפדף בספרייה'),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      onPressed: () {
+                        _showSaveWorkspaceDialog(context);
+                      },
+                      child: const Text('החלף שולחן עבודה'),
+                    ),
+                  ),
+                  // קו מפריד
+                  Container(
+                    height: 1,
+                    width: 200,
+                    color: Colors.grey.shade400,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      onPressed: () {
+                        _showHistoryDialog(context);
+                      },
+                      child: const Text('הצג היסטוריה'),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      onPressed: () {
+                        _showBookmarksDialog(context);
+                      },
+                      child: const Text('הצג סימניות'),
+                    ),
+                  )
+                ],
+              ),
             );
+          }
 
-            controller.addListener(() {
-              if (controller.index != state.currentTabIndex) {
-                context.read<TabsBloc>().add(SetCurrentTab(controller.index));
-              }
-            });
+          return Builder(
+            builder: (context) {
+              final controller = TabController(
+                length: state.tabs.length,
+                vsync: this,
+                initialIndex: state.currentTabIndex,
+              );
 
-            try {
+              controller.addListener(() {
+                if (controller.indexIsChanging &&
+                    state.currentTabIndex < state.tabs.length) {
+                  // שמירת המצב הנוכחי לפני המעבר לטאב אחר
+                  print(
+                      'DEBUG: מעבר בין טאבים - שמירת מצב טאב ${state.currentTabIndex}');
+                  context.read<HistoryBloc>().add(CaptureStateForHistory(
+                      state.tabs[state.currentTabIndex]));
+                }
+                if (controller.index != state.currentTabIndex) {
+                  print('DEBUG: עדכון טאב נוכחי ל-${controller.index}');
+                  context.read<TabsBloc>().add(SetCurrentTab(controller.index));
+                }
+              });
+
               return Scaffold(
                 appBar: AppBar(
+                  // 1. משתמשים בקבוע שהגדרנו עבור הרוחב
+                  leadingWidth: _kAppBarControlsWidth,
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // קבוצת היסטוריה וסימניות
+                      IconButton(
+                        icon: const Icon(Icons.history),
+                        tooltip: 'הצג היסטוריה',
+                        onPressed: () => _showHistoryDialog(context),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.bookmark),
+                        tooltip: 'הצג סימניות',
+                        onPressed: () => _showBookmarksDialog(context),
+                      ),
+                      // קו מפריד
+                      Container(
+                        height: 24,
+                        width: 1,
+                        color: Colors.grey.shade400,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                      ),
+                      // קבוצת שולחן עבודה עם אנימציה
+                      IconButton(
+                        icon: const Icon(Icons.add_to_queue),
+                        tooltip: 'החלף שולחן עבודה',
+                        onPressed: () => _showSaveWorkspaceDialog(context),
+                      ),
+                    ],
+                  ),
+                  titleSpacing: 0,
+                  centerTitle: true,
                   title: Container(
                     constraints: const BoxConstraints(maxHeight: 50),
-                    child: TabBar(
+                    child: ScrollableTabBarWithArrows(
                       controller: controller,
-                      isScrollable: true,
                       tabAlignment: TabAlignment.center,
+                      onOverflowChanged: (overflow) {
+                        if (mounted) {
+                          setState(() => _tabsOverflow = overflow);
+                        }
+                      },
                       tabs: state.tabs
                           .map((tab) => _buildTab(context, tab, state))
                           .toList(),
                     ),
                   ),
-                  leading: IconButton(
-                    icon: const Icon(Icons.add_to_queue),
-                    tooltip: 'החלף שולחן עבודה',
-                    onPressed: () => _showSaveWorkspaceDialog(context),
+                  flexibleSpace: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1,
+                        ),
+                      ),
+                    ),
                   ),
+                  // כאשר אין גלילה — מוסיפים placeholder משמאל כדי למרכז באמת ביחס למסך כולו
+                  // כאשר יש גלילה — מבטלים אותו כדי לאפשר התפשטות גם לצד שמאל
+                  // שומרים תמיד מקום קבוע לימין כדי למנוע שינויי רוחב פתאומיים
+                  actions: const [SizedBox(width: _kAppBarControlsWidth)],
+                  // centerTitle לא נדרש כאשר הטאבים נמצאים ב-bottom
+
+                  // 2. משתמשים באותו קבוע בדיוק עבור ווידג'ט הדמה
+                  // הוסר הרווח המלאכותי מצד שמאל כדי לאפשר לטאבים לתפוס רוחב מלא בעת הצורך
                 ),
                 body: SizedBox.fromSize(
                   size: MediaQuery.of(context).size,
@@ -148,13 +241,37 @@ class _ReadingScreenState extends State<ReadingScreen>
                   ),
                 ),
               );
-            } catch (e) {
-              return Text(e.toString());
-            }
-          },
-        );
-      },
+            },
+          );
+        },
+      ),
     );
+  }
+
+  Widget _buildTabView(OpenedTab tab) {
+    if (tab is PdfBookTab) {
+      return PdfBookScreen(
+        key: PageStorageKey(tab),
+        tab: tab,
+      );
+    } else if (tab is TextBookTab) {
+      return BlocProvider.value(
+          value: tab.bloc,
+          child: TextBookViewerBloc(
+            openBookCallback: (tab, {int index = 1}) {
+              context.read<TabsBloc>().add(AddTab(tab));
+            },
+            tab: tab,
+          ));
+    } else if (tab is SearchingTab) {
+      return FullTextSearchScreen(
+        tab: tab,
+        openBookCallback: (tab, {int index = 1}) {
+          context.read<TabsBloc>().add(AddTab(tab));
+        },
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildTab(BuildContext context, OpenedTab tab, TabsState state) {
@@ -170,12 +287,7 @@ class _ReadingScreenState extends State<ReadingScreen>
             MenuItem(label: 'סגור', onSelected: () => closeTab(tab, context)),
             MenuItem(
                 label: 'סגור הכל',
-                onSelected: () {
-                  for (final tab in state.tabs) {
-                    context.read<HistoryBloc>().add(AddHistory(tab));
-                  }
-                  context.read<TabsBloc>().add(CloseAllTabs());
-                }),
+                onSelected: () => closeAllTabs(state, context)),
             MenuItem(
               label: 'סגור את האחרים',
               onSelected: () => closeAllTabsButCurrent(state, context),
@@ -193,7 +305,7 @@ class _ReadingScreenState extends State<ReadingScreen>
         child: Draggable<OpenedTab>(
           axis: Axis.horizontal,
           data: tab,
-          childWhenDragging: SizedBox.fromSize(size: const Size(0, 0)),
+          childWhenDragging: const SizedBox.shrink(),
           feedback: Container(
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.only(
@@ -256,10 +368,17 @@ class _ReadingScreenState extends State<ReadingScreen>
                         child: Text(truncate(tab.title, 12))),
                   Tooltip(
                     preferBelow: false,
-                    message: (Settings.getValue<String>('key-shortcut-close-tab') ??
-                            'ctrl+w')
-                        .toUpperCase(),
+                    message:
+                        (Settings.getValue<String>('key-shortcut-close-tab') ??
+                                'ctrl+w')
+                            .toUpperCase(),
                     child: IconButton(
+                      constraints: const BoxConstraints(
+                        minWidth: 25,
+                        minHeight: 25,
+                        maxWidth: 25,
+                        maxHeight: 25,
+                      ),
                       onPressed: () => closeTab(tab, context),
                       icon: const Icon(Icons.close, size: 10),
                     ),
@@ -271,32 +390,6 @@ class _ReadingScreenState extends State<ReadingScreen>
         ),
       ),
     );
-  }
-
-  Widget _buildTabView(OpenedTab tab) {
-    if (tab is PdfBookTab) {
-      return PdfBookScreen(
-        key: PageStorageKey(tab),
-        tab: tab,
-      );
-    } else if (tab is TextBookTab) {
-      return BlocProvider.value(
-          value: tab.bloc,
-          child: TextBookViewerBloc(
-            openBookCallback: (tab, {int index = 1}) {
-              context.read<TabsBloc>().add(AddTab(tab));
-            },
-            tab: tab,
-          ));
-    } else if (tab is SearchingTab) {
-      return FullTextSearchScreen(
-        tab: tab,
-        openBookCallback: (tab, {int index = 1}) {
-          context.read<TabsBloc>().add(AddTab(tab));
-        },
-      );
-    }
-    return const SizedBox.shrink();
   }
 
   List<ContextMenuEntry> _getMenuItems(
@@ -316,6 +409,7 @@ class _ReadingScreenState extends State<ReadingScreen>
   }
 
   void _showSaveWorkspaceDialog(BuildContext context) {
+    context.read<HistoryBloc>().add(FlushHistory());
     showDialog(
       context: context,
       builder: (context) => const WorkspaceSwitcherDialog(),
@@ -335,20 +429,26 @@ class _ReadingScreenState extends State<ReadingScreen>
   }
 
   void closeAllTabsButCurrent(TabsState state, BuildContext context) {
-    for (final tab in state.tabs) {
-      if (tab is! SearchingTab && tab != state.tabs[state.currentTabIndex]) {
-        context.read<HistoryBloc>().add(AddHistory(tab));
-      }
-      context
-          .read<TabsBloc>()
-          .add(CloseOtherTabs(state.tabs[state.currentTabIndex]));
+    final current = state.tabs[state.currentTabIndex];
+    final toClose = state.tabs.where((t) => t != current).toList();
+    for (final tab in toClose) {
+      context.read<HistoryBloc>().add(AddHistory(tab));
     }
+    context.read<TabsBloc>().add(CloseOtherTabs(current));
   }
 
   void _showHistoryDialog(BuildContext context) {
+    context.read<HistoryBloc>().add(FlushHistory());
     showDialog(
       context: context,
       builder: (context) => const HistoryDialog(),
+    );
+  }
+
+  void _showBookmarksDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const BookmarksDialog(),
     );
   }
 }

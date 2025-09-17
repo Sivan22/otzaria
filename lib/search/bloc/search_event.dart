@@ -1,4 +1,5 @@
 import 'package:otzaria/models/books.dart';
+import 'package:otzaria/search/models/search_configuration.dart';
 import 'package:search_engine/search_engine.dart';
 
 abstract class SearchEvent {
@@ -16,7 +17,11 @@ class ClearFilter extends SearchEvent {
 
 class UpdateSearchQuery extends SearchEvent {
   final String query;
-  UpdateSearchQuery(this.query);
+  final Map<String, String>? customSpacing;
+  final Map<int, List<String>>? alternativeWords;
+  final Map<String, Map<String, bool>>? searchOptions;
+  UpdateSearchQuery(this.query,
+      {this.customSpacing, this.alternativeWords, this.searchOptions});
 }
 
 class UpdateDistance extends SearchEvent {
@@ -24,7 +29,12 @@ class UpdateDistance extends SearchEvent {
   UpdateDistance(this.distance);
 }
 
-class ToggleFuzzy extends SearchEvent {}
+class ToggleSearchMode extends SearchEvent {}
+
+class SetSearchMode extends SearchEvent {
+  final SearchMode searchMode;
+  SetSearchMode(this.searchMode);
+}
 
 class UpdateBooksToSearch extends SearchEvent {
   final Set<Book> books;
@@ -57,3 +67,20 @@ class UpdateNumResults extends SearchEvent {
 }
 
 class ResetSearch extends SearchEvent {}
+
+// Events חדשים להגדרות רגקס
+class ToggleRegex extends SearchEvent {}
+
+class ToggleCaseSensitive extends SearchEvent {}
+
+class ToggleMultiline extends SearchEvent {}
+
+class ToggleDotAll extends SearchEvent {}
+
+class ToggleUnicode extends SearchEvent {}
+
+// Event פנימי לעדכון facet counts
+class UpdateFacetCounts extends SearchEvent {
+  final Map<String, int> facetCounts;
+  UpdateFacetCounts(this.facetCounts);
+}

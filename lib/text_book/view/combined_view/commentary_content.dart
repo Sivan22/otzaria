@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:otzaria/models/links.dart';
@@ -17,12 +17,16 @@ class CommentaryContent extends StatefulWidget {
     required this.openBookCallback,
     required this.removeNikud,
     this.searchQuery = '',
+    this.currentSearchIndex = 0,
+    this.onSearchResultsCountChanged,
   });
   final bool removeNikud;
   final Link link;
   final double fontSize;
   final Function(TextBookTab) openBookCallback;
   final String searchQuery;
+  final int currentSearchIndex;
+  final Function(int)? onSearchResultsCountChanged;
 
   @override
   State<CommentaryContent> createState() => _CommentaryContentState();
@@ -37,6 +41,17 @@ class _CommentaryContentState extends State<CommentaryContent> {
     content = widget.link.content;
   }
 
+  int _countSearchMatches(String text, String searchQuery) {
+    if (searchQuery.isEmpty) return 0;
+
+    final RegExp regex = RegExp(
+      RegExp.escape(searchQuery),
+      caseSensitive: false,
+    );
+
+    return regex.allMatches(text).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -44,9 +59,8 @@ class _CommentaryContentState extends State<CommentaryContent> {
         widget.openBookCallback(TextBookTab(
           book: TextBook(title: utils.getTitleFromPath(widget.link.path2)),
           index: widget.link.index2 - 1,
-          openLeftPane:
-              (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
-                  (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
+          openLeftPane: (Settings.getValue<bool>('key-pin-sidebar') ?? false) ||
+              (Settings.getValue<bool>('key-default-sidebar-open') ?? false),
         ));
       },
       child: FutureBuilder(
@@ -57,15 +71,32 @@ class _CommentaryContentState extends State<CommentaryContent> {
               if (widget.removeNikud) {
                 text = utils.removeVolwels(text);
               }
-              text = utils.highLight(text, widget.searchQuery);              
+
+              // ספירת תוצאות החיפוש ועדכון הרכיב האב
+              if (widget.searchQuery.isNotEmpty) {
+                final searchCount =
+                    _countSearchMatches(text, widget.searchQuery);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.onSearchResultsCountChanged?.call(searchCount);
+                });
+              }
+
+              text = utils.highLight(text, widget.searchQuery,
+                  currentIndex: widget.currentSearchIndex);
+
+              // החלת עיצוב הסוגריים העגולים
+              text = utils.formatTextWithParentheses(text);
+
               return BlocBuilder<SettingsBloc, SettingsState>(
                 builder: (context, settingsState) {
-                  return Html(data: text, style: {
-                    'body': Style(
-                        fontSize: FontSize(widget.fontSize / 1.2),
-                        fontFamily: settingsState.fontFamily,
-                        textAlign: TextAlign.justify),
-                  });
+                  return DefaultTextStyle.merge(
+                    textAlign: TextAlign.justify,
+                    style: TextStyle(
+                      fontSize: widget.fontSize / 1.2,
+                      fontFamily: settingsState.fontFamily,
+                    ),
+                    child: HtmlWidget(text),
+                  );
                 },
               );
             }

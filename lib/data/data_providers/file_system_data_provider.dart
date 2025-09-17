@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
@@ -71,58 +72,69 @@ class FileSystemData {
 
       // Process each entity in the directory
       await for (FileSystemEntity entity in dir.list()) {
-        if (entity is Directory) {
-          // Recursively process subdirectories as categories
-          category.subCategories.add(
-              await getAllCategoriesAndBooksFromDirectory(
-                  Directory(entity.path), category));
-        } else {
-          // Extract topics from the file path
-          var topics = entity.path
-              .split('אוצריא${Platform.pathSeparator}')
-              .last
-              .split(Platform.pathSeparator)
-              .toList();
-          topics = topics.sublist(0, topics.length - 1);
+        // Check if entity is accessible before processing
+        try {
+          // Verify we can access the entity
+          await entity.stat();
+          
+          if (entity is Directory) {
+            // Recursively process subdirectories as categories
+            category.subCategories.add(
+                await getAllCategoriesAndBooksFromDirectory(
+                    Directory(entity.path), category));
+          } else if (entity is File) {
+            // Only process actual files, not directories mistaken as files
+            // Extract topics from the file path
+            var topics = entity.path
+                .split('אוצריא${Platform.pathSeparator}')
+                .last
+                .split(Platform.pathSeparator)
+                .toList();
+            topics = topics.sublist(0, topics.length - 1);
 
           // Handle special case where title contains " על "
           if (getTitleFromPath(entity.path).contains(' על ')) {
             topics.add(getTitleFromPath(entity.path).split(' על ')[1]);
           }
 
-          // Process PDF files
-          if (entity.path.toLowerCase().endsWith('.pdf')) {
-            final title = getTitleFromPath(entity.path);
-            category.books.add(
-              PdfBook(
-                title: title,
-                category: category,
-                path: entity.path,
-                author: metadata[title]?['author'],
-                heShortDesc: metadata[title]?['heShortDesc'],
-                pubDate: metadata[title]?['pubDate'],
-                pubPlace: metadata[title]?['pubPlace'],
-                order: metadata[title]?['order'] ?? 999,
-                topics: topics.join(', '),
-              ),
-            );
-          }
+            // Process PDF files
+            if (entity.path.toLowerCase().endsWith('.pdf')) {
+              final title = getTitleFromPath(entity.path);
+              category.books.add(
+                PdfBook(
+                  title: title,
+                  category: category,
+                  path: entity.path,
+                  author: metadata[title]?['author'],
+                  heShortDesc: metadata[title]?['heShortDesc'],
+                  pubDate: metadata[title]?['pubDate'],
+                  pubPlace: metadata[title]?['pubPlace'],
+                  order: metadata[title]?['order'] ?? 999,
+                  topics: topics.join(', '),
+                ),
+              );
+            }
 
-          // Process text and docx files
-          if (entity.path.toLowerCase().endsWith('.txt') ||
-              entity.path.toLowerCase().endsWith('.docx')) {
-            final title = getTitleFromPath(entity.path);
-            category.books.add(TextBook(
-                title: title,
-                category: category,
-                author: metadata[title]?['author'],
-                heShortDesc: metadata[title]?['heShortDesc'],
-                pubDate: metadata[title]?['pubDate'],
-                pubPlace: metadata[title]?['pubPlace'],
-                order: metadata[title]?['order'] ?? 999,
-                topics: topics.join(', '),
-                extraTitles: metadata[title]?['extraTitles']));
+            // Process text and docx files
+            if (entity.path.toLowerCase().endsWith('.txt') ||
+                entity.path.toLowerCase().endsWith('.docx')) {
+              final title = getTitleFromPath(entity.path);
+              category.books.add(TextBook(
+                  title: title,
+                  category: category,
+                  author: metadata[title]?['author'],
+                  heShortDesc: metadata[title]?['heShortDesc'],
+                  pubDate: metadata[title]?['pubDate'],
+                  pubPlace: metadata[title]?['pubPlace'],
+                  order: metadata[title]?['order'] ?? 999,
+                  topics: topics.join(', '),
+                  extraTitles: metadata[title]?['extraTitles']));
+            }
           }
+        } catch (e) {
+          // Skip entities that can't be accessed (like directories mistaken as files)
+          debugPrint('Skipping inaccessible entity: ${entity.path} - $e');
+          continue;
         }
       }
 
@@ -225,19 +237,19 @@ class FileSystemData {
           if (!RegExp(r'^\d+$').hasMatch(bookId)) continue;
           String? localPath;
 
-          if (hebrewBooksPath != null ) {
+          if (hebrewBooksPath != null) {
             localPath =
                 '$hebrewBooksPath${Platform.pathSeparator}Hebrewbooks_org_$bookId.pdf';
-            if (! File(localPath).existsSync()) {
-              localPath =   '$hebrewBooksPath${Platform.pathSeparator}$bookId.pdf';    
-              if (! File(localPath).existsSync()) {
+            if (!File(localPath).existsSync()) {
+              localPath =
+                  '$hebrewBooksPath${Platform.pathSeparator}$bookId.pdf';
+              if (!File(localPath).existsSync()) {
                 localPath = null;
-              }          
+              }
             }
-              
           }
 
-          if (localPath != null ) {
+          if (localPath != null) {
             // If local file exists, add as PdfBook
             books.add(PdfBook(
               title: row[1].toString(),
@@ -299,8 +311,7 @@ class FileSystemData {
       final bytes = await file.readAsBytes();
       return Isolate.run(() => docxToText(bytes, title));
     } else {
-      final content = await file.readAsString();
-      return Isolate.run(() => content);
+      return file.readAsString();
     }
   }
 

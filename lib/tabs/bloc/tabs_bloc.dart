@@ -41,6 +41,7 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
   }
 
   void _onAddTab(AddTab event, Emitter<TabsState> emit) {
+    print('DEBUG: הוספת טאב חדש - ${event.tab.title}');
     final newTabs = List<OpenedTab>.from(state.tabs);
     final newIndex = min(state.currentTabIndex + 1, newTabs.length);
     newTabs.insert(newIndex, event.tab);
@@ -67,6 +68,8 @@ class TabsBloc extends Bloc<TabsEvent, TabsState> {
 
   void _onSetCurrentTab(SetCurrentTab event, Emitter<TabsState> emit) {
     if (event.index >= 0 && event.index < state.tabs.length) {
+      print(
+          'DEBUG: מעבר לטאב ${event.index} - ${state.tabs[event.index].title}');
       _repository.saveTabs(state.tabs, event.index);
       emit(state.copyWith(currentTabIndex: event.index));
     }

@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import 'package:otzaria/app.dart';
@@ -38,7 +39,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:otzaria/app_bloc_observer.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/data/data_providers/hive_data_provider.dart';
-
+import 'package:otzaria/notes/data/database_schema.dart';
+import 'package:otzaria/notes/bloc/notes_bloc.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:search_engine/search_engine.dart';
 
 /// Application entry point that initializes necessary components and launches the app.
@@ -72,6 +75,14 @@ void main() async {
   };
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Check for single instance
+  FlutterSingleInstance flutterSingleInstance = FlutterSingleInstance();
+  bool isFirstInstance = await flutterSingleInstance.isFirstInstance();
+  if (!isFirstInstance) {
+    // If not the first instance, exit the app
+    exit(0);
+  }
 
   // Initialize bloc observer for debugging
   Bloc.observer = AppBlocObserver();
@@ -117,6 +128,9 @@ void main() async {
               create: (context) => FindRefBloc(
                   findRefRepository: FindRefRepository(
                       dataRepository: DataRepository.instance))),
+          BlocProvider<NotesBloc>(
+            create: (context) => NotesBloc(),
+          ),
           BlocProvider<BookmarkBloc>(
             create: (context) => BookmarkBloc(BookmarkRepository()),
           ),
@@ -142,12 +156,28 @@ void main() async {
 /// 4. Hive storage boxes setup
 /// 5. Required directory structure creation
 Future<void> initialize() async {
+  // Initialize SQLite FFI for desktop platforms
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   await RustLib.init();
   await Settings.init(cacheProvider: HiveCache());
   await initLibraryPath();
   await initHive();
   await createDirs();
   await loadCerts();
+
+  // Initialize notes database
+  try {
+    await DatabaseSchema.initializeDatabase();
+  } catch (e) {
+    if (kDebugMode) {
+      print('Failed to initialize notes database: $e');
+    }
+    // Continue without notes functionality if database fails
+  }
 }
 
 /// Creates the necessary directory structure for the application.
@@ -189,10 +219,9 @@ Future<void> initLibraryPath() async {
   // Check existing library path setting
   String? libraryPath = Settings.getValue('key-library-path');
 
-    if (libraryPath == null && (Platform.isLinux || Platform.isMacOS)) {
+  if (libraryPath == null && (Platform.isLinux || Platform.isMacOS)) {
     // Use the working directory for Linux and macOS
-    await Settings.setValue(
-        'key-library-path', '.');
+    await Settings.setValue('key-library-path', '.');
   }
 
   // Set default Windows path if not configured

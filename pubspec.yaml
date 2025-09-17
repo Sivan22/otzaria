@@ -6,9 +6,11 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 msix_config:
   display_name: אוצריא
+  display_name_short: אוצריא
   publisher_display_name: sivan22
   identity_name: sivan22.Otzaria
-  msix_version: 0.2.7.2
+  description: "ספריית ספרים יהודיים עם אפשרויות חיפוש חכם"
+  msix_version: 0.9.53.0
   logo_path: assets/icon/icon.png
   publisher: CN=sivan22, O=sivan22, C=IL
   certificate_path: sivan22.pfx
@@ -34,7 +36,7 @@ msix_config:
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.7
+version: 0.9.53
 
 environment:
   sdk: ">=3.2.6 <4.0.0"
@@ -58,18 +60,18 @@ dependencies:
   isar_flutter_libs: ^4.0.0-dev.14
   isar: ^4.0.0-dev.14
   msix: ^3.16.9
-  path_provider: ^2.0.15
+  path_provider: ^2.1.5
   html: ^0.15.1
   pdfrx: ^1.3.2
   url_launcher: ^6.3.1
-  flutter_html: ^3.0.0
+  flutter_widget_from_html: ^0.17.0
   scrollable_positioned_list: ^0.3.8
   search_highlight_text: ^1.0.0+2
   fuzzywuzzy: ^1.1.6
-  file_picker: ^8.0.6
+  file_picker: ^10.2.1
   permission_handler: ^11.3.0
   flutter_launcher_icons: "^0.13.1"
-  provider: ^6.1.2
+  provider: ^6.1.5
   docx_to_text: ^1.0.1
   expandable: ^5.0.1
   multi_split_view: ^2.4.0
@@ -80,15 +82,17 @@ dependencies:
 
   printing:
   pdf: ^3.10.8
-  kosher_dart: ^2.0.16
+  kosher_dart: ^2.0.18
   gematria: ^1.0.0
   csv: ^6.0.0
   archive: ^3.6.1
   filter_list: 1.0.3
   package_info_plus: ^8.0.2
-  crypto: ^3.0.5
+  crypto: ^3.0.6
   path: ^1.9.0
-  http: ^1.2.2
+  http: ^1.4.0
+  sqflite: ^2.4.2
+  characters: ^1.3.0
   flutter_document_picker:
     git:
       url:  https://github.com/sidlatau/flutter_document_picker
@@ -97,11 +101,15 @@ dependencies:
     #path: ../search_engine
     git:
       url: https://github.com/Sivan22/otzaria_search_engine
-      ref: 01b49f69b8475f673cd1db13128a482963d4bf7d
+      ref: use-regex
   flutter_archive: ^6.0.3
   flutter_spinbox: ^0.13.1
   toggle_switch: ^2.3.0
   logging: ^1.3.0
+  sqflite_common_ffi: ^2.3.0
+  shared_preferences: ^2.5.3
+  super_clipboard: ^0.9.1
+  flutter_single_instance: ^1.1.2
 
 dependency_overrides:
   #  it forces the version of the intl package to be 0.19.0 across all dependencies, even if some packages specify a different compatible version.
@@ -127,7 +135,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^5.0.0
   test: ^1.25.2
   build_runner: ^2.4.11
   bloc_test: ^10.0.0
@@ -148,6 +156,7 @@ flutter:
     - assets/
     - assets/logos/
     - assets/ca/
+    - assets/icon/שמור וזכור.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

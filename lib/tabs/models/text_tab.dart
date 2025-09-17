@@ -1,5 +1,6 @@
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/text_book_repository.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/data/data_providers/file_system_data_provider.dart';
 import 'package:otzaria/models/books.dart';
@@ -23,6 +24,16 @@ class TextBookTab extends OpenedTab {
   /// The bloc that manages the text book state and logic.
   late final TextBookBloc bloc;
 
+  final ItemScrollController scrollController = ItemScrollController();
+  final ItemPositionsListener positionsListener =
+      ItemPositionsListener.create();
+  // בקרים נוספים עבור תצוגה מפוצלת או רשימות מקבילות
+  final ItemScrollController auxScrollController = ItemScrollController();
+  final ItemPositionsListener auxPositionsListener =
+      ItemPositionsListener.create();
+  final ScrollOffsetController mainOffsetController = ScrollOffsetController();
+  final ScrollOffsetController auxOffsetController = ScrollOffsetController();
+
   List<String>? commentators;
 
   /// Creates a new instance of [TextBookTab].
@@ -39,6 +50,7 @@ class TextBookTab extends OpenedTab {
     bool openLeftPane = false,
     bool splitedView = true,
   }) : super(book.title) {
+    print('DEBUG: TextBookTab נוצר עם אינדקס: $index לספר: ${book.title}');
     // Initialize the bloc with initial state
     bloc = TextBookBloc(
       repository: TextBookRepository(
@@ -51,6 +63,8 @@ class TextBookTab extends OpenedTab {
         commentators ?? [],
         searchText,
       ),
+      scrollController: scrollController,
+      positionsListener: positionsListener,
     );
   }
 

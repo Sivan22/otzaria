@@ -63,9 +63,19 @@ class IndexingRepository {
         // Report progress
         onProgress(processedBooks, totalBooks);
       } catch (e) {
-        debugPrint('Error adding ${book.title} to index: $e');
+        // Use async error handling to prevent event loop blocking
+        await Future.microtask(() {
+          debugPrint('Error adding ${book.title} to index: $e');
+        });
         processedBooks++;
+        // Still report progress even after error
+        onProgress(processedBooks, totalBooks);
+        // Yield control back to event loop after error
+        await Future.delayed(Duration.zero);
       }
+
+    await Future.delayed(Duration.zero); 
+
     }
 
     // Reset indexing flag after completion
@@ -87,6 +97,11 @@ class IndexingRepository {
     for (int i = 0; i < texts.length; i++) {
       if (!_tantivyDataProvider.isIndexing.value) {
         return;
+      }
+      
+      // Yield control periodically to prevent blocking
+      if (i % 100 == 0) {
+        await Future.delayed(Duration.zero);
       }
 
       String line = texts[i];
@@ -154,6 +169,11 @@ class IndexingRepository {
       for (int j = 0; j < texts.length; j++) {
         if (!_tantivyDataProvider.isIndexing.value) {
           return;
+        }
+        
+        // Yield control periodically to prevent blocking
+        if (j % 50 == 0) {
+          await Future.delayed(Duration.zero);
         }
         final bookmark = await refFromPageNumber(i + 1, outline, title);
         final ref = bookmark.isNotEmpty

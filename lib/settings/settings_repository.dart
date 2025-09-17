@@ -19,6 +19,13 @@ class SettingsRepository {
   static const String keyRemoveNikudFromTanach = 'key-remove-nikud-tanach';
   static const String keyDefaultSidebarOpen = 'key-default-sidebar-open';
   static const String keyPinSidebar = 'key-pin-sidebar';
+  static const String keySidebarWidth = 'key-sidebar-width';
+  static const String keyFacetFilteringWidth = 'key-facet-filtering-width';
+  static const String keyCalendarType = 'key-calendar-type';
+  static const String keySelectedCity = 'key-selected-city';
+  static const String keyCalendarEvents = 'key-calendar-events';
+  static const String keyCopyWithHeaders = 'key-copy-with-headers';
+  static const String keyCopyHeaderFormat = 'key-copy-header-format';
 
   final SettingsWrapper _settings;
 
@@ -28,7 +35,7 @@ class SettingsRepository {
   Future<Map<String, dynamic>> loadSettings() async {
     // Initialize default settings to disk if needed
     await _initializeDefaultsIfNeeded();
-    
+
     return {
       'isDarkMode': _settings.getValue<bool>(keyDarkMode, defaultValue: false),
       'seedColor': ColorUtils.colorFromString(
@@ -85,6 +92,30 @@ class SettingsRepository {
         keyPinSidebar,
         defaultValue: false,
       ),
+      'sidebarWidth':
+          _settings.getValue<double>(keySidebarWidth, defaultValue: 300),
+      'facetFilteringWidth':
+          _settings.getValue<double>(keyFacetFilteringWidth, defaultValue: 235),
+      'calendarType': _settings.getValue<String>(
+        keyCalendarType,
+        defaultValue: 'combined',
+      ),
+      'selectedCity': _settings.getValue<String>(
+        keySelectedCity,
+        defaultValue: 'ירושלים',
+      ),
+      'calendarEvents': _settings.getValue<String>(
+        keyCalendarEvents,
+        defaultValue: '[]',
+      ),
+      'copyWithHeaders': _settings.getValue<String>(
+        keyCopyWithHeaders,
+        defaultValue: 'none',
+      ),
+      'copyHeaderFormat': _settings.getValue<String>(
+        keyCopyHeaderFormat,
+        defaultValue: 'same_line_after_brackets',
+      ),
     };
   }
 
@@ -139,15 +170,45 @@ class SettingsRepository {
   Future<void> updateDefaultRemoveNikud(bool value) async {
     await _settings.setValue(keyDefaultNikud, value);
   }
+
   Future<void> updateRemoveNikudFromTanach(bool value) async {
     await _settings.setValue(keyRemoveNikudFromTanach, value);
   }
+
   Future<void> updateDefaultSidebarOpen(bool value) async {
     await _settings.setValue(keyDefaultSidebarOpen, value);
   }
 
   Future<void> updatePinSidebar(bool value) async {
     await _settings.setValue(keyPinSidebar, value);
+  }
+
+  Future<void> updateSidebarWidth(double value) async {
+    await _settings.setValue(keySidebarWidth, value);
+  }
+
+  Future<void> updateFacetFilteringWidth(double value) async {
+    await _settings.setValue(keyFacetFilteringWidth, value);
+  }
+
+  Future<void> updateCalendarType(String value) async {
+    await _settings.setValue(keyCalendarType, value);
+  }
+
+  Future<void> updateSelectedCity(String value) async {
+    await _settings.setValue(keySelectedCity, value);
+  }
+
+  Future<void> updateCalendarEvents(String eventsJson) async {
+    await _settings.setValue(keyCalendarEvents, eventsJson);
+  }
+
+  Future<void> updateCopyWithHeaders(String value) async {
+    await _settings.setValue(keyCopyWithHeaders, value);
+  }
+
+  Future<void> updateCopyHeaderFormat(String value) async {
+    await _settings.setValue(keyCopyHeaderFormat, value);
   }
 
   /// Initialize default settings to disk if this is the first app launch
@@ -160,7 +221,8 @@ class SettingsRepository {
   /// Check if default settings need to be initialized
   Future<bool> _checkIfDefaultsNeeded() async {
     // Use a dedicated flag to track initialization
-    return !_settings.getValue<bool>('settings_initialized', defaultValue: false);
+    return !_settings.getValue<bool>('settings_initialized',
+        defaultValue: false);
   }
 
   /// Write all default settings to persistent storage
@@ -181,7 +243,14 @@ class SettingsRepository {
     await _settings.setValue(keyRemoveNikudFromTanach, false);
     await _settings.setValue(keyDefaultSidebarOpen, false);
     await _settings.setValue(keyPinSidebar, false);
-    
+    await _settings.setValue(keySidebarWidth, 300.0);
+    await _settings.setValue(keyFacetFilteringWidth, 235.0);
+    await _settings.setValue(keyCalendarType, 'combined');
+    await _settings.setValue(keySelectedCity, 'ירושלים');
+    await _settings.setValue(keyCalendarEvents, '[]');
+    await _settings.setValue(keyCopyWithHeaders, 'none');
+    await _settings.setValue(keyCopyHeaderFormat, 'same_line_after_brackets');
+
     // Mark as initialized
     await _settings.setValue('settings_initialized', true);
   }

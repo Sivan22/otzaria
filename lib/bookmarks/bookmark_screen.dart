@@ -12,8 +12,39 @@ import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
-class BookmarkView extends StatelessWidget {
+class BookmarkView extends StatefulWidget {
   const BookmarkView({Key? key}) : super(key: key);
+
+  @override
+  State<BookmarkView> createState() => _BookmarkViewState();
+}
+
+class _BookmarkViewState extends State<BookmarkView> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
+
+    // Auto-focus the search field when the screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFocusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   void _openBook(
       BuildContext context, Book book, int index, List<String>? commentators) {
@@ -40,58 +71,99 @@ class BookmarkView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<BookmarkBloc, BookmarkState>(
       builder: (context, state) {
-        return state.bookmarks.isEmpty
-            ? const Center(child: Text('אין סימניות'))
-            : Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: state.bookmarks.length,
-                      itemBuilder: (context, index) => ListTile(
-                          selected: false,
-                          leading: state.bookmarks[index].book is PdfBook
-                              ? const Icon(Icons.picture_as_pdf)
-                              : null,
-                          title: Text(state.bookmarks[index].ref),
-                          onTap: () => _openBook(
-                              context,
-                              state.bookmarks[index].book,
-                              state.bookmarks[index].index,
-                              state.bookmarks[index].commentatorsToShow),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete_forever,
-                            ),
-                            onPressed: () {
-                              context
-                                  .read<BookmarkBloc>()
-                                  .removeBookmark(index);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('הסימניה נמחקה'),
-                                ),
-                              );
-                            },
-                          )),
-                    ),
+        if (state.bookmarks.isEmpty) {
+          return const Center(child: Text('אין סימניות'));
+        }
+
+        // Filter bookmarks based on search query
+        final filteredBookmarks = _searchQuery.isEmpty
+            ? state.bookmarks
+            : state.bookmarks.where((bookmark) =>
+                bookmark.ref.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                decoration: InputDecoration(
+                  hintText: 'חפש בסימניות...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+                ),
+              ),
+            ),
+            Expanded(
+              child: filteredBookmarks.isEmpty
+                  ? const Center(child: Text('לא נמצאו תוצאות'))
+                  : ListView.builder(
+                itemCount: filteredBookmarks.length,
+                itemBuilder: (context, index) {
+                  final bookmark = filteredBookmarks[index];
+                  final originalIndex = state.bookmarks.indexOf(bookmark);
+                  return ListTile(
+                    selected: false,
+                    leading: bookmark.book is PdfBook
+                        ? const Icon(Icons.picture_as_pdf)
+                        : null,
+                    title: Text(bookmark.ref),
+                    onTap: () => _openBook(
+                        context,
+                        bookmark.book,
+                        bookmark.index,
+                        bookmark.commentatorsToShow),
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.delete_forever,
+                      ),
                       onPressed: () {
-                        context.read<BookmarkBloc>().clearBookmarks();
+                        context
+                            .read<BookmarkBloc>()
+                            .removeBookmark(originalIndex);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('כל הסימניות נמחקו'),
-                                duration: const Duration(milliseconds: 350),
+                            content: Text('הסימניה נמחקה'),
                           ),
                         );
                       },
-                      child: const Text('מחק את כל הסימניות'),
                     ),
-                  ),
-                ],
-              );
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  context.read<BookmarkBloc>().clearBookmarks();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('כל הסימניות נמחקו'),
+                      duration: const Duration(milliseconds: 350),
+                    ),
+                  );
+                },
+                child: const Text('מחק את כל הסימניות'),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
