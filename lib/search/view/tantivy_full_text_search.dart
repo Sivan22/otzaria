@@ -307,7 +307,7 @@ class _TantivyFullTextSearchState extends State<TantivyFullTextSearch>
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
-              'אינדקס החיפוש בתהליך עידכון. חלק מהספרים עלולים להיות חסרים בתוצאות החיפוש.',
+              'אינדקס החיפוש בתהליך עדכון. יתכן שחלק מהספרים לא יוצגו בתוצאות החיפוש.',
               textAlign: TextAlign.right,
               style: TextStyle(color: Colors.black87),
             ),

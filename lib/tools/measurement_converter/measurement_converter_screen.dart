@@ -514,7 +514,7 @@ class _MeasurementConverterScreenState
 
   Widget _buildUnitSelectors() {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: _buildUnitGrid('מ', _selectedFromUnit, (val) {
@@ -528,25 +528,20 @@ class _MeasurementConverterScreenState
           }),
         ),
         const SizedBox(width: 10),
-        Column(
-          children: [
-            const SizedBox(height: 20), // Align with the grid content
-            IconButton(
-              icon: const Icon(Icons.swap_horiz),
-              onPressed: () {
-                setState(() {
-                  final temp = _selectedFromUnit;
-                  _selectedFromUnit = _selectedToUnit;
-                  _selectedToUnit = temp;
-                  _convert();
-                });
-                // Restore focus to the screen after swap
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _screenFocusNode.requestFocus();
-                });
-              },
-            ),
-          ],
+        IconButton(
+          icon: const Icon(Icons.swap_horiz),
+          onPressed: () {
+            setState(() {
+              final temp = _selectedFromUnit;
+              _selectedFromUnit = _selectedToUnit;
+              _selectedToUnit = temp;
+              _convert();
+            });
+            // Restore focus to the screen after swap
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _screenFocusNode.requestFocus();
+            });
+          },
         ),
         const SizedBox(width: 10),
         Expanded(

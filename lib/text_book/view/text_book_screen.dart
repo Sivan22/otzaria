@@ -275,15 +275,41 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
   }
 
   Widget _buildTitle(TextBookLoaded state) {
-    return state.currentTitle != null
-        ? SelectionArea(
-            child: Text(
-              state.currentTitle!,
-              style: const TextStyle(fontSize: 17),
-              textAlign: TextAlign.end,
-            ),
-          )
-        : const SizedBox.shrink();
+    if (state.currentTitle == null) {
+      return const SizedBox.shrink();
+    }
+
+    const style = TextStyle(fontSize: 17);
+    final text = state.currentTitle!;
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final textPainter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          maxLines: 1,
+          textDirection: TextDirection.rtl,
+        )..layout(minWidth: 0, maxWidth: constraints.maxWidth);
+
+        final child = SelectionArea(
+          child: Text(
+            text,
+            style: style,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+
+        if (textPainter.didExceedMaxLines) {
+          return Tooltip(
+            message: text,
+            child: child,
+          );
+        }
+
+        return child;
+      },
+    );
   }
 
   Widget _buildMenuButton(BuildContext context, TextBookLoaded state) {

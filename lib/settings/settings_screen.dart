@@ -401,9 +401,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       SwitchSettingsTile(
                         settingKey: 'key-use-fast-search',
                         title: 'חיפוש מהיר באמצעות אינדקס',
-                        enabledLabel:
-                            'החיפוש יהיה מהיר יותר, נדרש ליצור אינדקס',
-                        disabledLabel: 'החיפוש יהיה איטי יותר, לא נדרש אינדקס',
+                        enabledLabel: 'חיפוש מהיר יותר, נדרש ליצור אינדקס',
+                        disabledLabel: 'חיפוש איטי יותר, לא נדרש אינדקס',
                         leading: const Icon(Icons.search),
                         defaultValue: state.useFastSearch,
                         onChange: (value) {
@@ -617,7 +616,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         Tooltip(
                           message: 'במידה וקיימים ברשותכם ספרים ממאגר זה',
                           child: SimpleSettingsTile(
-                            title: 'מיקום ספרי HebrewBooks (היברובוקס)',
+                            title: 'מיקום ספרי היברובוקס',
                             subtitle: Settings.getValue<String>(
                                     'key-hebrew-books-path') ??
                                 'לא קיים',
