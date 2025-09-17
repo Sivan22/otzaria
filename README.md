@@ -131,13 +131,13 @@ In case you need only the app itself (for upgrading) you can download the .msix 
 #### Installation
 * Download the linux build from releases, extract and run Otzaria.
 * When first running the app, you will be asked to download the library.
-* Llternatively, you can download the library manually from [here](https://github.com/Sivan22/otzaria-library/releases), extract it and provide its path to the app.
+* Llternatively, you can download the library manually from [here](https://github.com/zevisvei/otzaria-library/releases), extract it and provide its path to the app.
 
 ### android
 * The app is available on Google Play: [link](https://play.google.com/store/apps/details?id=com.mendelg.otzaria&pli=1)
 * Alternatively, you can download the .apk file from the releases page, and install it.
 * When first running the app, you will be asked to download the library.
-* Alternatively, you can download the library manually from [here](https://github.com/Sivan22/otzaria-library/releases) and provide the zip file to the app.
+* Alternatively, you can download the library manually from [here](https://github.com/zevisvei/otzaria-library/releases) and provide the zip file to the app.
 
 ### iOS (iPhone/iPad)
 * The app is available on AppStore: [link](https://apps.apple.com/us/app/otzaria/id6738098031)
@@ -147,7 +147,7 @@ In case you need only the app itself (for upgrading) you can download the .msix 
 * Download the latest MacOS build from the releases page.
 * Run the app while pressing the ctrl key.
 * When first running the app, you will be asked to download the library.
-* Alternatively, you can download the library manually from [here](https://github.com/Sivan22/otzaria-library/releases), extract it and provide its path to the app.
+* Alternatively, you can download the library manually from [here](https://github.com/zevisvei/otzaria-library/releases), extract it and provide its path to the app.
 
 
 
