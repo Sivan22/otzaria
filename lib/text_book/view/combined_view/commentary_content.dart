@@ -89,13 +89,12 @@ class _CommentaryContentState extends State<CommentaryContent> {
 
               return BlocBuilder<SettingsBloc, SettingsState>(
                 builder: (context, settingsState) {
-                  return DefaultTextStyle.merge(
-                    textAlign: TextAlign.justify,
-                    style: TextStyle(
+                  return HtmlWidget(
+                    '<div style="text-align: justify; direction: rtl;">$text</div>',
+                    textStyle: TextStyle(
                       fontSize: widget.fontSize / 1.2,
                       fontFamily: settingsState.fontFamily,
                     ),
-                    child: HtmlWidget(text),
                   );
                 },
               );
