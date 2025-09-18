@@ -35,6 +35,7 @@ import 'package:otzaria/models/phone_report_data.dart';
 import 'package:otzaria/services/data_collection_service.dart';
 import 'package:otzaria/services/phone_report_service.dart';
 import 'package:otzaria/widgets/phone_report_tab.dart';
+import 'package:otzaria/widgets/responsive_action_bar.dart';
 
 /// נתוני הדיווח שנאספו מתיבת סימון הטקסט + פירוט הטעות שהמשתמש הקליד.
 class ReportedErrorData {
@@ -326,45 +327,418 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     TextBookLoaded state,
     bool wideScreen,
   ) {
-    return [
-      // PDF Button
-      _buildPdfButton(context, state),
+    final screenWidth = MediaQuery.of(context).size.width;
 
-      // Split View Button
-      _buildSplitViewButton(context, state),
+    // במסכים רחבים מאוד (יותר מ-1200), נציג את כל הכפתורים כרגיל
+    if (screenWidth >= 1200) {
+      return [
+        // PDF Button
+        _buildPdfButton(context, state),
 
-      // Nikud Button
-      _buildNikudButton(context, state),
+        // Split View Button
+        _buildSplitViewButton(context, state),
 
-      // Bookmark Button
-      _buildBookmarkButton(context, state),
+        // Nikud Button
+        _buildNikudButton(context, state),
 
-      // Notes Buttons
-      _buildShowNotesButton(context, state),
-      _buildAddNoteButton(context, state),
+        // Bookmark Button
+        _buildBookmarkButton(context, state),
 
-      // Search Button (wide screen only)
-      if (wideScreen) _buildSearchButton(context, state),
+        // Notes Buttons
+        _buildShowNotesButton(context, state),
+        _buildAddNoteButton(context, state),
 
-      // Zoom Buttons (wide screen only)
-      if (wideScreen) ...[
+        // Search Button
+        _buildSearchButton(context, state),
+
+        // Zoom Buttons
         _buildZoomInButton(context, state),
         _buildZoomOutButton(context, state),
-      ],
 
-      // Navigation Buttons (wide screen only)
-      if (wideScreen) ...[
+        // Navigation Buttons
         _buildFirstPageButton(state),
         _buildPreviousPageButton(state),
         _buildNextPageButton(state),
         _buildLastPageButton(state),
-      ],
+
+        // Print Button
+        _buildPrintButton(context, state),
+
+        // Report Bug Button
+        _buildReportBugButton(context, state),
+      ];
+    }
+
+    // במסכים צרים, נשתמש ברכיב הרספונסיבי
+    // נקבע כמה כפתורים להציג בהתאם לרוחב המסך
+    int maxButtons;
+
+    if (screenWidth < 400) {
+      maxButtons = 2; // 2 כפתורים חשובים + "..." במסכים קטנים מאוד
+    } else if (screenWidth < 500) {
+      maxButtons = 4; // 4 כפתורים חשובים + "..." במסכים קטנים
+    } else if (screenWidth < 600) {
+      maxButtons = 6; // 6 כפתורים חשובים + "..." במסכים בינוניים קטנים
+    } else if (screenWidth < 700) {
+      maxButtons = 8; // 8 כפתורים חשובים + "..." במסכים בינוניים
+    } else if (screenWidth < 800) {
+      maxButtons = 10; // 10 כפתורים חשובים + "..." במסכים בינוניים גדולים
+    } else if (screenWidth < 900) {
+      maxButtons = 12; // 12 כפתורים חשובים + "..." במסכים גדולים
+    } else if (screenWidth < 1100) {
+      maxButtons = 14; // 14 כפתורים חשובים + "..." במסכים גדולים יותר
+    } else {
+      maxButtons = 15; // כמעט כל הכפתורים במסכים רחבים מאוד
+    }
+
+    return [
+      ResponsiveActionBar(
+        actions: _buildPrioritizedActions(context, state),
+        originalOrder: _buildOriginalOrderActions(context, state),
+        maxVisibleButtons: maxButtons,
+      ),
+    ];
+  }
+
+  /// בניית רשימת כפתורים בסדר המקורי (כמו במסך הרחב)
+  List<ActionButtonData> _buildOriginalOrderActions(
+    BuildContext context,
+    TextBookLoaded state,
+  ) {
+    return [
+      // PDF Button (ראשון במסך הרחב)
+      ActionButtonData(
+        widget: _buildPdfButton(context, state),
+        icon: Icons.picture_as_pdf,
+        tooltip: 'פתח ספר במהדורה מודפסת',
+        onPressed: () => _handlePdfButtonPress(context, state),
+      ),
+
+      // Split View Button
+      ActionButtonData(
+        widget: _buildSplitViewButton(context, state),
+        icon: !state.showSplitView
+            ? Icons.vertical_split_outlined
+            : Icons.horizontal_split_outlined,
+        tooltip: !state.showSplitView
+            ? 'הצגת מפרשים בצד הטקסט'
+            : 'הצגת מפרשים מתחת הטקסט',
+        onPressed: () => context.read<TextBookBloc>().add(
+              ToggleSplitView(!state.showSplitView),
+            ),
+      ),
+
+      // Nikud Button
+      ActionButtonData(
+        widget: _buildNikudButton(context, state),
+        icon: Icons.format_overline,
+        tooltip: 'הצג או הסתר ניקוד',
+        onPressed: () =>
+            context.read<TextBookBloc>().add(ToggleNikud(!state.removeNikud)),
+      ),
+
+      // Bookmark Button
+      ActionButtonData(
+        widget: _buildBookmarkButton(context, state),
+        icon: Icons.bookmark_add,
+        tooltip: 'הוספת סימניה',
+        onPressed: () => _handleBookmarkPress(context, state),
+      ),
+
+      // Show Notes Button
+      ActionButtonData(
+        widget: _buildShowNotesButton(context, state),
+        icon: Icons.notes,
+        tooltip: 'הצג הערות',
+        onPressed: () {
+          context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+        },
+      ),
+
+      // Add Note Button
+      ActionButtonData(
+        widget: _buildAddNoteButton(context, state),
+        icon: Icons.note_add,
+        tooltip: 'הוסף הערה אישית',
+        onPressed: () => _handleAddNotePress(context, state),
+      ),
+
+      // Search Button
+      ActionButtonData(
+        widget: _buildSearchButton(context, state),
+        icon: Icons.search,
+        tooltip: 'חיפוש',
+        onPressed: () {
+          context.read<TextBookBloc>().add(const ToggleLeftPane(true));
+          tabController.index = 1;
+          textSearchFocusNode.requestFocus();
+        },
+      ),
+
+      // Zoom In Button
+      ActionButtonData(
+        widget: _buildZoomInButton(context, state),
+        icon: Icons.zoom_in,
+        tooltip: 'הגדלת טקסט',
+        onPressed: () => context.read<TextBookBloc>().add(
+              UpdateFontSize(min(50.0, state.fontSize + 3)),
+            ),
+      ),
+
+      // Zoom Out Button
+      ActionButtonData(
+        widget: _buildZoomOutButton(context, state),
+        icon: Icons.zoom_out,
+        tooltip: 'הקטנת טקסט',
+        onPressed: () => context.read<TextBookBloc>().add(
+              UpdateFontSize(max(15.0, state.fontSize - 3)),
+            ),
+      ),
+
+      // Navigation Buttons
+      ActionButtonData(
+        widget: _buildFirstPageButton(state),
+        icon: Icons.first_page,
+        tooltip: 'תחילת הספר',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            index: 0,
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
+      ActionButtonData(
+        widget: _buildPreviousPageButton(state),
+        icon: Icons.navigate_before,
+        tooltip: 'הקטע הקודם',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            duration: const Duration(milliseconds: 300),
+            index: max(
+              0,
+              state.positionsListener.itemPositions.value.first.index - 1,
+            ),
+          );
+        },
+      ),
+      ActionButtonData(
+        widget: _buildNextPageButton(state),
+        icon: Icons.navigate_next,
+        tooltip: 'הקטע הבא',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            index: max(
+              state.positionsListener.itemPositions.value.first.index + 1,
+              state.positionsListener.itemPositions.value.length - 1,
+            ),
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
+      ActionButtonData(
+        widget: _buildLastPageButton(state),
+        icon: Icons.last_page,
+        tooltip: 'סוף הספר',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            index: state.content.length,
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
 
       // Print Button
-      _buildPrintButton(context, state),
+      ActionButtonData(
+        widget: _buildPrintButton(context, state),
+        icon: Icons.print,
+        tooltip: 'הדפסה',
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PrintingScreen(
+              data: Future.value(state.content.join('\n')),
+              startLine: state.visibleIndices.first,
+              removeNikud: state.removeNikud,
+            ),
+          ),
+        ),
+      ),
 
       // Report Bug Button
-      _buildReportBugButton(context, state),
+      ActionButtonData(
+        widget: _buildReportBugButton(context, state),
+        icon: Icons.error_outline,
+        tooltip: 'דווח על טעות בספר',
+        onPressed: () => _showReportBugDialog(context, state),
+      ),
+    ];
+  }
+
+  /// בניית רשימת כפתורים לפי סדר עדיפות (החשוב ביותר ראשון)
+  List<ActionButtonData> _buildPrioritizedActions(
+    BuildContext context,
+    TextBookLoaded state,
+  ) {
+    return [
+      // 1) כפתורי הגדל/הקטן, וכפתורי ההחלפה בין טקסט לPDF
+      ActionButtonData(
+        widget: _buildZoomInButton(context, state),
+        icon: Icons.zoom_in,
+        tooltip: 'הגדלת טקסט',
+        onPressed: () => context.read<TextBookBloc>().add(
+              UpdateFontSize(min(50.0, state.fontSize + 3)),
+            ),
+      ),
+      ActionButtonData(
+        widget: _buildZoomOutButton(context, state),
+        icon: Icons.zoom_out,
+        tooltip: 'הקטנת טקסט',
+        onPressed: () => context.read<TextBookBloc>().add(
+              UpdateFontSize(max(15.0, state.fontSize - 3)),
+            ),
+      ),
+      ActionButtonData(
+        widget: _buildPdfButton(context, state),
+        icon: Icons.picture_as_pdf,
+        tooltip: 'פתח ספר במהדורה מודפסת',
+        onPressed: () => _handlePdfButtonPress(context, state),
+      ),
+
+      // 2) חיפוש
+      ActionButtonData(
+        widget: _buildSearchButton(context, state),
+        icon: Icons.search,
+        tooltip: 'חיפוש',
+        onPressed: () {
+          context.read<TextBookBloc>().add(const ToggleLeftPane(true));
+          tabController.index = 1;
+          textSearchFocusNode.requestFocus();
+        },
+      ),
+
+      // 3) הוסף הערות
+      ActionButtonData(
+        widget: _buildAddNoteButton(context, state),
+        icon: Icons.note_add,
+        tooltip: 'הוסף הערה אישית',
+        onPressed: () => _handleAddNotePress(context, state),
+      ),
+
+      // 4) כפתורי השליטה בספר: הקטע הקודם/הבא, תחילת/סוף הספר
+      ActionButtonData(
+        widget: _buildFirstPageButton(state),
+        icon: Icons.first_page,
+        tooltip: 'תחילת הספר',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            index: 0,
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
+      ActionButtonData(
+        widget: _buildPreviousPageButton(state),
+        icon: Icons.navigate_before,
+        tooltip: 'הקטע הקודם',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            duration: const Duration(milliseconds: 300),
+            index: max(
+              0,
+              state.positionsListener.itemPositions.value.first.index - 1,
+            ),
+          );
+        },
+      ),
+      ActionButtonData(
+        widget: _buildNextPageButton(state),
+        icon: Icons.navigate_next,
+        tooltip: 'הקטע הבא',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            index: max(
+              state.positionsListener.itemPositions.value.first.index + 1,
+              state.positionsListener.itemPositions.value.length - 1,
+            ),
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
+      ActionButtonData(
+        widget: _buildLastPageButton(state),
+        icon: Icons.last_page,
+        tooltip: 'סוף הספר',
+        onPressed: () {
+          state.scrollController.scrollTo(
+            index: state.content.length,
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
+
+      // 5) הצג הערות
+      ActionButtonData(
+        widget: _buildShowNotesButton(context, state),
+        icon: Icons.notes,
+        tooltip: 'הצג הערות',
+        onPressed: () {
+          context.read<TextBookBloc>().add(const ToggleNotesSidebar());
+        },
+      ),
+
+      // 6) הוספת סימניה
+      ActionButtonData(
+        widget: _buildBookmarkButton(context, state),
+        icon: Icons.bookmark_add,
+        tooltip: 'הוספת סימניה',
+        onPressed: () => _handleBookmarkPress(context, state),
+      ),
+
+      // 7) הצגת מפרשים בצד/מתחת הטקסט
+      ActionButtonData(
+        widget: _buildSplitViewButton(context, state),
+        icon: !state.showSplitView
+            ? Icons.vertical_split_outlined
+            : Icons.horizontal_split_outlined,
+        tooltip: !state.showSplitView
+            ? 'הצגת מפרשים בצד הטקסט'
+            : 'הצגת מפרשים מתחת הטקסט',
+        onPressed: () => context.read<TextBookBloc>().add(
+              ToggleSplitView(!state.showSplitView),
+            ),
+      ),
+
+      // 8) הצג/הסתר ניקוד
+      ActionButtonData(
+        widget: _buildNikudButton(context, state),
+        icon: Icons.format_overline,
+        tooltip: 'הצג או הסתר ניקוד',
+        onPressed: () =>
+            context.read<TextBookBloc>().add(ToggleNikud(!state.removeNikud)),
+      ),
+
+      // 9) כפתורי הדיווח על טעות
+      ActionButtonData(
+        widget: _buildReportBugButton(context, state),
+        icon: Icons.error_outline,
+        tooltip: 'דווח על טעות בספר',
+        onPressed: () => _showReportBugDialog(context, state),
+      ),
+
+      // 10) כפתור הדפסה
+      ActionButtonData(
+        widget: _buildPrintButton(context, state),
+        icon: Icons.print,
+        tooltip: 'הדפסה',
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PrintingScreen(
+              data: Future.value(state.content.join('\n')),
+              startLine: state.visibleIndices.first,
+              removeNikud: state.removeNikud,
+            ),
+          ),
+        ),
+      ),
     ];
   }
 
@@ -655,6 +1029,66 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       tooltip: 'דווח על טעות בספר',
       onPressed: () => _showReportBugDialog(context, state),
     );
+  }
+
+  /// פונקציות עזר לטיפול בלחיצות על כפתורים בתפריט הנפתח
+  void _handlePdfButtonPress(BuildContext context, TextBookLoaded state) async {
+    final currentIndex = state.positionsListener.itemPositions.value.isNotEmpty
+        ? state.positionsListener.itemPositions.value.first.index
+        : 0;
+    widget.tab.index = currentIndex;
+
+    final book = await DataRepository.instance.library.then(
+      (library) => library.findBookByTitle(state.book.title, PdfBook),
+    );
+
+    if (book != null) {
+      final index = await textToPdfPage(state.book, currentIndex);
+      openBook(context, book, index ?? 1, '', ignoreHistory: true);
+    }
+  }
+
+  void _handleAddNotePress(BuildContext context, TextBookLoaded state) {
+    final selectedText = state.selectedTextForNote;
+    if (selectedText == null || selectedText.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('אנא בחר טקסט ליצירת הערה אישית'),
+          duration: Duration(milliseconds: 1500),
+        ),
+      );
+      return;
+    }
+
+    _showNoteEditor(
+      context,
+      selectedText,
+      state.selectedTextStart ?? 0,
+      state.selectedTextEnd ?? selectedText.length,
+      state.book.title,
+    );
+  }
+
+  void _handleBookmarkPress(BuildContext context, TextBookLoaded state) async {
+    int index = state.positionsListener.itemPositions.value.first.index;
+    final toc = state.book.tableOfContents;
+    String ref = await refFromIndex(index, toc);
+    bool bookmarkAdded = context.read<BookmarkBloc>().addBookmark(
+          ref: ref,
+          book: state.book,
+          index: index,
+          commentatorsToShow: state.activeCommentators,
+        );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            bookmarkAdded ? 'הסימניה נוספה בהצלחה' : 'הסימניה כבר קיימת',
+          ),
+          duration: const Duration(milliseconds: 350),
+        ),
+      );
+    }
   }
 
   Future<void> _showReportBugDialog(
