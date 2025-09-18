@@ -309,12 +309,22 @@ jobs:
           VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           
+          # Validate semver format
+          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'; then
+            echo "::error::Version '$VERSION' is not valid semver format"
+            exit 1
+          fi
+          
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "tag=v$VERSION" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
             echo "title=Otzaria v$VERSION" >> $GITHUB_OUTPUT
           else
-            echo "tag=v$VERSION-${{ github.ref_name }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+            # Use proper semver pre-release format with dots instead of hyphens
+            BRANCH_NAME="${{ github.ref_name }}"
+            # Replace any invalid characters in branch name for semver
+            CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^A-Za-z0-9.-]/-/g')
+            echo "tag=v$VERSION-$CLEAN_BRANCH.${{ github.run_number }}" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
             echo "title=Otzaria v$VERSION (Preview from ${{ github.ref_name }})" >> $GITHUB_OUTPUT
           fi
@@ -422,7 +432,15 @@ jobs:
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION-pr-${{ github.event.number }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          
+          # Validate semver format
+          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'; then
+            echo "::error::Version '$VERSION' is not valid semver format"
+            exit 1
+          fi
+          
+          # Use proper semver pre-release format with dots instead of hyphens for PR builds
+          echo "tag=v$VERSION-pr.${{ github.event.number }}.${{ github.run_number }}" >> $GITHUB_OUTPUT
           echo "title=Otzaria v$VERSION - PR #${{ github.event.number }} Preview" >> $GITHUB_OUTPUT
 
       - name: Get commit message
