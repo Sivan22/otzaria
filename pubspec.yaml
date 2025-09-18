@@ -107,6 +107,7 @@ dependencies:
   toggle_switch: ^2.3.0
   logging: ^1.3.0
   sqflite_common_ffi: ^2.3.0
+  sqlite3_flutter_libs: any
   shared_preferences: ^2.5.3
   super_clipboard: ^0.9.1
   flutter_single_instance: ^1.1.2
