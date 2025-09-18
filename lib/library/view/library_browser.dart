@@ -33,6 +33,7 @@ import 'package:otzaria/history/bloc/history_bloc.dart';
 import 'package:otzaria/history/bloc/history_event.dart';
 import 'package:otzaria/bookmarks/bookmarks_dialog.dart';
 import 'package:otzaria/widgets/workspace_icon_button.dart';
+import 'package:otzaria/widgets/responsive_action_bar.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({Key? key}) : super(key: key);
@@ -108,110 +109,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     ),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // קבוצת חזור ובית
-                          IconButton(
-                            icon: const Icon(Icons.arrow_upward),
-                            tooltip: 'חזרה לתיקיה הקודמת',
-                            onPressed: () {
-                              if (state.currentCategory?.parent != null) {
-                                setState(
-                                    () => _depth = _depth > 0 ? _depth - 1 : 0);
-                                context.read<LibraryBloc>().add(NavigateUp());
-                                context
-                                    .read<LibraryBloc>()
-                                    .add(const SearchBooks());
-                                _refocusSearchBar(selectAll: true);
-                              }
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.home),
-                            tooltip: 'חזרה לתיקיה הראשית',
-                            onPressed: () {
-                              setState(() => _depth = 0);
-                              context.read<LibraryBloc>().add(LoadLibrary());
-                              context
-                                  .read<FocusRepository>()
-                                  .librarySearchController
-                                  .clear();
-                              _update(context, state, settingsState);
-                              _refocusSearchBar(selectAll: true);
-                            },
-                          ),
-                          // קו מפריד
-                          Container(
-                            height: 24,
-                            width: 1,
-                            color: Colors.grey.shade400,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                          ),
-                          // קבוצת טעינה מחדש וסנכרון
-                          BlocProvider(
-                            create: (context) => FileSyncBloc(
-                              repository: FileSyncRepository(
-                                githubOwner: "zevisvei",
-                                repositoryName: "otzaria-library",
-                                branch: "main",
-                              ),
-                            ),
-                            child: BlocListener<FileSyncBloc, FileSyncState>(
-                              listener: (context, syncState) {
-                                // אם הסינכרון הושלם או הופסק והיו קבצים חדשים
-                                if ((syncState.status == FileSyncStatus.completed || 
-                                     syncState.status == FileSyncStatus.error) && 
-                                    syncState.hasNewSync) {
-                                  // הפעלת רענון אוטומטי של הספרייה
-                                  context.read<LibraryBloc>().add(RefreshLibrary());
-                                }
-                              },
-                              child: const SyncIconButton(),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.refresh),
-                            tooltip: 'טעינה מחדש של רשימת הספרים',
-                            onPressed: () {
-                              context.read<LibraryBloc>().add(RefreshLibrary());
-                            },
-                          ),
-                          // קו מפריד
-                          Container(
-                            height: 24,
-                            width: 1,
-                            color: Colors.grey.shade400,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                          ),
-                          // קבוצת שולחן עבודה, היסטוריה ומועדפים
-                          IconButton(
-                            icon: const Icon(Icons.history),
-                            tooltip: 'הצג היסטוריה',
-                            onPressed: () => _showHistoryDialog(context),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.bookmark),
-                            tooltip: 'הצג סימניות',
-                            onPressed: () => _showBookmarksDialog(context),
-                          ),
-                          // קו מפריד
-                          Container(
-                            height: 24,
-                            width: 1,
-                            color: Colors.grey.shade400,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                          ),
-                          SizedBox(
-                            width: 180, // רוחב קבוע למניעת הזזת הטקסט
-                            child: WorkspaceIconButton(
-                              // שולחנות עבודה
-                              onPressed: () =>
-                                  _showSwitchWorkspaceDialog(context),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child:
+                          _buildLibraryActions(context, state, settingsState),
                     ),
                   ],
                 ),
@@ -585,10 +484,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     LibraryState state,
     SettingsState settingsState,
   ) {
-    final searchText = context.read<FocusRepository>().librarySearchController.text;
+    final searchText =
+        context.read<FocusRepository>().librarySearchController.text;
     // Remove all quotation marks from the search query
     final cleanSearchText = searchText.replaceAll('"', '');
-    
+
     context.read<LibraryBloc>().add(
           UpdateSearchQuery(cleanSearchText),
         );
@@ -620,5 +520,312 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       context: context,
       builder: (context) => const BookmarksDialog(),
     );
+  }
+
+  /// בניית כפתורי הפעולה של הספרייה עם רכיב רספונסיבי
+  Widget _buildLibraryActions(
+      BuildContext context, LibraryState state, SettingsState settingsState) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    int maxButtons;
+
+    if (screenWidth < 400) {
+      maxButtons = 1; // כפתור אחד + "..." במסכים קטנים מאוד
+    } else if (screenWidth < 500) {
+      maxButtons = 2; // 2 כפתורים + "..." במסכים קטנים
+    } else if (screenWidth < 600) {
+      maxButtons = 3; // 3 כפתורים + "..." במסכים בינוניים קטנים
+    } else if (screenWidth < 700) {
+      maxButtons = 4; // 4 כפתורים + "..." במסכים בינוניים
+    } else if (screenWidth < 900) {
+      maxButtons = 5; // 5 כפתורים + "..." במסכים גדולים
+    } else {
+      maxButtons = 6; // כל הכפתורים במסכים רחבים
+    }
+
+    return ResponsiveActionBar(
+      actions: _buildPrioritizedLibraryActions(context, state, settingsState),
+      originalOrder:
+          _buildOriginalOrderLibraryActions(context, state, settingsState),
+      maxVisibleButtons: maxButtons,
+      overflowOnRight: true, // כפתור "..." ימני במסך הספרייה
+    );
+  }
+
+  /// בניית רשימת כפתורים בסדר המקורי (כמו במסך הרחב)
+  List<ActionButtonData> _buildOriginalOrderLibraryActions(
+    BuildContext context,
+    LibraryState state,
+    SettingsState settingsState,
+  ) {
+    return [
+      // חזור לתיקיה קודמת (ראשון במסך הרחב)
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.arrow_upward),
+          tooltip: 'חזרה לתיקיה הקודמת',
+          onPressed: () {
+            if (state.currentCategory?.parent != null) {
+              setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
+              context.read<LibraryBloc>().add(NavigateUp());
+              context.read<LibraryBloc>().add(const SearchBooks());
+              _refocusSearchBar(selectAll: true);
+            }
+          },
+        ),
+        icon: Icons.arrow_upward,
+        tooltip: 'חזרה לתיקיה הקודמת',
+        onPressed: () {
+          if (state.currentCategory?.parent != null) {
+            setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
+            context.read<LibraryBloc>().add(NavigateUp());
+            context.read<LibraryBloc>().add(const SearchBooks());
+            _refocusSearchBar(selectAll: true);
+          }
+        },
+      ),
+
+      // חזרה לתיקיה ראשית
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.home),
+          tooltip: 'חזרה לתיקיה הראשית',
+          onPressed: () {
+            setState(() => _depth = 0);
+            context.read<LibraryBloc>().add(LoadLibrary());
+            context.read<FocusRepository>().librarySearchController.clear();
+            _update(context, state, settingsState);
+            _refocusSearchBar(selectAll: true);
+          },
+        ),
+        icon: Icons.home,
+        tooltip: 'חזרה לתיקיה הראשית',
+        onPressed: () {
+          setState(() => _depth = 0);
+          context.read<LibraryBloc>().add(LoadLibrary());
+          context.read<FocusRepository>().librarySearchController.clear();
+          _update(context, state, settingsState);
+          _refocusSearchBar(selectAll: true);
+        },
+      ),
+
+      // סינכרון
+      ActionButtonData(
+        widget: BlocProvider(
+          create: (context) => FileSyncBloc(
+            repository: FileSyncRepository(
+              githubOwner: "zevisvei",
+              repositoryName: "otzaria-library",
+              branch: "main",
+            ),
+          ),
+          child: BlocListener<FileSyncBloc, FileSyncState>(
+            listener: (context, syncState) {
+              if ((syncState.status == FileSyncStatus.completed ||
+                      syncState.status == FileSyncStatus.error) &&
+                  syncState.hasNewSync) {
+                context.read<LibraryBloc>().add(RefreshLibrary());
+              }
+            },
+            child: const SyncIconButton(),
+          ),
+        ),
+        icon: Icons.sync,
+        tooltip: 'סינכרון',
+        onPressed: () {
+          // הפעולה מטופלת ב-SyncIconButton
+        },
+      ),
+
+      // טעינה מחדש
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'טעינה מחדש של רשימת הספרים',
+          onPressed: () {
+            context.read<LibraryBloc>().add(RefreshLibrary());
+          },
+        ),
+        icon: Icons.refresh,
+        tooltip: 'טעינה מחדש של רשימת הספרים',
+        onPressed: () {
+          context.read<LibraryBloc>().add(RefreshLibrary());
+        },
+      ),
+
+      // היסטוריה
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.history),
+          tooltip: 'הצג היסטוריה',
+          onPressed: () => _showHistoryDialog(context),
+        ),
+        icon: Icons.history,
+        tooltip: 'הצג היסטוריה',
+        onPressed: () => _showHistoryDialog(context),
+      ),
+
+      // סימניות
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.bookmark),
+          tooltip: 'הצג סימניות',
+          onPressed: () => _showBookmarksDialog(context),
+        ),
+        icon: Icons.bookmark,
+        tooltip: 'הצג סימניות',
+        onPressed: () => _showBookmarksDialog(context),
+      ),
+
+      // החלף שולחן עבודה
+      ActionButtonData(
+        widget: SizedBox(
+          width: 180,
+          child: WorkspaceIconButton(
+            onPressed: () => _showSwitchWorkspaceDialog(context),
+          ),
+        ),
+        icon: Icons.workspaces,
+        tooltip: 'החלף שולחן עבודה',
+        onPressed: () => _showSwitchWorkspaceDialog(context),
+      ),
+    ];
+  }
+
+  /// בניית רשימת כפתורים לפי סדר עדיפות (החשוב ביותר ראשון)
+  List<ActionButtonData> _buildPrioritizedLibraryActions(
+    BuildContext context,
+    LibraryState state,
+    SettingsState settingsState,
+  ) {
+    return [
+      // 1) חזור לתיקיה קודמת, חזרה לתיקיה ראשית (החשובים ביותר)
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.arrow_upward),
+          tooltip: 'חזרה לתיקיה הקודמת',
+          onPressed: () {
+            if (state.currentCategory?.parent != null) {
+              setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
+              context.read<LibraryBloc>().add(NavigateUp());
+              context.read<LibraryBloc>().add(const SearchBooks());
+              _refocusSearchBar(selectAll: true);
+            }
+          },
+        ),
+        icon: Icons.arrow_upward,
+        tooltip: 'חזרה לתיקיה הקודמת',
+        onPressed: () {
+          if (state.currentCategory?.parent != null) {
+            setState(() => _depth = _depth > 0 ? _depth - 1 : 0);
+            context.read<LibraryBloc>().add(NavigateUp());
+            context.read<LibraryBloc>().add(const SearchBooks());
+            _refocusSearchBar(selectAll: true);
+          }
+        },
+      ),
+
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.home),
+          tooltip: 'חזרה לתיקיה הראשית',
+          onPressed: () {
+            setState(() => _depth = 0);
+            context.read<LibraryBloc>().add(LoadLibrary());
+            context.read<FocusRepository>().librarySearchController.clear();
+            _update(context, state, settingsState);
+            _refocusSearchBar(selectAll: true);
+          },
+        ),
+        icon: Icons.home,
+        tooltip: 'חזרה לתיקיה הראשית',
+        onPressed: () {
+          setState(() => _depth = 0);
+          context.read<LibraryBloc>().add(LoadLibrary());
+          context.read<FocusRepository>().librarySearchController.clear();
+          _update(context, state, settingsState);
+          _refocusSearchBar(selectAll: true);
+        },
+      ),
+
+      // 2) הצג היסטוריה, הצג סימניות
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.history),
+          tooltip: 'הצג היסטוריה',
+          onPressed: () => _showHistoryDialog(context),
+        ),
+        icon: Icons.history,
+        tooltip: 'הצג היסטוריה',
+        onPressed: () => _showHistoryDialog(context),
+      ),
+
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.bookmark),
+          tooltip: 'הצג סימניות',
+          onPressed: () => _showBookmarksDialog(context),
+        ),
+        icon: Icons.bookmark,
+        tooltip: 'הצג סימניות',
+        onPressed: () => _showBookmarksDialog(context),
+      ),
+
+      // 3) החלף שולחן עבודה
+      ActionButtonData(
+        widget: SizedBox(
+          width: 180,
+          child: WorkspaceIconButton(
+            onPressed: () => _showSwitchWorkspaceDialog(context),
+          ),
+        ),
+        icon: Icons.workspaces,
+        tooltip: 'החלף שולחן עבודה',
+        onPressed: () => _showSwitchWorkspaceDialog(context),
+      ),
+
+      // 4) סינכרון
+      ActionButtonData(
+        widget: BlocProvider(
+          create: (context) => FileSyncBloc(
+            repository: FileSyncRepository(
+              githubOwner: "zevisvei",
+              repositoryName: "otzaria-library",
+              branch: "main",
+            ),
+          ),
+          child: BlocListener<FileSyncBloc, FileSyncState>(
+            listener: (context, syncState) {
+              if ((syncState.status == FileSyncStatus.completed ||
+                      syncState.status == FileSyncStatus.error) &&
+                  syncState.hasNewSync) {
+                context.read<LibraryBloc>().add(RefreshLibrary());
+              }
+            },
+            child: const SyncIconButton(),
+          ),
+        ),
+        icon: Icons.sync,
+        tooltip: 'סינכרון',
+        onPressed: () {
+          // הפעולה מטופלת ב-SyncIconButton
+        },
+      ),
+
+      // 5) טעינה מחדש של רשימת הספרים
+      ActionButtonData(
+        widget: IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'טעינה מחדש של רשימת הספרים',
+          onPressed: () {
+            context.read<LibraryBloc>().add(RefreshLibrary());
+          },
+        ),
+        icon: Icons.refresh,
+        tooltip: 'טעינה מחדש של רשימת הספרים',
+        onPressed: () {
+          context.read<LibraryBloc>().add(RefreshLibrary());
+        },
+      ),
+    ];
   }
 }

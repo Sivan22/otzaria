@@ -18,6 +18,9 @@ class ResponsiveActionBar extends StatefulWidget {
   /// הסדר המקורי של הכפתורים (לתצוגה עקבית)
   final List<ActionButtonData>? originalOrder;
 
+  /// האם כפתור "..." יהיה בצד ימין (ברירת מחדל: false - שמאל)
+  final bool overflowOnRight;
+
   const ResponsiveActionBar({
     super.key,
     required this.actions,
@@ -25,6 +28,7 @@ class ResponsiveActionBar extends StatefulWidget {
     this.spacing = 4.0,
     this.maxVisibleButtons,
     this.originalOrder,
+    this.overflowOnRight = false,
   });
 
   @override
@@ -48,9 +52,11 @@ class _ResponsiveActionBarState extends State<ResponsiveActionBar> {
         return Row(
           mainAxisSize: MainAxisSize.min,
           textDirection: TextDirection.ltr,
-          children: actionsToShow.reversed
-              .map((action) => _buildButton(action))
-              .toList(),
+          children: widget.overflowOnRight
+              ? actionsToShow.map((action) => _buildButton(action)).toList()
+              : actionsToShow.reversed
+                  .map((action) => _buildButton(action))
+                  .toList(),
         );
       }
 
@@ -58,7 +64,7 @@ class _ResponsiveActionBarState extends State<ResponsiveActionBar> {
       if (maxVisible <= 0) {
         return Row(
           mainAxisSize: MainAxisSize.min,
-          textDirection: TextDirection.ltr, // כדי שהכפתור "..." יהיה בשמאל
+          textDirection: TextDirection.ltr,
           children: [_buildOverflowButton(widget.actions)],
         );
       }
@@ -93,17 +99,33 @@ class _ResponsiveActionBarState extends State<ResponsiveActionBar> {
         hiddenActions = widget.actions.skip(maxVisible).toList();
       }
 
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        textDirection: TextDirection.ltr, // כדי שהכפתור "..." יהיה בשמאל
-        children: [
-          // כפתור "..." בצד שמאל
-          _buildOverflowButton(hiddenActions),
+      if (widget.overflowOnRight) {
+        // כפתור "..." בצד ימין (למסך ספרייה)
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          textDirection: TextDirection.ltr,
+          children: [
+            // הכפתורים הגלויים (בסדר רגיל)
+            ...visibleActions.map((action) => _buildButton(action)),
 
-          // הכפתורים הגלויים (בסדר הפוך כדי להתאים ל-AppBar)
-          ...visibleActions.reversed.map((action) => _buildButton(action)),
-        ],
-      );
+            // כפתור "..." בצד ימין
+            _buildOverflowButton(hiddenActions),
+          ],
+        );
+      } else {
+        // כפתור "..." בצד שמאל (למסך ספר)
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          textDirection: TextDirection.ltr,
+          children: [
+            // כפתור "..." בצד שמאל
+            _buildOverflowButton(hiddenActions),
+
+            // הכפתורים הגלויים (בסדר הפוך כדי להתאים ל-AppBar)
+            ...visibleActions.reversed.map((action) => _buildButton(action)),
+          ],
+        );
+      }
     }
 
     // אם לא הוגדר מספר מקסימלי, נשתמש ב-LayoutBuilder (לעתיד)
