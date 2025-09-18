@@ -79,10 +79,28 @@ jobs:
         run: |
           dart run msix:create --install-certificate false
 
+      - name: Download library for full installer (main branch only)
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          Write-Host "Downloading library for full installer..."
+          Invoke-WebRequest -Uri "https://github.com/zevisvei/otzaria-library/releases/download/latest/otzaria_latest.zip" -OutFile "otzaria_library.zip"
+          Write-Host "Extracting library to otzaria-library directory..."
+          Expand-Archive -Path "otzaria_library.zip" -DestinationPath "otzaria-library" -Force
+          Write-Host "Library downloaded and extracted successfully to otzaria-library/"
+          Write-Host "Library contents:"
+          Get-ChildItem -Path "otzaria-library" -Recurse | Select-Object -First 10
+
       - name: Build Inno Setup installer
         shell: pwsh
         run: |
-          & "$env:ISCC" installer\otzaria.iss
+          if ("${{ github.ref }}" -eq "refs/heads/main") {
+            Write-Host "Building full installer with library for main branch..."
+            & "$env:ISCC" installer\otzaria_full.iss
+          } else {
+            Write-Host "Building regular installer for non-main branch..."
+            & "$env:ISCC" installer\otzaria.iss
+          }
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
