@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
 
 /// רכיב שמציג כפתורי פעולה עם יכולת הסתרה במסכים צרים
-/// כשחלק מהכפתורים נסתרים, מוצג כפתור "..." בצד שמאל שפותח תפריט
+/// כשחלק מהכפתורים נסתרים, מוצג כפתור "..." שפותח תפריט
 class ResponsiveActionBar extends StatefulWidget {
   /// רשימת כפתורי הפעולה לפי סדר עדיפות (החשוב ביותר ראשון)
   final List<ActionButtonData> actions;
 
-  /// רוחב מינימלי לכפתור (ברירת מחדל: 48)
-  final double buttonMinWidth;
-
-  /// רווח בין כפתורים (ברירת מחדל: 4)
-  final double spacing;
+  /// הסדר המקורי של הכפתורים (לתצוגה עקבית). זו הרשימה שקובעת את הסדר החזותי.
+  final List<ActionButtonData> originalOrder;
 
   /// מספר מקסימלי של כפתורים להציג לפני מעבר לתפריט "..."
-  final int? maxVisibleButtons;
-
-  /// הסדר המקורי של הכפתורים (לתצוגה עקבית)
-  final List<ActionButtonData>? originalOrder;
+  final int maxVisibleButtons;
 
   /// האם כפתור "..." יהיה בצד ימין (ברירת מחדל: false - שמאל)
   final bool overflowOnRight;
@@ -24,10 +18,8 @@ class ResponsiveActionBar extends StatefulWidget {
   const ResponsiveActionBar({
     super.key,
     required this.actions,
-    this.buttonMinWidth = 48.0,
-    this.spacing = 4.0,
-    this.maxVisibleButtons,
-    this.originalOrder,
+    required this.originalOrder,
+    required this.maxVisibleButtons,
     this.overflowOnRight = false,
   });
 
@@ -38,211 +30,102 @@ class ResponsiveActionBar extends StatefulWidget {
 class _ResponsiveActionBarState extends State<ResponsiveActionBar> {
   @override
   Widget build(BuildContext context) {
-    if (widget.actions.isEmpty) {
+    if (widget.originalOrder.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // אם הוגדר מספר מקסימלי של כפתורים, נשתמש בו
-    if (widget.maxVisibleButtons != null) {
-      final maxVisible = widget.maxVisibleButtons!;
+    final totalButtons = widget.originalOrder.length;
+    int effectiveMaxVisible = widget.maxVisibleButtons;
 
-      // אם כל הכפתורים נכנסים, נציג את כולם
-      if (maxVisible >= widget.actions.length) {
-        final actionsToShow = widget.originalOrder ?? widget.actions;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          textDirection: TextDirection.ltr,
-          children: widget.overflowOnRight
-              ? actionsToShow.map((action) => _buildButton(action)).toList()
-              : actionsToShow.reversed
-                  .map((action) => _buildButton(action))
-                  .toList(),
-        );
-      }
+    // אם צריך להסתיר רק כפתור אחד, אין טעם להציג תפריט שתופס מקום בעצמו.
+    // עדיף פשוט להציג את כל הכפתורים.
+    if (totalButtons - widget.maxVisibleButtons == 1) {
+      effectiveMaxVisible = totalButtons;
+    }
 
-      // אם maxVisible הוא 0, נציג רק כפתור "..."
-      if (maxVisible <= 0) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          textDirection: TextDirection.ltr,
-          children: [_buildOverflowButton(widget.actions)],
-        );
-      }
+    List<ActionButtonData> visibleActions;
+    List<ActionButtonData> hiddenActions;
 
-      // אחרת, נציג חלק מהכפתורים + כפתור "..."
-      // נבחר את הכפתורים החשובים ביותר
-      final mostImportantActions = widget.actions.take(maxVisible).toList();
+    // אם יש מקום לכל הכפתורים, נציג את כולם וללא תפריט "..."
+    if (effectiveMaxVisible >= totalButtons) {
+      visibleActions = List.from(widget.originalOrder);
+      hiddenActions = [];
+    } else {
+      final numToHide = totalButtons - effectiveMaxVisible;
 
-      // אם יש סדר מקורי, נסדר את הכפתורים הגלויים לפיו
-      List<ActionButtonData> visibleActions;
-      List<ActionButtonData> hiddenActions;
+      // ניקח את הכפתורים הפחות חשובים מרשימת העדיפויות
+      final Set<ActionButtonData> actionsToHide =
+          widget.actions.reversed.take(numToHide).toSet();
 
-      if (widget.originalOrder != null) {
-        // נשווה לפי tooltip כדי למצוא את הכפתורים החשובים בסדר המקורי
-        final importantTooltips = mostImportantActions
-            .map((action) => action.tooltip)
-            .where((tooltip) => tooltip != null)
-            .toSet();
+      visibleActions = [];
+      hiddenActions = [];
 
-        // נסנן את הכפתורים הגלויים לפי הסדר המקורי
-        visibleActions = widget.originalOrder!
-            .where((action) => importantTooltips.contains(action.tooltip))
-            .toList();
-
-        // הכפתורים הנסתרים הם כל השאר מהסדר המקורי
-        hiddenActions = widget.originalOrder!
-            .where((action) => !importantTooltips.contains(action.tooltip))
-            .toList();
-      } else {
-        // אם אין סדר מקורי, נשתמש בסדר העדיפות
-        visibleActions = widget.actions.take(maxVisible).toList();
-        hiddenActions = widget.actions.skip(maxVisible).toList();
-      }
-
-      if (widget.overflowOnRight) {
-        // כפתור "..." בצד ימין (למסך ספרייה)
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          textDirection: TextDirection.ltr,
-          children: [
-            // הכפתורים הגלויים (בסדר רגיל)
-            ...visibleActions.map((action) => _buildButton(action)),
-
-            // כפתור "..." בצד ימין
-            _buildOverflowButton(hiddenActions),
-          ],
-        );
-      } else {
-        // כפתור "..." בצד שמאל (למסך ספר)
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          textDirection: TextDirection.ltr,
-          children: [
-            // כפתור "..." בצד שמאל
-            _buildOverflowButton(hiddenActions),
-
-            // הכפתורים הגלויים (בסדר הפוך כדי להתאים ל-AppBar)
-            ...visibleActions.reversed.map((action) => _buildButton(action)),
-          ],
-        );
+      // נחלק את הכפתורים (לפי הסדר המקורי!) לגלויים ונסתרים
+      for (final action in widget.originalOrder) {
+        if (actionsToHide.contains(action)) {
+          hiddenActions.add(action);
+        } else {
+          visibleActions.add(action);
+        }
       }
     }
 
-    // אם לא הוגדר מספר מקסימלי, נשתמש ב-LayoutBuilder (לעתיד)
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // חישוב כמה כפתורים יכולים להיכנס ברוחב הזמין
-        final availableWidth = constraints.maxWidth;
-        final buttonWidth = widget.buttonMinWidth + widget.spacing;
+    final visibleWidgets =
+        visibleActions.map((action) => action.widget).toList();
+    final List<Widget> children = [];
 
-        // בדיקה שהרוחב הזמין תקין
-        if (availableWidth <= 0 || buttonWidth <= 0) {
-          return const SizedBox.shrink();
-        }
+    if (widget.overflowOnRight) {
+      // מסך הספרייה: תפריט בצד ימין. הסדר החזותי R->L דורש היפוך הרשימה.
+      children.addAll(visibleWidgets.reversed);
+      if (hiddenActions.isNotEmpty) {
+        children.add(_buildOverflowButton(hiddenActions));
+      }
+    } else {
+      // מסך הספר: תפריט בצד שמאל. הסדר הטבעי של הרשימה מתאים.
+      if (hiddenActions.isNotEmpty) {
+        children.add(_buildOverflowButton(hiddenActions));
+      }
+      children.addAll(visibleWidgets);
+    }
 
-        // בדיקה נוספת שהערכים תקינים
-        if (!availableWidth.isFinite ||
-            !buttonWidth.isFinite ||
-            availableWidth.isNaN ||
-            buttonWidth.isNaN) {
-          return const SizedBox.shrink();
-        }
-
-        // אם הרוחב הוא Infinity (כמו ב-AppBar actions), נציג רק כפתור "..."
-        if (availableWidth.isInfinite) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [_buildOverflowButton(widget.actions)],
-          );
-        }
-
-        // קודם נבדוק אם כל הכפתורים נכנסים בלי כפתור "..."
-        final maxButtonsWithoutOverflow =
-            (availableWidth / buttonWidth).floor();
-
-        // אם כל הכפתורים נכנסים, נציג את כולם בלי כפתור "..."
-        if (maxButtonsWithoutOverflow >= widget.actions.length) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children:
-                widget.actions.map((action) => _buildButton(action)).toList(),
-          );
-        }
-
-        // אם לא כל הכפתורים נכנסים, נצטרך כפתור "..."
-        final overflowButtonWidth = widget.buttonMinWidth + widget.spacing;
-        final availableForButtons = availableWidth - overflowButtonWidth;
-
-        // בדיקה שיש מקום לפחות לכפתור אחד + כפתור "..."
-        if (availableForButtons <= 0) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [_buildOverflowButton(widget.actions)],
-          );
-        }
-
-        final maxVisibleButtons = (availableForButtons / buttonWidth).floor();
-
-        // אם אין מקום לאף כפתור נוסף מלבד "...", נציג רק אותו
-        if (maxVisibleButtons <= 0) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [_buildOverflowButton(widget.actions)],
-          );
-        }
-
-        // נציג חלק מהכפתורים + כפתור "..."
-        final visibleActions = widget.actions.take(maxVisibleButtons).toList();
-        final hiddenActions = widget.actions.skip(maxVisibleButtons).toList();
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // כפתור "..." בצד שמאל
-            _buildOverflowButton(hiddenActions),
-
-            // הכפתורים הגלויים (החשובים ביותר)
-            ...visibleActions.map((action) => _buildButton(action)),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildButton(ActionButtonData action) {
-    return Padding(
-      padding: EdgeInsets.only(left: widget.spacing),
-      child: action.widget,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      textDirection: TextDirection.ltr,
+      children: children,
     );
   }
 
   Widget _buildOverflowButton(List<ActionButtonData> hiddenActions) {
-    return Padding(
-      padding: EdgeInsets.only(left: widget.spacing),
-      child: PopupMenuButton<ActionButtonData>(
-        icon: const Icon(Icons.more_horiz),
-        tooltip: 'עוד פעולות',
-        onSelected: (action) {
-          action.onPressed?.call();
-        },
-        itemBuilder: (context) {
-          return hiddenActions.map((action) {
-            return PopupMenuItem<ActionButtonData>(
-              value: action,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (action.icon != null) ...[
-                    Icon(action.icon),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(action.tooltip ?? ''),
+    // נציג את הכפתורים הנסתרים בתפריט בסדר המקורי שלהם
+    final orderedHiddenActions = widget.originalOrder
+        .where((action) => hiddenActions.contains(action))
+        .toList();
+
+    return PopupMenuButton<ActionButtonData>(
+      icon: const Icon(Icons.more_horiz),
+      tooltip: 'עוד פעולות',
+      // הוספת offset כדי למקם את התפריט מתחת לכפתור
+      offset: const Offset(0, 40.0),
+      onSelected: (action) {
+        action.onPressed?.call();
+      },
+      itemBuilder: (context) {
+        return orderedHiddenActions.map((action) {
+          return PopupMenuItem<ActionButtonData>(
+            value: action,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (action.icon != null) ...[
+                  Icon(action.icon),
+                  const SizedBox(width: 8),
                 ],
-              ),
-            );
-          }).toList();
-        },
-      ),
+                Text(action.tooltip ?? ''),
+              ],
+            ),
+          );
+        }).toList();
+      },
     );
   }
 }
@@ -267,4 +150,14 @@ class ActionButtonData {
     this.tooltip,
     this.onPressed,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ActionButtonData &&
+          runtimeType == other.runtimeType &&
+          tooltip == other.tooltip;
+
+  @override
+  int get hashCode => tooltip.hashCode;
 }
