@@ -18,7 +18,7 @@ import 'package:otzaria/library/view/library_browser.dart';
 import 'package:otzaria/tabs/reading_screen.dart';
 import 'package:otzaria/settings/settings_screen.dart';
 import 'package:otzaria/navigation/more_screen.dart';
-import 'package:otzaria/navigation/about_screen.dart';
+import 'package:otzaria/navigation/about_dialog.dart';
 import 'package:otzaria/widgets/keyboard_shortcuts.dart';
 import 'package:otzaria/update/my_updat_widget.dart';
 
@@ -41,7 +41,6 @@ class MainWindowScreenState extends State<MainWindowScreen>
     KeepAlivePage(child: SizedBox.shrink()),
     KeepAlivePage(child: MoreScreen()),
     KeepAlivePage(child: MySettingsScreen()),
-    KeepAlivePage(child: AboutScreen()),
   ];
 
   @override
@@ -133,19 +132,18 @@ class MainWindowScreenState extends State<MainWindowScreen>
         ),
         label: 'חיפוש',
       ),
-      const NavigationDestination(
+      NavigationDestination(
         icon: Icon(Icons.more_horiz),
-                label: 'עוד',
+        label: 'עוד',
       ),
-       const NavigationDestination(
-        icon: Icon(Icons.info_outline),
-        label: 'אודות',
-      ),
-      const NavigationDestination(
+      NavigationDestination(
         icon: Icon(Icons.settings),
         label: 'הגדרות',
       ),
-     
+      NavigationDestination(
+        icon: Icon(Icons.info_outline),
+        label: 'אודות',
+      ),
     ];
   }
 
@@ -239,6 +237,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                   onDestinationSelected: (index) {
                                     if (index == Screen.search.index) {
                                       _handleSearchTabOpen(context);
+                                    } else if (index == Screen.about.index) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            const AboutDialogWidget(),
+                                      );
                                     } else {
                                       context.read<NavigationBloc>().add(
                                           NavigateToScreen(
@@ -274,6 +278,12 @@ class MainWindowScreenState extends State<MainWindowScreen>
                               onDestinationSelected: (index) {
                                 if (index == Screen.search.index) {
                                   _handleSearchTabOpen(context);
+                                } else if (index == Screen.about.index) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        const AboutDialogWidget(),
+                                  );
                                 } else {
                                   context.read<NavigationBloc>().add(
                                       NavigateToScreen(Screen.values[index]));

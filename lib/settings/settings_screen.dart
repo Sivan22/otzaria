@@ -13,7 +13,6 @@ import 'package:otzaria/settings/settings_event.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/library/bloc/library_bloc.dart';
 import 'package:otzaria/library/bloc/library_event.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:async';
 
 class MySettingsScreen extends StatefulWidget {
@@ -687,25 +686,6 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         }
                       },
                     ),
-                    FutureBuilder(
-                        future: PackageInfo.fromPlatform(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const SimpleSettingsTile(
-                              title: 'גרסה נוכחית',
-                              subtitle: 'המתן..',
-                              leading: Icon(Icons.info_rounded),
-                            );
-                          }
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: SimpleSettingsTile(
-                              title: 'גרסה נוכחית',
-                              subtitle: snapshot.data!.version,
-                              leading: const Icon(Icons.info_rounded),
-                            ),
-                          );
-                        }),
                   ],
                 )
               ],
