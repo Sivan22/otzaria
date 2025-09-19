@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:otzaria/models/books.dart';
-import 'dart:math' as math;
 
 class CopyUtils {
   /// מחלץ את שם הספר
@@ -24,7 +23,6 @@ class CopyUtils {
       final toc = await book.tableOfContents;
       if (toc.isEmpty) return '';
 
-      // שומרים רק את האחרונה לכל רמה עד currentIndex
       final Map<int, String> lastByLevel = {};
       for (final entry in toc) {
         if (entry.index <= currentIndex) {
@@ -33,7 +31,6 @@ class CopyUtils {
             lastByLevel[entry.level] = clean;
           }
         } else {
-          // מרגע שעברנו את האינדקס הנוכחי אין טעם להמשיך
           break;
         }
       }
@@ -63,8 +60,8 @@ class CopyUtils {
   /// מעצב טקסט עם כותרות בהתאם להגדרות
   static String formatTextWithHeaders({
     required String originalText,
-    required String copyWithHeaders, // 'none' | 'book_name' | 'book_and_path'
-    required String copyHeaderFormat, // one of: same_line_* / separate_line_*
+    required String copyWithHeaders,
+    required String copyHeaderFormat,
     required String bookName,
     required String currentPath,
   }) {
@@ -75,15 +72,10 @@ class CopyUtils {
     String header;
 
     if (copyWithHeaders == 'book_name') {
-      // המשתמש בחר "העתקה עם שם הספר בלבד"
       header = bookName;
     } else if (copyWithHeaders == 'book_and_path') {
-      // המשתמש בחר "העתקה עם שם הספר+הנתיב".
-      // `currentPath` הוא הנתיב המלא מהכותרות (כולל שם הספר מ-H1).
-      // לכן, נשתמש בו ישירות. אם הוא ריק, ניקח את שם הקובץ כגיבוי.
       header = currentPath.isNotEmpty ? currentPath : bookName;
     } else {
-      // מצב לא צפוי, אל תוסיף כותרת
       return originalText;
     }
 
@@ -91,7 +83,6 @@ class CopyUtils {
       return originalText;
     }
 
-    // עיצוב המיקום לפי ההעדפה
     String result;
     switch (copyHeaderFormat) {
       case 'same_line_after_brackets':
@@ -123,57 +114,55 @@ class CopyUtils {
   //                 HELPERS - STRICT CONTENT PARSING
   // ------------------------------------------------------------
 
-  /// מוצא את הכותרות האחרוניות <h1..h6> לפני currentIndex בלבד.
+  /// הלוגיקה החדשה: סורקים אחורה מהמיקום הנוכחי עד לתחילת הקובץ,
+  /// ואוספים את הכותרת האחרונה (הקרובה ביותר) מכל רמה.
   static String _extractPathFromContentStrict(
       List<String>? content, int currentIndex) {
     if (content == null || content.isEmpty) return '';
     if (currentIndex < 0 || currentIndex >= content.length) return '';
 
-    final start = math.max(0, currentIndex - 200);
-    final end = currentIndex;
-
-    String? h1, h2, h3, h4; // נשמור את הקרובות ביותר לאינדקס
+    final Map<int, String> lastHeaderByLevel = {};
     final hTag = RegExp(r'<h([1-6])[^>]*>(.*?)</h\1>', dotAll: true);
 
-    for (int i = end; i >= start; i--) {
-      final line = content[i];
-      for (final m in hTag.allMatches(line)) {
-        final levelStr = m.group(1)!;
-        final inner = _cleanHtml(m.group(2)!);
-
-        if (inner.isEmpty) continue;
-
-        switch (levelStr) {
-          case '1':
-            h1 ??= inner;
-            break;
-          case '2':
-            h2 ??= inner;
-            break;
-          case '3':
-            h3 ??= inner;
-            break;
-          case '4':
-            h4 ??= inner;
-            break;
-          default:
-            break;
-        }
+    // סריקה מהמיקום הנוכחי אחורה עד להתחלה
+    for (int i = currentIndex; i >= 0; i--) {
+      // אם כבר מצאנו את כל הרמות הראשיות, אפשר לעצור לטובת יעילות
+      if (lastHeaderByLevel.containsKey(1) &&
+          lastHeaderByLevel.containsKey(2) &&
+          lastHeaderByLevel.containsKey(3)) {
+        break;
       }
 
-      if (h1 != null && h2 != null && h3 != null && h4 != null) break;
+      final line = content[i];
+      for (final match in hTag.allMatches(line)) {
+        try {
+          final level = int.parse(match.group(1)!);
+          final text = _cleanHtml(match.group(2)!);
+
+          // שומרים רק את הכותרת הראשונה שנמצאה עבור כל רמה (כי אנחנו הולכים אחורה)
+          if (!lastHeaderByLevel.containsKey(level) && text.isNotEmpty) {
+            lastHeaderByLevel[level] = text;
+          }
+        } catch (_) {
+          // התעלם אם תגית ה-h אינה תקינה
+        }
+      }
     }
 
+    if (lastHeaderByLevel.isEmpty) return '';
+
+    // הרכבת הנתיב לפי סדר הרמות (1, 2, 3...)
+    final sortedLevels = lastHeaderByLevel.keys.toList()..sort();
     final parts = <String>[];
-    if (h1 != null && h1.trim().isNotEmpty) parts.add(h1.trim());
-    if (h2 != null && h2.trim().isNotEmpty) parts.add(h2.trim());
-    if (h3 != null && h3.trim().isNotEmpty) parts.add(h3.trim());
-    if (h4 != null && h4.trim().isNotEmpty) parts.add(h4.trim());
+    for (final level in sortedLevels) {
+      parts.add(lastHeaderByLevel[level]!);
+    }
 
     final result = parts.join(', ');
     if (kDebugMode) {
       if (result.isNotEmpty)
-        print('CopyUtils: Final path from CONTENT (strict): "$result"');
+        print(
+            'CopyUtils: Final path from CONTENT (strict, full scan): "$result"');
     }
     return result;
   }
