@@ -63,7 +63,7 @@ class MyUpdatWidget extends StatelessWidget {
                 (release) =>
                     release["prerelease"] == true &&
                     release["draft"] == false &&
-                    !release["tag_name"].toString().contains('-pr-'),
+                    !release["tag_name"].toString().contains('-pr'),
                 orElse: () => releases.first,
               );
               return preRelease["tag_name"];
@@ -100,7 +100,7 @@ class MyUpdatWidget extends StatelessWidget {
               switch (platformName) {
                 case 'windows':
                   // For dev channel prefer MSIX, otherwise EXE
-                  if (isDevChannel && name.endsWith('.msix')) {
+                  if (isDevChannel && name.endsWith('.exe')) {
                     assetUrl = downloadUrl;
                     break;
                   } else if (name.endsWith('.exe')) {
