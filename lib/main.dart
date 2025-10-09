@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:hive/hive.dart';
 import 'package:otzaria/app.dart';
 import 'package:otzaria/bookmarks/bloc/bookmark_bloc.dart';
@@ -47,6 +48,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:search_engine/search_engine.dart';
 import 'package:otzaria/core/app_paths.dart';
 import 'package:otzaria/core/window_listener.dart';
+import 'package:shamor_zachor/providers/shamor_zachor_data_provider.dart';
+import 'package:shamor_zachor/providers/shamor_zachor_progress_provider.dart';
 
 // Global reference to window listener for cleanup
 AppWindowListener? _appWindowListener;
@@ -146,6 +149,12 @@ void main() async {
               repository: WorkspaceRepository(),
               tabsBloc: context.read<TabsBloc>(),
             )..add(LoadWorkspaces()),
+          ),
+          ChangeNotifierProvider<ShamorZachorDataProvider>(
+            create: (context) => ShamorZachorDataProvider(),
+          ),
+          ChangeNotifierProvider<ShamorZachorProgressProvider>(
+            create: (context) => ShamorZachorProgressProvider(),
           ),
         ],
         child: const App(),
