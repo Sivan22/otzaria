@@ -8,6 +8,7 @@ import '../widgets/book_card_widget.dart';
 import '../models/book_model.dart';
 import '../models/progress_model.dart';
 import '../utils/message_utils.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// Screen for browsing and searching books
 class BooksScreen extends StatefulWidget {
@@ -73,7 +74,8 @@ class _BooksScreenState extends State<BooksScreen>
 
     return Consumer<ShamorZachorDataProvider>(
       builder: (context, dataProvider, child) {
-        _logger.info('BooksScreen Consumer builder - hasData: ${dataProvider.hasData}, isLoading: ${dataProvider.isLoading}');
+        _logger.info(
+            'BooksScreen Consumer builder - hasData: ${dataProvider.hasData}, isLoading: ${dataProvider.isLoading}');
 
         if (dataProvider.isLoading) {
           return const Center(
@@ -135,7 +137,8 @@ class _BooksScreenState extends State<BooksScreen>
 
         _logger.info('Custom books count: ${customBooksData.length}');
         if (hasCustomBooks) {
-          _logger.info('Custom books: ${customBooksData.map((b) => "${b['categoryName']} - ${b['bookName']}").toList()}');
+          _logger.info(
+              'Custom books: ${customBooksData.map((b) => "${b['categoryName']} - ${b['bookName']}").toList()}');
         }
 
         final customOrder = [
@@ -206,7 +209,7 @@ class _BooksScreenState extends State<BooksScreen>
         controller: _searchController,
         textDirection: TextDirection.rtl,
         decoration: InputDecoration(
-          hintText: 'חפש ספר...',
+          hintText: context.t.search.searchBook,
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
@@ -246,7 +249,7 @@ class _BooksScreenState extends State<BooksScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'לא נמצאו תוצאות',
+                    context.t.common.noResults,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
@@ -256,7 +259,7 @@ class _BooksScreenState extends State<BooksScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'נסה מילות חיפוש אחרות',
+                    context.t.search.tryDifferent,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
@@ -276,7 +279,7 @@ class _BooksScreenState extends State<BooksScreen>
           children: [
             const Icon(Icons.error, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('שגיאה בבניית תוצאות חיפוש'),
+            Text(context.t.search.buildError),
             Text('Error: $e'),
           ],
         ),
@@ -331,7 +334,8 @@ class _BooksScreenState extends State<BooksScreen>
   /// Build view for custom (user-added) books
   Widget _buildCustomBooksView(ShamorZachorDataProvider dataProvider) {
     final customBooksData = dataProvider.getCustomBooks();
-    _logger.info('_buildCustomBooksView: ${customBooksData.length} custom books');
+    _logger
+        .info('_buildCustomBooksView: ${customBooksData.length} custom books');
 
     final items = <_BookItem>[];
 
@@ -568,10 +572,10 @@ class _BooksScreenState extends State<BooksScreen>
         bookName: item.bookName,
       );
 
-      ShamorZachorMessenger.showSuccess(
-          'הספר "${item.bookName}" הוסר מהמעקב');
+      ShamorZachorMessenger.showSuccess('הספר "${item.bookName}" הוסר מהמעקב');
     } catch (e, stackTrace) {
-      _logger.severe('Failed to delete custom book ${item.bookName}', e, stackTrace);
+      _logger.severe(
+          'Failed to delete custom book ${item.bookName}', e, stackTrace);
       ShamorZachorMessenger.showError('שגיאה בהסרת הספר: $e');
     }
   }

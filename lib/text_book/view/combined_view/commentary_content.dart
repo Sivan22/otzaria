@@ -8,6 +8,7 @@ import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/i18n/translations.g.dart';
 
 class CommentaryContent extends StatefulWidget {
   const CommentaryContent({
@@ -119,7 +120,7 @@ class _CommentaryContentState extends State<CommentaryContent> {
             }
             if (snapshot.hasError) {
               return Center(
-                child: Text('שגיאה בטעינת הפרשן: ${snapshot.error}'),
+                child: Text(context.t.textBook.errorLoadingCommentator(error: snapshot.error.toString())),
               );
             }
             return _buildSkeletonLoading(context);

@@ -26,6 +26,7 @@ import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_event.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/navigation/calendar_cubit.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class MainWindowScreen extends StatefulWidget {
   const MainWindowScreen({super.key});
@@ -123,7 +124,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
     }
   }
 
-  List<NavigationDestination> _buildNavigationDestinations() {
+  List<NavigationDestination> _buildNavigationDestinations(BuildContext context) {
     String formatShortcut(String shortcut) => shortcut.toUpperCase();
 
     final libraryShortcut =
@@ -145,7 +146,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
           message: formatShortcut(libraryShortcut),
           child: const Icon(FluentIcons.library_24_regular),
         ),
-        label: 'ספרייה',
+        label: context.t.navigation.library,
       ),
       NavigationDestination(
         tooltip: '',
@@ -154,7 +155,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
           message: formatShortcut(findShortcut),
           child: const Icon(FluentIcons.book_search_24_regular),
         ),
-        label: 'איתור',
+        label: context.t.navigation.find,
       ),
       NavigationDestination(
         tooltip: '',
@@ -163,7 +164,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
           message: formatShortcut(browseShortcut),
           child: const Icon(FluentIcons.book_open_24_regular),
         ),
-        label: 'עיון',
+        label: context.t.navigation.reading,
       ),
       NavigationDestination(
         tooltip: '',
@@ -172,7 +173,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
           message: formatShortcut(searchShortcut),
           child: const Icon(FluentIcons.search_24_regular),
         ),
-        label: 'חיפוש',
+        label: context.t.navigation.search,
       ),
       NavigationDestination(
         tooltip: '',
@@ -183,7 +184,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
           ),
           child: const Icon(FluentIcons.apps_24_regular),
         ),
-        label: 'כלים',
+        label: context.t.navigation.tools,
       ),
       NavigationDestination(
         tooltip: '',
@@ -195,11 +196,11 @@ class MainWindowScreenState extends State<MainWindowScreen>
           ),
           child: const Icon(FluentIcons.settings_24_regular),
         ),
-        label: 'הגדרות',
+        label: context.t.navigation.settings,
       ),
       NavigationDestination(
         icon: Icon(FluentIcons.info_24_regular),
-        label: 'אודות',
+        label: context.t.navigation.about,
       ),
     ];
   }
@@ -317,7 +318,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                             for (int i = 0; i < 7; i++)
                                               _buildNavButton(
                                                 context,
-                                                _buildNavigationDestinations()[i],
+                                                _buildNavigationDestinations(context)[i],
                                                 i,
                                                 state.currentScreen,
                                               ),
@@ -332,7 +333,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                           for (int i = 0; i < 5; i++)
                                             _buildNavButton(
                                               context,
-                                              _buildNavigationDestinations()[i],
+                                              _buildNavigationDestinations(context)[i],
                                               i,
                                               state.currentScreen,
                                             ),
@@ -342,7 +343,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                                           for (int i = 5; i < 7; i++)
                                             _buildNavButton(
                                               context,
-                                              _buildNavigationDestinations()[i],
+                                              _buildNavigationDestinations(context)[i],
                                               i,
                                               state.currentScreen,
                                             ),
@@ -362,7 +363,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
                           children: [
                             Expanded(child: pageView),
                             NavigationBar(
-                              destinations: _buildNavigationDestinations(),
+                              destinations: _buildNavigationDestinations(context),
                               selectedIndex: _getSelectedIndex(
                                 state.currentScreen,
                               ),
@@ -454,7 +455,7 @@ class MainWindowScreenState extends State<MainWindowScreen>
     );
 
     if (!hasSearchTab) {
-      tabsBloc.add(AddTab(SearchingTab("חיפוש", "")));
+      tabsBloc.add(AddTab(SearchingTab(context.t.navigation.search, "")));
     } else {
       final currentScreen = navigationBloc.state.currentScreen;
       final isAlreadySearchTab =

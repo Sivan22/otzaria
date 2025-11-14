@@ -13,6 +13,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/core/scaffold_messenger.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/widgets/items_list_view.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class BookmarkView extends StatelessWidget {
   const BookmarkView({super.key});
@@ -41,18 +42,19 @@ class BookmarkView extends StatelessWidget {
               _openBook(ctx, item.book, item.index, item.commentatorsToShow),
           onDelete: (ctx, originalIndex) {
             ctx.read<BookmarkBloc>().removeBookmark(originalIndex);
-            UiSnack.show('הסימניה נמחקה');
+            UiSnack.show(ctx.t.bookmarks.bookmarkDeleted);
           },
           onClearAll: (ctx) {
             ctx.read<BookmarkBloc>().clearBookmarks();
-            UiSnack.show('כל הסימניות נמחקו');
+            UiSnack.show(ctx.t.bookmarks.allBookmarksDeleted);
           },
-          hintText: 'חפש בסימניות...',
-          emptyText: 'אין סימניות',
-          notFoundText: 'לא נמצאו תוצאות',
-          clearAllText: 'מחק את כל הסימניות',
-          leadingIconBuilder: (item) =>
-              item.book is PdfBook ? const Icon(FluentIcons.document_pdf_24_regular) : null,
+          hintText: context.t.bookmarks.searchHint,
+          emptyText: context.t.bookmarks.empty,
+          notFoundText: context.t.bookmarks.notFound,
+          clearAllText: context.t.bookmarks.clearAll,
+          leadingIconBuilder: (item) => item.book is PdfBook
+              ? const Icon(FluentIcons.document_pdf_24_regular)
+              : null,
         );
       },
     );

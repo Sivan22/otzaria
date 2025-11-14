@@ -4,6 +4,7 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:synchronized/extension.dart';
 import 'package:otzaria/utils/ref_helper.dart';
 import 'package:otzaria/widgets/search_pane_base.dart';
+import 'package:otzaria/i18n/translations.g.dart'; // Add import
 
 //
 // Simple Text Search View
@@ -168,8 +169,9 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
             )
           : null,
       resultCountString: widget.textSearcher.matches.isNotEmpty
-          ? 'נמצאו ${widget.textSearcher.matches.length} תוצאות'
-          : null,
+          ? context.t.search.resultsCount(
+              count: widget.textSearcher.matches.length.toString())
+          : null, // Old: 'נמצאו ${widget.textSearcher.matches.length} תוצאות'
       resultsWidget: ListView.builder(
         key: Key(widget.searchController.text),
         controller: scrollController,
@@ -199,7 +201,9 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
               child: Text(
                 _pageTitles[-matchIndex]?.isNotEmpty == true
                     ? _pageTitles[-matchIndex]!
-                    : 'עמוד ${-matchIndex}',
+                    : context.t.search.page(
+                        page: (-matchIndex)
+                            .toString()), // Old: 'עמוד ${-matchIndex}'
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -214,7 +218,7 @@ class _PdfBookSearchViewState extends State<PdfBookSearchView> {
           widget.textSearcher.matches.isEmpty,
       onSearchTextChanged: (_) => _searchTextUpdated(),
       resetSearchCallback: () => widget.textSearcher.resetTextSearch(),
-      hintText: 'חפש כאן..',
+      hintText: context.t.search.pdfPlaceholder, // Old: 'חפש כאן..'
     );
   }
 

@@ -28,6 +28,7 @@ import 'package:otzaria/settings/reading_settings_dialog.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 import 'package:otzaria/settings/settings_event.dart';
 
 class ReadingScreen extends StatefulWidget {
@@ -114,14 +115,16 @@ class _ReadingScreenState extends State<ReadingScreen>
                         // קבוצת היסטוריה וסימניות
                         IconButton(
                           icon: const Icon(FluentIcons.history_24_regular),
-                          tooltip:
-                              'הצג היסטוריה (${historyShortcut.toUpperCase()})',
+                          tooltip: context.t.reading.showHistoryTooltip
+                              .replaceAll(
+                                  '{shortcut}', historyShortcut.toUpperCase()),
                           onPressed: () => _showHistoryDialog(context),
                         ),
                         IconButton(
                           icon: const Icon(FluentIcons.bookmark_24_regular),
-                          tooltip:
-                              'הצג סימניות (${bookmarksShortcut.toUpperCase()})',
+                          tooltip: context.t.reading.showBookmarksTooltip
+                              .replaceAll('{shortcut}',
+                                  bookmarksShortcut.toUpperCase()),
                           onPressed: () => _showBookmarksDialog(context),
                         ),
                         // קו מפריד
@@ -134,15 +137,16 @@ class _ReadingScreenState extends State<ReadingScreen>
                         // קבוצת שולחן עבודה
                         IconButton(
                           icon: const Icon(FluentIcons.add_square_24_regular),
-                          tooltip:
-                              'החלף שולחן עבודה (${workspaceShortcut.toUpperCase()})',
+                          tooltip: context.t.reading.switchWorkspaceTooltip
+                              .replaceAll('{shortcut}',
+                                  workspaceShortcut.toUpperCase()),
                           onPressed: () => _showSaveWorkspaceDialog(context),
                         ),
                       ],
                     ),
                     titleSpacing: 0,
                     centerTitle: true,
-                    title: const Text('עיון'),
+                    title: Text(context.t.navigation.reading),
                     actions: [
                       // כפתור מסך מלא
                       BlocBuilder<SettingsBloc, SettingsState>(
@@ -152,8 +156,8 @@ class _ReadingScreenState extends State<ReadingScreen>
                                 ? FluentIcons.full_screen_minimize_24_regular
                                 : FluentIcons.full_screen_maximize_24_regular),
                             tooltip: settingsState.isFullscreen
-                                ? 'צא ממסך מלא'
-                                : 'מסך מלא',
+                                ? context.t.settings.fullscreen
+                                : context.t.settings.fullscreen,
                             onPressed: () async {
                               final newFullscreenState =
                                   !settingsState.isFullscreen;
@@ -171,7 +175,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: IconButton(
                           icon: const Icon(FluentIcons.settings_24_regular),
-                          tooltip: 'הגדרות תצוגת הספרים',
+                          tooltip: context.t.settings.bookDisplaySettings,
                           onPressed: () => showReadingSettingsDialog(context),
                           style: IconButton.styleFrom(
                             foregroundColor:
@@ -191,10 +195,10 @@ class _ReadingScreenState extends State<ReadingScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(16.0),
                           child: Text(
-                            'לא נבחרו ספרים',
+                            context.t.common.empty,
                             style: TextStyle(fontSize: 18),
                           ),
                         ),
@@ -207,7 +211,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                                   );
                             },
                             icon: const Icon(FluentIcons.library_24_regular),
-                            label: const Text('דפדף בספרייה'),
+                            label: Text(context.t.navigation.library),
                           ),
                         ),
                       ],
@@ -265,14 +269,16 @@ class _ReadingScreenState extends State<ReadingScreen>
                       // קבוצת היסטוריה וסימניות
                       IconButton(
                         icon: const Icon(FluentIcons.history_24_regular),
-                        tooltip:
-                            'הצג היסטוריה (${historyShortcut.toUpperCase()})',
+                        tooltip: context.t.reading.showHistoryTooltip
+                            .replaceAll(
+                                '{shortcut}', historyShortcut.toUpperCase()),
                         onPressed: () => _showHistoryDialog(context),
                       ),
                       IconButton(
                         icon: const Icon(FluentIcons.bookmark_24_regular),
-                        tooltip:
-                            'הצג סימניות (${bookmarksShortcut.toUpperCase()})',
+                        tooltip: context.t.reading.showBookmarksTooltip
+                            .replaceAll(
+                                '{shortcut}', bookmarksShortcut.toUpperCase()),
                         onPressed: () => _showBookmarksDialog(context),
                       ),
                       // קו מפריד
@@ -285,8 +291,9 @@ class _ReadingScreenState extends State<ReadingScreen>
                       // קבוצת שולחן עבודה עם אנימציה
                       IconButton(
                         icon: const Icon(FluentIcons.add_square_24_regular),
-                        tooltip:
-                            'החלף שולחן עבודה (${workspaceShortcut.toUpperCase()})',
+                        tooltip: context.t.reading.switchWorkspaceTooltip
+                            .replaceAll(
+                                '{shortcut}', workspaceShortcut.toUpperCase()),
                         onPressed: () => _showSaveWorkspaceDialog(context),
                       ),
                     ],
@@ -327,8 +334,8 @@ class _ReadingScreenState extends State<ReadingScreen>
                               ? FluentIcons.full_screen_minimize_24_regular
                               : FluentIcons.full_screen_maximize_24_regular),
                           tooltip: settingsState.isFullscreen
-                              ? 'צא ממסך מלא'
-                              : 'מסך מלא',
+                              ? context.t.settings.exitFullscreen
+                              : context.t.settings.fullscreen,
                           onPressed: () async {
                             final newFullscreenState =
                                 !settingsState.isFullscreen;
@@ -346,7 +353,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: IconButton(
                         icon: const Icon(FluentIcons.settings_24_regular),
-                        tooltip: 'הגדרות תצוגת הספרים',
+                        tooltip: context.t.settings.bookDisplaySettings,
                         onPressed: () => showReadingSettingsDialog(context),
                         style: IconButton.styleFrom(
                           foregroundColor:
@@ -419,21 +426,23 @@ class _ReadingScreenState extends State<ReadingScreen>
       child: ContextMenuRegion(
         contextMenu: ContextMenu(
           entries: [
-            MenuItem(label: 'סגור', onSelected: () => closeTab(tab, context)),
             MenuItem(
-                label: 'סגור הכל',
+                label: context.t.common.close,
+                onSelected: () => closeTab(tab, context)),
+            MenuItem(
+                label: context.t.settings.closeAllBooks,
                 onSelected: () => closeAllTabs(state, context)),
             MenuItem(
-              label: 'סגור את האחרים',
+              label: context.t.tabs.closeOthers,
               onSelected: () => closeAllTabsButCurrent(state, context),
             ),
             MenuItem(
-              label: 'שיכפול',
+              label: context.t.tabs.clone,
               onSelected: () => context.read<TabsBloc>().add(CloneTab(tab)),
             ),
             // הוסרת אפשרות הצמדה לדף הבית לאחר הסרת דף הבית
             MenuItem.submenu(
-              label: 'רשימת הכרטיסיות ',
+              label: context.t.tabs.tabList,
               items: _getMenuItems(state.tabs, context),
             )
           ],
@@ -634,7 +643,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     if (currentPinnedBooksJson.any((book) => book['title'] == tab.title)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('"${tab.title}" כבר נעוץ בדף הבית'),
+          content: Text('"${tab.title}" ${context.t.tabs.alreadyPinned}'),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -668,7 +677,7 @@ class _ReadingScreenState extends State<ReadingScreen>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('הצמדת "${tab.title}" לדף הבית'),
+        content: Text('${context.t.tabs.pinnedToHome} "${tab.title}"'),
         duration: const Duration(seconds: 2),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// Generic settings dialog that can be used across different screens
 /// Supports master switches and dependent sub-settings
@@ -34,7 +35,7 @@ class GenericSettingsDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('סגור'),
+          child: Text(context.t.common.close),
         ),
       ],
     );

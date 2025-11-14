@@ -16,6 +16,7 @@ import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:search_highlight_text/search_highlight_text.dart';
 import '../models/legacy_full_text_searcher.dart';
 import 'book_tree_checklist.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class TextFileSearchScreen extends StatefulWidget {
   final void Function(OpenedTab) openBookCallback;
@@ -143,9 +144,9 @@ class TextFileSearchScreenState extends State<TextFileSearchScreen>
     return Expanded(
       child: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.all(15.0),
-            child: Text("רשימת הספרים לחיפוש:"),
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Text(context.t.search.bookListForSearch),
           ),
           Expanded(
               child: FileTreeViewScreen(

@@ -3,6 +3,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import '../models/phone_report_data.dart';
 import '../widgets/reporting_numbers_widget.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// Tab widget for phone-based error reporting
 class PhoneReportTab extends StatefulWidget {
@@ -54,23 +55,23 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
     super.dispose();
   }
 
-  List<String> get _validationErrors {
+  List<String> _validationErrors(BuildContext context) {
     final errors = <String>[];
 
     if (_selectedText == null || _selectedText!.isEmpty) {
-      errors.add('יש לבחור טקסט שבו נמצאת השגיאה');
+      errors.add(context.t.report.mustSelectText);
     }
 
     if (_selectedErrorType == null) {
-      errors.add('יש לבחור סוג שגיאה');
+      errors.add(context.t.report.mustSelectErrorType);
     }
 
     if (widget.bookId == null) {
-      errors.add('לא ניתן למצוא את הספר במאגר הנתונים');
+      errors.add(context.t.report.cannotFindBook);
     }
 
     if (widget.libraryVersion == 'unknown') {
-      errors.add('לא ניתן לקרוא את גירסת הספרייה');
+      errors.add(context.t.report.cannotReadLibraryVersion);
     }
 
     return errors;
@@ -108,7 +109,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'הוראות לדיווח טלפוני:',
+              context.t.report.phoneReportInstructions,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -117,9 +118,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              '1. סמן את הטקסט שבו נמצאת הטעות  •  '
-              '2. בחר את סוג השגיאה מהרשימה  •  '
-              '3. השתמש במספרים המוצגים למטה כשתתקשר',
+              context.t.report.phoneReportSteps,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
@@ -136,7 +135,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'סמן את הטקסט שבו נמצאת הטעות:',
+          context.t.report.selectTextWithError,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -234,7 +233,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'הטקסט שנבחר:',
+                  context.t.report.selectedText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -259,7 +258,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'בחר סוג שגיאה:',
+          context.t.report.selectErrorType,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -268,9 +267,9 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
         const SizedBox(height: 8),
         DropdownButtonFormField<ErrorType>(
           initialValue: _selectedErrorType,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             border: OutlineInputBorder(),
-            hintText: 'בחר סוג שגיאה...',
+            hintText: context.t.report.selectErrorTypeHint,
           ),
           isExpanded: true,
           items: ErrorType.errorTypes.map((errorType) {
@@ -305,7 +304,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
   }
 
   Widget _buildValidationErrors(BuildContext context) {
-    final errors = _validationErrors;
+    final errors = _validationErrors(context);
     if (errors.isEmpty) return const SizedBox.shrink();
 
     return Card(
@@ -324,7 +323,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'יש לתקן את השגיאות הבאות:',
+                  context.t.report.mustFixErrors,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onErrorContainer,
@@ -372,7 +371,7 @@ class _PhoneReportTabState extends State<PhoneReportTab> {
       children: [
         TextButton(
           onPressed: widget.onCancel,
-          child: const Text('ביטול'),
+          child: Text(context.t.common.cancel),
         ),
       ],
     );

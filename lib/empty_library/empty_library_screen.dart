@@ -6,6 +6,7 @@ import 'package:otzaria/empty_library/bloc/empty_library_event.dart';
 import 'package:otzaria/empty_library/bloc/empty_library_state.dart';
 import 'dart:io' show Platform;
 import 'package:otzaria/core/scaffold_messenger.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class EmptyLibraryScreen extends StatelessWidget {
   final VoidCallback onLibraryLoaded;
@@ -56,9 +57,9 @@ class _EmptyLibraryView extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
-          'לא נמצאה ספרייה',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        Text(
+          context.t.emptyLibrary.noLibraryFound,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         if (!Platform.isAndroid && !Platform.isIOS) const SizedBox(height: 32),
@@ -78,7 +79,8 @@ class _EmptyLibraryView extends StatelessWidget {
                 ? null
                 : () => BlocProvider.of<EmptyLibraryBloc>(context)
                     .add(PickDirectoryRequested()),
-            child: const Text('בחר תיקייה'),
+            child:
+                Text(context.t.emptyLibrary.chooseFolder), // Old: 'בחר תיקייה'
           ),
         const SizedBox(height: 32),
         if (Platform.isAndroid)
@@ -87,11 +89,12 @@ class _EmptyLibraryView extends StatelessWidget {
                 ? null
                 : () => BlocProvider.of<EmptyLibraryBloc>(context)
                     .add(PickAndExtractZipRequested()),
-            child: const Text('בחר קובץ ZIP מהמכשיר'),
+            child: Text(context
+                .t.emptyLibrary.chooseZip), // Old: 'בחר קובץ ZIP מהמכשיר'
           ),
-        const Text(
-          'או',
-          style: TextStyle(fontSize: 18),
+        Text(
+          context.t.emptyLibrary.or,
+          style: const TextStyle(fontSize: 18),
         ),
         const SizedBox(height: 32),
         if (state.isDownloading) ...[
@@ -102,7 +105,8 @@ class _EmptyLibraryView extends StatelessWidget {
                 ? null
                 : () => BlocProvider.of<EmptyLibraryBloc>(context)
                     .add(DownloadLibraryRequested()),
-            child: const Text('הורד את הספרייה מהאינטרנט (1.2GB)'),
+            child: Text(context.t.emptyLibrary
+                .downloadLibrary), // Old: 'הורד את הספרייה מהאינטרנט (1.2GB)'
           ),
       ],
     );
@@ -122,7 +126,9 @@ class _DownloadProgress extends StatelessWidget {
         const SizedBox(height: 16),
         Text(state.currentOperation),
         if (state.downloadSpeed > 0)
-          Text('מהירות הורדה: ${state.downloadSpeed.toStringAsFixed(2)} MB/s'),
+          Text(context.t.emptyLibrary.downloadSpeed(
+              speed: state.downloadSpeed.toStringAsFixed(
+                  2))), // Old: 'מהירות הורדה: ${state.downloadSpeed.toStringAsFixed(2)} MB/s'
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: state.isCancelling

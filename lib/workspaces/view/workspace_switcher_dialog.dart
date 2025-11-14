@@ -9,6 +9,7 @@ import 'package:otzaria/tabs/bloc/tabs_bloc.dart';
 import 'package:otzaria/tabs/bloc/tabs_state.dart';
 import 'package:otzaria/daf_yomi/calendar.dart';
 import 'package:otzaria/core/scaffold_messenger.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class WorkspaceSwitcherDialog extends StatefulWidget {
   const WorkspaceSwitcherDialog({super.key});
@@ -83,7 +84,9 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                   }
 
                   if (state.error != null) {
-                    return Center(child: Text('שגיאה: ${state.error}'));
+                    return Center(
+                        child: Text(
+                            '${context.t.common.error}: ${state.error}')); // Old: 'שגיאה: ${state.error}'
                   }
 
                   return GridView.builder(
@@ -240,7 +243,8 @@ class _WorkspaceSwitcherDialogState extends State<WorkspaceSwitcherDialog> {
                                   ),
                                 ),
                                 IconButton(
-                                    icon: const Icon(FluentIcons.edit_24_regular),
+                                    icon:
+                                        const Icon(FluentIcons.edit_24_regular),
                                     onPressed: () {
                                       setState(() {
                                         editController = TextEditingController(

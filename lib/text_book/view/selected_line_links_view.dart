@@ -12,6 +12,7 @@ import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// Widget שמציג את הקישורים של השורה הנבחרת בלבד
 class SelectedLineLinksView extends StatefulWidget {
@@ -102,7 +103,8 @@ class _SelectedLineLinksViewState extends State<SelectedLineLinksView> {
                               });
                             },
                           ),
-                          const Text('חפש גם בתוכן הקישורים'),
+                          Text(context.t.links
+                              .searchInLinks), // Old: 'חפש גם בתוכן הקישורים'
                         ],
                       ),
                     ),

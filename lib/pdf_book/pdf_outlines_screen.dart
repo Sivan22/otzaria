@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class OutlineView extends StatefulWidget {
   const OutlineView({
@@ -207,8 +208,8 @@ class _OutlineViewState extends State<OutlineView>
     super.build(context);
     final outline = widget.outline;
     if (outline == null || outline.isEmpty) {
-      return const Center(
-        child: Text('אין תוכן עניינים'),
+      return Center(
+        child: Text(context.t.pdfBook.noOutline), // Old: 'אין תוכן עניינים'
       );
     }
 

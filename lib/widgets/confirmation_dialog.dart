@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// דיאלוג אישור עם תמיכה באנטר וחיצים
 class ConfirmationDialog extends StatefulWidget {
   final String title;
   final String content;
-  final String cancelText;
-  final String confirmText;
+  final String? cancelText;
+  final String? confirmText;
   final Color? confirmColor;
   final bool isDangerous;
 
@@ -14,8 +15,8 @@ class ConfirmationDialog extends StatefulWidget {
     super.key,
     required this.title,
     required this.content,
-    this.cancelText = 'ביטול',
-    this.confirmText = 'אישור',
+    this.cancelText,
+    this.confirmText,
     this.confirmColor,
     this.isDangerous = false,
   });
@@ -64,12 +65,12 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
         content: Text(widget.content),
         actions: [
           _buildButton(
-            text: widget.cancelText,
+            text: widget.cancelText ?? context.t.common.cancel,
             isFocused: _focusedButtonIndex == 0,
             onPressed: () => Navigator.of(context).pop(false),
           ),
           _buildButton(
-            text: widget.confirmText,
+            text: widget.confirmText ?? context.t.common.confirm,
             isFocused: _focusedButtonIndex == 1,
             isConfirm: true,
             onPressed: () => Navigator.of(context).pop(true),
@@ -113,8 +114,8 @@ Future<bool?> showConfirmationDialog({
   required BuildContext context,
   required String title,
   required String content,
-  String cancelText = 'ביטול',
-  String confirmText = 'אישור',
+  String? cancelText,
+  String? confirmText,
   Color? confirmColor,
   bool isDangerous = false,
   bool barrierDismissible = true,

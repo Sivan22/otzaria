@@ -6,6 +6,7 @@ import 'package:otzaria/library/models/library.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/utils/open_book.dart';
 import 'package:otzaria/core/scaffold_messenger.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 // Generic tree search for outlines
 typedef EntryTextGetter<T> = String Function(T entry);
@@ -159,9 +160,9 @@ Future<void> _openBookFromRefHelper(
     if (index != null) {
       openBook(context, book, index, '', ignoreHistory: true);
     } else {
-      UiSnack.showError(UiSnack.sectionNotFound);
+      UiSnack.showError(context.t.messages.sectionNotFound);
     }
   } else {
-    UiSnack.showError(UiSnack.bookNotFound);
+    UiSnack.showError(context.t.messages.bookNotFound);
   }
 }

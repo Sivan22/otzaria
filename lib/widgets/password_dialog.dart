@@ -2,6 +2,7 @@
 // Simple password dialog
 //
 import 'package:flutter/material.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 Future<String?> passwordDialog(BuildContext context) async {
   final textController = TextEditingController();
@@ -10,7 +11,7 @@ Future<String?> passwordDialog(BuildContext context) async {
     barrierDismissible: false,
     builder: (context) {
       return AlertDialog(
-        title: const Text('Enter password'),
+        title: Text(context.t.password.enterPassword),
         content: TextField(
           controller: textController,
           autofocus: true,
@@ -21,11 +22,11 @@ Future<String?> passwordDialog(BuildContext context) async {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(null),
-            child: const Text('Cancel'),
+            child: Text(context.t.common.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(textController.text),
-            child: const Text('OK'),
+            child: Text(context.t.common.confirm),
           ),
         ],
       );

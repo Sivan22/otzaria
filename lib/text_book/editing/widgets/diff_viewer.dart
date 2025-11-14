@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// Widget for displaying side-by-side diff of original vs edited content
 class DiffViewer extends StatelessWidget {
@@ -18,7 +19,7 @@ class DiffViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('השוואה - $title'),
+        title: Text(context.t.editor.diffTitle(title: title)),
         actions: [
           IconButton(
             icon: const Icon(FluentIcons.dismiss_24_regular),
@@ -42,9 +43,9 @@ class DiffViewer extends StatelessWidget {
                           BorderSide(color: Colors.red.withValues(alpha: 0.3)),
                     ),
                   ),
-                  child: const Text(
-                    'מקור',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    context.t.editor.original,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -86,9 +87,9 @@ class DiffViewer extends StatelessWidget {
                           color: Colors.green.withValues(alpha: 0.3)),
                     ),
                   ),
-                  child: const Text(
-                    'נערך',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    context.t.editor.edited,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                 ),

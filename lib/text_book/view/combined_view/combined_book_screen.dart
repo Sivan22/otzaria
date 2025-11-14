@@ -23,6 +23,7 @@ import 'package:otzaria/core/scaffold_messenger.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:otzaria/utils/html_link_handler.dart';
 import 'package:otzaria/utils/text_with_inline_links.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class CombinedView extends StatefulWidget {
   CombinedView({
@@ -536,11 +537,12 @@ $textWithBreaks
           htmlText: htmlContentToUse,
           fontFamily: settingsState.fontFamily,
           fontSize: widget.textSize,
+          context: context,
         );
       }
     } catch (e) {
       if (mounted) {
-        UiSnack.showError('שגיאה בהעתקה מעוצבת: $e',
+        UiSnack.showError('${context.t.messages.formattedCopyError}: $e',
             backgroundColor: Theme.of(context).colorScheme.error);
       }
     }

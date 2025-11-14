@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class PersonalNoteEditorDialog extends StatefulWidget {
   final TextEditingController controller;
@@ -8,7 +9,7 @@ class PersonalNoteEditorDialog extends StatefulWidget {
   PersonalNoteEditorDialog({
     super.key,
     TextEditingController? controller,
-    this.title = 'הערה חדשה',
+    this.title = '',
   }) : controller = controller ?? TextEditingController();
 
   @override
@@ -89,7 +90,7 @@ class _PersonalNoteEditorDialogState extends State<PersonalNoteEditorDialog> {
         return KeyEventResult.ignored;
       },
       child: AlertDialog(
-        title: Text(widget.title),
+        title: Text(widget.title.isEmpty ? context.t.notes.newNote : widget.title),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: TextField(
@@ -99,20 +100,20 @@ class _PersonalNoteEditorDialogState extends State<PersonalNoteEditorDialog> {
             maxLines: 12,
             autofocus: true,
             keyboardType: TextInputType.multiline,
-            decoration: const InputDecoration(
-              hintText: 'כתבו כאן את ההערה האישית\n(Alt+Enter לשמירה)',
+            decoration: InputDecoration(
+              hintText: context.t.notes.writeNoteHere,
               border: OutlineInputBorder(),
             ),
           ),
         ),
         actions: [
           _buildButton(
-            text: 'ביטול',
+            text: context.t.common.cancel,
             isFocused: _focusedButtonIndex == 0,
             onPressed: () => Navigator.of(context).pop(),
           ),
           _buildButton(
-            text: 'שמור',
+            text: context.t.common.save,
             isFocused: _focusedButtonIndex == 1,
             isConfirm: true,
             onPressed: _submit,

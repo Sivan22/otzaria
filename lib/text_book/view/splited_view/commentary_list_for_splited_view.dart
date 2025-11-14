@@ -11,6 +11,7 @@ import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class CommentaryList extends StatefulWidget {
   final Function(TextBookTab) openBookCallback;
@@ -244,7 +245,7 @@ class _CommentaryListState extends State<CommentaryList> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (thisLinksSnapshot.data!.isEmpty) {
-                  return const Center(child: Text("לא נמצאו מפרשים להצגה"));
+                  return Center(child: Text(context.t.textBook.noCommentatorsToShow));
                 }
 
                 // יצירת מפתח ייחודי לאינדקסים הנוכחיים

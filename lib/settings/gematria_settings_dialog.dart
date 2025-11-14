@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// פונקציה גלובלית להצגת דיאלוג הגדרות גימטריה
 /// ניתן לקרוא לה מכל מקום באפליקציה
 Future<void> showGematriaSettingsDialog(BuildContext context) async {
   debugPrint('🔧 showGematriaSettingsDialog called');
-  
+
   int maxResults = Settings.getValue<int>('key-gematria-max-results') ?? 100;
   bool filterDuplicates =
       Settings.getValue<bool>('key-gematria-filter-duplicates') ?? false;
@@ -23,15 +24,17 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
-        title: const Text('הגדרות חיפוש גימטריה', textAlign: TextAlign.right),
+        title: Text(context.t.gematria.settingsTitle,
+            textAlign: TextAlign.right), // Old: 'הגדרות חיפוש גימטריה'
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Align(
+              Align(
                 alignment: Alignment.centerRight,
-                child: Text('מספר תוצאות מקסימלי:'),
+                child: Text(
+                    '${context.t.gematria.maxResults}:'), // Old: 'מספר תוצאות מקסימלי:'
               ),
               const SizedBox(height: 8),
               DropdownButton<int>(
@@ -56,7 +59,9 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
-                title: const Text('סינון תוצאות כפולות',
+                title: Text(
+                    context.t.gematria
+                        .filterDuplicates, // Old: 'סינון תוצאות כפולות'
                     textAlign: TextAlign.right),
                 value: filterDuplicates,
                 onChanged: (value) {
@@ -69,7 +74,9 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
                 contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
-                title: const Text('חיפוש פסוק שלם בלבד',
+                title: Text(
+                    context.t.gematria
+                        .wholeVerseOnly, // Old: 'חיפוש פסוק שלם בלבד'
                     textAlign: TextAlign.right),
                 value: wholeVerseOnly,
                 onChanged: (value) {
@@ -82,8 +89,8 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
                 contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
-                title:
-                    const Text('חיפוש בתורה בלבד', textAlign: TextAlign.right),
+                title: Text(context.t.gematria.torahOnly,
+                    textAlign: TextAlign.right), // Old: 'חיפוש בתורה בלבד'
                 value: torahOnly,
                 onChanged: (value) {
                   torahOnly = value ?? false;
@@ -94,16 +101,18 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
                 contentPadding: EdgeInsets.zero,
               ),
               const SizedBox(height: 16),
-              const Align(
+              Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'שיטת חישוב גימטריה:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  context
+                      .t.gematria.gematriaMethod, // Old: 'שיטת חישוב גימטריה:'
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 8),
               CheckboxListTile(
-                title: const Text('גימטריה קטנה', textAlign: TextAlign.right),
+                title: Text(context.t.gematria.smallGematria,
+                    textAlign: TextAlign.right), // Old: 'גימטריה קטנה'
                 value: useSmallGematria,
                 onChanged: (value) {
                   useSmallGematria = value ?? false;
@@ -120,7 +129,9 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
                 contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
-                title: const Text('אותיות סופיות שונות',
+                title: Text(
+                    context
+                        .t.gematria.finalLetters, // Old: 'אותיות סופיות שונות'
                     textAlign: TextAlign.right),
                 value: useFinalLetters,
                 onChanged: (value) {
@@ -137,7 +148,8 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
                 contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
-                title: const Text('עם הכולל', textAlign: TextAlign.right),
+                title: Text(context.t.gematria.withKolel,
+                    textAlign: TextAlign.right), // Old: 'עם הכולל'
                 value: useWithKolel,
                 onChanged: (value) {
                   useWithKolel = value ?? false;
@@ -157,12 +169,12 @@ Future<void> showGematriaSettingsDialog(BuildContext context) async {
               debugPrint('🔧 Close button pressed');
               Navigator.of(context).pop();
             },
-            child: const Text('סגור'),
+            child: Text(context.t.common.close), // Old: 'סגור'
           ),
         ],
       ),
     ),
   );
-  
+
   debugPrint('🔧 showGematriaSettingsDialog completed');
 }

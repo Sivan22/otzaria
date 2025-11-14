@@ -11,6 +11,7 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:otzaria/i18n/translations.g.dart';
 
 class PrintingScreen extends StatefulWidget {
   final Future<String> data;
@@ -143,7 +144,7 @@ class _PrintingScreenState extends State<PrintingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('הדפסה'),
+        title: Text(context.t.printing.title), // Old: 'הדפסה'
         actions: [
           IconButton(
             onPressed: () async {
@@ -185,7 +186,7 @@ class _PrintingScreenState extends State<PrintingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('טווח הדפסה',
+                      Text(context.t.printing.printRange, // Old: 'טווח הדפסה'
                           style: Theme.of(context).textTheme.labelLarge),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -203,7 +204,7 @@ class _PrintingScreenState extends State<PrintingScreen> {
                           },
                         ),
                       ),
-                      Text('גודל גופן',
+                      Text(context.t.printing.fontSize, // Old: 'גודל גופן'
                           style: Theme.of(context).textTheme.labelLarge),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -218,7 +219,7 @@ class _PrintingScreenState extends State<PrintingScreen> {
                           },
                         ),
                       ),
-                      Text('שוליים',
+                      Text(context.t.printing.margins, // Old: 'שוליים'
                           style: Theme.of(context).textTheme.labelLarge),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -233,7 +234,7 @@ class _PrintingScreenState extends State<PrintingScreen> {
                           },
                         ),
                       ),
-                      Text('גופן',
+                      Text(context.t.printing.font, // Old: 'גופן'
                           style: Theme.of(context).textTheme.labelLarge),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -261,7 +262,7 @@ class _PrintingScreenState extends State<PrintingScreen> {
                           }).toList(),
                         ),
                       ),
-                      Text('פריסה',
+                      Text(context.t.printing.layout, // Old: 'פריסה'
                           style: Theme.of(context).textTheme.labelLarge),
                       DropDownSettingsTile<PdfPageFormat>(
                           title: 'גודל עמוד',

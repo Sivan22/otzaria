@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class SearchPaneBase extends StatefulWidget {
   const SearchPaneBase({
@@ -72,7 +73,7 @@ class _SearchPaneBaseState extends State<SearchPaneBase> {
                   prefixIcon: const Icon(FluentIcons.search_24_regular),
                   suffixIcon: value.text.isNotEmpty
                       ? IconButton(
-                          tooltip: 'נקה',
+                          tooltip: context.t.search.clear,
                           onPressed: () {
                             widget.searchController.clear();
                             widget.onSearchTextChanged?.call('');
@@ -112,7 +113,7 @@ class _SearchPaneBaseState extends State<SearchPaneBase> {
         const SizedBox(height: 4),
         Expanded(
           child: widget.isNoResults
-              ? const Center(child: Text('אין תוצאות'))
+              ? Center(child: Text(context.t.common.noResults))
               : widget.resultsWidget,
         ),
       ],

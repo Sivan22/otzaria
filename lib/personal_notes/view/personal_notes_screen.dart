@@ -12,6 +12,7 @@ import 'package:otzaria/personal_notes/storage/personal_notes_storage.dart';
 import 'package:otzaria/personal_notes/widgets/personal_note_editor_dialog.dart';
 import 'package:otzaria/widgets/confirmation_dialog.dart';
 import 'package:otzaria/widgets/input_dialog.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class PersonalNotesManagerScreen extends StatefulWidget {
   const PersonalNotesManagerScreen({super.key});
@@ -105,7 +106,7 @@ class _PersonalNotesManagerScreenState extends State<PersonalNotesManagerScreen>
             const SizedBox(height: 12),
             FilledButton(
               onPressed: _loadBooks,
-              child: const Text('נסה שוב'),
+              child: Text(context.t.notes.tryAgain), // Old: 'נסה שוב'
             ),
           ],
         ),
@@ -117,11 +118,12 @@ class _PersonalNotesManagerScreenState extends State<PersonalNotesManagerScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('לא נמצאו הערות אישיות.'),
+            Text(context
+                .t.notes.noPersonalNotes), // Old: 'לא נמצאו הערות אישיות.'
             const SizedBox(height: 12),
             FilledButton(
               onPressed: _loadBooks,
-              child: const Text('רענון'),
+              child: Text(context.t.common.refresh), // Old: 'רענון'
             ),
           ],
         ),
@@ -293,7 +295,7 @@ class _PersonalNotesManagerScreenState extends State<PersonalNotesManagerScreen>
     final result = await showDialog<String>(
       context: context,
       builder: (context) => PersonalNoteEditorDialog(
-        title: 'עריכת הערה',
+        title: context.t.notes.editNote,
         controller: controller,
       ),
     );
@@ -301,7 +303,7 @@ class _PersonalNotesManagerScreenState extends State<PersonalNotesManagerScreen>
 
     final trimmed = result.trim();
     if (trimmed.isEmpty) {
-      UiSnack.show('ההערה ריקה, לא נשמרה');
+      UiSnack.show(context.t.notes.emptyNoteNotSaved);
       return;
     }
 
@@ -313,15 +315,15 @@ class _PersonalNotesManagerScreenState extends State<PersonalNotesManagerScreen>
             content: trimmed,
           ),
         );
-    UiSnack.show('ההערה עודכנה');
+    UiSnack.show(context.t.notes.noteUpdated);
   }
 
   Future<void> _deleteNote(PersonalNote note) async {
     final shouldDelete = await showConfirmationDialog(
       context: context,
-      title: 'מחיקת הערה',
-      content: 'האם למחוק את ההערה לצמיתות?',
-      confirmText: 'מחק',
+      title: context.t.notes.deleteNote,
+      content: context.t.notes.deleteNoteConfirm,
+      confirmText: context.t.common.delete,
       isDangerous: true,
     );
 
@@ -333,18 +335,18 @@ class _PersonalNotesManagerScreenState extends State<PersonalNotesManagerScreen>
               noteId: note.id,
             ),
           );
-      UiSnack.show('ההערה נמחקה');
+      UiSnack.show(context.t.notes.noteDeleted);
     }
   }
 
   Future<void> _repositionMissing(PersonalNote note) async {
     final result = await showInputDialog(
       context: context,
-      title: 'מיקום מחדש של הערה',
+      title: context.t.notes.repositionNote,
       subtitle: note.lastKnownLineNumber != null
-          ? 'שורה קודמת: ${note.lastKnownLineNumber}'
+          ? '${context.t.notes.previousLine}: ${note.lastKnownLineNumber}'
           : null,
-      labelText: 'מספר שורה חדש',
+      labelText: context.t.notes.newLineNumber,
       initialValue: (note.lastKnownLineNumber ?? '').toString(),
       keyboardType: TextInputType.number,
     );

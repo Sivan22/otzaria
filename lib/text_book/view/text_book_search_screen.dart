@@ -12,6 +12,7 @@ import 'package:otzaria/text_book/models/search_results.dart';
 import 'package:otzaria/text_book/models/text_book_searcher.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
 import 'package:otzaria/widgets/search_pane_base.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class _GroupedResultItem {
   final String? header;
@@ -99,7 +100,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
       focusNode: widget.focusNode,
       progressWidget: null,
       resultCountString: searchResults.isNotEmpty
-          ? 'נמצאו ${searchResults.length} תוצאות'
+          ? context.t.search.resultsCount(count: searchResults.length.toString())
           : null,
       resultsWidget: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -222,7 +223,7 @@ class TextBookSearchViewState extends State<TextBookSearchView>
         _searchTextUpdated();
       },
       resetSearchCallback: () {},
-      hintText: 'חפש כאן..',
+      hintText: context.t.search.placeholder,
     );
   }
 

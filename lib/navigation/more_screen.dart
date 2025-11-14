@@ -10,6 +10,7 @@ import 'calendar_widget.dart';
 import 'calendar_cubit.dart';
 import 'package:otzaria/personal_notes/view/personal_notes_screen.dart';
 import 'package:otzaria/settings/settings_repository.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -27,7 +28,7 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
   late final PageController _pageController;
 
   // Title for the ShamorZachor section (dynamic from the package)
-  String _shamorZachorTitle = 'זכור ושמור';
+  late String _shamorZachorTitle;
 
   /// Update the ShamorZachor title
   void _updateShamorZachorTitle(String title) {
@@ -42,6 +43,7 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
     _settingsRepository = SettingsRepository();
     _calendarCubit = CalendarCubit(settingsRepository: _settingsRepository);
     _pageController = PageController(initialPage: 0);
+    _shamorZachorTitle = ''; // Will be set by _updateShamorZachorTitle callback
   }
 
   /// Reset to calendar page - public method for external access
@@ -67,6 +69,10 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize title if not set
+    if (_shamorZachorTitle.isEmpty) {
+      _shamorZachorTitle = context.t.more.shamorZachor;
+    }
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 700;
 
@@ -75,7 +81,7 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
         backgroundColor:
             Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
         title: Text(
-          _getTitle(_selectedIndex),
+          _getTitle(context, _selectedIndex),
           style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.bold,
@@ -138,26 +144,26 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
                   }
                 },
                 labelType: NavigationRailLabelType.all,
-                destinations: const [
+                destinations: [
                   NavigationRailDestination(
                     icon: Icon(Icons.calendar_month_outlined),
-                    label: Text('לוח שנה'),
+                    label: Text(context.t.more.calendar),
                   ),
                   NavigationRailDestination(
                     icon: ImageIcon(AssetImage('assets/icon/זכור ושמור.png')),
-                    label: Text('זכור ושמור'),
+                    label: Text(context.t.more.shamorZachor),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.straighten),
-                    label: Text('מדות ושיעורים'),
+                    label: Text(context.t.more.measurements),
                   ),
                   NavigationRailDestination(
                     icon: Icon(FluentIcons.note_24_regular),
-                    label: Text('הערות אישיות'),
+                    label: Text(context.t.more.personalNotes),
                   ),
                   NavigationRailDestination(
                     icon: Icon(FluentIcons.calculator_24_regular),
-                    label: Text('גימטריות'),
+                    label: Text(context.t.more.gematria),
                   ),
                 ],
               ),
@@ -210,26 +216,26 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
               type: BottomNavigationBarType.fixed,
               selectedFontSize: 11,
               unselectedFontSize: 10,
-              items: const [
+              items: [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.calendar_month_outlined, size: 20),
-                  label: 'לוח שנה',
+                  label: context.t.more.calendar,
                 ),
                 BottomNavigationBarItem(
                   icon: ImageIcon(AssetImage('assets/icon/זכור ושמור.png'), size: 20),
-                  label: 'זכור ושמור',
+                  label: context.t.more.shamorZachor,
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.straighten, size: 20),
-                  label: 'מדות',
+                  label: context.t.more.measurementsShort,
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(FluentIcons.note_24_regular, size: 20),
-                  label: 'הערות',
+                  label: context.t.more.personalNotesShort,
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(FluentIcons.calculator_24_regular, size: 20),
-                  label: 'גימטריה',
+                  label: context.t.more.gematria,
                 ),
               ],
             )
@@ -237,20 +243,20 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
     );
   }
 
-  String _getTitle(int index) {
+  String _getTitle(BuildContext context, int index) {
     switch (index) {
       case 0:
-        return 'לוח שנה';
+        return context.t.more.calendar;
       case 1:
         return _shamorZachorTitle;
       case 2:
-        return 'מדות ושיעורים';
+        return context.t.more.measurements;
       case 3:
-        return 'הערות אישיות';
+        return context.t.more.personalNotes;
       case 4:
-        return 'גימטריה';
+        return context.t.more.gematria;
       default:
-        return 'כלים';
+        return context.t.navigation.tools;
     }
   }
 
@@ -260,7 +266,7 @@ class _MoreScreenState extends State<MoreScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: IconButton(
           icon: const Icon(FluentIcons.settings_24_regular),
-          tooltip: 'הגדרות',
+          tooltip: context.t.navigation.settings,
           onPressed: onPressed,
           style: IconButton.styleFrom(
             foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,

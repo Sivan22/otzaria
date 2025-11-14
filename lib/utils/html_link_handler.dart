@@ -6,6 +6,7 @@ import 'package:otzaria/models/books.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/text_book/bloc/text_book_bloc.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// מחלקה לטיפול בקישורי HTML בתוך הטקסט
 class HtmlLinkHandler {
@@ -77,7 +78,7 @@ class HtmlLinkHandler {
       if (context.mounted && ref.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('נפתח: $ref'),
+            content: Text(context.t.links.opened(ref: ref)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -88,7 +89,7 @@ class HtmlLinkHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('לא ניתן לפתוח את הקישור: $e'),
+            content: Text(context.t.links.cannotOpenLink(error: e.toString())),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -180,7 +181,7 @@ class HtmlLinkHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('שגיאה בפתיחת הקישור: $e'),
+            content: Text(context.t.links.linkError(error: e.toString())),
             duration: const Duration(seconds: 5),
           ),
         );
@@ -216,7 +217,7 @@ class HtmlLinkHandler {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('נווט ל: $headerName'),
+              content: Text(context.t.links.navigateTo(headerName: headerName)),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -230,7 +231,7 @@ class HtmlLinkHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('לא ניתן לנווט לכותרת: $headerName'),
+            content: Text(context.t.links.cannotNavigateToHeader(headerName: headerName)),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -309,7 +310,7 @@ class HtmlLinkHandler {
       if (context.mounted && headerName != null && headerName.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('פתח ספר: $bookTitle - $headerName'),
+            content: Text(context.t.links.openBook(bookTitle: bookTitle, headerName: headerName)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -320,7 +321,7 @@ class HtmlLinkHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('לא ניתן לפתוח את הספר: $bookTitle'),
+            content: Text(context.t.links.cannotOpenBook(bookTitle: bookTitle)),
             duration: const Duration(seconds: 3),
           ),
         );

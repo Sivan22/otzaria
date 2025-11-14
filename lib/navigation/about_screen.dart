@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import '../services/data_collection_service.dart';
 import 'dart:io';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -50,7 +51,7 @@ class _AboutScreenState extends State<AboutScreen> {
       {
         'name': 'sivan22',
         'url': 'https://github.com/Sivan22',
-        'description': 'יוצר התוכנה'
+        'description': context.t.about.creator // Old: 'יוצר התוכנה'
       },
       {'name': 'Y.PL.', 'url': 'https://github.com/Y-PLONI'},
       {'name': 'YOSEFTT', 'url': 'https://github.com/YOSEFTT'},
@@ -58,12 +59,14 @@ class _AboutScreenState extends State<AboutScreen> {
       {
         'name': 'NHLOCAL',
         'url': 'https://github.com/NHLOCAL/Shamor-Zachor',
-        'description': 'פיתוח "זכור ושמור"'
+        'description':
+            context.t.about.developedShamorZachor // Old: 'פיתוח "זכור ושמור"'
       },
       {
         'name': 'evel-avalim',
         'url': 'https://github.com/evel-avalim',
-        'description': 'פיתוח הגימטריות'
+        'description':
+            context.t.about.developedGematria // Old: 'פיתוח הגימטריות'
       },
       {
         'name': 'userbot',
@@ -152,11 +155,18 @@ class _AboutScreenState extends State<AboutScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildCompactInfoItem('גרסת תוכנה', appVersion ?? 'לא ידוע'),
+              _buildCompactInfoItem(
+                  context.t.about.appVersion,
+                  appVersion ??
+                      context.t.about.unknown), // Old: 'גרסת תוכנה', 'לא ידוע'
               const SizedBox(height: 8),
-              _buildCompactInfoItem('גרסת ספרייה', libraryVersion ?? 'לא ידוע'),
+              _buildCompactInfoItem(
+                  context.t.about.libraryVersion,
+                  libraryVersion ??
+                      context.t.about.unknown), // Old: 'גרסת ספרייה', 'לא ידוע'
               const SizedBox(height: 8),
-              _buildCompactInfoItem('מספר ספרים', '${bookCount ?? 'לא ידוע'}'),
+              _buildCompactInfoItem(context.t.about.bookCount,
+                  '${bookCount ?? context.t.about.unknown}'), // Old: 'מספר ספרים', 'לא ידוע'
             ],
           );
         }
@@ -165,9 +175,16 @@ class _AboutScreenState extends State<AboutScreen> {
           spacing: 30,
           runSpacing: 8,
           children: [
-            _buildCompactInfoItem('גרסת תוכנה', appVersion ?? 'לא ידוע'),
-            _buildCompactInfoItem('גרסת ספרייה', libraryVersion ?? 'לא ידוע'),
-            _buildCompactInfoItem('מספר ספרים', '${bookCount ?? 'לא ידוע'}'),
+            _buildCompactInfoItem(
+                context.t.about.appVersion,
+                appVersion ??
+                    context.t.about.unknown), // Old: 'גרסת תוכנה', 'לא ידוע'
+            _buildCompactInfoItem(
+                context.t.about.libraryVersion,
+                libraryVersion ??
+                    context.t.about.unknown), // Old: 'גרסת ספרייה', 'לא ידוע'
+            _buildCompactInfoItem(context.t.about.bookCount,
+                '${bookCount ?? context.t.about.unknown}'), // Old: 'מספר ספרים', 'לא ידוע'
           ],
         );
       },
@@ -205,20 +222,24 @@ class _AboutScreenState extends State<AboutScreen> {
           children: [
             Expanded(
               child: _buildMemorialCard(
-                'לע"נ ר\' משה בן יהודה ראה ז"ל',
-                'סכום משמעותי לפיתוח התוכנה',
+                context.t.about
+                    .memorialCandle, // Old: 'לע"נ ר\' משה בן יהודה ראה ז"ל'
+                context.t.about
+                    .significantContribution, // Old: 'סכום משמעותי לפיתוח התוכנה'
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: _buildDonationMemorialCard(
-                'מקום זה יכול להיות מונצח לע"נ יקירך',
+                context.t.about
+                    .memorialSpot, // Old: 'מקום זה יכול להיות מונצח לע"נ יקירך'
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: _buildDonationMemorialCard(
-                'מקום זה יכול להיות מונצח לע"נ יקירך',
+                context.t.about
+                    .memorialSpot, // Old: 'מקום זה יכול להיות מונצח לע"נ יקירך'
               ),
             ),
           ],
@@ -376,7 +397,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'לחץ כאן',
+                  context.t.about.clickHere, // Old: 'לחץ כאן'
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
@@ -406,7 +427,7 @@ class _AboutScreenState extends State<AboutScreen> {
     final dataService = DataCollectionService();
     libraryVersion = await dataService.readLibraryVersion();
     if (libraryVersion == 'unknown') {
-      libraryVersion = 'לא ידוע';
+      libraryVersion = context.t.about.unknown;
     }
 
     // Load book count
@@ -431,7 +452,9 @@ class _AboutScreenState extends State<AboutScreen> {
     if (sitePath == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('לא נמצאה תיקיית otzaria-site')),
+        SnackBar(
+            content: Text(context.t.about
+                .otzariaSiteNotFound)), // Old: 'לא נמצאה תיקיית otzaria-site'
       );
       return;
     }
@@ -440,7 +463,9 @@ class _AboutScreenState extends State<AboutScreen> {
     if (!await htmlFile.exists()) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('הקובץ $fileName לא נמצא')),
+        SnackBar(
+            content: Text(context.t.about.fileNotFound(
+                file: fileName))), // Old: 'הקובץ $fileName לא נמצא'
       );
       return;
     }
@@ -460,7 +485,7 @@ class _AboutScreenState extends State<AboutScreen> {
       builder: (dialogContext) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('יומן שינויים'),
+          title: Text(context.t.about.changelog), // Old: 'יומן שינויים'
           content: SizedBox(
             width: 600,
             height: 400,
@@ -471,7 +496,7 @@ class _AboutScreenState extends State<AboutScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('סגור'),
+              child: Text(context.t.common.close), // Old: 'סגור'
             ),
           ],
         ),
@@ -485,8 +510,7 @@ class _AboutScreenState extends State<AboutScreen> {
       decoration: BoxDecoration(
         color: Colors.grey[600]!.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: Colors.grey[600]!.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.grey[600]!.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,7 +521,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   color: Colors.grey[600]!, size: 24),
               const SizedBox(width: 8),
               Text(
-                'תרום לפרויקט',
+                context.t.about.donate, // Old: 'תרום לפרויקט'
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -507,9 +531,10 @@ class _AboutScreenState extends State<AboutScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'תרומתך תעזור לנו להמשיך לפתח ולשפר את אוצריא עבור כלל הציבור.',
-            style: TextStyle(fontSize: 14),
+          Text(
+            context.t.about
+                .donateDesc, // Old: 'תרומתך תעזור לנו להמשיך לפתח ולשפר את אוצריא עבור כלל הציבור.'
+            style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
           // שורה עם שני כפתורים אחד לצד השני
@@ -538,9 +563,12 @@ class _AboutScreenState extends State<AboutScreen> {
                         width: 18,
                         height: 18,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(FluentIcons.payment_24_regular, size: 18),
+                            const Icon(FluentIcons.payment_24_regular,
+                                size: 18),
                       ),
-                      label: const Text('נדרים+', style: TextStyle(fontSize: 12)),
+                      label: Text(context.t.about.nedarimPlus,
+                          style:
+                              const TextStyle(fontSize: 12)), // Old: 'נדרים+'
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
@@ -550,8 +578,10 @@ class _AboutScreenState extends State<AboutScreen> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      icon: const Icon(FluentIcons.payment_24_regular, size: 18),
-                      label: const Text('אחר', style: TextStyle(fontSize: 12)),
+                      icon:
+                          const Icon(FluentIcons.payment_24_regular, size: 18),
+                      label: Text(context.t.about.other,
+                          style: const TextStyle(fontSize: 12)), // Old: 'אחר'
                     ),
                   ],
                 );
@@ -578,9 +608,12 @@ class _AboutScreenState extends State<AboutScreen> {
                         width: 18,
                         height: 18,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(FluentIcons.payment_24_regular, size: 18),
+                            const Icon(FluentIcons.payment_24_regular,
+                                size: 18),
                       ),
-                      label: const Text('נדרים+', style: TextStyle(fontSize: 12)),
+                      label: Text(context.t.about.nedarimPlus,
+                          style:
+                              const TextStyle(fontSize: 12)), // Old: 'נדרים+'
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -592,8 +625,10 @@ class _AboutScreenState extends State<AboutScreen> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      icon: const Icon(FluentIcons.payment_24_regular, size: 18),
-                      label: const Text('אחר', style: TextStyle(fontSize: 12)),
+                      icon:
+                          const Icon(FluentIcons.payment_24_regular, size: 18),
+                      label: Text(context.t.about.other,
+                          style: const TextStyle(fontSize: 12)), // Old: 'אחר'
                     ),
                   ),
                 ],
@@ -630,97 +665,98 @@ class _AboutScreenState extends State<AboutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  // סמל וכותרת משנה
-                  Row(
-                    children: [
-                      Image.asset(
-                        'assets/icon/icon.png',
-                        width: 80,
-                        height: 80,
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'אוצריא',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
+                // סמל וכותרת משנה
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/icon/icon.png',
+                      width: 80,
+                      height: 80,
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.t.about.appName,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            'מאגר תורני חינמי',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
-                            ),
+                        ),
+                        Text(
+                          context.t.about.subtitle,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // תיאור התוכנה
-                  const Text(
-                    'מאגר תורני רחב עם ממשק מודרני ומהיר, לשימוש במחשב אישי או במכשיר הנייד, ללימוד תורה בקלות ובנוחות בכל מקום.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                  ],
+                ),
+                const SizedBox(height: 24),
 
-                  // כארדים תורמים
-                  const Text(
-                    'תורמים',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                // תיאור התוכנה
+                Text(
+                  context.t.about.description,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
                   ),
-                  const SizedBox(height: 16),
-                  _buildMemorialCardsRow(),
-                  const SizedBox(height: 32),
+                ),
+                const SizedBox(height: 32),
 
-                  // רשימת מפתחים
-                  const Text(
-                    'מפתחים',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                // כארדים תורמים
+                Text(
+                  context.t.about.donors,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 16),
-                  _buildDevelopersList(),
-                  const SizedBox(height: 32),
+                ),
+                const SizedBox(height: 16),
+                _buildMemorialCardsRow(),
+                const SizedBox(height: 32),
 
-                  // פרטים טכניים
-                  const Text(
-                    'פרטים טכניים',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                // רשימת מפתחים
+                Text(
+                  context.t.about.developers,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 16),
-                  _buildTechnicalDetails(),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(height: 16),
+                _buildDevelopersList(),
+                const SizedBox(height: 32),
 
-                  // כפתור יומן שינויים
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showChangelogDialog(context),
-                      icon: const Icon(FluentIcons.history_24_regular),
-                      label: const Text('יומן שינויים'),
-                    ),
+                // פרטים טכניים
+                Text(
+                  context.t.about.technicalDetails,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                _buildTechnicalDetails(),
+                const SizedBox(height: 16),
+
+                // כפתור יומן שינויים
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showChangelogDialog(context),
+                    icon: const Icon(FluentIcons.history_24_regular),
+                    label:
+                        Text(context.t.about.changelog), // Old: 'יומן שינויים'
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
 
         // כארד צדדי - מצד שמאל
         SizedBox(
@@ -736,10 +772,9 @@ class _AboutScreenState extends State<AboutScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildActionCard(
-                      title: 'הצטרף לפיתוח!',
-                      description:
-                          'מפתחים מוזמנים להצטרף לפיתוח אוצריא ולתרום לקהילה התורנית.',
-                      buttonText: 'הצטרף עכשיו',
+                      title: context.t.about.joinDevelopment,
+                      description: context.t.about.joinDevelopmentDesc,
+                      buttonText: context.t.about.joinNow,
                       icon: FluentIcons.code_24_regular,
                       color: Colors.grey[600]!,
                       showGitHubIcon: true,
@@ -748,10 +783,9 @@ class _AboutScreenState extends State<AboutScreen> {
                     ),
                     const SizedBox(height: 20),
                     _buildActionCard(
-                      title: 'הצטרף לצוות העריכה',
-                      description:
-                          'עזור לנו להוסיף ספרים חדשים לספריית אוצריא ולהרחיב את המאגר התורני.',
-                      buttonText: 'הצטרף לעריכה',
+                      title: context.t.about.joinEditing,
+                      description: context.t.about.joinEditingDesc,
+                      buttonText: context.t.about.joinEditingButton,
                       icon: FluentIcons.edit_24_regular,
                       color: Colors.grey[600]!,
                       onTap: () => _openLocalHtmlFile('tutorial-dicta.html'),
@@ -779,18 +813,17 @@ class _AboutScreenState extends State<AboutScreen> {
           const SizedBox(height: 16),
 
           // תיאור
-          const Text(
-            'מאגר תורני רחב עם ממשק מודרני ומהיר, לשימוד תורה בקלות ובנוחות בכל מקום.',
-            style: TextStyle(fontSize: 14, height: 1.5),
+          Text(
+            context.t.about.description,
+            style: const TextStyle(fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 24),
 
           // כארדים של פעולות (למעלה במסכים קטנים)
           _buildActionCard(
-            title: 'הצטרף לפיתוח!',
-            description:
-                'מפתחים מוזמנים להצטרף לפיתוח אוצריא ולתרום לקהילה התורנית.',
-            buttonText: 'הצטרף עכשיו',
+            title: context.t.about.joinDevelopment,
+            description: context.t.about.joinDevelopmentDesc,
+            buttonText: context.t.about.joinNow,
             icon: FluentIcons.code_24_regular,
             color: Colors.grey[600]!,
             showGitHubIcon: true,
@@ -798,10 +831,9 @@ class _AboutScreenState extends State<AboutScreen> {
           ),
           const SizedBox(height: 16),
           _buildActionCard(
-            title: 'הצטרף לצוות העריכה',
-            description:
-                'עזור לנו להוסיף ספרים חדשים לספריית אוצריא ולהרחיב את המאגר התורני.',
-            buttonText: 'הצטרף לעריכה',
+            title: context.t.about.joinEditing,
+            description: context.t.about.joinEditingDesc,
+            buttonText: context.t.about.joinEditingButton,
             icon: FluentIcons.edit_24_regular,
             color: Colors.grey[600]!,
             onTap: () => _openLocalHtmlFile('tutorial-dicta.html'),
@@ -811,27 +843,27 @@ class _AboutScreenState extends State<AboutScreen> {
           const SizedBox(height: 24),
 
           // תורמים
-          const Text(
-            'תורמים',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            context.t.about.donors,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildMemorialCardsColumn(),
           const SizedBox(height: 24),
 
           // מפתחים
-          const Text(
-            'מפתחים',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            context.t.about.developers,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildDevelopersList(),
           const SizedBox(height: 24),
 
           // פרטים טכניים
-          const Text(
-            'פרטים טכניים',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            context.t.about.technicalDetails,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildTechnicalDetails(),
@@ -843,7 +875,7 @@ class _AboutScreenState extends State<AboutScreen> {
             child: ElevatedButton.icon(
               onPressed: () => _showChangelogDialog(context),
               icon: const Icon(FluentIcons.history_24_regular),
-              label: const Text('יומן שינויים'),
+              label: Text(context.t.about.changelog), // Old: 'יומן שינויים'
             ),
           ),
         ],
@@ -868,14 +900,14 @@ class _AboutScreenState extends State<AboutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'אוצריא',
+                    context.t.about.appName,
                     style: TextStyle(
                       fontSize: isVerySmall ? 20 : 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    'מאגר תורני חינמי',
+                    context.t.about.subtitle,
                     style: TextStyle(
                       fontSize: isVerySmall ? 12 : 14,
                       color: Colors.grey[600],
@@ -894,16 +926,16 @@ class _AboutScreenState extends State<AboutScreen> {
     return Column(
       children: [
         _buildMemorialCard(
-          'לע"נ ר\' משה בן יהודה ראה ז"ל',
-          'סכום משמעותי לפיתוח התוכנה',
+          context.t.about.memorialCandle,
+          context.t.about.significantContribution,
         ),
         const SizedBox(height: 12),
         _buildDonationMemorialCard(
-          'מקום זה יכול להיות מונצח לע"נ יקירך',
+          context.t.about.memorialSpot,
         ),
         const SizedBox(height: 12),
         _buildDonationMemorialCard(
-          'מקום זה יכול להיות מונצח לע"נ יקירך',
+          context.t.about.memorialSpot,
         ),
       ],
     );

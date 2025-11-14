@@ -9,6 +9,7 @@ import 'package:otzaria/personal_notes/models/personal_note.dart';
 import 'package:otzaria/personal_notes/widgets/personal_note_editor_dialog.dart';
 import 'package:otzaria/widgets/confirmation_dialog.dart';
 import 'package:otzaria/widgets/input_dialog.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class PersonalNotesSidebar extends StatefulWidget {
   final String bookId;
@@ -70,7 +71,7 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
       child: Row(
         children: [
           Text(
-            'הערות אישיות',
+            context.t.more.personalNotes,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -78,7 +79,7 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
           ),
           const Spacer(),
           IconButton(
-            tooltip: 'רענן',
+            tooltip: context.t.common.refresh,
             onPressed: () {
               context
                   .read<PersonalNotesBloc>()
@@ -106,8 +107,8 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
     }
 
     if (state.locatedNotes.isEmpty && state.missingNotes.isEmpty) {
-      return const Center(
-        child: Text('אין עדיין הערות על הספר הזה.'),
+      return Center(
+        child: Text(context.t.notes.noNotesYet),
       );
     }
 
@@ -116,7 +117,7 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
       children: [
         if (state.locatedNotes.isNotEmpty) ...[
           _SectionHeader(
-            title: 'הערות',
+            title: context.t.notes.title,
             count: state.locatedNotes.length,
           ),
           ...state.locatedNotes.map(
@@ -131,7 +132,7 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
         ],
         if (state.missingNotes.isNotEmpty) ...[
           _SectionHeader(
-            title: 'הערות חסרות מיקום',
+            title: context.t.notes.missingLocationNotes,
             count: state.missingNotes.length,
           ),
           ...state.missingNotes.map(
@@ -158,7 +159,7 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => PersonalNoteEditorDialog(
-        title: 'עריכת הערה',
+        title: context.t.notes.editNote,
         controller: controller,
       ),
     );
@@ -177,9 +178,9 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
     final bloc = context.read<PersonalNotesBloc>();
     final shouldDelete = await showConfirmationDialog(
       context: context,
-      title: 'מחיקת הערה',
-      content: 'האם למחוק את ההערה לצמיתות?',
-      confirmText: 'מחק',
+      title: context.t.notes.deleteNote,
+      content: context.t.notes.deleteNoteConfirm,
+      confirmText: context.t.common.delete,
       isDangerous: true,
     );
 
@@ -199,12 +200,12 @@ class _PersonalNotesSidebarState extends State<PersonalNotesSidebar> {
 
     final result = await showInputDialog(
       context: context,
-      title: 'שחזור מיקום הערה',
+      title: context.t.notes.restoreNoteLocation,
       subtitle: note.lastKnownLineNumber != null
-          ? 'המיקום האחרון הידוע: שורה ${note.lastKnownLineNumber}'
+          ? '${context.t.notes.lastKnownLocation}: ${context.t.notes.line} ${note.lastKnownLineNumber}'
           : null,
-      labelText: 'שורה חדשה',
-      hintText: 'הקלד מספר שורה',
+      labelText: context.t.notes.newLine,
+      hintText: context.t.notes.enterLineNumber,
       initialValue: note.lastKnownLineNumber?.toString() ?? '',
       keyboardType: TextInputType.number,
     );
@@ -284,7 +285,7 @@ class _LocatedNoteTile extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         title: Text(
-          'שורה ${note.lineNumber}',
+          '${context.t.notes.line} ${note.lineNumber}',
           style: Theme.of(context)
               .textTheme
               .titleSmall
@@ -340,7 +341,7 @@ class _MissingNoteTile extends StatelessWidget {
       child: ListTile(
         onTap: onReposition,
         title: Text(
-          'הערה ללא מיקום',
+          context.t.notes.noteWithoutLocation,
           style: Theme.of(context)
               .textTheme
               .titleSmall
@@ -353,7 +354,7 @@ class _MissingNoteTile extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4.0),
                 child: Text(
-                  'שורה קודמת: ${note.lastKnownLineNumber}',
+                  '${context.t.notes.previousLine}: ${note.lastKnownLineNumber}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -368,7 +369,7 @@ class _MissingNoteTile extends StatelessWidget {
           onEdit: onEdit,
           onDelete: onDelete,
           extraAction: IconButton(
-            tooltip: 'מיקום מחדש',
+            tooltip: context.t.notes.reposition,
             icon: const Icon(FluentIcons.location_24_regular),
             onPressed: onReposition,
           ),
@@ -395,13 +396,13 @@ class _NoteActions extends StatelessWidget {
       spacing: 4,
       children: [
         IconButton(
-          tooltip: 'עריכה',
+                  tooltip: context.t.notes.edit,
           icon: const Icon(FluentIcons.edit_24_regular),
           onPressed: onEdit,
         ),
         extraAction ?? const SizedBox.shrink(),
         IconButton(
-          tooltip: 'מחיקה',
+                  tooltip: context.t.common.delete,
           icon: const Icon(FluentIcons.delete_24_regular),
           onPressed: onDelete,
         ),

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:otzaria/models/books.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:otzaria/core/scaffold_messenger.dart';
+import 'package:otzaria/i18n/translations.g.dart';
+import 'package:flutter/material.dart';
 
 class CopyUtils {
   /// מחלץ את שם הספר
@@ -119,11 +121,12 @@ class CopyUtils {
     required String htmlText,
     required String fontFamily,
     required double fontSize,
+    required BuildContext context,
   }) async {
     try {
       final clipboard = SystemClipboard.instance;
       if (clipboard == null) {
-        UiSnack.show('לא ניתן לגשת ללוח');
+        UiSnack.show(context.t.messages.cannotAccessClipboard);
         return;
       }
 
@@ -140,9 +143,9 @@ $textWithBreaks
       item.add(Formats.htmlText(htmlContent)); // טקסט עם עיצוב
 
       await clipboard.write([item]);
-      UiSnack.show('הטקסט המעוצב הועתק ללוח');
+      UiSnack.show(context.t.messages.formattedTextCopied);
     } catch (e) {
-      UiSnack.showError('שגיאה בהעתקה: $e');
+      UiSnack.showError('${context.t.messages.copyError}: $e');
     }
   }
 

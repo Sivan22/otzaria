@@ -5,6 +5,7 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_event.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// פונקציה גלובלית להצגת דיאלוג הגדרות תצוגת הספרים
 /// ניתן לקרוא לה מכל מקום באפליקציה
@@ -14,9 +15,9 @@ void showReadingSettingsDialog(BuildContext context) {
     builder: (context) => BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
         return AlertDialog(
-          title: const Text(
-            'הגדרות תצוגת הספרים',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            context.t.settings.readingSettingsTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           content: SizedBox(
@@ -35,10 +36,9 @@ void showReadingSettingsDialog(BuildContext context) {
                       color:
                           Theme.of(context).colorScheme.surfaceContainerHighest,
                     ),
-                    child: const Text(
-                      'הגדרות גופן ועיצוב',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Text(
+                      context.t.settings.fontAndStyleSettings,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       textAlign: TextAlign.start,
                     ),
                   ),
@@ -66,7 +66,7 @@ void showReadingSettingsDialog(BuildContext context) {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
-                                          'גודל גופן התחלתי',
+                                          context.t.settings.initialFontSize,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,
@@ -118,7 +118,7 @@ void showReadingSettingsDialog(BuildContext context) {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          'גופן טקסט',
+                                          context.t.settings.textFont,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,
@@ -201,12 +201,11 @@ void showReadingSettingsDialog(BuildContext context) {
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(
-                                          FluentIcons.book_24_regular),
+                                      const Icon(FluentIcons.book_24_regular),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          'גופן מפרשים',
+                                          context.t.settings.commentatorFont,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,
@@ -216,7 +215,8 @@ void showReadingSettingsDialog(BuildContext context) {
                                   ),
                                   const SizedBox(height: 8),
                                   DropdownButtonFormField<String>(
-                                    initialValue: settingsState.commentatorsFontFamily,
+                                    initialValue:
+                                        settingsState.commentatorsFontFamily,
                                     decoration: InputDecoration(
                                       contentPadding:
                                           const EdgeInsets.symmetric(
@@ -266,9 +266,9 @@ void showReadingSettingsDialog(BuildContext context) {
                                     ],
                                     onChanged: (value) {
                                       if (value != null) {
-                                        context
-                                            .read<SettingsBloc>()
-                                            .add(UpdateCommentatorsFontFamily(value));
+                                        context.read<SettingsBloc>().add(
+                                            UpdateCommentatorsFontFamily(
+                                                value));
                                         setState(() {});
                                       }
                                     },
@@ -292,7 +292,8 @@ void showReadingSettingsDialog(BuildContext context) {
                           ListTile(
                             leading: const Icon(
                                 FluentIcons.text_align_justify_24_regular),
-                            title: const Text('רוחב השוליים בצידי הטקסט'),
+                            title: Text(context.t.settings
+                                .textMargins), // Old: 'רוחב השוליים בצידי הטקסט'
                             trailing: Text(
                               currentPadding.toStringAsFixed(0),
                               style: TextStyle(
@@ -333,20 +334,24 @@ void showReadingSettingsDialog(BuildContext context) {
                       color:
                           Theme.of(context).colorScheme.surfaceContainerHighest,
                     ),
-                    child: const Text(
-                      'הסרת ניקוד וטעמים',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Text(
+                      context.t.settings
+                          .nikudAndTeamim, // Old: 'הסרת ניקוד וטעמים'
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                       textAlign: TextAlign.start,
                     ),
                   ),
 
                   // הצגת טעמי המקרא
                   SwitchListTile(
-                    title: const Text('הצגת טעמי המקרא'),
+                    title: Text(context
+                        .t.settings.showTeamim), // Old: 'הצגת טעמי המקרא'
                     subtitle: Text(settingsState.showTeamim
-                        ? 'המקרא יוצג עם טעמים'
-                        : 'המקרא יוצג ללא טעמים'),
+                        ? context.t.settings
+                            .showTeamimEnabled // Old: 'המקרא יוצג עם טעמים'
+                        : context.t.settings
+                            .showTeamimDisabled), // Old: 'המקרא יוצג ללא טעמים'
                     value: settingsState.showTeamim,
                     onChanged: (value) {
                       context.read<SettingsBloc>().add(UpdateShowTeamim(value));
@@ -356,10 +361,13 @@ void showReadingSettingsDialog(BuildContext context) {
 
                   // הסרת ניקוד כברירת מחדל
                   SwitchListTile(
-                    title: const Text('הסרת ניקוד כברירת מחדל'),
+                    title: Text(context.t.settings
+                        .defaultRemoveNikud), // Old: 'הסרת ניקוד כברירת מחדל'
                     subtitle: Text(settingsState.defaultRemoveNikud
-                        ? 'הניקוד יוסר כברירת מחדל'
-                        : 'הניקוד יוצג כברירת מחדל'),
+                        ? context.t.settings
+                            .defaultRemoveNikudEnabled // Old: 'הניקוד יוסר כברירת מחדל'
+                        : context.t.settings
+                            .defaultRemoveNikudDisabled), // Old: 'הניקוד יוצג כברירת מחדל'
                     value: settingsState.defaultRemoveNikud,
                     onChanged: (value) {
                       context
@@ -371,8 +379,10 @@ void showReadingSettingsDialog(BuildContext context) {
                     Padding(
                       padding: const EdgeInsets.only(right: 32.0),
                       child: CheckboxListTile(
-                        title: const Text('הסרת ניקוד מספרי התנ"ך'),
-                        subtitle: const Text('גם ספרי התנ"ך יוצגו ללא ניקוד'),
+                        title: Text(context.t.settings
+                            .removeNikudFromTanach), // Old: 'הסרת ניקוד מספרי התנ"ך'
+                        subtitle: Text(context.t.settings
+                            .removeNikudFromTanachSubtitle), // Old: 'גם ספרי התנ"ך יוצגו ללא ניקוד'
                         value: settingsState.removeNikudFromTanach,
                         onChanged: (bool? value) {
                           if (value != null) {
@@ -393,20 +403,24 @@ void showReadingSettingsDialog(BuildContext context) {
                       color:
                           Theme.of(context).colorScheme.surfaceContainerHighest,
                     ),
-                    child: const Text(
-                      'התנהגות סרגל צד',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Text(
+                      context
+                          .t.settings.sidebarBehavior, // Old: 'התנהגות סרגל צד'
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                       textAlign: TextAlign.start,
                     ),
                   ),
 
                   // הצמדת סרגל צד
                   SwitchListTile(
-                    title: const Text('הצמדת סרגל צד'),
+                    title: Text(
+                        context.t.settings.pinSidebar), // Old: 'הצמדת סרגל צד'
                     subtitle: Text(settingsState.pinSidebar
-                        ? 'סרגל הצד יוצמד תמיד'
-                        : 'סרגל הצד יפעל כרגיל'),
+                        ? context.t.settings
+                            .pinSidebarEnabled // Old: 'סרגל הצד יוצמד תמיד'
+                        : context.t.settings
+                            .pinSidebarDisabled), // Old: 'סרגל הצד יפעל כרגיל'
                     value: settingsState.pinSidebar,
                     onChanged: (value) {
                       context.read<SettingsBloc>().add(UpdatePinSidebar(value));
@@ -421,10 +435,13 @@ void showReadingSettingsDialog(BuildContext context) {
 
                   // פתיחת סרגל צד
                   SwitchListTile(
-                    title: const Text('פתיחת סרגל צד כברירת מחדל'),
+                    title: Text(context.t.settings
+                        .defaultSidebarOpen), // Old: 'פתיחת סרגל צד כברירת מחדל'
                     subtitle: Text(settingsState.defaultSidebarOpen
-                        ? 'סרגל הצד יפתח אוטומטית'
-                        : 'סרגל הצד ישאר סגור'),
+                        ? context.t.settings
+                            .defaultSidebarOpenEnabled // Old: 'סרגל הצד יפתח אוטומטית'
+                        : context.t.settings
+                            .defaultSidebarOpenDisabled), // Old: 'סרגל הצד ישאר סגור'
                     value: settingsState.defaultSidebarOpen,
                     onChanged: settingsState.pinSidebar
                         ? null
@@ -442,10 +459,13 @@ void showReadingSettingsDialog(BuildContext context) {
                       final splitedView =
                           Settings.getValue<bool>('key-splited-view') ?? false;
                       return SwitchListTile(
-                        title: const Text('ברירת המחדל להצגת המפרשים'),
+                        title: Text(context.t.settings
+                            .defaultShowCommentators), // Old: 'ברירת המחדל להצגת המפרשים'
                         subtitle: Text(splitedView
-                            ? 'המפרשים יוצגו לצד הטקסט'
-                            : 'המפרשים יוצגו מתחת הטקסט'),
+                            ? context.t.settings
+                                .defaultShowCommentatorsEnabled // Old: 'המפרשים יוצגו לצד הטקסט'
+                            : context.t.settings
+                                .defaultShowCommentatorsDisabled), // Old: 'המפרשים יוצגו מתחת הטקסט'
                         value: splitedView,
                         onChanged: (value) {
                           setState(() {
@@ -465,10 +485,9 @@ void showReadingSettingsDialog(BuildContext context) {
                       color:
                           Theme.of(context).colorScheme.surfaceContainerHighest,
                     ),
-                    child: const Text(
-                      'הגדרות העתקה',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Text(
+                      context.t.settings.copySettings,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       textAlign: TextAlign.start,
                     ),
                   ),
@@ -516,15 +535,15 @@ void showReadingSettingsDialog(BuildContext context) {
                                     dropdownColor:
                                         Theme.of(context).colorScheme.surface,
                                     isExpanded: true,
-                                    items: const [
+                                    items: [
                                       DropdownMenuItem(
-                                          value: 'none', child: Text('ללא')),
+                                          value: 'none', child: Text(context.t.settings.none)),
                                       DropdownMenuItem(
                                           value: 'book_name',
-                                          child: Text('שם הספר בלבד')),
+                                          child: Text(context.t.settings.bookNameOnly)),
                                       DropdownMenuItem(
                                           value: 'book_and_path',
-                                          child: Text('שם הספר+נתיב')),
+                                          child: Text(context.t.settings.bookNameAndPath)),
                                     ],
                                     onChanged: (value) {
                                       if (value != null) {
@@ -551,7 +570,7 @@ void showReadingSettingsDialog(BuildContext context) {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          'עיצוב העתקה',
+                                          context.t.settings.copyFormatting,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,
@@ -576,29 +595,25 @@ void showReadingSettingsDialog(BuildContext context) {
                                     dropdownColor:
                                         Theme.of(context).colorScheme.surface,
                                     isExpanded: true,
-                                    items: const [
+                                    items: [
                                       DropdownMenuItem(
                                           value: 'same_line_after_brackets',
-                                          child: Text(
-                                              'אותה שורה אחרי (עם סוגריים)')),
+                                          child: Text(context.t.settings.sameLineAfterBrackets)),
                                       DropdownMenuItem(
                                           value: 'same_line_after_no_brackets',
-                                          child: Text(
-                                              'אותה שורה אחרי (בלי סוגריים)')),
+                                          child: Text(context.t.settings.sameLineAfterNoBrackets)),
                                       DropdownMenuItem(
                                           value: 'same_line_before_brackets',
-                                          child: Text(
-                                              'אותה שורה לפני (עם סוגריים)')),
+                                          child: Text(context.t.settings.sameLineBeforeBrackets)),
                                       DropdownMenuItem(
                                           value: 'same_line_before_no_brackets',
-                                          child: Text(
-                                              'אותה שורה לפני (בלי סוגריים)')),
+                                          child: Text(context.t.settings.sameLineBeforeNoBrackets)),
                                       DropdownMenuItem(
                                           value: 'separate_line_after',
-                                          child: Text('פסקה נפרדת אחרי')),
+                                          child: Text(context.t.settings.separateLineAfter)),
                                       DropdownMenuItem(
                                           value: 'separate_line_before',
-                                          child: Text('פסקה נפרדת לפני')),
+                                          child: Text(context.t.settings.separateLineBefore)),
                                     ],
                                     onChanged: (value) {
                                       if (value != null) {
@@ -627,10 +642,9 @@ void showReadingSettingsDialog(BuildContext context) {
                       color:
                           Theme.of(context).colorScheme.surfaceContainerHighest,
                     ),
-                    child: const Text(
-                      'הגדרות עורך טקסטים',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Text(
+                      context.t.settings.textEditorSettings,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       textAlign: TextAlign.start,
                     ),
                   ),
@@ -662,7 +676,7 @@ void showReadingSettingsDialog(BuildContext context) {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        'זמן עיכוב במילישניות',
+                                        context.t.settings.delayInMilliseconds,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium,
@@ -707,7 +721,7 @@ void showReadingSettingsDialog(BuildContext context) {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        'ניקוי טיוטות ישנות (ימים)',
+                                        context.t.settings.cleanOldDrafts,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium,
@@ -751,7 +765,7 @@ void showReadingSettingsDialog(BuildContext context) {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        'מכסת טיוטות (MB)',
+                                        context.t.settings.draftQuota,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium,
@@ -795,7 +809,7 @@ void showReadingSettingsDialog(BuildContext context) {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('סגור'),
+              child: Text(context.t.common.close), // Old: 'סגור'
             ),
           ],
         );

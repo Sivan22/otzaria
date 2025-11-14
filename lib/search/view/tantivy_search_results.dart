@@ -17,6 +17,7 @@ import 'package:otzaria/tabs/models/pdf_tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/tabs/models/text_tab.dart';
 import 'package:otzaria/utils/text_manipulation.dart' as utils;
+import 'package:otzaria/i18n/translations.g.dart';
 
 class TantivySearchResults extends StatefulWidget {
   final SearchingTab tab;
@@ -350,13 +351,13 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.searchQuery.isEmpty) {
-      return const Center(child: Text("לא בוצע חיפוש"));
+      return Center(child: Text(context.t.search.noSearchPerformed));
     }
     if (state.results.isEmpty) {
-      return const Center(
+      return Center(
           child: Padding(
-        padding: EdgeInsets.all(8.0),
-        child: Text('אין תוצאות'),
+        padding: const EdgeInsets.all(8.0),
+        child: Text(context.t.search.noResultsShort), // Old: 'אין תוצאות'
       ));
     }
 
@@ -403,7 +404,10 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.3),
                   width: 1,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -433,12 +437,12 @@ class _TantivySearchResultsState extends State<TantivySearchResults> {
                               ),
                               index: result.segment.toInt(),
                               searchText: widget.tab.queryController.text,
-                              openLeftPane: (Settings.getValue<bool>(
-                                          'key-pin-sidebar') ??
-                                      false) ||
-                                  (Settings.getValue<bool>(
-                                          'key-default-sidebar-open') ??
-                                      false)),
+                              openLeftPane:
+                                  (Settings.getValue<bool>('key-pin-sidebar') ??
+                                          false) ||
+                                      (Settings.getValue<bool>(
+                                              'key-default-sidebar-open') ??
+                                          false)),
                         ));
                   }
                 },

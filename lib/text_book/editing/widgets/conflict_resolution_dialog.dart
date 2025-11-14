@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/overrides_rebase_service.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// Dialog for resolving rebase conflicts
 class ConflictResolutionDialog extends StatefulWidget {
@@ -33,7 +34,7 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
         ),
       },
       child: AlertDialog(
-        title: const Text('קונפליקט בעריכה'),
+        title: Text(context.t.editor.conflictInEditing),
         content: SizedBox(
           width: double.maxFinite,
           height: 400,
@@ -47,26 +48,26 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'הטקסט המקורי השתנה מאז שערכת אותו. בחר כיצד לפתור את הקונפליקט:',
+                Text(
+                  context.t.editor.conflictMessage,
                   style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 16),
 
                 // Resolution options
-                const RadioListTile<String>(
-                  title: Text('שמור את העריכה שלי'),
-                  subtitle: Text('התעלם מהשינויים במקור'),
+                RadioListTile<String>(
+                  title: Text(context.t.editor.keepMyEdit),
+                  subtitle: Text(context.t.editor.ignoreSourceChanges),
                   value: 'keep_override',
                 ),
-                const RadioListTile<String>(
-                  title: Text('השתמש בגרסה החדשה'),
-                  subtitle: Text('בטל את העריכה שלי'),
+                RadioListTile<String>(
+                  title: Text(context.t.editor.useNewVersion),
+                  subtitle: Text(context.t.editor.cancelMyEdit),
                   value: 'use_new_source',
                 ),
-                const RadioListTile<String>(
-                  title: Text('שמור בנפרד'),
-                  subtitle: Text('שמור את העריכה שלי כגרסה נפרדת'),
+                RadioListTile<String>(
+                  title: Text(context.t.editor.saveSeparately),
+                  subtitle: Text(context.t.editor.saveAsSeparateVersion),
                   value: 'save_separate',
                 ),
 
@@ -209,14 +210,14 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ביטול'),
+            child: Text(context.t.common.cancel),
           ),
           ElevatedButton(
             onPressed: () {
               widget.onResolve(_selectedResolution);
               Navigator.of(context).pop();
             },
-            child: const Text('פתור קונפליקט'),
+            child: Text(context.t.editor.resolveConflict),
           ),
         ],
       ),

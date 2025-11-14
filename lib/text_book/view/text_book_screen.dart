@@ -44,6 +44,7 @@ import 'package:otzaria/widgets/responsive_action_bar.dart';
 import 'package:shamor_zachor/providers/shamor_zachor_data_provider.dart';
 import 'package:shamor_zachor/providers/shamor_zachor_progress_provider.dart';
 import 'package:shamor_zachor/models/book_model.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// נתוני הדיווח שנאספו מתיבת סימון הטקסט + פירוט הטעות שהמשתמש הקליד.
 class ReportedErrorData {
@@ -761,7 +762,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
             }
 
             if (state is TextBookError) {
-              return Center(child: Text('Error: ${(state).message}'));
+              return Center(child: Text('${context.t.common.error}: ${(state).message}'));
             }
 
             if (state is TextBookLoaded) {
@@ -782,7 +783,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
             }
 
             // Fallback
-            return const Center(child: Text('Unknown state'));
+            return Center(child: Text(context.t.common.unknown));
           },
         );
       },
@@ -1485,7 +1486,7 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
     final noteContent = await showDialog<String>(
       context: context,
       builder: (dialogContext) => PersonalNoteEditorDialog(
-        title: 'הוסף הערה לקטע זה',
+        title: context.t.notes.addNoteToSection,
         controller: controller,
       ),
     );
@@ -1700,22 +1701,22 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('דיווח על טעות בספר'),
+          title: Text(context.t.report.errorReportTitle),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'הטקסט שנבחר:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  context.t.report.selectedText,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(reportData.selectedText),
                 const SizedBox(height: 16),
                 if (reportData.errorDetails.isNotEmpty) ...[
-                  const Text(
-                    'פירוט הטעות:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    context.t.report.errorDetails,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(reportData.errorDetails),
                 ],
@@ -1724,16 +1725,16 @@ class _TextBookViewerBlocState extends State<TextBookViewerBloc>
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('ביטול'),
+              child: Text(context.t.common.cancel),
               onPressed: () => Navigator.of(context).pop(ReportAction.cancel),
             ),
             TextButton(
-              child: const Text('שמור לדיווח מאוחר'),
+              child: Text(context.t.report.saveForLater),
               onPressed: () =>
                   Navigator.of(context).pop(ReportAction.saveForLater),
             ),
             TextButton(
-              child: const Text('פתיחת דוא"ל'),
+              child: Text(context.t.report.openEmail),
               onPressed: () =>
                   Navigator.of(context).pop(ReportAction.sendEmail),
             ),
@@ -1817,15 +1818,15 @@ $detailsSection
 
       try {
         if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
-          _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+          _showSimpleSnack(context.t.report.cannotOpenEmail);
         }
       } catch (_) {
-        _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+        _showSimpleSnack(context.t.report.cannotOpenEmail);
       }
     } else if (action == ReportAction.saveForLater) {
       final saved = await _saveReportToFile(emailBody);
       if (!saved) {
-        _showSimpleSnack('שמירת הדיווח נכשלה.');
+        _showSimpleSnack(context.t.report.saveFailed);
         return;
       }
 
@@ -1867,7 +1868,7 @@ $detailsSection
       }
 
       debugPrint('Phone report error: $e');
-      _showSimpleSnack('שגיאה בשליחת הדיווח: ${e.toString()}');
+      _showSimpleSnack('${context.t.report.sendError}: ${e.toString()}');
     }
   }
 
@@ -1878,12 +1879,12 @@ $detailsSection
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('דיווח נשלח בהצלחה'),
-        content: const Text('הדיווח נשלח בהצלחה לצוות אוצריא. תודה על הדיווח!'),
+        title: Text(context.t.report.reportSentSuccessfully),
+        content: Text(context.t.report.reportSentMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('סגור'),
+            child: Text(context.t.common.close),
           ),
           TextButton(
             onPressed: () {
@@ -1892,7 +1893,7 @@ $detailsSection
               _showReportBugDialog(context,
                   context.read<TextBookBloc>().state as TextBookLoaded);
             },
-            child: const Text('פתח דוח שגיאות אחר'),
+            child: Text(context.t.report.openAnotherReport),
           ),
         ],
       ),
@@ -1974,13 +1975,13 @@ $detailsSection
     if (!mounted) return;
 
     final message =
-        "הדיווח נשמר בהצלחה לקובץ '$_reportFileName', הנמצא בתיקייה הראשית של אוצריא.\n"
-        "יש לך כבר $count דיווחים!\n"
-        "כעת תוכל לשלוח את הקובץ למייל: $_fallbackMail";
+        "${context.t.report.reportSavedToFile(fileName: _reportFileName)}\n"
+        "${context.t.report.youHaveReports(count: count)}\n"
+        "${context.t.report.canSendToEmail(email: _fallbackMail)}";
 
     UiSnack.showWithAction(
       message: message,
-      actionLabel: 'שלח',
+      actionLabel: context.t.report.send,
       onAction: () => _launchMail(_fallbackMail),
       duration: const Duration(seconds: 8),
     );
@@ -1994,7 +1995,7 @@ $detailsSection
     try {
       await launchUrl(emailUri, mode: LaunchMode.externalApplication);
     } catch (e) {
-      _showSimpleSnack('לא ניתן לפתוח את תוכנת הדואר');
+        _showSimpleSnack(context.t.report.cannotOpenEmail);
     }
   }
 
@@ -2443,13 +2444,13 @@ class _TabbedReportDialogState extends State<_TabbedReportDialog>
 
   Widget _buildPhoneReportTab() {
     if (_isLoadingData) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('טוען נתוני דיווח...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(context.t.report.loadingReportData),
           ],
         ),
       );
@@ -2463,7 +2464,7 @@ class _TabbedReportDialogState extends State<_TabbedReportDialog>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'לא ניתן לטעון את נתוני הדיווח:',
+              context.t.report.cannotLoadReportData,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -2478,7 +2479,7 @@ class _TabbedReportDialogState extends State<_TabbedReportDialog>
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('סגור'),
+              child: Text(context.t.common.close),
             ),
           ],
         ),
@@ -2663,7 +2664,7 @@ class _RegularReportTabState extends State<_RegularReportTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('סמן את הטקסט שבו נמצאת הטעות:'),
+          Text(context.t.report.selectTextWithError),
           const SizedBox(height: 8),
           ConstrainedBox(
             constraints: BoxConstraints(
@@ -2752,10 +2753,10 @@ class _RegularReportTabState extends State<_RegularReportTab> {
             controller: _detailsController,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               border: OutlineInputBorder(),
-              hintText: 'כתוב כאן מה לא תקין, הצע תיקון וכו\'',
+              hintText: context.t.report.writeErrorDetails,
             ),
             textDirection: TextDirection.rtl,
           ),
@@ -2777,7 +2778,7 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                 children: [
                   TextButton(
                     onPressed: widget.onCancel,
-                    child: const Text('ביטול'),
+                    child: Text(context.t.common.cancel),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -2791,7 +2792,7 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                             );
                           }
                         : null,
-                    child: const Text('שליחת דוא"ל'),
+                    child: Text(context.t.report.sendEmail),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -2825,7 +2826,7 @@ class _RegularReportTabState extends State<_RegularReportTab> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(isPhoneDisabled ? 'דיווח לא זמין' : 'שלח דיווח'),
+                        : Text(isPhoneDisabled ? context.t.report.reportNotAvailable : context.t.report.sendReport),
                   ),
                 ],
               );

@@ -3,6 +3,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:otzaria/navigation/calendar_cubit.dart';
 import 'package:otzaria/settings/settings_repository.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// פונקציה גלובלית להצגת דיאלוג הגדרות לוח שנה
 /// ניתן לקרוא לה מכל מקום באפליקציה
@@ -60,7 +61,7 @@ class _CalendarSettingsDialogState extends State<_CalendarSettingsDialog> {
       bloc: widget.calendarCubit,
       builder: (context, state) {
         return AlertDialog(
-          title: const Text('הגדרות לוח שנה'),
+          title: Text(context.t.calendar.title), // Old: 'הגדרות לוח שנה'
           content: SizedBox(
             width: 400,
             child: SingleChildScrollView(
@@ -68,9 +69,10 @@ class _CalendarSettingsDialogState extends State<_CalendarSettingsDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'סוג לוח:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Text(
+                    context.t.calendar.calendarType, // Old: 'סוג לוח:'
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   RadioGroup<CalendarType>(
                     groupValue: state.calendarType,
@@ -81,17 +83,17 @@ class _CalendarSettingsDialogState extends State<_CalendarSettingsDialog> {
                     },
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         RadioListTile<CalendarType>(
-                          title: Text('לוח עברי'),
+                          title: Text(context.t.calendar.hebrew),
                           value: CalendarType.hebrew,
                         ),
                         RadioListTile<CalendarType>(
-                          title: Text('לוח לועזי'),
+                          title: Text(context.t.calendar.gregorian),
                           value: CalendarType.gregorian,
                         ),
                         RadioListTile<CalendarType>(
-                          title: Text('לוח משולב'),
+                          title: Text(context.t.calendar.combined),
                           value: CalendarType.combined,
                         ),
                       ],
@@ -103,9 +105,9 @@ class _CalendarSettingsDialogState extends State<_CalendarSettingsDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'עיר:',
-                        style: TextStyle(
+                      Text(
+                        context.t.calendar.city, // Old: 'עיר:'
+                        style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       ElevatedButton(
@@ -158,7 +160,7 @@ class _CalendarSettingsDialogState extends State<_CalendarSettingsDialog> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('סגור'),
+              child: Text(context.t.common.close), // Old: 'סגור'
             ),
           ],
         );
@@ -264,10 +266,11 @@ class _CitySearchWidgetState extends State<_CitySearchWidget> {
             child: TextField(
               controller: _searchController,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'הקלד שם עיר...',
-                prefixIcon: Icon(FluentIcons.search_24_regular),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText:
+                    context.t.calendar.searchCity, // Old: 'הקלד שם עיר...'
+                prefixIcon: const Icon(FluentIcons.search_24_regular),
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
             ),
@@ -276,7 +279,9 @@ class _CitySearchWidgetState extends State<_CitySearchWidget> {
           SizedBox(
             height: 300,
             child: _filteredCities.isEmpty
-                ? const Center(child: Text('לא נמצאו ערים'))
+                ? Center(
+                    child: Text(context
+                        .t.calendar.noCitiesFound)) // Old: 'לא נמצאו ערים'
                 : ListView(children: items),
           ),
         ],

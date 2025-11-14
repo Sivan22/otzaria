@@ -16,6 +16,7 @@ import 'package:otzaria/tabs/models/tab.dart';
 import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/widgets/items_list_view.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class HistoryView extends StatelessWidget {
   const HistoryView({super.key});
@@ -63,7 +64,7 @@ class HistoryView extends StatelessWidget {
         }
 
         if (state is HistoryError) {
-          return Center(child: Text('Error: ${state.message}'));
+          return Center(child: Text('${context.t.common.error}: ${state.message}'));
         }
 
         return ItemsListView(
@@ -72,7 +73,7 @@ class HistoryView extends StatelessWidget {
             if (item.isSearch) {
               final tabsBloc = ctx.read<TabsBloc>();
               // Always create a new search tab instead of reusing existing one
-              final searchTab = SearchingTab('חיפוש', null);
+              final searchTab = SearchingTab(ctx.t.navigation.search, null);
               tabsBloc.add(AddTab(searchTab));
 
               // Restore search query and options
@@ -105,16 +106,16 @@ class HistoryView extends StatelessWidget {
           },
           onDelete: (ctx, originalIndex) {
             ctx.read<HistoryBloc>().add(RemoveHistory(originalIndex));
-            UiSnack.show('נמחק בהצלחה');
+            UiSnack.show(ctx.t.history.deleted);
           },
           onClearAll: (ctx) {
             ctx.read<HistoryBloc>().add(ClearHistory());
-            UiSnack.show('כל ההיסטוריה נמחקה');
+            UiSnack.show(ctx.t.history.allDeleted);
           },
-          hintText: 'חפש בהיסטוריה...',
-          emptyText: 'אין היסטוריה',
-          notFoundText: 'לא נמצאו תוצאות',
-          clearAllText: 'מחק את כל ההיסטוריה',
+          hintText: context.t.history.searchHint,
+          emptyText: context.t.history.empty,
+          notFoundText: context.t.history.notFound,
+          clearAllText: context.t.history.clearAll,
           leadingIconBuilder: (item) =>
               _getLeadingIcon(item.book, item.isSearch),
         );

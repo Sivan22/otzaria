@@ -7,6 +7,7 @@ import 'package:otzaria/daf_yomi/daf_yomi_helper.dart';
 import 'package:otzaria/core/scaffold_messenger.dart';
 import 'package:otzaria/settings/calendar_settings_dialog.dart';
 import 'package:otzaria/widgets/confirmation_dialog.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 // הפכנו את הווידג'ט ל-Stateless כי הוא כבר לא מנהל מצב בעצמו.
 class CalendarWidget extends StatelessWidget {
@@ -186,12 +187,12 @@ class CalendarWidget extends StatelessWidget {
               children: [
                 ElevatedButton(
                   onPressed: () => context.read<CalendarCubit>().jumpToToday(),
-                  child: const Text('היום'),
+                  child: Text(context.t.calendar.today),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _showJumpToDateDialog(context),
-                  child: const Text('עבור לתאריך'),
+                  child: Text(context.t.calendar.goToDate),
                 ),
               ],
             ),
@@ -1390,7 +1391,7 @@ class CalendarWidget extends StatelessWidget {
         return StatefulBuilder(
           builder: (builderContext, setState) {
             return AlertDialog(
-              title: const Text('קפוץ לתאריך'),
+              title: Text(context.t.calendar.jumpToDate),
               content: SizedBox(
                 width: 350,
                 height: 450,
@@ -1461,7 +1462,7 @@ class CalendarWidget extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('ביטול'),
+                  child: Text(context.t.calendar.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1486,7 +1487,7 @@ class CalendarWidget extends StatelessWidget {
                     context.read<CalendarCubit>().jumpToDate(dateToJump);
                     Navigator.of(dialogContext).pop();
                   },
-                  child: const Text('קפוץ'),
+                  child: Text(context.t.calendar.jump),
                 ),
               ],
             );
@@ -1672,7 +1673,7 @@ class CalendarWidget extends StatelessWidget {
 
                       // אירוע חוזר
                       SwitchListTile(
-                        title: const Text('אירוע חוזר'),
+                        title: Text(context.t.calendar.recurringEvent),
                         value: isRecurring,
                         onChanged: (value) =>
                             setState(() => isRecurring = value),
@@ -1709,7 +1710,7 @@ class CalendarWidget extends StatelessWidget {
                               // --- כאן נמצא השינוי המרכזי ---
                               // הוספנו תיבת סימון לבחירת "תמיד"
                               CheckboxListTile(
-                                title: const Text('חזרה ללא הגבלה (תמיד)'),
+                                title: Text(context.t.calendar.repeatForever),
                                 value: recurForever,
                                 onChanged: (value) {
                                   setState(() {
@@ -1754,7 +1755,7 @@ class CalendarWidget extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('ביטול'),
+                  child: Text(context.t.calendar.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1843,11 +1844,11 @@ class CalendarWidget extends StatelessWidget {
 
     if (events.isEmpty) {
       if (state.eventSearchQuery.isNotEmpty) {
-        return const Center(child: Text('לא נמצאו אירועים מתאימים'));
+        return Center(child: Text(context.t.calendar.noMatchingEvents));
       } else if (state.showAllEvents) {
-        return const Center(child: Text('אין אירועים במערכת'));
+        return Center(child: Text(context.t.calendar.noEventsInSystem));
       } else {
-        return const Center(child: Text('אין אירועים ביום זה'));
+        return Center(child: Text(context.t.calendar.noEventsToday));
       }
     }
 
@@ -2019,18 +2020,18 @@ class _TimesAndEventsTabViewState extends State<_TimesAndEventsTabView>
             ),
             child: TabBar(
               controller: _tabController,
-              tabs: const [
+              tabs: [
                 Tab(
-                  icon: Icon(FluentIcons.calendar_clock_24_regular, size: 18),
-                  iconMargin: EdgeInsets.only(bottom: 2),
+                  icon: const Icon(FluentIcons.calendar_clock_24_regular, size: 18),
+                  iconMargin: const EdgeInsets.only(bottom: 2),
                   height: 48,
-                  child: Text('זמני היום', style: TextStyle(fontSize: 12)),
+                  child: Text(context.t.calendar.timesOfDay, style: const TextStyle(fontSize: 12)),
                 ),
                 Tab(
-                  icon: Icon(FluentIcons.calendar_ltr_24_regular, size: 18),
-                  iconMargin: EdgeInsets.only(bottom: 2),
+                  icon: const Icon(FluentIcons.calendar_ltr_24_regular, size: 18),
+                  iconMargin: const EdgeInsets.only(bottom: 2),
                   height: 48,
-                  child: Text('אירועים', style: TextStyle(fontSize: 12)),
+                  child: Text(context.t.calendar.events, style: const TextStyle(fontSize: 12)),
                 ),
               ],
               labelColor: Theme.of(context).colorScheme.primary,
@@ -2099,7 +2100,7 @@ class _TimesAndEventsTabViewState extends State<_TimesAndEventsTabView>
                                 context, widget.state),
                             icon: const Icon(FluentIcons.add_24_regular,
                                 size: 16),
-                            label: const Text('צור אירוע'),
+                            label: Text(context.t.calendar.createEvent),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),

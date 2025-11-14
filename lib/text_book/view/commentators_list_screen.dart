@@ -8,6 +8,7 @@ import 'package:otzaria/text_book/models/commentator_group.dart';
 import 'package:otzaria/utils/text_manipulation.dart';
 import 'package:otzaria/widgets/filter_list/src/filter_list_dialog.dart';
 import 'package:otzaria/widgets/filter_list/src/theme/filter_list_theme.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class CommentatorsListView extends StatefulWidget {
   const CommentatorsListView({
@@ -128,8 +129,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
     return BlocBuilder<TextBookBloc, TextBookState>(builder: (context, state) {
       if (state is! TextBookLoaded) return const Center();
       if (state.availableCommentators.isEmpty) {
-        return const Center(
-          child: Text("אין מפרשים"),
+        return Center(
+          child: Text(context.t.textBook.noCommentators),
         );
       }
       if (commentatorsList.isEmpty) _update(context, state);
@@ -212,8 +213,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                 // --- כפתור הכל ---
                 if (commentatorsList.isNotEmpty)
                   CheckboxListTile(
-                    title:
-                        const Text('הצג את כל המפרשים'), // שמרתי את השינוי שלך
+                    title: Text(context.t.textBook
+                        .showAllCommentators), // Old: 'הצג את כל המפרשים'
                     value: commentatorsList
                         .where((e) =>
                             !e.startsWith('__TITLE_') &&
@@ -249,7 +250,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                         final allActive = _torahShebichtav
                             .every(state.activeCommentators.contains);
                         return CheckboxListTile(
-                          title: const Text('הצג את כל התורה שבכתב'),
+                          title: Text(context.t.textBook
+                              .showAllWrittenTorah), // Old: 'הצג את כל התורה שבכתב'
                           value: allActive,
                           onChanged: (checked) {
                             final current =
@@ -271,7 +273,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                         final allActive =
                             _chazal.every(state.activeCommentators.contains);
                         return CheckboxListTile(
-                          title: const Text('הצג את כל חז"ל'),
+                          title: Text(context.t.textBook
+                              .showAllChazal), // Old: 'הצג את כל חז"ל'
                           value: allActive,
                           onChanged: (checked) {
                             final current =
@@ -293,7 +296,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                         final allActive =
                             _rishonim.every(state.activeCommentators.contains);
                         return CheckboxListTile(
-                          title: const Text('הצג את כל הראשונים'),
+                          title: Text(context.t.textBook
+                              .showAllRishonim), // Old: 'הצג את כל הראשונים'
                           value: allActive,
                           onChanged: (checked) {
                             final current =
@@ -315,7 +319,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                         final allActive =
                             _acharonim.every(state.activeCommentators.contains);
                         return CheckboxListTile(
-                          title: const Text('הצג את כל האחרונים'),
+                          title: Text(context.t.textBook
+                              .showAllAcharonim), // Old: 'הצג את כל האחרונים'
                           value: allActive,
                           onChanged: (checked) {
                             final current =
@@ -337,7 +342,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                         final allActive =
                             _modern.every(state.activeCommentators.contains);
                         return CheckboxListTile(
-                          title: const Text('הצג את כל מחברי זמננו'),
+                          title: Text(context.t.textBook
+                              .showAllModern), // Old: 'הצג את כל מחברי זמננו'
                           value: allActive,
                           onChanged: (checked) {
                             final current =
@@ -359,7 +365,8 @@ class CommentatorsListViewState extends State<CommentatorsListView> {
                         final allActive =
                             _ungrouped.every(state.activeCommentators.contains);
                         return CheckboxListTile(
-                          title: const Text('הצג את כל שאר המפרשים'),
+                          title: Text(context.t.textBook
+                              .showAllOthers), // Old: 'הצג את כל שאר המפרשים'
                           value: allActive,
                           onChanged: (checked) {
                             final current =

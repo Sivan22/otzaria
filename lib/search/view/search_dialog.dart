@@ -19,6 +19,7 @@ import 'package:otzaria/tabs/models/searching_tab.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 /// דיאלוג חיפוש מתקדם - מכיל את כל פקדי החיפוש וההגדרות
 /// כשמבצעים חיפוש, הדיאלוג נסגר ונפתחת לשונית תוצאות
@@ -267,9 +268,10 @@ class _SearchDialogState extends State<SearchDialog> {
 
     if (query.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('נא להזין טקסט לחיפוש'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(
+              context.t.search.pleaseEnterText), // Old: 'נא להזין טקסט לחיפוש'
+          duration: const Duration(seconds: 2),
         ),
       );
       return;

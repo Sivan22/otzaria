@@ -36,6 +36,7 @@ import 'package:otzaria/settings/library_settings_dialog.dart';
 import 'package:otzaria/navigation/bloc/navigation_bloc.dart';
 import 'package:otzaria/navigation/bloc/navigation_event.dart';
 import 'package:otzaria/navigation/bloc/navigation_state.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class LibraryBrowser extends StatefulWidget {
   const LibraryBrowser({super.key});
@@ -97,12 +98,13 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           },
           builder: (context, state) {
             if (state.error != null) {
-              return Center(child: Text('Error: ${state.error}'));
+              return Center(
+                  child: Text('${context.t.common.error}: ${state.error}'));
             }
 
             // אם אין ספרייה ולא בטעינה - הצג שגיאה
             if (state.library == null && !state.isLoading) {
-              return const Center(child: Text('No library data available'));
+              return Center(child: Text(context.t.common.noLibraryData));
             }
 
             // גם אם אין ספרייה אבל בטעינה - הצג את המסך עם שכבת טעינה
@@ -317,8 +319,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                     border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8.0)),
                     ),
-                    hintText:
-                        'איתור ספר ב${state.currentCategory?.title ?? ""}',
+                    hintText: context.t.library.searchHint +
+                        (state.currentCategory?.title ?? ""),
                   ),
                   onChanged: (value) {
                     context.read<LibraryBloc>().add(UpdateSearchQuery(value));
@@ -335,8 +337,8 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                       ? FluentIcons.list_24_regular
                       : FluentIcons.grid_24_regular),
                   tooltip: _viewMode == ViewMode.grid
-                      ? 'תצוגת רשימה (עץ מתרחב)'
-                      : 'תצוגת רשת',
+                      ? context.t.library.listView
+                      : context.t.library.gridView,
                   onPressed: () {
                     final newViewMode = _viewMode == ViewMode.grid
                         ? ViewMode.list
@@ -365,7 +367,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
                   padding: const EdgeInsets.symmetric(horizontal: 2.0),
                   child: IconButton(
                     icon: const Icon(FluentIcons.eye_24_regular),
-                    tooltip: 'הצג תצוגה מקדימה',
+                    tooltip: context.t.library.showPreview,
                     onPressed: () {
                       setState(() {
                         _showPreview = true;
@@ -399,7 +401,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       padding: const EdgeInsets.symmetric(horizontal: 2.0),
       child: IconButton(
         icon: const Icon(FluentIcons.settings_24_regular),
-        tooltip: 'הגדרות',
+        tooltip: context.t.tooltips.settings,
         onPressed: () => showLibrarySettingsDialog(context),
         style: IconButton.styleFrom(
           foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -423,21 +425,21 @@ class _LibraryBrowserState extends State<LibraryBrowser>
     }
 
     final categoryTopics = [
-      "תנך",
-      "מדרש",
-      "משנה",
-      "תלמוד בבלי",
-      "תלמוד ירושלמי",
-      "הלכה",
-      "משנה תורה",
-      "שולחן ערוך",
-      "חסידות",
-      "קבלה",
-      "ספרי מוסר",
-      "שות",
-      "ראשונים",
-      "אחרונים",
-      "מחברי זמננו",
+      context.t.library.categories.tanach,
+      context.t.library.categories.midrash,
+      context.t.library.categories.mishna,
+      context.t.library.categories.talmudBavli,
+      context.t.library.categories.talmudYerushalmi,
+      context.t.library.categories.halacha,
+      context.t.library.categories.mishneTorah,
+      context.t.library.categories.shulchanAruch,
+      context.t.library.categories.chasidut,
+      context.t.library.categories.kabbalah,
+      context.t.library.categories.musar,
+      context.t.library.categories.shut,
+      context.t.library.categories.rishonim,
+      context.t.library.categories.acharonim,
+      context.t.library.categories.modern,
     ];
 
     final allTopics = _getAllTopics(state.searchResults!);
@@ -499,15 +501,16 @@ class _LibraryBrowserState extends State<LibraryBrowser>
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+                child: Text('${context.t.common.error}: ${snapshot.error}'));
           }
           if (snapshot.hasData && snapshot.data!.isEmpty) {
             final focusRepository = context.read<FocusRepository>();
             return Center(
               child: Text(
                 focusRepository.librarySearchController.text.isNotEmpty
-                    ? 'אין תוצאות עבור "${focusRepository.librarySearchController.text}"'
-                    : 'אין פריטים להצגה בתיקייה זו',
+                    ? '${context.t.library.noResultsFor} "${focusRepository.librarySearchController.text}"'
+                    : context.t.library.noItems,
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
@@ -1039,7 +1042,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.arrow_up_24_regular),
-          tooltip: 'חזרה לתיקיה הקודמת',
+          tooltip: context.t.tooltips.backToPreviousFolder,
           onPressed: () {
             // בתצוגת רשימה - סגור את הקטגוריה האחרונה שנפתחה
             if (_viewMode == ViewMode.list && _expandedCategories.isNotEmpty) {
@@ -1059,7 +1062,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           },
         ),
         icon: FluentIcons.arrow_up_24_regular,
-        tooltip: 'חזרה לתיקיה הקודמת',
+        tooltip: context.t.tooltips.backToPreviousFolder,
         onPressed: () {
           // בתצוגת רשימה - סגור את הקטגוריה האחרונה שנפתחה
           if (_viewMode == ViewMode.list && _expandedCategories.isNotEmpty) {
@@ -1083,7 +1086,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.home_24_regular),
-          tooltip: 'חזרה לתיקיה הראשית',
+          tooltip: context.t.tooltips.backToMainFolder,
           onPressed: () {
             setState(() {
               _depth = 0;
@@ -1096,7 +1099,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           },
         ),
         icon: FluentIcons.home_24_regular,
-        tooltip: 'חזרה לתיקיה הראשית',
+        tooltip: context.t.tooltips.backToMainFolder,
         onPressed: () {
           setState(() {
             _depth = 0;
@@ -1131,7 +1134,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           ),
         ),
         icon: FluentIcons.arrow_sync_24_regular,
-        tooltip: 'סינכרון',
+        tooltip: context.t.tooltips.sync,
         onPressed: () {
           // הפעולה מטופלת ב-SyncIconButton
         },
@@ -1141,13 +1144,13 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.arrow_clockwise_24_regular),
-          tooltip: 'טעינה מחדש של רשימת הספרים',
+          tooltip: context.t.tooltips.reload,
           onPressed: () {
             context.read<LibraryBloc>().add(RefreshLibrary());
           },
         ),
         icon: FluentIcons.arrow_clockwise_24_regular,
-        tooltip: 'טעינה מחדש של רשימת הספרים',
+        tooltip: context.t.tooltips.reload,
         onPressed: () {
           context.read<LibraryBloc>().add(RefreshLibrary());
         },
@@ -1157,8 +1160,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.history_24_regular),
-          tooltip:
-              'הצג היסטוריה (${(Settings.getValue<String>('key-shortcut-open-history') ?? 'ctrl+h').toUpperCase()})',
+          tooltip: context.t.reading.showHistoryTooltip.replaceAll(
+              '{shortcut}',
+              (Settings.getValue<String>('key-shortcut-open-history') ??
+                      'ctrl+h')
+                  .toUpperCase()),
           onPressed: () => _showHistoryDialog(context),
         ),
         icon: FluentIcons.history_24_regular,
@@ -1171,8 +1177,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.bookmark_24_regular),
-          tooltip:
-              'הצג סימניות (${(Settings.getValue<String>('key-shortcut-open-bookmarks') ?? 'ctrl+shift+b').toUpperCase()})',
+          tooltip: context.t.reading.showBookmarksTooltip.replaceAll(
+              '{shortcut}',
+              (Settings.getValue<String>('key-shortcut-open-bookmarks') ??
+                      'ctrl+shift+b')
+                  .toUpperCase()),
           onPressed: () => _showBookmarksDialog(context),
         ),
         icon: FluentIcons.bookmark_24_regular,
@@ -1190,7 +1199,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           ),
         ),
         icon: FluentIcons.grid_24_regular,
-        tooltip: 'החלף שולחן עבודה',
+        tooltip: context.t.library.switchWorkspace,
         onPressed: () => _showSwitchWorkspaceDialog(context),
       ),
     ];
@@ -1207,7 +1216,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.arrow_up_24_regular),
-          tooltip: 'חזרה לתיקיה הקודמת',
+          tooltip: context.t.tooltips.backToPreviousFolder,
           onPressed: () {
             // בתצוגת רשימה - סגור את הקטגוריה האחרונה שנפתחה
             if (_viewMode == ViewMode.list && _expandedCategories.isNotEmpty) {
@@ -1227,7 +1236,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           },
         ),
         icon: FluentIcons.arrow_up_24_regular,
-        tooltip: 'חזרה לתיקיה הקודמת',
+        tooltip: context.t.tooltips.backToPreviousFolder,
         onPressed: () {
           // בתצוגת רשימה - סגור את הקטגוריה האחרונה שנפתחה
           if (_viewMode == ViewMode.list && _expandedCategories.isNotEmpty) {
@@ -1250,7 +1259,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.home_24_regular),
-          tooltip: 'חזרה לתיקיה הראשית',
+          tooltip: context.t.tooltips.backToMainFolder,
           onPressed: () {
             setState(() {
               _depth = 0;
@@ -1263,7 +1272,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           },
         ),
         icon: FluentIcons.home_24_regular,
-        tooltip: 'חזרה לתיקיה הראשית',
+        tooltip: context.t.tooltips.backToMainFolder,
         onPressed: () {
           setState(() {
             _depth = 0;
@@ -1280,8 +1289,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.history_24_regular),
-          tooltip:
-              'הצג היסטוריה (${(Settings.getValue<String>('key-shortcut-open-history') ?? 'ctrl+h').toUpperCase()})',
+          tooltip: context.t.reading.showHistoryTooltip.replaceAll(
+              '{shortcut}',
+              (Settings.getValue<String>('key-shortcut-open-history') ??
+                      'ctrl+h')
+                  .toUpperCase()),
           onPressed: () => _showHistoryDialog(context),
         ),
         icon: FluentIcons.history_24_regular,
@@ -1293,8 +1305,11 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.bookmark_24_regular),
-          tooltip:
-              'הצג סימניות (${(Settings.getValue<String>('key-shortcut-open-bookmarks') ?? 'ctrl+shift+b').toUpperCase()})',
+          tooltip: context.t.reading.showBookmarksTooltip.replaceAll(
+              '{shortcut}',
+              (Settings.getValue<String>('key-shortcut-open-bookmarks') ??
+                      'ctrl+shift+b')
+                  .toUpperCase()),
           onPressed: () => _showBookmarksDialog(context),
         ),
         icon: FluentIcons.bookmark_24_regular,
@@ -1312,7 +1327,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           ),
         ),
         icon: FluentIcons.grid_24_regular,
-        tooltip: 'החלף שולחן עבודה',
+        tooltip: context.t.library.switchWorkspace,
         onPressed: () => _showSwitchWorkspaceDialog(context),
       ),
 
@@ -1338,7 +1353,7 @@ class _LibraryBrowserState extends State<LibraryBrowser>
           ),
         ),
         icon: FluentIcons.arrow_sync_24_regular,
-        tooltip: 'סינכרון',
+        tooltip: context.t.tooltips.sync,
         onPressed: () {
           // הפעולה מטופלת ב-SyncIconButton
         },
@@ -1348,13 +1363,13 @@ class _LibraryBrowserState extends State<LibraryBrowser>
       ActionButtonData(
         widget: IconButton(
           icon: const Icon(FluentIcons.arrow_clockwise_24_regular),
-          tooltip: 'טעינה מחדש של רשימת הספרים',
+          tooltip: context.t.tooltips.reload,
           onPressed: () {
             context.read<LibraryBloc>().add(RefreshLibrary());
           },
         ),
         icon: FluentIcons.arrow_clockwise_24_regular,
-        tooltip: 'טעינה מחדש של רשימת הספרים',
+        tooltip: context.t.tooltips.reload,
         onPressed: () {
           context.read<LibraryBloc>().add(RefreshLibrary());
         },
@@ -1412,7 +1427,7 @@ class _LoadingDotsTextState extends State<_LoadingDotsText>
         final dotsString = '.' * dots + ' ' * (3 - dots);
 
         return Text(
-          'טוען ספרייה$dotsString',
+          context.t.common.loadingLibrary + dotsString,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,

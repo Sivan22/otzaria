@@ -23,6 +23,7 @@ import 'pdf_outlines_screen.dart';
 import 'package:otzaria/widgets/password_dialog.dart';
 import 'pdf_thumbnails_screen.dart';
 import 'package:printing/printing.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:otzaria/utils/page_converter.dart';
 import 'package:flutter/gestures.dart';
@@ -622,7 +623,7 @@ class _PdfBookScreenState extends State<PdfBookScreen>
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('לעבור לURL?'),
+          title: Text(context.t.pdfBook.navigateToUrl), // Old: 'לעבור לURL?'
           content: SelectionArea(
             child: Text.rich(
               TextSpan(
@@ -639,11 +640,11 @@ class _PdfBookScreenState extends State<PdfBookScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('ביטול'),
+              child: Text(context.t.common.cancel), // Old: 'ביטול'
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('עבור'),
+              child: Text(context.t.pdfBook.go), // Old: 'עבור'
             ),
           ],
         );

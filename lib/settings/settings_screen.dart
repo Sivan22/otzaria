@@ -23,6 +23,7 @@ import 'package:otzaria/settings/backup_service.dart';
 import 'package:otzaria/widgets/shortcut_dropdown_tile.dart';
 import 'package:otzaria/widgets/confirmation_dialog.dart';
 import 'dart:async';
+import 'package:otzaria/i18n/translations.g.dart';
 
 class MySettingsScreen extends StatefulWidget {
   const MySettingsScreen({
@@ -207,7 +208,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                 children: [
                   SettingsGroup(
                     titleAlignment: Alignment.centerRight,
-                    title: 'הגדרות עיצוב',
+                    title: context.t.settings.appearance,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: <Widget>[
                       _buildColumns(3, [
@@ -215,8 +216,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           BlocBuilder<SettingsBloc, SettingsState>(
                             builder: (context, settingsState) {
                               return SimpleSettingsTile(
-                                title: 'מסך מלא',
-                                subtitle: 'החלף מצב מסך מלא',
+                                title: context.t.settings.fullscreen,
+                                subtitle: context.t.settings.toggleFullscreen,
                                 leading: Icon(settingsState.isFullscreen
                                     ? FluentIcons
                                         .full_screen_minimize_24_regular
@@ -235,9 +236,9 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           ),
                         SwitchSettingsTile(
                           settingKey: 'key-dark-mode',
-                          title: 'מצב כהה',
-                          enabledLabel: 'מופעל',
-                          disabledLabel: 'לא מופעל',
+                          title: context.t.settings.darkMode,
+                          enabledLabel: context.t.settings.enabled,
+                          disabledLabel: context.t.settings.disabled,
                           leading:
                               const Icon(FluentIcons.weather_moon_24_regular),
                           onChange: (value) {
@@ -248,7 +249,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           activeColor: Theme.of(context).cardColor,
                         ),
                         ColorPickerSettingsTile(
-                          title: 'צבע בסיס',
+                          title: context.t.settings.baseColor,
                           leading: const Icon(FluentIcons.color_24_regular),
                           settingKey: 'key-swatch-color',
                           onChange: (color) {
@@ -265,20 +266,19 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       ? const SizedBox.shrink()
                       : SettingsGroup(
                           titleAlignment: Alignment.centerRight,
-                          title: "קיצורי מקשים",
+                          title: context.t.settings.shortcuts,
                           titleTextStyle: const TextStyle(fontSize: 25),
                           children: [
                             SimpleSettingsTile(
-                              title: 'איפוס קיצורי מקשים',
-                              subtitle: 'החזר את כל קיצורי המקשים לברירת מחדל',
+                              title: context.t.settings.resetShortcuts,
+                              subtitle: context.t.settings.resetShortcutsSubtitle,
                               leading: const Icon(
                                   FluentIcons.arrow_reset_24_regular),
                               onTap: () async {
                                 final confirmed = await showConfirmationDialog(
                                   context: context,
-                                  title: 'איפוס קיצורי מקשים?',
-                                  content:
-                                      'כל קיצורי המקשים המותאמים אישית יאופסו לברירת המחדל. האם להמשיך?',
+                                  title: context.t.settings.resetShortcutsTitle,
+                                  content: context.t.settings.resetShortcutsContent,
                                   isDangerous: true,
                                   barrierDismissible: false,
                                 );
@@ -289,9 +289,9 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                       .add(ResetShortcuts());
 
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                      SnackBar(
                                       content: Text(
-                                        'קיצורי המקשים אופסו בהצלחה',
+                                        context.t.settings.shortcutsReset,
                                         textDirection: TextDirection.rtl,
                                       ),
                                       duration: Duration(seconds: 2),
@@ -301,10 +301,10 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               },
                             ),
                             const SizedBox(height: 16),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(bottom: 8.0, right: 8.0),
                               child: Text(
-                                'ניווט כללי',
+                                context.t.settings.generalNavigation,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -316,7 +316,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ShortcutDropDownTile(
                                 selected: 'ctrl+l',
                                 settingKey: 'key-shortcut-open-library-browser',
-                                title: 'ספרייה',
+                                title: context.t.navigation.library,
                                 allShortcuts: shortcuctsList,
                                 leading:
                                     const Icon(FluentIcons.library_24_regular),
@@ -324,7 +324,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ShortcutDropDownTile(
                                 selected: 'ctrl+o',
                                 settingKey: 'key-shortcut-open-find-ref',
-                                title: 'איתור',
+                                title: context.t.navigation.find,
                                 allShortcuts: shortcuctsList,
                                 leading: const Icon(
                                     FluentIcons.book_open_24_regular),
@@ -332,7 +332,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ShortcutDropDownTile(
                                 selected: 'ctrl+r',
                                 settingKey: 'key-shortcut-open-reading-screen',
-                                title: 'עיון',
+                                title: context.t.navigation.reading,
                                 leading:
                                     const Icon(FluentIcons.book_24_regular),
                                 allShortcuts: shortcuctsList,
@@ -340,14 +340,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ShortcutDropDownTile(
                                 selected: 'ctrl+q',
                                 settingKey: 'key-shortcut-open-new-search',
-                                title: 'חלון חיפוש חדש',
+                                title: context.t.settings.newSearchWindow,
                                 leading:
                                     const Icon(FluentIcons.search_24_regular),
                                 allShortcuts: shortcuctsList,
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-open-settings',
-                                title: 'הגדרות',
+                                title: context.t.navigation.settings,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+comma',
                                 leading:
@@ -355,7 +355,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-open-more',
-                                title: 'כלים',
+                                title: context.t.navigation.tools,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+m',
                                 leading:
@@ -363,7 +363,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-open-bookmarks',
-                                title: 'סימניות',
+                                title: context.t.bookmarks.title,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+shift+b',
                                 leading:
@@ -371,7 +371,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-open-history',
-                                title: 'היסטוריה',
+                                title: context.t.history.title,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+h',
                                 leading:
@@ -379,7 +379,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-switch-workspace',
-                                title: 'החלף שולחן עבודה',
+                                title: context.t.settings.switchWorkspace,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+k',
                                 leading:
@@ -387,10 +387,10 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                             ]),
                             const SizedBox(height: 16),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(bottom: 8.0, right: 8.0),
                               child: Text(
-                                'תצוגת ספר',
+                                context.t.settings.bookView,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -401,7 +401,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             _buildColumns(3, [
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-search-in-book',
-                                title: 'חיפוש בספר',
+                                title: context.t.settings.searchInBook,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+f',
                                 leading:
@@ -409,7 +409,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-edit-section',
-                                title: 'עריכת קטע',
+                                title: context.t.settings.editSection,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+e',
                                 leading: const Icon(
@@ -417,7 +417,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-print',
-                                title: 'הדפסה',
+                                title: context.t.settings.print,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+p',
                                 leading:
@@ -425,7 +425,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-add-bookmark',
-                                title: 'הוספת סימניה',
+                                title: context.t.settings.addBookmark,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+b',
                                 leading:
@@ -433,7 +433,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                               ShortcutDropDownTile(
                                 settingKey: 'key-shortcut-add-note',
-                                title: 'הוספת הערה',
+                                title: context.t.settings.addNote,
                                 allShortcuts: shortcuctsList,
                                 selected: 'ctrl+n',
                                 leading:
@@ -442,7 +442,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ShortcutDropDownTile(
                                 selected: 'ctrl+w',
                                 settingKey: 'key-shortcut-close-tab',
-                                title: 'סגור ספר נוכחי',
+                                title: context.t.settings.closeCurrentBook,
                                 allShortcuts: shortcuctsList,
                                 leading: const Icon(
                                     FluentIcons.dismiss_circle_24_regular),
@@ -450,7 +450,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ShortcutDropDownTile(
                                 selected: 'ctrl+shift+w',
                                 settingKey: 'key-shortcut-close-all-tabs',
-                                title: 'סגור כל הספרים',
+                                title: context.t.settings.closeAllBooks,
                                 allShortcuts: shortcuctsList,
                                 leading:
                                     const Icon(FluentIcons.dismiss_24_regular),
@@ -460,15 +460,15 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         ),
                   const SizedBox(height: 24),
                   SettingsGroup(
-                    title: 'הגדרות ממשק',
+                    title: context.t.settings.interface,
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
                       SwitchSettingsTile(
                         settingKey: 'key-replace-holy-names',
-                        title: 'הסתרת שמות הקודש',
-                        enabledLabel: 'השמות הקדושים יוחלפו מפאת קדושתם',
-                        disabledLabel: 'השמות הקדושים יוצגו ככתיבתם',
+                        title: context.t.settings.hideHolyNames,
+                        enabledLabel: context.t.settings.hideHolyNamesEnabled,
+                        disabledLabel: context.t.settings.hideHolyNamesDisabled,
                         leading: const Icon(FluentIcons.eye_off_24_regular),
                         defaultValue: state.replaceHolyNames,
                         onChange: (value) {
@@ -488,19 +488,19 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           children: [
                             _buildSettingsCard(
                               context: context,
-                              title: 'הגדרות מסך ספרייה',
+                              title: context.t.settings.libraryScreenSettings,
                               icon: FluentIcons.library_24_regular,
                               onTap: () => showLibrarySettingsDialog(context),
                             ),
                             _buildSettingsCard(
                               context: context,
-                              title: 'הגדרות תצוגת הספרים',
+                              title: context.t.settings.bookDisplaySettings,
                               icon: FluentIcons.book_24_regular,
                               onTap: () => showReadingSettingsDialog(context),
                             ),
                             _buildSettingsCard(
                               context: context,
-                              title: 'הגדרות לוח שנה',
+                              title: context.t.settings.calendarSettings,
                               icon: Icons.calendar_month_outlined,
                               onTap: () => showCalendarSettingsDialog(context),
                             ),
@@ -518,7 +518,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                               ),
                             _buildSettingsCard(
                               context: context,
-                              title: 'הגדרות גימטריות',
+                              title: context.t.settings.gematriaSettings,
                               icon: FluentIcons.calculator_24_regular,
                               onTap: () => showGematriaSettingsDialog(context),
                             ),
@@ -529,19 +529,19 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   ),
                   const SizedBox(height: 24),
                   SettingsGroup(
-                    title: 'גיבוי',
+                    title: context.t.settings.backup,
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
                       SettingsGroup(
-                        title: 'גבה את:',
+                        title: context.t.settings.backupWhat,
                         titleAlignment: Alignment.centerRight,
                         children: [
                           _buildColumns(3, [
                             SwitchSettingsTile(
                               settingKey: 'key-backup-settings',
-                              title: 'הגדרות',
-                              subtitle: 'כולל את כלל הגדרות התוכנה',
+                              title: context.t.settings.title,
+                              subtitle: context.t.settings.backupSettingsSubtitle,
                               leading:
                                   const Icon(FluentIcons.settings_24_regular),
                               defaultValue: true,
@@ -549,8 +549,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             ),
                             SwitchSettingsTile(
                               settingKey: 'key-backup-bookmarks',
-                              title: 'סימניות',
-                              subtitle: 'כל הסימניות שנשמרו',
+                              title: context.t.settings.backupBookmarks,
+                              subtitle: context.t.settings.backupBookmarksSubtitle,
                               leading:
                                   const Icon(FluentIcons.bookmark_24_regular),
                               defaultValue: true,
@@ -558,8 +558,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             ),
                             SwitchSettingsTile(
                               settingKey: 'key-backup-history',
-                              title: 'היסטוריה',
-                              subtitle: 'היסטוריית הלימוד',
+                              title: context.t.settings.backupHistory,
+                              subtitle: context.t.settings.backupHistorySubtitle,
                               leading:
                                   const Icon(FluentIcons.history_24_regular),
                               defaultValue: true,
@@ -567,24 +567,24 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             ),
                             SwitchSettingsTile(
                               settingKey: 'key-backup-notes',
-                              title: 'הערות אישיות',
-                              subtitle: 'כל ההערות האישיות שלך',
+                              title: context.t.settings.backupNotes,
+                              subtitle: context.t.settings.backupNotesSubtitle,
                               leading: const Icon(FluentIcons.note_24_regular),
                               defaultValue: true,
                               activeColor: Theme.of(context).cardColor,
                             ),
                             SwitchSettingsTile(
                               settingKey: 'key-backup-workspaces',
-                              title: 'שולחנות עבודה',
-                              subtitle: 'כל שולחנות העבודה',
+                              title: context.t.settings.backupWorkspaces,
+                              subtitle: context.t.settings.backupWorkspacesSubtitle,
                               leading: const Icon(FluentIcons.grid_24_regular),
                               defaultValue: true,
                               activeColor: Theme.of(context).cardColor,
                             ),
                             SwitchSettingsTile(
                               settingKey: 'key-backup-shamor-zachor',
-                              title: 'זכור ושמור',
-                              subtitle: 'ספרים ומעקב לימוד',
+                              title: context.t.settings.backupShamorZachor,
+                              subtitle: context.t.settings.backupShamorZachorSubtitle,
                               leading: const Icon(FluentIcons.book_24_regular),
                               defaultValue: true,
                               activeColor: Theme.of(context).cardColor,
@@ -595,14 +595,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       const SizedBox(height: 16),
                       DropDownSettingsTile<String>(
                         settingKey: 'key-auto-backup-frequency',
-                        title: 'גיבוי אוטומטי',
+                        title: context.t.settings.autoBackup,
                         leading:
                             const Icon(FluentIcons.calendar_clock_24_regular),
                         selected: 'none',
-                        values: const {
-                          'none': 'ללא',
-                          'weekly': 'כל שבוע',
-                          'monthly': 'כל חודש',
+                        values: {
+                          'none': context.t.settings.none,
+                          'weekly': context.t.settings.weekly,
+                          'monthly': context.t.settings.monthly,
                         },
                       ),
                       const SizedBox(height: 16),
@@ -610,8 +610,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         children: [
                           Expanded(
                             child: SimpleSettingsTile(
-                              title: 'צור גיבוי עכשיו',
-                              subtitle: 'שמור גיבוי של הנתונים שנבחרו',
+                              title: context.t.settings.createBackupNow,
+                              subtitle: context.t.settings.createBackupSubtitle,
                               leading: const Icon(
                                   FluentIcons.arrow_upload_24_regular),
                               onTap: () async {
@@ -659,12 +659,12 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                   if (fileExists) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('הגיבוי נשמר בהצלחה!\n'
-                                            'נתיב: $backupPath\n'
-                                            'גודל: ${(fileSize / 1024).toStringAsFixed(1)} KB'),
+                                        content: Text('${context.t.settings.backupSaved}\n'
+                                            '${context.t.settings.backupPath}: $backupPath\n'
+                                            '${context.t.settings.backupSize}: ${(fileSize / 1024).toStringAsFixed(1)} KB'),
                                         duration: const Duration(seconds: 5),
                                         action: SnackBarAction(
-                                          label: 'פתח תיקייה',
+                                          label: context.t.settings.openFolder,
                                           onPressed: () async {
                                             final dir =
                                                 Directory(file.parent.path);
@@ -680,7 +680,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                            'שגיאה: הקובץ לא נוצר בנתיב:\n$backupPath'),
+                                            '${context.t.settings.backupFileNotCreated}\n$backupPath'),
                                         backgroundColor: Colors.orange,
                                         duration: const Duration(seconds: 5),
                                       ),
@@ -691,7 +691,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                          'שגיאה ביצירת הגיבוי:\n$e\n\nStack trace:\n${stackTrace.toString().substring(0, 200)}'),
+                                          '${context.t.settings.backupError}\n$e\n\nStack trace:\n${stackTrace.toString().substring(0, 200)}'),
                                       backgroundColor: Colors.red,
                                       duration: const Duration(seconds: 10),
                                     ),
@@ -703,8 +703,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           const SizedBox(width: 16),
                           Expanded(
                             child: SimpleSettingsTile(
-                              title: 'שחזר מגיבוי',
-                              subtitle: 'בחר קובץ גיבוי לשחזור',
+                              title: context.t.settings.restoreFromBackup,
+                              subtitle: context.t.settings.restoreFromBackupSubtitle,
                               leading: const Icon(
                                   FluentIcons.arrow_download_24_regular),
                               onTap: () async {
@@ -712,7 +712,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                     .pickFiles(
                                       type: FileType.custom,
                                       allowedExtensions: ['json'],
-                                      dialogTitle: 'בחר קובץ גיבוי',
+                                      dialogTitle: context.t.settings.selectBackupFile,
                                     )
                                     .then(
                                         (result) => result?.files.single.path);
@@ -722,9 +722,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                 if (!context.mounted) return;
                                 final confirmed = await showConfirmationDialog(
                                   context: context,
-                                  title: 'שחזור מגיבוי?',
-                                  content:
-                                      'פעולה זו תחליף את הנתונים הקיימים בנתונים מהגיבוי. האם להמשיך?',
+                                  title: context.t.settings.restoreBackupTitle,
+                                  content: context.t.settings.restoreBackupContent,
                                   confirmColor: Colors.blue,
                                 );
 
@@ -739,14 +738,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                     context: context,
                                     barrierDismissible: false,
                                     builder: (context) => AlertDialog(
-                                      title: const Text('השחזור הושלם'),
-                                      content: const Text(
-                                        'הנתונים שוחזרו בהצלחה. יש להפעיל מחדש את התוכנה.',
+                                      title: Text(context.t.settings.restoreCompleted),
+                                      content: Text(
+                                        context.t.settings.restoreCompletedContent,
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () => exit(0),
-                                          child: const Text('סגור את התוכנה'),
+                                          child: Text(context.t.settings.closeApp),
                                         ),
                                       ],
                                     ),
@@ -755,7 +754,7 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                   if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('שגיאה בשחזור הגיבוי: $e'),
+                                      content: Text('${context.t.settings.restoreError} $e'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -769,25 +768,24 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                   ),
                   const SizedBox(height: 24),
                   SettingsGroup(
-                    title: 'כללי',
+                    title: context.t.settings.general,
                     titleAlignment: Alignment.centerRight,
                     titleTextStyle: const TextStyle(fontSize: 25),
                     children: [
                       SwitchSettingsTile(
-                        title: 'סינכרון הספרייה באופן אוטומטי',
+                        title: context.t.settings.autoSyncLibrary,
                         leading: Icon(FluentIcons.arrow_sync_24_regular),
                         settingKey: 'key-auto-sync',
                         defaultValue: true,
-                        enabledLabel:
-                            'מאגר הספרים המובנה יתעדכן אוטומטית מאתר אוצריא',
-                        disabledLabel: 'מאגר הספרים לא יתעדכן אוטומטית.',
+                        enabledLabel: context.t.settings.autoSyncEnabled,
+                        disabledLabel: context.t.settings.autoSyncDisabled,
                         activeColor: Theme.of(context).cardColor,
                       ),
                       SwitchSettingsTile(
                         settingKey: 'key-use-fast-search',
-                        title: 'חיפוש מהיר באמצעות אינדקס',
-                        enabledLabel: 'חיפוש מהיר יותר, נדרש ליצור אינדקס',
-                        disabledLabel: 'חיפוש איטי יותר, לא נדרש אינדקס',
+                        title: context.t.settings.fastSearch,
+                        enabledLabel: context.t.settings.fastSearchEnabled,
+                        disabledLabel: context.t.settings.fastSearchDisabled,
                         leading: const Icon(FluentIcons.search_24_regular),
                         defaultValue: state.useFastSearch,
                         onChange: (value) {
@@ -801,18 +799,17 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                         BlocBuilder<IndexingBloc, IndexingState>(
                           builder: (context, indexingState) {
                             return SimpleSettingsTile(
-                              title: "אינדקס חיפוש",
+                              title: context.t.settings.searchIndex,
                               subtitle: indexingState is IndexingInProgress
-                                  ? "בתהליך עדכון:${indexingState.booksProcessed}/${indexingState.totalBooks}"
-                                  : "האינדקס מעודכן",
+                                  ? "${context.t.settings.indexUpdating}${indexingState.booksProcessed}/${indexingState.totalBooks}"
+                                  : context.t.settings.indexUpdated,
                               leading: const Icon(FluentIcons.table_24_regular),
                               onTap: () async {
                                 if (indexingState is IndexingInProgress) {
                                   final result = await showConfirmationDialog(
                                     context: context,
-                                    title: 'עצירת אינדקס',
-                                    content:
-                                        'האם לעצור את תהליך יצירת האינדקס?',
+                                    title: context.t.settings.stopIndexing,
+                                    content: context.t.settings.stopIndexingContent,
                                   );
                                   if (!context.mounted) return;
                                   if (result == true) {
@@ -824,8 +821,8 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                 } else {
                                   final result = await showConfirmationDialog(
                                     context: context,
-                                    title: 'איפוס אינדקס',
-                                    content: 'האם לאפס את האינדקס?',
+                                    title: context.t.settings.resetIndex,
+                                    content: context.t.settings.resetIndexContent,
                                   );
                                   if (!context.mounted) return;
                                   if (result == true) {
@@ -849,13 +846,13 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                           },
                         ),
                         SwitchSettingsTile(
-                          title: 'עדכון אינדקס',
+                          title: context.t.settings.autoUpdateIndex,
                           leading:
                               const Icon(FluentIcons.arrow_sync_24_regular),
                           settingKey: 'key-auto-index-update',
                           defaultValue: state.autoUpdateIndex,
-                          enabledLabel: 'אינדקס החיפוש יתעדכן אוטומטית',
-                          disabledLabel: 'אינדקס החיפוש לא יתעדכן אוטומטית',
+                          enabledLabel: context.t.settings.autoUpdateIndexEnabled,
+                          disabledLabel: context.t.settings.autoUpdateIndexDisabled,
                           onChange: (value) async {
                             context
                                 .read<SettingsBloc>()
@@ -875,10 +872,10 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                       if (!(Platform.isAndroid || Platform.isIOS))
                         _buildColumns(2, [
                           SimpleSettingsTile(
-                            title: 'מיקום הספרייה',
+                            title: context.t.settings.libraryLocation,
                             subtitle:
                                 Settings.getValue<String>('key-library-path') ??
-                                    'לא קיים',
+                                    context.t.settings.notExists,
                             leading: const Icon(FluentIcons.folder_24_regular),
                             onTap: () async {
                               String? path =
@@ -892,12 +889,12 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                             },
                           ),
                           Tooltip(
-                            message: 'במידה וקיימים ברשותכם ספרים ממאגר זה',
+                            message: context.t.settings.hebrewBooksTooltip,
                             child: SimpleSettingsTile(
-                              title: 'מיקום ספרי היברובוקס',
+                              title: context.t.settings.hebrewBooksLocation,
                               subtitle: Settings.getValue<String>(
                                       'key-hebrew-books-path') ??
-                                  'לא קיים',
+                                  context.t.settings.notExists,
                               leading:
                                   const Icon(FluentIcons.folder_24_regular),
                               onTap: () async {
@@ -918,25 +915,22 @@ class _MySettingsScreenState extends State<MySettingsScreen>
 
                       SwitchSettingsTile(
                         settingKey: 'key-dev-channel',
-                        title: 'עדכון לגרסאות מפתחים',
-                        enabledLabel:
-                            'קבלת עדכונים על גרסאות בדיקה, ייתכנו באגים וחוסר יציבות',
-                        disabledLabel: 'קבלת עדכונים על גרסאות יציבות בלבד',
+                        title: context.t.settings.devChannel,
+                        enabledLabel: context.t.settings.devChannelEnabled,
+                        disabledLabel: context.t.settings.devChannelDisabled,
                         leading: const Icon(FluentIcons.bug_24_regular),
                         activeColor: Theme.of(context).cardColor,
                       ),
                       SimpleSettingsTile(
-                        title: 'איפוס הגדרות',
-                        subtitle:
-                            'פעולה זו תמחק את כל ההגדרות ותחזיר את התוכנה למצב ההתחלתי',
+                        title: context.t.settings.resetSettings,
+                        subtitle: context.t.settings.resetSettingsSubtitle,
                         leading: const Icon(FluentIcons.arrow_reset_24_regular),
                         onTap: () async {
                           // דיאלוג לאישור המשתמש
                           final confirmed = await showConfirmationDialog(
                             context: context,
-                            title: 'איפוס הגדרות?',
-                            content:
-                                'כל ההגדרות האישיות שלך ימחקו. פעולה זו אינה הפיכה. האם להמשיך?',
+                            title: context.t.settings.resetSettingsTitle,
+                            content: context.t.settings.resetSettingsContent,
                             isDangerous: true,
                           );
 
@@ -948,14 +942,14 @@ class _MySettingsScreenState extends State<MySettingsScreen>
                                 context: context,
                                 barrierDismissible: false,
                                 builder: (context) => AlertDialog(
-                                        title: const Text('ההגדרות אופסו'),
-                                        content: const Text(
-                                            'יש לסגור ולהפעיל מחדש את התוכנה כדי שהשינויים יכנסו לתוקף.'),
+                                        title: Text(context.t.settings.settingsReset),
+                                        content: Text(
+                                            context.t.settings.settingsResetContent),
                                         actions: [
                                           TextButton(
                                               onPressed: () => exit(0),
                                               child:
-                                                  const Text('סגור את התוכנה'))
+                                                  Text(context.t.settings.closeApp))
                                         ]));
                           }
                         },

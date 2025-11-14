@@ -8,6 +8,7 @@ import 'package:otzaria/text_book/bloc/text_book_event.dart';
 import 'package:otzaria/text_book/bloc/text_book_state.dart';
 import 'package:otzaria/settings/settings_bloc.dart';
 import 'package:otzaria/settings/settings_state.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:otzaria/widgets/password_dialog.dart';
@@ -158,7 +159,7 @@ class _BookPreviewPanelState extends State<BookPreviewPanel> {
             ElevatedButton.icon(
               onPressed: () => widget.onOpenInReader?.call(0),
               icon: const Icon(FluentIcons.open_24_regular),
-              label: const Text('פתח בעיון'),
+              label: Text(context.t.preview.openInReader), // Old: 'פתח בעיון'
             ),
           ],
         ),
@@ -318,7 +319,7 @@ class _BookPreviewPanelState extends State<BookPreviewPanel> {
 
                   if (state is TextBookError) {
                     return Center(
-                      child: Text('שגיאה: ${state.message}'),
+                      child: Text(context.t.library.error(message: state.message)),
                     );
                   }
 
