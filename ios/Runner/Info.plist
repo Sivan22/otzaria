@@ -57,5 +57,9 @@
 	<array>
 		<string>mailto</string>
 	</array>
+	<key>CFBundleLocalizations</key>
+	<array>
+	    <string>he</string>
+	</array>
 </dict>
 </plist>

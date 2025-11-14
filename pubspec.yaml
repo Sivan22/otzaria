@@ -119,6 +119,8 @@ dependencies:
   flutter_single_instance: ^1.1.2
   xml: ^6.5.0
   flutter_markdown: ^0.6.23
+  slang: ^4.4.1
+  slang_flutter: ^4.4.0
 
 dependency_overrides:
   #  it forces the version of the intl package to be 0.19.0 across all dependencies, even if some packages specify a different compatible version.
@@ -149,6 +151,7 @@ dev_dependencies:
   build_runner: ^2.4.11
   bloc_test: ^10.0.0
   mockito: ^5.4.4
+  slang_build_runner: ^4.4.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

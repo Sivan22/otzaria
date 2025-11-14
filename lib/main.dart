@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:otzaria/i18n/translations.g.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -220,6 +221,7 @@ Future<void> initialize() async {
   await initHive();
   await createDirs();
   await loadCerts();
+  await LocaleSettings.useDeviceLocale();
 
   // Initialize Shamor Zachor dynamic data loader
   try {
