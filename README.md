@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> ## 🚚 This repository has moved
+>
+> Otzaria is now developed at **[otzaria/otzaria](https://github.com/otzaria/otzaria)**.
+> This repository is archived and read-only: no new issues, pull requests, or releases here.
+>
+> **הפיתוח של אוצריא עבר ל־[otzaria/otzaria](https://github.com/otzaria/otzaria).** מאגר זה לקריאה בלבד.
 
 <!-- PROJECT SHIELDS -->
 <!--
